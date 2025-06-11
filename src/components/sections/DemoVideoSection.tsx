@@ -68,7 +68,7 @@ Constraint: Avoid overly technical jargon.`;
       typingIntervalRef.current = setInterval(() => {
         setTypedGoal(fullGoal.substring(0, charIndex + 1));
         charIndex++;
-        if (charIndex > fullGoal.length) { // Allow to stay on full text for a bit
+        if (charIndex > fullGoal.length) { 
           if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
         }
       }, 60); 
@@ -86,7 +86,7 @@ Constraint: Avoid overly technical jargon.`;
             } else {
                 if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
             }
-        }, (currentSceneConfig.duration - 500) / 20); // -500 to finish before scene change
+        }, (currentSceneConfig.duration - 500) / 20); 
     } else if (currentSceneConfig.title === 'Optimized Prompt Generated') {
         surveyTimeoutRefs.current.push(setTimeout(() => setShowOptimizedPrompt(true), 500));
     }
@@ -95,7 +95,6 @@ Constraint: Avoid overly technical jargon.`;
       setCurrentSceneIndex((prevIndex) => (prevIndex + 1) % scenesData.length);
     }, currentSceneConfig.duration);
 
-    // Animation restart logic
     if (sceneContainerRef.current) {
       sceneContainerRef.current.classList.remove('animate-fadeIn');
       void sceneContainerRef.current.offsetWidth; 
@@ -118,56 +117,56 @@ Constraint: Avoid overly technical jargon.`;
     switch (currentSceneConfig.title) {
       case 'User Enters Goal':
         return (
-          <div className="p-4 md:p-6 space-y-3 md:space-y-4 h-full flex flex-col justify-center">
-            <div className="flex items-center text-md md:text-lg font-semibold text-foreground">
-              <Lightbulb className="mr-2 h-5 md:h-6 w-5 md:w-6 text-primary" />
+          <div className="p-3 sm:p-4 md:p-6 space-y-2 sm:space-y-3 md:space-y-4 h-full flex flex-col justify-center">
+            <div className="flex items-center text-sm sm:text-md md:text-lg font-semibold text-foreground">
+              <Lightbulb className="mr-2 h-4 w-4 sm:h-5 md:h-6 sm:w-5 md:w-6 text-primary" />
               1. Define Your Goal
             </div>
-            <Label htmlFor="goal-demo" className="text-xs md:text-sm text-muted-foreground">
+            <Label htmlFor="goal-demo" className="text-xs sm:text-sm text-muted-foreground">
               What task or objective do you want your AI prompt to achieve?
             </Label>
             <Textarea
               id="goal-demo"
               value={typedGoal}
               readOnly
-              rows={5}
-              className="bg-background/70 border-input focus-visible:ring-primary text-xs md:text-sm"
+              rows={4}
+              className="bg-background/70 border-input focus-visible:ring-primary text-xs sm:text-sm resize-none"
               placeholder="e.g., Write a marketing email..."
             />
           </div>
         );
       case 'Answering Adaptive Survey':
         return (
-          <div className="p-4 md:p-6 space-y-3 md:space-y-4 h-full flex flex-col justify-center">
-            <div className="flex items-center text-md md:text-lg font-semibold text-foreground">
-              <Wand2 className="mr-2 h-5 md:h-6 w-5 md:w-6 text-primary" />
+          <div className="p-3 sm:p-4 md:p-6 space-y-2 sm:space-y-3 md:space-y-4 h-full flex flex-col justify-center">
+            <div className="flex items-center text-sm sm:text-md md:text-lg font-semibold text-foreground">
+              <Wand2 className="mr-2 h-4 w-4 sm:h-5 md:h-6 sm:w-5 md:w-6 text-primary" />
               2. Refine with Details
             </div>
-            <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
+            <div className="space-y-1.5 sm:space-y-2 md:space-y-3 text-xs sm:text-sm">
               <div>
                 <Label htmlFor="q1-demo" className="text-muted-foreground">Primary audience?</Label>
-                <Input id="q1-demo" readOnly value={surveyAnswers.q1 as string || ''} className="mt-1 bg-background/70 h-8 text-xs md:text-sm" placeholder="e.g., Developers, CEOs..." />
+                <Input id="q1-demo" readOnly value={surveyAnswers.q1 as string || ''} className="mt-1 bg-background/70 h-7 sm:h-8 text-xs sm:text-sm" placeholder="e.g., Developers, CEOs..." />
               </div>
               <div>
                 <Label className="text-muted-foreground">Desired tone?</Label>
-                <RadioGroup value={surveyAnswers.q2 as string || ''} className="mt-1 flex space-x-2 md:space-x-3">
+                <RadioGroup value={surveyAnswers.q2 as string || ''} className="mt-1 flex flex-wrap gap-x-2 md:gap-x-3 gap-y-1">
                   {['Formal', 'Casual', 'Professional'].map(opt => (
                     <div key={opt} className="flex items-center space-x-1">
-                      <RadioGroupItem value={opt} id={`q2-demo-${opt}`} checked={(surveyAnswers.q2  as string) === opt} readOnly className="border-primary data-[state=checked]:border-primary data-[state=checked]:text-primary h-3.5 w-3.5 md:h-4 md:w-4"/>
-                      <Label htmlFor={`q2-demo-${opt}`} className="font-normal text-muted-foreground text-xs md:text-sm">{opt}</Label>
+                      <RadioGroupItem value={opt} id={`q2-demo-${opt}`} checked={(surveyAnswers.q2  as string) === opt} readOnly className="border-primary data-[state=checked]:border-primary data-[state=checked]:text-primary h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4"/>
+                      <Label htmlFor={`q2-demo-${opt}`} className="font-normal text-muted-foreground text-[10px] sm:text-xs md:text-sm">{opt}</Label>
                     </div>
                   ))}
                 </RadioGroup>
               </div>
                <div>
                 <Label htmlFor="q3-demo-include" className="text-muted-foreground">Keywords to include?</Label>
-                <Input id="q3-demo-include" readOnly value={surveyAnswers.q3_include as string || ''} className="mt-1 bg-background/70 h-8 text-xs md:text-sm" placeholder="e.g., innovation, efficiency" />
+                <Input id="q3-demo-include" readOnly value={surveyAnswers.q3_include as string || ''} className="mt-1 bg-background/70 h-7 sm:h-8 text-xs sm:text-sm" placeholder="e.g., innovation, efficiency" />
               </div>
               <div>
                 <Label className="text-muted-foreground">Constraints?</Label>
                 <div className="mt-1 flex items-center space-x-2">
-                    <Checkbox id="q5-demo-jargon" checked={(surveyAnswers.q5 as string[])?.includes('Avoid jargon')} readOnly className="border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-3.5 w-3.5 md:h-4 md:w-4" />
-                    <Label htmlFor="q5-demo-jargon" className="font-normal text-muted-foreground text-xs md:text-sm">Avoid jargon</Label>
+                    <Checkbox id="q5-demo-jargon" checked={(surveyAnswers.q5 as string[])?.includes('Avoid jargon')} readOnly className="border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
+                    <Label htmlFor="q5-demo-jargon" className="font-normal text-muted-foreground text-[10px] sm:text-xs md:text-sm">Avoid jargon</Label>
                 </div>
               </div>
             </div>
@@ -175,31 +174,31 @@ Constraint: Avoid overly technical jargon.`;
         );
       case 'AI Optimizing...':
         return (
-            <div className="p-4 md:p-6 flex flex-col items-center justify-center h-full space-y-3">
-                <Loader2 className="h-10 md:h-12 w-10 md:w-12 text-primary animate-spin" />
-                <p className="text-md md:text-lg text-muted-foreground">Optimizing your prompt...</p>
-                <div className="w-full max-w-xs h-2 bg-muted rounded-full overflow-hidden">
+            <div className="p-3 sm:p-4 md:p-6 flex flex-col items-center justify-center h-full space-y-2 sm:space-y-3">
+                <Loader2 className="h-8 w-8 sm:h-10 md:h-12 sm:w-10 md:w-12 text-primary animate-spin" />
+                <p className="text-sm sm:text-md md:text-lg text-muted-foreground">Optimizing your prompt...</p>
+                <div className="w-full max-w-[200px] sm:max-w-xs h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-primary transition-all duration-150" style={{width: `${optimizingProgress}%` }}></div>
                 </div>
             </div>
         );
       case 'Optimized Prompt Generated':
         return (
-          <div className="p-4 md:p-6 space-y-3 md:space-y-4 h-full flex flex-col justify-center">
-            <div className="flex items-center text-md md:text-lg font-semibold text-foreground">
-              <CheckCircle className="mr-2 h-5 md:h-6 w-5 md:w-6 text-accent" />
+          <div className="p-3 sm:p-4 md:p-6 space-y-2 sm:space-y-3 md:space-y-4 h-full flex flex-col justify-center">
+            <div className="flex items-center text-sm sm:text-md md:text-lg font-semibold text-foreground">
+              <CheckCircle className="mr-2 h-4 w-4 sm:h-5 md:h-6 sm:w-5 md:w-6 text-accent" />
               3. Your Optimized Prompt
             </div>
             <Textarea
               value={showOptimizedPrompt ? optimizedPromptExample : ''}
               readOnly
-              rows={6}
-              className="bg-muted/30 border-input focus-visible:ring-accent font-code text-[10px] md:text-xs leading-snug md:leading-normal"
+              rows={4}
+              className="bg-muted/30 border-input focus-visible:ring-accent font-code text-[9px] sm:text-[10px] md:text-xs leading-snug resize-none"
               placeholder="Generating prompt..."
             />
              <div className="flex justify-end">
-                <Button size="sm" variant="outline" className="border-accent text-accent hover:bg-accent/10 h-8 text-xs md:text-sm">
-                    <Copy className="mr-1 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" /> Copy
+                <Button size="sm" variant="outline" className="border-accent text-accent hover:bg-accent/10 h-7 sm:h-8 text-[10px] sm:text-xs md:text-sm">
+                    <Copy className="mr-1 h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" /> Copy
                 </Button>
             </div>
           </div>
@@ -210,31 +209,31 @@ Constraint: Avoid overly technical jargon.`;
   };
 
   return (
-    <section id="demo-video" className="py-16 md:py-24 bg-background">
+    <section id="demo-video" className="py-12 md:py-16 lg:py-24 bg-background">
       <Container className="text-center">
         <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           See BrieflyAI in Action
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+        <p className="mx-auto mt-3 sm:mt-4 max-w-xl sm:max-w-2xl text-md sm:text-lg text-muted-foreground">
           Watch this interactive demo of how BrieflyAI optimizes your prompts.
         </p>
         <GlassCard
           className={cn(
-            "mt-10 aspect-video overflow-hidden shadow-2xl bg-card/80 backdrop-blur-md",
-            "w-full max-w-3xl mx-auto transition-opacity duration-500 ease-in-out relative" // Added relative for progress bar positioning
+            "mt-8 sm:mt-10 aspect-video overflow-hidden shadow-2xl bg-card/80 backdrop-blur-md",
+            "w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mx-auto transition-opacity duration-500 ease-in-out relative" 
           )}
         >
-           <div className="w-full h-1.5 bg-muted/50 absolute top-0 left-0 z-10 rounded-t-xl overflow-hidden">
+           <div className="w-full h-1 sm:h-1.5 bg-muted/50 absolute top-0 left-0 z-10 rounded-t-lg sm:rounded-t-xl overflow-hidden">
             <div
               className="h-full bg-primary transition-all duration-300 ease-linear"
               style={{ width: `${((currentSceneIndex) / scenesData.length) * 100}%` }}
             />
           </div>
-          <div ref={sceneContainerRef} className="pt-1.5 h-full w-full flex flex-col justify-center">
+          <div ref={sceneContainerRef} className="pt-1 sm:pt-1.5 h-full w-full flex flex-col justify-center">
              {renderSceneContent()}
           </div>
         </GlassCard>
-         <p className="mt-4 text-sm text-muted-foreground">
+         <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
           BrieflyAI: Input Goal → Answer Survey → Get Optimized Prompt.
         </p>
       </Container>
@@ -242,3 +241,5 @@ Constraint: Avoid overly technical jargon.`;
   );
 }
  
+
+    
