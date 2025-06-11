@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow to dynamically generate survey questions based on a user's goal.
@@ -12,7 +13,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 // Define the schema for a single survey question
-export const SurveyQuestionSchema = z.object({
+const SurveyQuestionSchema = z.object({
   id: z.string().describe('A unique identifier for the question (e.g., "q1", "q2_audience").'),
   text: z.string().describe('The text of the survey question.'),
   type: z.enum(['text', 'radio', 'checkbox']).describe('The type of input field for the question.'),
@@ -81,3 +82,4 @@ const generateSurveyQuestionsFlow = ai.defineFlow(
     return { questions: output?.questions || [] };
   }
 );
+
