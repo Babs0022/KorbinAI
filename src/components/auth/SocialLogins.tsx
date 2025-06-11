@@ -40,7 +40,7 @@ export function SocialLogins({ type }: { type: "login" | "signup" }) {
 
   return (
     <>
-      <div className="my-6 flex items-center">
+      <div className="my-4 flex items-center">
         <Separator className="flex-grow" />
         <span className="mx-4 text-xs text-muted-foreground">OR CONTINUE WITH</span>
         <Separator className="flex-grow" />
