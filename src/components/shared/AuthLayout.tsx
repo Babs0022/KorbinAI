@@ -1,3 +1,4 @@
+
 import type { ReactNode } from 'react';
 import { Logo } from '@/components/shared/Logo';
 import { GlassCard } from './GlassCard';
@@ -12,7 +13,7 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background via-indigo-50/50 to-mint-50/50 p-4">
       <div className="mb-8 text-center">
-        <Logo className="text-3xl" />
+        <Logo className="text-2xl" />
       </div>
       <GlassCard className="w-full max-w-md">
         <div className="p-6 sm:p-8">

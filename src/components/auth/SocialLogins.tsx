@@ -45,7 +45,11 @@ export function SocialLogins({ type }: { type: "login" | "signup" }) {
         <span className="mx-4 text-xs text-muted-foreground">OR CONTINUE WITH</span>
         <Separator className="flex-grow" />
       </div>
-      <Button variant="outline" className="w-full" onClick={handleGoogleLogin}>
+      <Button 
+        variant="default" 
+        className="w-full bg-accent text-accent-foreground hover:bg-accent/90" 
+        onClick={handleGoogleLogin}
+      >
         <Chrome className="mr-2 h-4 w-4" /> {/* Replace with a proper Google icon if available or SVG */}
         {type === "login" ? "Login with Google" : "Sign up with Google"}
       </Button>
