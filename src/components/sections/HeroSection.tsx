@@ -1,9 +1,29 @@
+
+"use client"; // Required for useState and useEffect
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import Container from '@/components/layout/Container';
 
+const animatedPhrases = [
+  "Flawless Prompts",
+  "Perfect Prompts",
+  "Optimized Prompts",
+];
+
 export function HeroSection() {
+  const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setCurrentPhraseIndex((prevIndex) => (prevIndex + 1) % animatedPhrases.length);
+    }, 3000); // Change phrase every 3 seconds
+
+    return () => clearInterval(intervalId); // Cleanup interval on component unmount
+  }, []);
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-background via-indigo-50/50 to-mint-50/50 py-20 md:py-32">
       <div className="absolute inset-0 -z-10">
@@ -15,7 +35,13 @@ export function HeroSection() {
           AI-Powered Prompt Perfection
         </div>
         <h1 className="font-headline text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
-          Craft <span className="text-primary">Flawless Prompts</span>.
+          Craft{' '}
+          <span className="text-primary">
+            <span key={currentPhraseIndex} className="fade-in inline-block">
+              {animatedPhrases[currentPhraseIndex]}
+            </span>
+          </span>
+          .
           <br />
           Unlock AI's True Potential.
         </h1>
