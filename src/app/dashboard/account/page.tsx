@@ -1,3 +1,4 @@
+
 "use client";
 
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
@@ -7,20 +8,34 @@ import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCard
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, KeyRound, Shield, CreditCard, Trash2 } from 'lucide-react';
+import { User, Mail, KeyRound, Shield, CreditCard, Trash2, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
-// Placeholder user data
-const user = {
-  name: 'Babs',
-  email: 'babs@example.com',
-  avatarUrl: 'https://placehold.co/100x100.png',
-  plan: 'Premium',
-};
-const userInitials = user.name.split(" ").map(n => n[0]).join("").toUpperCase() || "U";
+// Placeholder subscription data
+const userPlan = 'Premium';
 
 export default function AccountPage() {
+  const { currentUser, loading, displayName, displayEmail, avatarUrl, userInitials } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !currentUser) {
+      router.push('/login');
+    }
+  }, [currentUser, loading, router]);
+
+  if (loading || !currentUser) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading account details...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <DashboardHeader />
@@ -37,18 +52,18 @@ export default function AccountPage() {
                 <GlassCardContent className="space-y-6">
                   <div className="flex flex-col items-center space-y-4">
                     <Avatar className="h-24 w-24">
-                      <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="user profile large"/>
+                      <AvatarImage src={avatarUrl} alt={displayName} data-ai-hint="user profile large"/>
                       <AvatarFallback>{userInitials}</AvatarFallback>
                     </Avatar>
                     <Button variant="outline" size="sm">Change Avatar</Button>
                   </div>
                   <div>
                     <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" defaultValue={user.name} className="mt-1"/>
+                    <Input id="name" defaultValue={displayName} className="mt-1"/>
                   </div>
                   <div>
                     <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" defaultValue={user.email} disabled className="mt-1"/>
+                    <Input id="email" type="email" defaultValue={displayEmail} disabled className="mt-1"/>
                     <p className="text-xs text-muted-foreground mt-1">Email cannot be changed.</p>
                   </div>
                   <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Save Profile Changes</Button>
@@ -84,11 +99,11 @@ export default function AccountPage() {
                   <GlassCardDescription>Manage your BrieflyAI plan.</GlassCardDescription>
                 </GlassCardHeader>
                 <GlassCardContent>
-                  <p className="text-sm">Current Plan: <span className="font-semibold text-primary">{user.plan}</span></p>
+                  <p className="text-sm">Current Plan: <span className="font-semibold text-primary">{userPlan}</span></p>
                   {/* Add details like next billing date, usage, etc. */}
                   <div className="mt-4 flex gap-2">
                     <Button variant="outline">Change Plan</Button>
-                    {user.plan !== 'Free' && <Button variant="ghost">Cancel Subscription</Button>}
+                    {userPlan !== 'Free' && <Button variant="ghost">Cancel Subscription</Button>}
                   </div>
                 </GlassCardContent>
               </GlassCard>

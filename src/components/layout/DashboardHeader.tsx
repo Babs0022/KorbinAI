@@ -14,50 +14,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LayoutGrid, LogOut, PlusCircle, Settings, UserCircle } from 'lucide-react';
+import { LayoutGrid, LogOut, PlusCircle, Settings, UserCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
-import { useEffect, useState } from 'react';
-import type { User as FirebaseUser } from 'firebase/auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 export function DashboardHeader() {
   const router = useRouter();
   const { toast } = useToast();
-  // This state will be replaced by an Auth Context later
-  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
-
-  // Placeholder user data - this will be updated by the auth state
-  const [displayName, setDisplayName] = useState("User");
-  const [displayEmail, setDisplayEmail] = useState("user@example.com");
-  const [avatarUrl, setAvatarUrl] = useState("https://placehold.co/40x40.png");
-  const [userInitials, setUserInitials] = useState("U");
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      setCurrentUser(user);
-      if (user) {
-        setDisplayName(user.displayName || user.email?.split('@')[0] || "User");
-        setDisplayEmail(user.email || "user@example.com");
-        setAvatarUrl(user.photoURL || "https://placehold.co/40x40.png");
-        setUserInitials(
-          (user.displayName?.split(" ").map(n => n[0]).join("") || 
-           user.email?.charAt(0) || 
-           "U"
-          ).toUpperCase()
-        );
-      } else {
-        // Reset to placeholders if not logged in, though ideally this header isn't shown
-        setDisplayName("User");
-        setDisplayEmail("user@example.com");
-        setAvatarUrl("https://placehold.co/40x40.png");
-        setUserInitials("U");
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
+  const { currentUser, loading, displayName, displayEmail, avatarUrl, userInitials } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -69,6 +36,19 @@ export function DashboardHeader() {
       toast({ title: "Logout Failed", description: "Could not log out. Please try again.", variant: "destructive"});
     }
   };
+
+  if (loading) {
+    return (
+      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
+          <Logo />
+          <div className="flex items-center space-x-4">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
