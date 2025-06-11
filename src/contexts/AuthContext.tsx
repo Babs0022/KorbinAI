@@ -13,7 +13,7 @@ interface AuthContextType {
   userInitials: string;
   displayName: string;
   displayEmail: string;
-  avatarUrl: string;
+  avatarUrl:string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,7 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     userInitials
   };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  // Always render children. Consumer components can use the 'loading' state.
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
