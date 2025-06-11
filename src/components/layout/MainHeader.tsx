@@ -1,10 +1,11 @@
+
 "use client";
 
 import Link from 'next/link';
 import { Logo } from '@/components/shared/Logo';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Settings } from 'lucide-react'; // Using Settings as a placeholder for "How it Works" or a generic icon.
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React from 'react';
@@ -78,10 +79,15 @@ export function MainHeader() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
-              <div className="flex flex-col space-y-4 p-4">
-                <Logo className="mb-4 self-start" />
-                {renderNavLinks(true)}
-                <div className="mt-4 flex flex-col space-y-2">
+              <SheetHeader>
+                <SheetTitle>Navigation Menu</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col h-full py-4"> {/* py-4 added to space content from header if SheetContent removes its padding for children */}
+                <Logo className="mb-6 self-start px-0" /> {/* Adjusted padding/margin */}
+                <nav className="flex flex-col space-y-1">
+                  {renderNavLinks(true)}
+                </nav>
+                <div className="mt-auto flex flex-col space-y-2 pt-6">
                   <Button variant="outline" asChild className="w-full">
                      <Link href="/login">Login</Link>
                   </Button>
