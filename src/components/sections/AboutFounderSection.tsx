@@ -3,7 +3,8 @@ import Image from 'next/image';
 import { GlassCard } from '@/components/shared/GlassCard';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
-import { Twitter, Users, Mail } from 'lucide-react'; // Using Users for Discord & Farcaster (generic group icon)
+import { Users, Mail } from 'lucide-react'; // Using Users for Discord & Farcaster (generic group icon)
+import { XLogoIcon } from '@/components/shared/XLogoIcon';
 
 // Farcaster icon as SVG
 const FarcasterIcon = () => (
@@ -40,7 +41,7 @@ export function AboutFounderSection() {
             <div className="md:w-2/3">
               <h3 className="font-headline text-2xl font-semibold text-foreground">Elijah Babatunde</h3>
               <p className="mt-2 text-muted-foreground">
-                Hey, I’m Elijah Babatunde, also known as Babs! I'm building BrieflyAI to solve a problem I faced daily: crafting effective AI prompts. 
+                Hey, I’m Elijah Babatunde (you might know me as Babs)! I'm building BrieflyAI to solve a problem I faced daily: crafting effective AI prompts. 
                 My goal is to provide a straightforward, honest tool that genuinely helps you get more out of AI. 
                 I believe in building in public, listening to users, and creating products that deliver real value.
                 No hype, just utility.
@@ -48,7 +49,7 @@ export function AboutFounderSection() {
               <div className="mt-6 flex flex-wrap gap-3">
                 <Button variant="outline" size="sm" asChild>
                   <a href="https://twitter.com/babsbuilds" target="_blank" rel="noopener noreferrer">
-                    <Twitter className="mr-2 h-4 w-4" /> X (@babsbuilds)
+                    <XLogoIcon className="mr-2 h-4 w-4" /> X (@babsbuilds)
                   </a>
                 </Button>
                 <Button variant="outline" size="sm" asChild>

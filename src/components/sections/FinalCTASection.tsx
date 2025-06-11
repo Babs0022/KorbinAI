@@ -1,7 +1,9 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Container from '@/components/layout/Container';
-import { ArrowRight, Mail, MessageCircle, Twitter, Users } from 'lucide-react';
+import { ArrowRight, Mail, MessageCircle, Users } from 'lucide-react';
+import { XLogoIcon } from '@/components/shared/XLogoIcon';
 
 export function FinalCTASection() {
   return (
@@ -30,7 +32,7 @@ export function FinalCTASection() {
             </Button>
             <Button variant="outline" asChild>
               <a href="https://twitter.com/babsbuilds" target="_blank" rel="noopener noreferrer">
-                <Twitter className="mr-2 h-4 w-4" /> @babsbuilds
+                <XLogoIcon className="mr-2 h-4 w-4" /> @babsbuilds
               </a>
             </Button>
             <Button variant="outline" asChild>
