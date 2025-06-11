@@ -1,9 +1,19 @@
+
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import { MainHeader } from '@/components/layout/MainHeader';
 import { Footer } from '@/components/layout/Footer';
 import Container from '@/components/layout/Container';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 
 export default function TermsOfServicePage() {
+  const [lastUpdatedDate, setLastUpdatedDate] = useState<string>("Loading date...");
+
+  useEffect(() => {
+    setLastUpdatedDate(new Date().toLocaleDateString());
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <MainHeader />
@@ -14,7 +24,7 @@ export default function TermsOfServicePage() {
               <GlassCardTitle className="font-headline text-3xl">Terms of Service</GlassCardTitle>
             </GlassCardHeader>
             <GlassCardContent className="prose prose-indigo dark:prose-invert max-w-none">
-              <p><em>Last Updated: {new Date().toLocaleDateString()}</em></p>
+              <p><em>Last Updated: {lastUpdatedDate}</em></p>
 
               <h2>1. Agreement to Terms</h2>
               <p>By using BrieflyAI ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Service.</p>
