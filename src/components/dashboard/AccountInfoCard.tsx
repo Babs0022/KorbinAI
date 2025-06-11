@@ -5,14 +5,9 @@ import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { UserCircle, Edit3, Loader2 } from 'lucide-react';
+import { UserCircle, Edit3, Loader2, BadgeInfo } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
-
-// Placeholder data that will eventually come from Firestore
-const plan = 'Premium'; // or 'Free', 'Unlimited'
-const promptsUsed = 23;
-const promptLimit = 50; // or Infinity for unlimited
 
 export function AccountInfoCard() {
   const { currentUser, loading, displayName, displayEmail, avatarUrl, userInitials } = useAuth();
@@ -42,8 +37,6 @@ export function AccountInfoCard() {
     );
   }
 
-  const promptsRemaining = plan === 'Unlimited' ? 'Unlimited' : Math.max(0, promptLimit - promptsUsed);
-
   return (
     <GlassCard className="w-full">
       <GlassCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -59,20 +52,15 @@ export function AccountInfoCard() {
           <div>
             <h3 className="text-2xl font-semibold font-headline">{displayName}</h3>
             <p className="text-sm text-muted-foreground">{displayEmail}</p>
-            <Badge variant={plan === 'Premium' ? 'default' : 'secondary'} className="mt-2 bg-primary text-primary-foreground">
-              {plan} Plan
+            <Badge variant="secondary" className="mt-2 flex items-center gap-1">
+             <BadgeInfo className="h-3 w-3"/> Basic Plan
             </Badge>
           </div>
         </div>
         <div className="mt-4 space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Prompts Used:</span>
-            <span className="font-medium">{promptsUsed}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Prompts Remaining:</span>
-            <span className="font-medium">{promptsRemaining}</span>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Prompt usage and limits will be displayed here with an active subscription.
+          </p>
         </div>
         <Button variant="outline" className="mt-6 w-full" asChild>
           <Link href="/dashboard/account">

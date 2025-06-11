@@ -1,3 +1,4 @@
+
 "use client"; // Required for useState, useEffect, and event handlers
 
 import React, { useState } from 'react';
@@ -23,41 +24,16 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 
-// Mock data for prompt history - replace with Firestore data
-const mockPromptHistory: PromptHistory[] = [
-  {
-    id: '1',
-    goal: 'Write a marketing email for a new SaaS product launch targeting small businesses.',
-    optimizedPrompt: 'Craft a compelling marketing email for the launch of "BrieflyAI", a new SaaS product designed to help small businesses optimize AI prompts. Highlight key benefits like time-saving, improved AI output quality, and ease of use. Include a clear call to action to sign up for a free trial. Target audience: non-technical small business owners.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-    tags: ['marketing', 'email', 'saas']
-  },
-  {
-    id: '2',
-    goal: 'Generate a blog post outline about the future of AI in education.',
-    optimizedPrompt: 'Create a comprehensive blog post outline discussing the transformative potential of AI in education. Include sections on personalized learning, AI-powered tutoring systems, administrative efficiencies, ethical considerations, and future trends. Ensure the tone is informative and optimistic yet balanced.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), // 3 days ago
-    tags: ['blog', 'ai', 'education']
-  },
-  {
-    id: '3',
-    goal: 'Summarize a long research paper on climate change impact.',
-    optimizedPrompt: 'Provide a concise summary (approx. 300 words) of the attached research paper on climate change impact, focusing on key findings, methodology, and main conclusions. The summary should be accessible to a general audience without losing scientific accuracy.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 120).toISOString(), // 5 days ago
-    tags: ['summary', 'research', 'climate change']
-  },
-];
-
-
 export default function DashboardPage() {
-  const [prompts, setPrompts] = useState<PromptHistory[]>(mockPromptHistory);
+  const [prompts, setPrompts] = useState<PromptHistory[]>([]); // Initialize with empty array
   const [searchTerm, setSearchTerm] = useState('');
   const [promptToDelete, setPromptToDelete] = useState<PromptHistory | null>(null);
   const { toast } = useToast();
 
-  const handleViewPrompt = (prompt: PromptHistory) => alert(`Viewing prompt: ${prompt.goal}`);
-  const handleEditPrompt = (prompt: PromptHistory) => alert(`Editing prompt: ${prompt.goal}`);
-  const handleExportPrompt = (prompt: PromptHistory) => alert(`Exporting prompt: ${prompt.goal}`);
+  // TODO: Implement actual view, edit, export logic when Firestore is integrated
+  const handleViewPrompt = (prompt: PromptHistory) => alert(`Viewing prompt (ID: ${prompt.id}): ${prompt.goal}`);
+  const handleEditPrompt = (prompt: PromptHistory) => alert(`Editing prompt (ID: ${prompt.id}): ${prompt.goal}`);
+  const handleExportPrompt = (prompt: PromptHistory) => alert(`Exporting prompt (ID: ${prompt.id}): ${prompt.goal}`);
   
   const openDeleteDialog = (prompt: PromptHistory) => {
     setPromptToDelete(prompt);
@@ -65,6 +41,7 @@ export default function DashboardPage() {
 
   const handleDeletePrompt = () => {
     if (!promptToDelete) return;
+    // TODO: Delete from Firestore when integrated
     setPrompts(prompts.filter(p => p.id !== promptToDelete.id));
     toast({ title: "Prompt Deleted", description: `Prompt "${promptToDelete.goal.substring(0,30)}..." has been deleted.`});
     setPromptToDelete(null); // Close dialog
@@ -72,7 +49,7 @@ export default function DashboardPage() {
 
   const filteredPrompts = prompts.filter(prompt => 
     prompt.goal.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prompt.optimizedPrompt.toLowerCase().includes(searchTerm.toLowerCase())
+    (prompt.optimizedPrompt && prompt.optimizedPrompt.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -119,12 +96,12 @@ export default function DashboardPage() {
                       onView={handleViewPrompt}
                       onEdit={handleEditPrompt}
                       onExport={handleExportPrompt}
-                      onDelete={() => openDeleteDialog(prompt)}
+                      onDelete={() => openDeleteDialog(prompt)} // Pass the prompt object
                     />
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-10">
+                <div className="text-center py-10 rounded-lg bg-card/50 p-6">
                   <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="font-semibold text-xl text-foreground">No Prompts Found</h3>
                   <p className="text-muted-foreground mt-2">
