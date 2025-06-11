@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, type FormEvent } from "react";
@@ -21,17 +22,23 @@ export function SignupForm() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
-    // Placeholder for Firebase Email/Password Auth Signup
+    
     console.log("Signup attempt:", { name, email, password });
-    // Simulating API call
+    
+    // Mock: Store the email in localStorage so login form can "find" it
+    if (typeof window !== "undefined") {
+      localStorage.setItem("brieflyai_mock_user_email", email);
+      // For a more complete mock, you could store a mock user object
+      // localStorage.setItem("brieflyai_mock_user", JSON.stringify({ name, email }));
+    }
+    
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Example success
     toast({
       title: "Account Created!",
       description: "Welcome to BrieflyAI. You can now log in.",
     });
-    router.push("/login"); // Or directly to dashboard if auto-login
+    router.push("/login"); 
     
     setIsLoading(false);
   };

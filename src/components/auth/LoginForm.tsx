@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, type FormEvent } from "react";
@@ -20,13 +21,22 @@ export function LoginForm() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
-    // Placeholder for Firebase Email/Password Auth
+    
     console.log("Login attempt:", { email, password });
-    // Simulating API call
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Example success/error
-    const isSuccess = email.includes("test@example.com"); // Mock success
+    let isSuccess = false;
+    if (typeof window !== "undefined") {
+      const signedUpEmail = localStorage.getItem("brieflyai_mock_user_email");
+      // For this mock, we'll just check if the email matches and password is not empty
+      if (signedUpEmail && email === signedUpEmail && password.length > 0) {
+        isSuccess = true;
+      }
+    } else {
+      // Fallback for server-side or environments without localStorage (won't work for this mock persistence)
+      isSuccess = email.includes("test@example.com") && password.length > 0;
+    }
+
     if (isSuccess) {
       toast({
         title: "Login Successful",
