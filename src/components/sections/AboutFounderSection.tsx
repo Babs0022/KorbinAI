@@ -29,7 +29,7 @@ export function AboutFounderSection() {
             <div className="md:w-1/3 mb-6 md:mb-0 text-center">
               <Image
                 src="https://placehold.co/200x200.png"
-                alt="Babs - Founder of BrieflyAI"
+                alt="Elijah Babatunde - Founder of BrieflyAI"
                 width={200}
                 height={200}
                 className="rounded-full mx-auto shadow-lg"
@@ -37,7 +37,7 @@ export function AboutFounderSection() {
               />
             </div>
             <div className="md:w-2/3">
-              <h3 className="font-headline text-2xl font-semibold text-foreground">Babs (@0xbabs)</h3>
+              <h3 className="font-headline text-2xl font-semibold text-foreground">Elijah Babatunde</h3>
               <p className="mt-2 text-muted-foreground">
                 Hey, I'm Babs! I'm building BrieflyAI to solve a problem I faced daily: crafting effective AI prompts. 
                 My goal is to provide a straightforward, honest tool that genuinely helps you get more out of AI. 
