@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { SocialLogins } from "./SocialLogins";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, User } from "lucide-react";
+import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
 export function SignupForm() {
   const router = useRouter();
@@ -23,24 +25,37 @@ export function SignupForm() {
     event.preventDefault();
     setIsLoading(true);
     
-    console.log("Signup attempt:", { name, email, password });
-    
-    // Mock: Store the email in localStorage so login form can "find" it
-    if (typeof window !== "undefined") {
-      localStorage.setItem("brieflyai_mock_user_email", email);
-      // For a more complete mock, you could store a mock user object
-      // localStorage.setItem("brieflyai_mock_user", JSON.stringify({ name, email }));
-    }
-    
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      if (userCredential.user) {
+        await updateProfile(userCredential.user, {
+          displayName: name,
+        });
+      }
+      
+      toast({
+        title: "Account Created!",
+        description: "Welcome to BrieflyAI. You can now log in.",
+      });
+      router.push("/login");
 
-    toast({
-      title: "Account Created!",
-      description: "Welcome to BrieflyAI. You can now log in.",
-    });
-    router.push("/login"); 
-    
-    setIsLoading(false);
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      let errorMessage = "Failed to create account. Please try again.";
+      if (error.code === "auth/email-already-in-use") {
+        errorMessage = "This email is already in use. Please try another or log in.";
+      } else if (error.code === "auth/weak-password") {
+        errorMessage = "The password is too weak. Please choose a stronger password.";
+      }
+      toast({
+        title: "Signup Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

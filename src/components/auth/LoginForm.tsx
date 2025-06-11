@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { SocialLogins } from "./SocialLogins";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock } from "lucide-react";
+import { auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export function LoginForm() {
   const router = useRouter();
@@ -22,35 +24,27 @@ export function LoginForm() {
     event.preventDefault();
     setIsLoading(true);
     
-    console.log("Login attempt:", { email, password });
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    let isSuccess = false;
-    if (typeof window !== "undefined") {
-      const signedUpEmail = localStorage.getItem("brieflyai_mock_user_email");
-      // For this mock, we'll just check if the email matches and password is not empty
-      if (signedUpEmail && email === signedUpEmail && password.length > 0) {
-        isSuccess = true;
-      }
-    } else {
-      // Fallback for server-side or environments without localStorage (won't work for this mock persistence)
-      isSuccess = email.includes("test@example.com") && password.length > 0;
-    }
-
-    if (isSuccess) {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: "Login Successful",
         description: "Welcome back!",
       });
       router.push("/dashboard");
-    } else {
+    } catch (error: any) {
+      console.error("Login error:", error);
+      let errorMessage = "Invalid email or password. Please try again.";
+      if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password" || error.code === "auth/invalid-credential") {
+        errorMessage = "Invalid email or password. Please check your credentials.";
+      }
       toast({
         title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
