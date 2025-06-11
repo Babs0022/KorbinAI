@@ -1,14 +1,14 @@
 
-"use client"; // Required for useState, useEffect, and event handlers
+"use client"; 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { Footer } from '@/components/layout/Footer';
 import Container from '@/components/layout/Container';
 import { AccountInfoCard } from '@/components/dashboard/AccountInfoCard';
 import { PromptHistoryItem, type PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, ListFilter } from 'lucide-react';
+import { PlusCircle, Search, ListFilter, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import {
@@ -22,13 +22,32 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 
 export default function DashboardPage() {
-  const [prompts, setPrompts] = useState<PromptHistory[]>([]); // Initialize with empty array
+  const { currentUser, loading } = useAuth();
+  const router = useRouter();
+  const [prompts, setPrompts] = useState<PromptHistory[]>([]); 
   const [searchTerm, setSearchTerm] = useState('');
   const [promptToDelete, setPromptToDelete] = useState<PromptHistory | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!loading && !currentUser) {
+      router.push('/login');
+    }
+  }, [currentUser, loading, router]);
+
+  if (loading || !currentUser) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
+      </div>
+    );
+  }
 
   // TODO: Implement actual view, edit, export logic when Firestore is integrated
   const handleViewPrompt = (prompt: PromptHistory) => alert(`Viewing prompt (ID: ${prompt.id}): ${prompt.goal}`);
@@ -87,7 +106,20 @@ export default function DashboardPage() {
                 </Button>
               </div>
 
-              {filteredPrompts.length > 0 ? (
+              {prompts.length === 0 && !searchTerm ? (
+                 <div className="text-center py-10 rounded-lg bg-card/50 p-6">
+                  <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="font-semibold text-xl text-foreground">No Prompts Yet</h3>
+                  <p className="text-muted-foreground mt-2">
+                    You haven&apos;t created any prompts. Get started by creating one!
+                  </p>
+                    <Button asChild className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground">
+                        <Link href="/create-prompt">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Create New Prompt
+                        </Link>
+                    </Button>
+                </div>
+              ) : filteredPrompts.length > 0 ? (
                 <div className="space-y-4">
                   {filteredPrompts.map((prompt) => (
                     <PromptHistoryItem
@@ -96,7 +128,7 @@ export default function DashboardPage() {
                       onView={handleViewPrompt}
                       onEdit={handleEditPrompt}
                       onExport={handleExportPrompt}
-                      onDelete={() => openDeleteDialog(prompt)} // Pass the prompt object
+                      onDelete={() => openDeleteDialog(prompt)} 
                     />
                   ))}
                 </div>
@@ -105,15 +137,8 @@ export default function DashboardPage() {
                   <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="font-semibold text-xl text-foreground">No Prompts Found</h3>
                   <p className="text-muted-foreground mt-2">
-                    {searchTerm ? "Try adjusting your search or create a new prompt." : "You haven't created any prompts yet. Get started by creating one!"}
+                    Try adjusting your search terms.
                   </p>
-                   {!searchTerm && (
-                    <Button asChild className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground">
-                        <Link href="/create-prompt">
-                        <PlusCircle className="mr-2 h-4 w-4" /> Create New Prompt
-                        </Link>
-                    </Button>
-                   )}
                 </div>
               )}
             </div>

@@ -1,24 +1,44 @@
+
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { Footer } from '@/components/layout/Footer';
 import Container from '@/components/layout/Container';
 import { CreatePromptForm } from '@/components/prompt/CreatePromptForm';
 import { OptimizedPromptCard } from '@/components/prompt/OptimizedPromptCard';
 import type { OptimizePromptOutput } from '@/ai/flows/optimize-prompt';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function CreatePromptPage() {
+  const { currentUser, loading } = useAuth();
+  const router = useRouter();
   const [optimizedOutput, setOptimizedOutput] = useState<OptimizePromptOutput | null>(null);
   const [originalGoal, setOriginalGoal] = useState<string>('');
+
+  useEffect(() => {
+    if (!loading && !currentUser) {
+      router.push('/login');
+    }
+  }, [currentUser, loading, router]);
 
   const handlePromptOptimized = (output: OptimizePromptOutput, goal: string) => {
     setOptimizedOutput(output);
     setOriginalGoal(goal);
   };
+
+  if (loading || !currentUser) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col">

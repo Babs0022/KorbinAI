@@ -1,5 +1,7 @@
+
 "use client";
 
+import { useEffect } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { Footer } from '@/components/layout/Footer';
 import Container from '@/components/layout/Container';
@@ -8,9 +10,29 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, Palette, ShieldCheck, DownloadCloud } from 'lucide-react';
+import { Bell, Palette, DownloadCloud, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
+  const { currentUser, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !currentUser) {
+      router.push('/login');
+    }
+  }, [currentUser, loading, router]);
+
+  if (loading || !currentUser) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading settings...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <DashboardHeader />

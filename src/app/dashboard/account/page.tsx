@@ -33,8 +33,8 @@ export default function AccountPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [newDisplayName, setNewDisplayName] = useState(displayName);
-  const [newAvatarUrl, setNewAvatarUrl] = useState(avatarUrl);
+  const [newDisplayName, setNewDisplayName] = useState('');
+  const [newAvatarUrl, setNewAvatarUrl] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState('');
@@ -44,17 +44,19 @@ export default function AccountPage() {
 
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [reAuthPassword, setReAuthPassword] = useState(''); // For re-authentication before delete/password change
+  const [reAuthPassword, setReAuthPassword] = useState('');
 
 
   useEffect(() => {
     if (!loading && !currentUser) {
       router.push('/login');
     } else if (currentUser) {
-      setNewDisplayName(currentUser.displayName || '');
-      setNewAvatarUrl(currentUser.photoURL || '');
+      // Initialize form fields only once currentUser is available
+      // and ensure displayName and avatarUrl from context are used as initial values
+      setNewDisplayName(displayName || '');
+      setNewAvatarUrl(avatarUrl === "https://placehold.co/40x40.png" ? '' : avatarUrl); // Use placeholder if no avatar
     }
-  }, [currentUser, loading, router]);
+  }, [currentUser, loading, router, displayName, avatarUrl]);
 
   const handleSaveProfile = async (e: FormEvent) => {
     e.preventDefault();
@@ -95,18 +97,17 @@ export default function AccountPage() {
          return;
       }
       
-      // Re-authenticate if email/password user
       if (currentUser.providerData.some(p => p.providerId === EmailAuthProvider.PROVIDER_ID)) {
         const credential = EmailAuthProvider.credential(currentUser.email!, currentPassword);
         await reauthenticateWithCredential(currentUser, credential);
       }
-      // If re-authentication is successful or not needed (e.g. social login), proceed to update password
       await updatePassword(currentUser, newPassword);
       toast({ title: "Password Updated", description: "Your password has been successfully updated." });
       setCurrentPassword('');
       setNewPassword('');
       setConfirmNewPassword('');
-    } catch (error: any) {
+    } catch (error: any)
+     {
       console.error("Error updating password:", error);
       let description = "Could not update password. Please try again.";
       if (error.code === 'auth/wrong-password') {
@@ -121,9 +122,6 @@ export default function AccountPage() {
   };
   
   const triggerDeleteConfirmation = () => {
-    // For email/password users, prompt for password to re-authenticate before showing final delete.
-    // For social provider users, they might be able to delete directly or Firebase might prompt re-auth.
-    // For simplicity, we'll use one dialog.
     setShowDeleteConfirm(true);
   };
 
@@ -133,7 +131,6 @@ export default function AccountPage() {
      setIsDeletingAccount(true);
 
     try {
-       // For email/password users, require re-authentication
       if (currentUser.providerData.some(p => p.providerId === EmailAuthProvider.PROVIDER_ID)) {
         if (!reAuthPassword) {
           toast({ title: "Password Required", description: "Please enter your password to confirm account deletion.", variant: "destructive"});
@@ -146,7 +143,7 @@ export default function AccountPage() {
       
       await deleteUser(currentUser);
       toast({ title: "Account Deleted", description: "Your account has been permanently deleted." });
-      router.push('/login'); // Redirect to login page
+      router.push('/login'); 
     } catch (error: any) {
       console.error("Error deleting account:", error);
       let description = "Could not delete account. Please try again.";
@@ -157,10 +154,9 @@ export default function AccountPage() {
       }
       toast({ title: "Error Deleting Account", description, variant: "destructive" });
       setIsDeletingAccount(false);
-      setShowDeleteConfirm(false); // Close dialog on error
+      setShowDeleteConfirm(false); 
       setReAuthPassword('');
     } 
-    // No finally for setIsDeletingAccount here, as navigation occurs on success
   };
 
 
@@ -192,7 +188,7 @@ export default function AccountPage() {
                   <form onSubmit={handleSaveProfile} className="space-y-6">
                     <div className="flex flex-col items-center space-y-4">
                       <Avatar className="h-24 w-24">
-                        <AvatarImage src={newAvatarUrl || avatarUrl} alt={newDisplayName || displayName} data-ai-hint="user profile large" />
+                        <AvatarImage src={newAvatarUrl || avatarUrl } alt={newDisplayName || displayName} data-ai-hint="user profile large"/>
                         <AvatarFallback>{userInitials}</AvatarFallback>
                       </Avatar>
                     </div>
@@ -217,7 +213,7 @@ export default function AccountPage() {
                     </div>
                     <div>
                       <Label htmlFor="email">Email Address</Label>
-                      <Input id="email" type="email" defaultValue={displayEmail} disabled className="mt-1"/>
+                      <Input id="email" type="email" value={displayEmail} disabled className="mt-1"/>
                       <p className="text-xs text-muted-foreground mt-1">Email cannot be changed.</p>
                     </div>
                     <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSavingProfile}>
@@ -294,7 +290,7 @@ export default function AccountPage() {
                   </p>
                   <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" className="w-full" onClick={() => setShowDeleteConfirm(true)} disabled={isDeletingAccount}>
+                      <Button variant="destructive" className="w-full" onClick={triggerDeleteConfirmation} disabled={isDeletingAccount}>
                         Delete My Account
                       </Button>
                     </AlertDialogTrigger>
