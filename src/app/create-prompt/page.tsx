@@ -1,0 +1,54 @@
+"use client";
+
+import React, { useState } from 'react';
+import { DashboardHeader } from '@/components/layout/DashboardHeader';
+import { Footer } from '@/components/layout/Footer';
+import Container from '@/components/layout/Container';
+import { CreatePromptForm } from '@/components/prompt/CreatePromptForm';
+import { OptimizedPromptCard } from '@/components/prompt/OptimizedPromptCard';
+import type { OptimizePromptOutput } from '@/ai/flows/optimize-prompt';
+import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+
+export default function CreatePromptPage() {
+  const [optimizedOutput, setOptimizedOutput] = useState<OptimizePromptOutput | null>(null);
+  const [originalGoal, setOriginalGoal] = useState<string>('');
+
+  const handlePromptOptimized = (output: OptimizePromptOutput, goal: string) => {
+    setOptimizedOutput(output);
+    setOriginalGoal(goal);
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <DashboardHeader />
+      <main className="flex-grow bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8">
+        <Container>
+          <div className="mb-6">
+            <Button variant="outline" asChild size="sm">
+              <Link href="/dashboard">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Dashboard
+              </Link>
+            </Button>
+          </div>
+          <h1 className="font-headline text-3xl font-bold text-foreground mb-2">Create New Prompt</h1>
+          <p className="text-muted-foreground mb-8">
+            Follow the steps below to generate a highly optimized prompt for your AI tasks.
+          </p>
+          
+          <CreatePromptForm onPromptOptimized={(output) => handlePromptOptimized(output, (document.getElementById('goal') as HTMLTextAreaElement)?.value || '')} />
+
+          {optimizedOutput && (
+            <OptimizedPromptCard 
+              optimizedPrompt={optimizedOutput.optimizedPrompt}
+              originalGoal={originalGoal} 
+            />
+          )}
+        </Container>
+      </main>
+      <Footer />
+    </div>
+  );
+}

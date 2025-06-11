@@ -2,79 +2,80 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --background: 208 100% 97%; /* #F0F8FF Alice Blue */
+    --foreground: 274 100% 15%; /* Dark Indigo for text */
+
+    --muted: 274 50% 85%; /* Lighter Indigo/Purple */
+    --muted-foreground: 274 70% 45%; /* Medium Indigo/Purple for muted text */
+
+    --popover: 208 100% 97%; /* Light gray */
+    --popover-foreground: 274 100% 15%;
+
+    --card: 208 100% 97%; /* Base for cards, opacity applied in components for glass effect */
+    --card-foreground: 274 100% 15%;
+
+    --border: 274 40% 75%; /* Softer Indigo/Purple border */
+    --input: 208 60% 93%; /* Very light gray-blue for input background */
+
+    --primary: 274 100% 25%; /* Indigo #4B0082 */
+    --primary-foreground: 208 100% 97%; /* Light gray on primary */
+
+    --secondary: 160 100% 80%; /* Lighter Mint/Aquamarine */
+    --secondary-foreground: 274 100% 15%; /* Dark Indigo on secondary (mint) */
+
+    --accent: 160 100% 70%; /* Mint #7FFFD4 */
+    --accent-foreground: 274 100% 10%; /* Darkest Indigo on accent (mint) */
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+
+    --ring: 160 100% 70%; /* Mint for focus rings */
+    --radius: 0.75rem; /* Slightly more rounded corners */
+
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --background: 274 20% 5%; /* Very dark desaturated indigo */
+    --foreground: 208 100% 90%; /* Light blueish-gray */
+
+    --muted: 274 15% 20%; /* Darker muted indigo */
+    --muted-foreground: 208 50% 65%; /* Lighter muted blue-gray */
+
+    --popover: 274 20% 8%; 
+    --popover-foreground: 208 100% 90%;
+
+    --card: 274 20% 8%; 
+    --card-foreground: 208 100% 90%;
+
+    --border: 274 15% 35%; /* Muted indigo border */
+    --input: 274 15% 15%;   /* Dark input background */
+
+    --primary: 160 100% 70%; /* Mint as primary in dark mode */
+    --primary-foreground: 274 100% 10%; /* Dark indigo text on mint */
+
+    --secondary: 274 50% 30%; /* Muted deep indigo/purple */
+    --secondary-foreground: 208 100% 90%;
+
+    --accent: 274 100% 65%; /* A vibrant purple for accent */
+    --accent-foreground: 0 0% 98%; /* White text on accent */
+
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+
+    --ring: 160 100% 60%; /* Slightly darker Mint for focus rings */
+    
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -83,6 +84,23 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Simple fade-in animation */
+.fade-in {
+  animation: fadeInAnimation 0.5s ease-in-out;
+}
+
+@keyframes fadeInAnimation {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
