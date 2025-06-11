@@ -1,27 +1,24 @@
-import type { ReactNode } from 'react';
+import React from 'react';
+import type { HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface GlassCardProps {
-  children: ReactNode;
-  className?: string;
-  asChild?: boolean;
-}
-
-const GlassCard = ({ children, className, ...props }: GlassCardProps) => {
-  return (
-    <div
+const GlassCard = React.forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className, children, ...props }, ref) => (
+    <Card
+      ref={ref}
       className={cn(
-        "rounded-xl border border-white/20 bg-card/50 p-6 shadow-lg backdrop-blur-lg",
-        "dark:border-slate-700/50 dark:bg-card/30",
+        "rounded-xl border-white/20 bg-card/60 shadow-lg backdrop-blur-md",
+        "dark:border-slate-700/50 dark:bg-card/40",
         className
       )}
       {...props}
     >
       {children}
-    </div>
-  );
-};
+    </Card>
+  )
+);
+GlassCard.displayName = 'GlassCard';
 
 const GlassCardHeader = CardHeader;
 const GlassCardTitle = CardTitle;

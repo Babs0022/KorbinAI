@@ -69,7 +69,7 @@ export function PricingSection() {
           {pricingTiers.map((tier) => (
             <GlassCard
               key={tier.name}
-              className={`flex flex-col ${tier.emphasized ? 'border-2 border-primary shadow-2xl transform scale-105' : 'border-border'}`}
+              className={`flex flex-col ${tier.emphasized ? 'border-2 border-primary shadow-2xl' : 'border-border'}`}
             >
               <GlassCardHeader className="pb-4">
                 <GlassCardTitle className="font-headline text-2xl">{tier.name}</GlassCardTitle>
