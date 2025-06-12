@@ -10,11 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info } from 'lucide-react';
+import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, UploadCloud } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
+import { auth, storage } from '@/lib/firebase';
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from 'firebase/auth';
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -29,13 +30,16 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function AccountPage() {
-  const { currentUser, loading, displayName, displayEmail, avatarUrl, userInitials } = useAuth();
+  const authContext = useAuth();
+  const { currentUser, loading } = authContext;
   const router = useRouter();
   const { toast } = useToast();
 
   const [newDisplayName, setNewDisplayName] = useState('');
-  const [newAvatarUrl, setNewAvatarUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -46,32 +50,97 @@ export default function AccountPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [reAuthPassword, setReAuthPassword] = useState('');
 
-
   useEffect(() => {
     if (!loading && !currentUser) {
       router.push('/login');
     } else if (currentUser) {
-      // Initialize form fields only once currentUser is available
-      // and ensure displayName and avatarUrl from context are used as initial values
-      setNewDisplayName(displayName || '');
-      setNewAvatarUrl(avatarUrl === "https://placehold.co/40x40.png" ? '' : avatarUrl); // Use placeholder if no avatar
+      setNewDisplayName(authContext.displayName || '');
     }
-  }, [currentUser, loading, router, displayName, avatarUrl]);
+  }, [currentUser, loading, router, authContext.displayName]);
+
+  // Cleanup for imagePreview object URL
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (imagePreview) { // Revoke old preview if one exists
+        URL.revokeObjectURL(imagePreview);
+    }
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({ title: "File Too Large", description: "Please select an image smaller than 5MB.", variant: "destructive" });
+        setSelectedFile(null);
+        setImagePreview(null);
+        e.target.value = ""; // Reset file input
+        return;
+      }
+      setSelectedFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    } else {
+      setSelectedFile(null);
+      setImagePreview(null);
+    }
+  };
 
   const handleSaveProfile = async (e: FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
     setIsSavingProfile(true);
+    
+    let finalPhotoURL = authContext.avatarUrl; // Start with current or default from context
+
     try {
-      await updateProfile(currentUser, {
-        displayName: newDisplayName,
-        photoURL: newAvatarUrl,
-      });
-      toast({ title: "Profile Updated", description: "Your profile has been successfully updated." });
-      // AuthContext will pick up changes via onAuthStateChanged
+      if (selectedFile) {
+        setIsUploading(true);
+        const fileRef = storageRef(storage, `avatars/${currentUser.uid}/${Date.now()}_${selectedFile.name}`);
+        const uploadTaskSnapshot = await uploadBytesResumable(fileRef, selectedFile);
+        finalPhotoURL = await getDownloadURL(uploadTaskSnapshot.ref);
+        setIsUploading(false);
+        setSelectedFile(null); 
+      }
+
+      const profileUpdates: { displayName?: string; photoURL?: string } = {};
+      let profileChanged = false;
+
+      if (newDisplayName !== (currentUser.displayName || '')) {
+        profileUpdates.displayName = newDisplayName;
+        profileChanged = true;
+      }
+
+      // Only update photoURL if a new one was uploaded and it's different or if the original was the placeholder
+      if (finalPhotoURL !== authContext.avatarUrl && finalPhotoURL !== "https://placehold.co/40x40.png") {
+          profileUpdates.photoURL = finalPhotoURL;
+          profileChanged = true;
+      } else if (selectedFile && finalPhotoURL === "https://placehold.co/40x40.png") { // case where default placeholder was there and new image uploaded
+          profileUpdates.photoURL = finalPhotoURL;
+          profileChanged = true;
+      }
+
+
+      if (profileChanged) {
+        await updateProfile(currentUser, profileUpdates);
+        toast({ title: "Profile Updated", description: "Your profile has been successfully updated." });
+        if (imagePreview && finalPhotoURL !== authContext.avatarUrl) { // if a new image was processed
+             URL.revokeObjectURL(imagePreview); // Clean up the local preview
+             setImagePreview(null); // Reset preview state
+        }
+      } else if (!selectedFile) { // if no file selected and name didn't change
+        toast({ title: "No Changes", description: "No changes were made to your profile." });
+      } else if (selectedFile && !profileChanged) { // if file was selected but something prevented an update (e.g. name was same)
+         toast({ title: "Profile Updated", description: "Your profile picture has been updated." });
+         if (imagePreview) { URL.revokeObjectURL(imagePreview); setImagePreview(null); }
+      }
+      
     } catch (error: any) {
       console.error("Error updating profile:", error);
       toast({ title: "Error Updating Profile", description: error.message, variant: "destructive" });
+      setIsUploading(false); 
     } finally {
       setIsSavingProfile(false);
     }
@@ -124,7 +193,6 @@ export default function AccountPage() {
   const triggerDeleteConfirmation = () => {
     setShowDeleteConfirm(true);
   };
-
 
   const handleDeleteAccount = async () => {
      if (!currentUser) return;
@@ -188,19 +256,22 @@ export default function AccountPage() {
                   <form onSubmit={handleSaveProfile} className="space-y-6">
                     <div className="flex flex-col items-center space-y-4">
                       <Avatar className="h-24 w-24">
-                        <AvatarImage src={newAvatarUrl || avatarUrl } alt={newDisplayName || displayName} data-ai-hint="user profile large"/>
-                        <AvatarFallback>{userInitials}</AvatarFallback>
+                        <AvatarImage src={imagePreview || authContext.avatarUrl} alt={newDisplayName || authContext.displayName} data-ai-hint="user profile large"/>
+                        <AvatarFallback>{authContext.userInitials}</AvatarFallback>
                       </Avatar>
-                    </div>
-                    <div>
-                      <Label htmlFor="avatarUrl">Avatar URL</Label>
-                      <Input 
-                        id="avatarUrl" 
-                        value={newAvatarUrl} 
-                        onChange={(e) => setNewAvatarUrl(e.target.value)} 
-                        placeholder="https://example.com/avatar.png"
-                        className="mt-1"
-                      />
+                       <div className="w-full">
+                        <Label htmlFor="avatarFile" className="mb-1 flex items-center text-sm font-medium text-foreground">
+                          <UploadCloud className="mr-2 h-4 w-4" /> Change Avatar (max 5MB)
+                        </Label>
+                        <Input 
+                          id="avatarFile" 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleFileChange} 
+                          className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                          disabled={isSavingProfile || isUploading}
+                        />
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor="name">Full Name</Label>
@@ -209,15 +280,16 @@ export default function AccountPage() {
                         value={newDisplayName} 
                         onChange={(e) => setNewDisplayName(e.target.value)} 
                         className="mt-1"
+                        disabled={isSavingProfile}
                       />
                     </div>
                     <div>
                       <Label htmlFor="email">Email Address</Label>
-                      <Input id="email" type="email" value={displayEmail} disabled className="mt-1"/>
+                      <Input id="email" type="email" value={authContext.displayEmail} disabled className="mt-1"/>
                       <p className="text-xs text-muted-foreground mt-1">Email cannot be changed.</p>
                     </div>
-                    <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSavingProfile}>
-                      {isSavingProfile ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : "Save Profile Changes"}
+                    <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSavingProfile || isUploading}>
+                      {isUploading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...</> : isSavingProfile ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : "Save Profile Changes"}
                     </Button>
                   </form>
                 </GlassCardContent>
