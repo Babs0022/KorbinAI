@@ -40,10 +40,10 @@ export function SocialLogins({ type }: { type: "login" | "signup" }) {
 
   return (
     <>
-      <div className="my-4 flex items-center">
-        <Separator className="flex-grow" />
-        <span className="mx-4 text-xs text-muted-foreground">OR CONTINUE WITH</span>
-        <Separator className="flex-grow" />
+      <div className="my-4 grid grid-cols-[1fr_auto_1fr] items-center gap-x-4">
+        <Separator orientation="horizontal" />
+        <span className="text-xs text-muted-foreground">OR CONTINUE WITH</span>
+        <Separator orientation="horizontal" />
       </div>
       <Button 
         variant="default" 
