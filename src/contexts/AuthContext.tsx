@@ -17,6 +17,8 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const defaultPlaceholderUrl = "https://placehold.co/40x40.png";
+
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
@@ -24,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const [displayName, setDisplayName] = useState("User");
   const [displayEmail, setDisplayEmail] = useState("user@example.com");
-  const [avatarUrl, setAvatarUrl] = useState("https://placehold.co/40x40.png");
+  const [avatarUrl, setAvatarUrl] = useState(defaultPlaceholderUrl);
   const [userInitials, setUserInitials] = useState("U");
 
   useEffect(() => {
@@ -33,7 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (user) {
         setDisplayName(user.displayName || user.email?.split('@')[0] || "User");
         setDisplayEmail(user.email || "user@example.com");
-        setAvatarUrl(user.photoURL || "https://placehold.co/40x40.png");
+        // Use the actual photoURL from Firebase, or the default placeholder if it's null/empty
+        setAvatarUrl(user.photoURL || defaultPlaceholderUrl); 
         setUserInitials(
           (user.displayName?.split(" ").map(n => n[0]).join("") || 
            user.email?.charAt(0) || 
@@ -43,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setDisplayName("User");
         setDisplayEmail("user@example.com");
-        setAvatarUrl("https://placehold.co/40x40.png");
+        setAvatarUrl(defaultPlaceholderUrl);
         setUserInitials("U");
       }
       setLoading(false);
@@ -72,3 +75,5 @@ export function useAuth() {
   }
   return context;
 }
+
+    
