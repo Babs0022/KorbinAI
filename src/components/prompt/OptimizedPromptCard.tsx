@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from '@/components/ui/button';
@@ -6,11 +7,14 @@ import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/
 import { CheckCircle, Copy, Edit3, Download, Save, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 
 interface OptimizedPromptCardProps {
   optimizedPrompt: string;
   originalGoal: string;
 }
+
+const LOCAL_STORAGE_KEY = 'brieflyai_prompt_history';
 
 export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: OptimizedPromptCardProps) {
   const [editedPrompt, setEditedPrompt] = useState(optimizedPrompt);
@@ -23,14 +27,13 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: Optimized
   };
 
   const handleSaveEdit = () => {
-    // Here you would typically save the editedPrompt to your backend/state
-    console.log("Saving edited prompt:", editedPrompt);
-    toast({ title: "Changes Saved!", description: "Your edits to the prompt have been saved." });
+    // This only saves the edit locally in the component state for now.
+    // If "Save to History" is clicked later, this edited version will be saved.
+    toast({ title: "Changes Applied!", description: "Your edits are applied. Click 'Save to History' to persist." });
     setIsEditing(false);
   };
   
   const handleExport = () => {
-    // Placeholder for export functionality (e.g., download as .txt)
     const blob = new Blob([editedPrompt], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -42,9 +45,26 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: Optimized
   };
 
   const handleSaveToHistory = () => {
-    // Placeholder for saving to prompt history (Firestore)
-     console.log("Saving prompt to history:", { originalGoal, optimizedPrompt: editedPrompt });
-     toast({ title: "Prompt Saved!", description: "This prompt has been saved to your history." });
+    try {
+      const existingHistoryString = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const existingHistory: PromptHistory[] = existingHistoryString ? JSON.parse(existingHistoryString) : [];
+      
+      const newPromptEntry: PromptHistory = {
+        id: crypto.randomUUID(), // Generate a unique ID
+        goal: originalGoal,
+        optimizedPrompt: editedPrompt, // Save the potentially edited prompt
+        timestamp: new Date().toISOString(),
+        // tags: [] // Add tags functionality later if needed
+      };
+
+      const updatedHistory = [newPromptEntry, ...existingHistory]; // Add new prompt to the beginning
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedHistory));
+      
+      toast({ title: "Prompt Saved!", description: "This prompt has been saved to your local history." });
+    } catch (error) {
+      console.error("Error saving to localStorage:", error);
+      toast({ title: "Save Failed", description: "Could not save prompt to local history.", variant: "destructive" });
+    }
   };
 
   if (!optimizedPrompt) {
@@ -92,7 +112,7 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: Optimized
           </Button>
           {isEditing ? (
             <Button variant="default" onClick={handleSaveEdit} size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-              <Save className="mr-2 h-4 w-4" /> Save Edit
+              <Save className="mr-2 h-4 w-4" /> Apply Edit
             </Button>
           ) : (
             <Button variant="outline" onClick={() => setIsEditing(true)} size="sm">

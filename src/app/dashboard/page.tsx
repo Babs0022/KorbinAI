@@ -25,11 +25,13 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
+const LOCAL_STORAGE_KEY = 'brieflyai_prompt_history';
 
 export default function DashboardPage() {
   const { currentUser, loading } = useAuth();
   const router = useRouter();
   const [prompts, setPrompts] = useState<PromptHistory[]>([]); 
+  const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [promptToDelete, setPromptToDelete] = useState<PromptHistory | null>(null);
   const { toast } = useToast();
@@ -37,14 +39,42 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!loading && !currentUser) {
       router.push('/login');
+    } else if (currentUser) {
+      // Load prompts from localStorage
+      try {
+        const storedPrompts = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (storedPrompts) {
+          setPrompts(JSON.parse(storedPrompts));
+        }
+      } catch (error) {
+        console.error("Error loading prompts from localStorage:", error);
+        toast({ title: "Error Loading History", description: "Could not load prompt history.", variant: "destructive"});
+      } finally {
+        setIsLoadingPrompts(false);
+      }
+    } else if (!loading && !currentUser) {
+      // If not loading and no current user, means we should not load prompts or redirect.
+      // This state is primarily for when user logs out.
+      setIsLoadingPrompts(false);
     }
-  }, [currentUser, loading, router]);
+  }, [currentUser, loading, router, toast]);
 
-  if (loading || !currentUser) {
+
+  if (loading || (!currentUser && loading)) { // Show loader if auth is loading OR if not logged in but auth is still resolving
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
+      </div>
+    );
+  }
+  
+  if (!currentUser) { // If auth finished loading and there's still no user, means they are logged out.
+    // Redirecting is handled by the useEffect above, this is a fallback / alternative view
+     return (
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <p className="mt-4 text-muted-foreground">Please log in to view your dashboard.</p>
+        <Button asChild className="mt-4"><Link href="/login">Login</Link></Button>
       </div>
     );
   }
@@ -60,10 +90,17 @@ export default function DashboardPage() {
 
   const handleDeletePrompt = () => {
     if (!promptToDelete) return;
-    // TODO: Delete from Firestore when integrated
-    setPrompts(prompts.filter(p => p.id !== promptToDelete.id));
-    toast({ title: "Prompt Deleted", description: `Prompt "${promptToDelete.goal.substring(0,30)}..." has been deleted.`});
-    setPromptToDelete(null); // Close dialog
+    try {
+      const updatedPrompts = prompts.filter(p => p.id !== promptToDelete.id);
+      setPrompts(updatedPrompts);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedPrompts));
+      toast({ title: "Prompt Deleted", description: `Prompt "${promptToDelete.goal.substring(0,30)}..." has been deleted.`});
+    } catch (error) {
+      console.error("Error deleting prompt from localStorage:", error);
+      toast({ title: "Error Deleting Prompt", description: "Could not delete prompt from local history.", variant: "destructive"});
+    } finally {
+      setPromptToDelete(null); // Close dialog
+    }
   };
 
   const filteredPrompts = prompts.filter(prompt => 
@@ -106,7 +143,12 @@ export default function DashboardPage() {
                 </Button>
               </div>
 
-              {prompts.length === 0 && !searchTerm ? (
+              {isLoadingPrompts ? (
+                <div className="text-center py-10 rounded-lg bg-card/50 p-6">
+                  <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary mb-4" />
+                  <h3 className="font-semibold text-xl text-foreground">Loading Prompt History...</h3>
+                </div>
+              ) : prompts.length === 0 && !searchTerm ? (
                  <div className="text-center py-10 rounded-lg bg-card/50 p-6">
                   <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="font-semibold text-xl text-foreground">No Prompts Yet</h3>
@@ -152,7 +194,7 @@ export default function DashboardPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure you want to delete this prompt?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. The prompt titled &quot;{promptToDelete.goal.substring(0,50)}...&quot; will be permanently deleted.
+                This action cannot be undone. The prompt titled &quot;{promptToDelete.goal.substring(0,50)}...&quot; will be permanently deleted from your local history.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
