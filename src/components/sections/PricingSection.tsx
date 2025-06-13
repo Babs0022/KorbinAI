@@ -1,12 +1,34 @@
+
+"use client";
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { GlassCard, GlassCardContent, GlassCardDescription, GlassCardFooter, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 import Container from '@/components/layout/Container';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from '@/lib/firebase'; // Ensure app is exported from firebase config
+import React, { useState } from 'react';
 
-const pricingTiers = [
+interface Tier {
+  name: string;
+  planId: string; // e.g., 'free', 'premium', 'unlimited' or actual Paystack Plan Codes
+  price: string;
+  frequency: string;
+  description: string;
+  features: string[];
+  cta: string;
+  href: string; // Fallback for free tier or if user not logged in
+  emphasized: boolean;
+  paystackPlanCode?: string; // Optional: if you create plans in Paystack
+}
+
+const pricingTiers: Tier[] = [
   {
     name: 'Free',
+    planId: 'free',
     price: '$0',
     frequency: '/mo',
     description: 'Get started and experience the power of optimized prompts.',
@@ -22,6 +44,8 @@ const pricingTiers = [
   },
   {
     name: 'Premium',
+    planId: 'premium',
+    paystackPlanCode: 'PLN_xxxxxxx_premium', // Replace with your actual Paystack Plan Code
     price: '$10',
     frequency: '/mo',
     description: 'For individuals who want to supercharge their AI interactions.',
@@ -33,11 +57,13 @@ const pricingTiers = [
       'Priority email support',
     ],
     cta: 'Go Premium',
-    href: '/signup?plan=premium', // Actual link would go to Paystack via a function
+    href: '/signup?plan=premium', 
     emphasized: true,
   },
   {
     name: 'Unlimited',
+    planId: 'unlimited',
+    paystackPlanCode: 'PLN_xxxxxxx_unlimited', // Replace with your actual Paystack Plan Code
     price: '$35',
     frequency: '/mo',
     description: 'For power users and teams who need unlimited prompting capabilities.',
@@ -48,12 +74,62 @@ const pricingTiers = [
       'Dedicated support channel',
     ],
     cta: 'Go Unlimited',
-    href: '/signup?plan=unlimited', // Actual link would go to Paystack via a function
+    href: '/signup?plan=unlimited', 
     emphasized: false,
   },
 ];
 
 export function PricingSection() {
+  const { currentUser } = useAuth();
+  const { toast } = useToast();
+  const functions = getFunctions(app);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const handleSubscription = async (tier: Tier) => {
+    if (!currentUser) {
+      toast({
+        title: 'Login Required',
+        description: 'Please log in or sign up to subscribe.',
+        variant: 'destructive',
+      });
+      // Optionally redirect to login: router.push('/login');
+      return;
+    }
+
+    if (tier.planId === 'free') {
+      // Handle free plan selection, e.g., navigate to signup or dashboard
+      // For now, we assume free plan users just sign up.
+      return;
+    }
+    
+    setLoadingPlan(tier.planId);
+
+    try {
+      const createSubscriptionFunction = httpsCallable(functions, 'createPaystackSubscription');
+      const result: any = await createSubscriptionFunction({ 
+        userId: currentUser.uid, 
+        email: currentUser.email,
+        planId: tier.planId, // You might pass tier.paystackPlanCode if using Paystack plans
+        // amount: parseFloat(tier.price.replace('$', '')) * 100 // Amount in kobo/cents if not using Paystack plans
+      });
+
+      if (result.data && result.data.authorization_url) {
+        window.location.href = result.data.authorization_url;
+      } else {
+        throw new Error(result.data.error || 'Could not initiate payment. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Subscription error:', error);
+      toast({
+        title: 'Subscription Failed',
+        description: error.message || 'An unexpected error occurred.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
   return (
     <section id="pricing" className="py-16 md:py-24 bg-gradient-to-br from-background via-indigo-50/20 to-mint-50/20">
       <Container>
@@ -90,14 +166,20 @@ export function PricingSection() {
                 </ul>
               </GlassCardContent>
               <GlassCardFooter className="mt-6">
-                <Button
-                  asChild
-                  size="lg"
-                  className={`w-full ${tier.emphasized ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-accent hover:bg-accent/90 text-accent-foreground'}`}
-                >
-                  {/* For now, all link to signup. Actual implementation would involve Paystack. */}
-                  <Link href={tier.href}>{tier.cta}</Link>
-                </Button>
+                {tier.planId === 'free' ? (
+                   <Button asChild size="lg" className={`w-full ${tier.emphasized ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-accent hover:bg-accent/90 text-accent-foreground'}`}>
+                    <Link href={tier.href}>{tier.cta}</Link>
+                  </Button>
+                ) : (
+                  <Button
+                    size="lg"
+                    onClick={() => handleSubscription(tier)}
+                    disabled={loadingPlan === tier.planId}
+                    className={`w-full ${tier.emphasized ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-accent hover:bg-accent/90 text-accent-foreground'}`}
+                  >
+                    {loadingPlan === tier.planId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : tier.cta}
+                  </Button>
+                )}
               </GlassCardFooter>
             </GlassCard>
           ))}
