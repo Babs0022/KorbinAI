@@ -21,6 +21,7 @@ const navLinks = [
 export function MainHeader() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -37,10 +38,15 @@ export function MainHeader() {
         variant="ghost"
         asChild
         className={cn(
-          "text-sm font-medium transition-colors hover:text-primary",
+          "text-sm font-medium transition-colors",
           isMobile ? "w-full justify-start" : "",
-          pathname === link.href && !link.external ? "text-primary" : "text-muted-foreground"
+          isScrolled
+            ? "text-primary hover:text-primary/80" // All links are primary when scrolled
+            : (pathname === link.href && !link.external
+                ? "text-primary hover:text-primary/80" // Active link when not scrolled
+                : "text-muted-foreground hover:text-primary") // Inactive link when not scrolled
         )}
+        onClick={() => isMobile && setIsMobileMenuOpen(false)}
       >
         {link.external ? (
           <a href={link.href} target="_blank" rel="noopener noreferrer">
@@ -53,7 +59,7 @@ export function MainHeader() {
     ));
 
   return (
-    <header 
+    <header
       className={cn(
         "sticky top-0 z-50 w-full border-b border-transparent transition-all duration-300",
         isScrolled ? "border-border/40 bg-background/80 backdrop-blur-lg" : "bg-transparent"
@@ -71,7 +77,7 @@ export function MainHeader() {
           </Button>
         </nav>
         <div className="md:hidden">
-          <Sheet>
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
                 <Menu className="h-6 w-6" />
@@ -82,16 +88,16 @@ export function MainHeader() {
               <SheetHeader>
                 <SheetTitle>Navigation Menu</SheetTitle>
               </SheetHeader>
-              <div className="flex flex-col h-full py-4"> {/* py-4 added to space content from header if SheetContent removes its padding for children */}
-                <Logo className="mb-6 self-start px-0" /> {/* Adjusted padding/margin */}
+              <div className="flex flex-col h-full py-4">
+                <Logo className="mb-6 self-start px-0" />
                 <nav className="flex flex-col space-y-1">
                   {renderNavLinks(true)}
                 </nav>
                 <div className="mt-auto flex flex-col space-y-2 pt-6">
-                  <Button variant="outline" asChild className="w-full">
+                  <Button variant="outline" asChild className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
                      <Link href="/login">Login</Link>
                   </Button>
-                  <Button variant="default" asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+                  <Button variant="default" asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setIsMobileMenuOpen(false)}>
                     <Link href="/signup">Sign Up</Link>
                   </Button>
                 </div>
