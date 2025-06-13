@@ -209,7 +209,7 @@ Constraint: Avoid overly technical jargon.`;
   };
 
   return (
-    <section id="demo-video" className="py-12 md:py-16 lg:py-24 bg-background">
+    <section id="demo-video" className="py-12 md:py-16 lg:py-24 bg-gradient-to-b from-background via-indigo-50/10 to-mint-50/10">
       <Container className="text-center">
         <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           See BrieflyAI in Action
@@ -240,6 +240,3 @@ Constraint: Avoid overly technical jargon.`;
     </section>
   );
 }
- 
-
-    

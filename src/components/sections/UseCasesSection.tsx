@@ -1,3 +1,4 @@
+
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import Container from '@/components/layout/Container';
 import { Users, Zap, BookOpen, Briefcase, GraduationCap, Mic } from 'lucide-react';
@@ -31,7 +32,7 @@ const useCases = [
 
 export function UseCasesSection() {
   return (
-    <section id="use-cases" className="py-16 md:py-24 bg-background">
+    <section id="use-cases" className="py-16 md:py-24 bg-gradient-to-b from-background via-mint-50/10 to-indigo-50/10">
       <Container>
         <div className="text-center mb-12">
           <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">

@@ -25,7 +25,7 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-background via-indigo-50/50 to-mint-50/50 py-20 md:py-32">
+    <section className="relative overflow-hidden bg-gradient-to-br from-background via-indigo-50/50 to-mint-50/50 py-24 md:py-40">
       <div className="absolute inset-0 -z-10">
         {/* Subtle background pattern or gradient variation if needed */}
       </div>
@@ -45,7 +45,7 @@ export function HeroSection() {
           <br />
           Unlock AI's True Potential.
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
+        <p className="mx-auto mt-8 max-w-2xl text-lg text-muted-foreground md:text-xl">
           BrieflyAI helps you transform your ideas into powerful, optimized prompts.
           Stop guessing, start creating with clarity and precision.
         </p>
