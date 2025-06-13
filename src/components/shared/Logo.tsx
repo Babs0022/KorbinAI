@@ -7,26 +7,25 @@ export function Logo({ className }: { className?: string }) {
     <Link
       href="/"
       className={cn(
-        'flex items-center font-headline text-2xl font-bold text-primary',
+        'flex items-center font-headline text-2xl font-bold', // text-primary removed as color is intrinsic to SVG
         className
       )}
     >
       <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
+        width="24" // Intrinsic width, actual display size controlled by className
+        height="24" // Intrinsic height
+        viewBox="0 0 24 24" // ViewBox to match the coordinate system of the path
         xmlns="http://www.w3.org/2000/svg"
-        className="h-7 w-7 mr-2 text-primary" 
+        className="h-7 w-7 mr-2" // Tailwind classes for display size and margin
         aria-hidden="true"
       >
+        {/* Purple rounded square background, color #582C83 approximates the image */}
+        <rect width="24" height="24" rx="4.5" fill="#582C83"/>
+        {/* The 'B' symbol path, filled white. Stroke removed for cleaner look. */}
         <path
-            d="M12 2L12 4L12 6L12 8L12 10L12 12L12 14L12 16L12 18L12 20L12 22M12 2H10V4H12V2ZM12 22H10V20H12V22ZM12 2L14 2L14 4L12 4L12 2ZM12 22L14 22L14 20L12 20L12 22Z"
-            fill="currentColor"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          d="M12.13,2.0002C11.4142,2.0002 10.7422,2.17687 10.1882,2.50537C9.63415,2.83387 9.2213,3.29971 8.99476,3.85221C8.54576,4.95221 8.45026,6.0002 8.00026,6.0002C7.55026,6.0002 7.45476,4.95221 7.00576,3.85221C6.77921,3.29971 6.36636,2.83387 5.81236,2.50537C5.25836,2.17687 4.58636,2.0002 3.87076,2.0002C3.30656,2.0002 2.75986,2.12271 2.27286,2.35571C1.78586,2.58871 1.37036,2.92471 1.05826,3.33921C0.746155,3.75371 0.548155,4.23521 0.482255,4.74921C0.416255,5.26321 0.482255,5.79821 0.674255,6.31021C0.866255,6.82221 1.17726,7.29621 1.58126,7.69621L1.58176,7.69671L7.58176,12.8897L1.58176,18.0827C1.17476,18.4817 0.862255,18.9562 0.669255,19.4697C0.476255,19.9832 0.411255,20.5197 0.477755,21.0347C0.544255,21.5497 0.742755,22.0317 1.05476,22.4467C1.36676,22.8617 1.78225,23.1977 2.26976,23.4307C2.75725,23.6637 3.30425,23.7862 3.86876,23.7862C4.58476,23.7862 5.25776,23.6097 5.81276,23.2807C6.36776,22.9517 6.78076,22.4857 7.00776,21.9327C7.45676,20.8327 7.55226,19.7862 8.00226,19.7862C8.45226,19.7862 8.54776,20.8327 8.99676,21.9327C9.22321,22.4857 9.63606,22.9517 10.1901,23.2807C10.7441,23.6097 11.4161,23.7862 12.1318,23.7862C13.0741,23.7862 13.9543,23.5638 14.6958,23.1461C15.4372,22.7284 16.0153,22.1311 16.3788,21.4157L22.4218,12.8897L16.3788,4.36371C16.0153,3.64841 15.4372,3.05111 14.6958,2.63341C13.9543,2.21571 13.0741,1.99341 12.1318,2.0002H12.13Z"
+          fill="white"
+          stroke="none" 
         />
       </svg>
       BrieflyAI
