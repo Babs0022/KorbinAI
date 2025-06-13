@@ -109,8 +109,30 @@ export default function DashboardPage() {
     });
   };
 
-  const handleEditPrompt = (prompt: PromptHistory) => alert(`Editing prompt (ID: ${prompt.id}): ${prompt.goal}`);
-  const handleExportPrompt = (prompt: PromptHistory) => alert(`Exporting prompt (ID: ${prompt.id}): ${prompt.goal}`);
+  const handleEditPrompt = (prompt: PromptHistory) => {
+    // Navigate to create-prompt page with query params
+    // The create-prompt page will need to be modified to read these and pre-fill
+    const queryParams = new URLSearchParams({
+      goal: prompt.goal,
+      optimizedPrompt: prompt.optimizedPrompt, // Optionally pass this if useful for re-editing
+      // You could also pass an 'editMode=true' or 'historyId=prompt.id'
+    });
+    router.push(`/create-prompt?${queryParams.toString()}`);
+    toast({ title: "Editing Prompt", description: `Loading "${prompt.goal.substring(0,30)}..." for editing.`});
+  };
+
+  const handleExportPrompt = (prompt: PromptHistory) => {
+    const content = `Original Goal:\n${prompt.goal}\n\nOptimized Prompt:\n${prompt.optimizedPrompt}`;
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    const safeGoal = prompt.goal.substring(0,20).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    link.download = `brieflyai_prompt_${safeGoal}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: "Prompt Exported", description: "The prompt has been downloaded as a .txt file." });
+  };
   
   const openDeleteDialog = (prompt: PromptHistory) => {
     setPromptToDelete(prompt);
