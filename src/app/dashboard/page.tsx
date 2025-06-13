@@ -8,7 +8,7 @@ import Container from '@/components/layout/Container';
 import { AccountInfoCard } from '@/components/dashboard/AccountInfoCard';
 import { PromptHistoryItem, type PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, ListFilter, Loader2 } from 'lucide-react';
+import { PlusCircle, Search, ListFilter, Loader2, Copy } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import {
@@ -21,6 +21,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -34,12 +45,13 @@ export default function DashboardPage() {
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [promptToDelete, setPromptToDelete] = useState<PromptHistory | null>(null);
+  const [viewingPrompt, setViewingPrompt] = useState<PromptHistory | null>(null);
   const { toast } = useToast();
 
   const fetchPrompts = useCallback(async () => {
     if (!currentUser) {
       setIsLoadingPrompts(false);
-      setPrompts([]); // Clear prompts if user logs out
+      setPrompts([]); 
       return;
     }
     setIsLoadingPrompts(true);
@@ -48,13 +60,10 @@ export default function DashboardPage() {
       const querySnapshot = await getDocs(q);
       const firestorePrompts = querySnapshot.docs.map(docSnap => {
         const data = docSnap.data();
-        // Ensure timestamp is a string (ISO format) for consistency with PromptHistory interface
-        // Firestore Timestamps need to be converted.
         let timestampStr = data.timestamp;
         if (data.timestamp instanceof Timestamp) {
           timestampStr = data.timestamp.toDate().toISOString();
         } else if (typeof data.timestamp === 'object' && data.timestamp.seconds) {
-          // Handle cases where it might be a plain object from Firestore non-Timestamp date
           timestampStr = new Timestamp(data.timestamp.seconds, data.timestamp.nanoseconds).toDate().toISOString();
         }
 
@@ -70,7 +79,7 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Error loading prompts from Firestore:", error);
       toast({ title: "Error Loading History", description: "Could not load prompt history from the cloud.", variant: "destructive"});
-      setPrompts([]); // Clear prompts on error
+      setPrompts([]); 
     } finally {
       setIsLoadingPrompts(false);
     }
@@ -82,32 +91,24 @@ export default function DashboardPage() {
     } else if (currentUser) {
       fetchPrompts();
     } else if (!authLoading && !currentUser) {
-      // If not loading and no current user (e.g., after logout), clear prompts and stop loading
       setIsLoadingPrompts(false);
       setPrompts([]);
     }
   }, [currentUser, authLoading, router, fetchPrompts]);
 
+  const handleViewPrompt = (prompt: PromptHistory) => {
+    setViewingPrompt(prompt);
+  };
 
-  if (authLoading || (!currentUser && authLoading)) { 
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
-      </div>
-    );
-  }
-  
-  if (!currentUser) { 
-     return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <p className="mt-4 text-muted-foreground">Please log in to view your dashboard.</p>
-        <Button asChild className="mt-4"><Link href="/login">Login</Link></Button>
-      </div>
-    );
-  }
+  const handleCopyToClipboard = (text: string, type: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    toast({
+      title: `${type} Copied!`,
+      description: `The ${type.toLowerCase()} has been copied to your clipboard.`,
+    });
+  };
 
-  const handleViewPrompt = (prompt: PromptHistory) => alert(`Viewing prompt (ID: ${prompt.id}): ${prompt.goal}`);
   const handleEditPrompt = (prompt: PromptHistory) => alert(`Editing prompt (ID: ${prompt.id}): ${prompt.goal}`);
   const handleExportPrompt = (prompt: PromptHistory) => alert(`Exporting prompt (ID: ${prompt.id}): ${prompt.goal}`);
   
@@ -133,6 +134,24 @@ export default function DashboardPage() {
     prompt.goal.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (prompt.optimizedPrompt && prompt.optimizedPrompt.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+  
+  if (authLoading || (!currentUser && authLoading)) { 
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
+      </div>
+    );
+  }
+  
+  if (!currentUser) { 
+     return (
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <p className="mt-4 text-muted-foreground">Please log in to view your dashboard.</p>
+        <Button asChild className="mt-4"><Link href="/login">Login</Link></Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -214,6 +233,7 @@ export default function DashboardPage() {
         </Container>
       </main>
       <MinimalFooter />
+      
       {promptToDelete && (
         <AlertDialog open={!!promptToDelete} onOpenChange={() => setPromptToDelete(null)}>
           <AlertDialogContent>
@@ -232,6 +252,61 @@ export default function DashboardPage() {
           </AlertDialogContent>
         </AlertDialog>
       )}
+
+      {viewingPrompt && (
+        <Dialog open={!!viewingPrompt} onOpenChange={(isOpen) => { if (!isOpen) setViewingPrompt(null); }}>
+          <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-headline">View Prompt Details</DialogTitle>
+              <DialogDescription>
+                Review your original goal and the optimized prompt.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4 overflow-y-auto px-1 flex-grow">
+              <div>
+                <Label htmlFor="viewGoal" className="text-sm font-semibold text-foreground">Original Goal</Label>
+                <p id="viewGoal" className="mt-1 text-sm text-muted-foreground p-3 bg-muted/50 rounded-md border whitespace-pre-wrap">
+                  {viewingPrompt.goal}
+                </p>
+              </div>
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <Label htmlFor="viewOptimizedPrompt" className="text-sm font-semibold text-foreground">Optimized Prompt</Label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleCopyToClipboard(viewingPrompt.optimizedPrompt, 'Optimized Prompt')}
+                  >
+                    <Copy className="mr-2 h-4 w-4" /> Copy
+                  </Button>
+                </div>
+                <Textarea
+                  id="viewOptimizedPrompt"
+                  value={viewingPrompt.optimizedPrompt}
+                  readOnly
+                  rows={10}
+                  className="text-sm leading-relaxed font-code bg-muted/50 border whitespace-pre-wrap"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-semibold text-foreground">Created</Label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {new Date(viewingPrompt.timestamp).toLocaleString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
+                  })}
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Close</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
+
+    
