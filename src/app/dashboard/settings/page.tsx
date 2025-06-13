@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
@@ -10,21 +10,146 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, Palette, DownloadCloud, Loader2 } from 'lucide-react';
+import { Bell, Palette, DownloadCloud, Loader2, Save } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, setDoc, collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem';
+
+interface UserSettings {
+  emailNotifications: boolean;
+  promotionalEmails: boolean;
+  theme: string;
+}
+
+const defaultSettings: UserSettings = {
+  emailNotifications: true,
+  promotionalEmails: false,
+  theme: 'system',
+};
 
 export default function SettingsPage() {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
+
+  const [settings, setSettings] = useState<UserSettings>(defaultSettings);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isExportingData, setIsExportingData] = useState(false);
+
+  const fetchSettings = useCallback(async () => {
+    if (!currentUser) {
+      setIsLoadingSettings(false);
+      setSettings(defaultSettings); // Reset to defaults if user logs out
+      return;
+    }
+    setIsLoadingSettings(true);
+    try {
+      const settingsDocRef = doc(db, `userSettings/${currentUser.uid}`);
+      const docSnap = await getDoc(settingsDocRef);
+      if (docSnap.exists()) {
+        setSettings(docSnap.data() as UserSettings);
+      } else {
+        // No settings saved yet, use defaults (and optionally save them)
+        setSettings(defaultSettings);
+        // await setDoc(settingsDocRef, defaultSettings); // Optionally save defaults immediately
+      }
+    } catch (error) {
+      console.error("Error loading settings:", error);
+      toast({ title: "Error Loading Settings", description: "Could not load your saved settings. Using defaults.", variant: "destructive" });
+      setSettings(defaultSettings);
+    } finally {
+      setIsLoadingSettings(false);
+    }
+  }, [currentUser, toast]);
 
   useEffect(() => {
-    if (!loading && !currentUser) {
+    if (!authLoading && !currentUser) {
       router.push('/login');
+    } else if (currentUser) {
+      fetchSettings();
     }
-  }, [currentUser, loading, router]);
+  }, [currentUser, authLoading, router, fetchSettings]);
 
-  if (loading || !currentUser) {
+  const handleSettingChange = (key: keyof UserSettings, value: string | boolean) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleSaveSettings = async () => {
+    if (!currentUser) {
+      toast({ title: "Login Required", description: "Please log in to save settings.", variant: "destructive" });
+      return;
+    }
+    setIsSavingSettings(true);
+    try {
+      const settingsDocRef = doc(db, `userSettings/${currentUser.uid}`);
+      await setDoc(settingsDocRef, settings, { merge: true });
+      toast({ title: "Settings Saved", description: "Your preferences have been updated." });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({ title: "Save Failed", description: "Could not save your settings. Please try again.", variant: "destructive" });
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    if (!currentUser) {
+      toast({ title: "Login Required", description: "Please log in to export your data.", variant: "destructive" });
+      return;
+    }
+    setIsExportingData(true);
+    try {
+      const q = query(collection(db, `users/${currentUser.uid}/promptHistory`), orderBy("timestamp", "desc"));
+      const querySnapshot = await getDocs(q);
+      const firestorePrompts = querySnapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        let timestampStr = data.timestamp;
+        if (data.timestamp instanceof Timestamp) {
+          timestampStr = data.timestamp.toDate().toISOString();
+        } else if (typeof data.timestamp === 'object' && data.timestamp.seconds) {
+          timestampStr = new Timestamp(data.timestamp.seconds, data.timestamp.nanoseconds).toDate().toISOString();
+        }
+        return {
+          id: docSnap.id,
+          goal: data.goal,
+          optimizedPrompt: data.optimizedPrompt,
+          timestamp: timestampStr,
+          tags: data.tags || [],
+        } as PromptHistory;
+      });
+
+      if (firestorePrompts.length === 0) {
+        toast({ title: "No Data to Export", description: "You don't have any prompt history to export yet.", variant: "default"});
+        return;
+      }
+
+      const jsonData = JSON.stringify(firestorePrompts, null, 2);
+      const blob = new Blob([jsonData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `brieflyai_prompt_history_${currentUser.uid}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Data Exported", description: "Your prompt history has been downloaded as a JSON file." });
+
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast({ title: "Export Failed", description: "Could not export your prompt history. Please try again.", variant: "destructive" });
+    } finally {
+      setIsExportingData(false);
+    }
+  };
+
+
+  if (authLoading || isLoadingSettings || (!currentUser && !authLoading)) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -54,7 +179,11 @@ export default function SettingsPage() {
                       Receive updates about new features and important account activity.
                     </span>
                   </Label>
-                  <Switch id="email-notifications" defaultChecked />
+                  <Switch 
+                    id="email-notifications" 
+                    checked={settings.emailNotifications}
+                    onCheckedChange={(checked) => handleSettingChange('emailNotifications', checked)}
+                  />
                 </div>
                 <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
                   <Label htmlFor="promotional-emails" className="flex flex-col space-y-1">
@@ -63,7 +192,11 @@ export default function SettingsPage() {
                       Get occasional emails about special offers and tips.
                     </span>
                   </Label>
-                  <Switch id="promotional-emails" />
+                  <Switch 
+                    id="promotional-emails" 
+                    checked={settings.promotionalEmails}
+                    onCheckedChange={(checked) => handleSettingChange('promotionalEmails', checked)}
+                  />
                 </div>
               </GlassCardContent>
             </GlassCard>
@@ -76,7 +209,10 @@ export default function SettingsPage() {
               <GlassCardContent className="space-y-4">
                 <div>
                   <Label htmlFor="theme">Theme</Label>
-                  <Select defaultValue="system">
+                  <Select 
+                    value={settings.theme} 
+                    onValueChange={(value) => handleSettingChange('theme', value)}
+                  >
                     <SelectTrigger id="theme" className="w-full mt-1">
                       <SelectValue placeholder="Select theme" />
                     </SelectTrigger>
@@ -93,16 +229,37 @@ export default function SettingsPage() {
             <GlassCard>
               <GlassCardHeader>
                 <GlassCardTitle className="flex items-center"><DownloadCloud className="mr-2 h-5 w-5"/> Data Export</GlassCardTitle>
-                <GlassCardDescription>Export your prompt history and account data.</GlassCardDescription>
+                <GlassCardDescription>Export your prompt history.</GlassCardDescription>
               </GlassCardHeader>
               <GlassCardContent>
-                 <Button variant="outline" className="w-full">Export All My Data</Button>
-                 <p className="text-xs text-muted-foreground mt-2">You will receive an email with a download link when your export is ready.</p>
+                 <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={handleExportData}
+                    disabled={isExportingData}
+                  >
+                    {isExportingData ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Exporting...</>
+                    ) : (
+                        "Export Prompt History"
+                    )}
+                 </Button>
+                 <p className="text-xs text-muted-foreground mt-2">Download your prompt history as a JSON file.</p>
               </GlassCardContent>
             </GlassCard>
 
             <div className="text-center mt-8">
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Save All Settings</Button>
+                <Button 
+                  className="bg-primary text-primary-foreground hover:bg-primary/90" 
+                  onClick={handleSaveSettings}
+                  disabled={isSavingSettings || isLoadingSettings}
+                >
+                  {isSavingSettings ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
+                  ) : (
+                    <><Save className="mr-2 h-4 w-4" /> Save All Settings</>
+                  )}
+                </Button>
             </div>
 
           </div>
