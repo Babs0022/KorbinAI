@@ -1,7 +1,7 @@
 
 "use client"; 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
@@ -24,11 +24,11 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-
-const LOCAL_STORAGE_KEY = 'brieflyai_prompt_history';
+import { db } from '@/lib/firebase';
+import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 
 export default function DashboardPage() {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const [prompts, setPrompts] = useState<PromptHistory[]>([]); 
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
@@ -36,31 +36,60 @@ export default function DashboardPage() {
   const [promptToDelete, setPromptToDelete] = useState<PromptHistory | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (!loading && !currentUser) {
-      router.push('/login');
-    } else if (currentUser) {
-      // Load prompts from localStorage
-      try {
-        const storedPrompts = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (storedPrompts) {
-          setPrompts(JSON.parse(storedPrompts));
+  const fetchPrompts = useCallback(async () => {
+    if (!currentUser) {
+      setIsLoadingPrompts(false);
+      setPrompts([]); // Clear prompts if user logs out
+      return;
+    }
+    setIsLoadingPrompts(true);
+    try {
+      const q = query(collection(db, `users/${currentUser.uid}/promptHistory`), orderBy("timestamp", "desc"));
+      const querySnapshot = await getDocs(q);
+      const firestorePrompts = querySnapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        // Ensure timestamp is a string (ISO format) for consistency with PromptHistory interface
+        // Firestore Timestamps need to be converted.
+        let timestampStr = data.timestamp;
+        if (data.timestamp instanceof Timestamp) {
+          timestampStr = data.timestamp.toDate().toISOString();
+        } else if (typeof data.timestamp === 'object' && data.timestamp.seconds) {
+          // Handle cases where it might be a plain object from Firestore non-Timestamp date
+          timestampStr = new Timestamp(data.timestamp.seconds, data.timestamp.nanoseconds).toDate().toISOString();
         }
-      } catch (error) {
-        console.error("Error loading prompts from localStorage:", error);
-        toast({ title: "Error Loading History", description: "Could not load prompt history.", variant: "destructive"});
-      } finally {
-        setIsLoadingPrompts(false);
-      }
-    } else if (!loading && !currentUser) {
-      // If not loading and no current user, means we should not load prompts or redirect.
-      // This state is primarily for when user logs out.
+
+        return {
+          id: docSnap.id,
+          goal: data.goal,
+          optimizedPrompt: data.optimizedPrompt,
+          timestamp: timestampStr,
+          tags: data.tags || [],
+        } as PromptHistory;
+      });
+      setPrompts(firestorePrompts);
+    } catch (error) {
+      console.error("Error loading prompts from Firestore:", error);
+      toast({ title: "Error Loading History", description: "Could not load prompt history from the cloud.", variant: "destructive"});
+      setPrompts([]); // Clear prompts on error
+    } finally {
       setIsLoadingPrompts(false);
     }
-  }, [currentUser, loading, router, toast]);
+  }, [currentUser, toast]);
+
+  useEffect(() => {
+    if (!authLoading && !currentUser) {
+      router.push('/login');
+    } else if (currentUser) {
+      fetchPrompts();
+    } else if (!authLoading && !currentUser) {
+      // If not loading and no current user (e.g., after logout), clear prompts and stop loading
+      setIsLoadingPrompts(false);
+      setPrompts([]);
+    }
+  }, [currentUser, authLoading, router, fetchPrompts]);
 
 
-  if (loading || (!currentUser && loading)) { // Show loader if auth is loading OR if not logged in but auth is still resolving
+  if (authLoading || (!currentUser && authLoading)) { 
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -69,8 +98,7 @@ export default function DashboardPage() {
     );
   }
   
-  if (!currentUser) { // If auth finished loading and there's still no user, means they are logged out.
-    // Redirecting is handled by the useEffect above, this is a fallback / alternative view
+  if (!currentUser) { 
      return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <p className="mt-4 text-muted-foreground">Please log in to view your dashboard.</p>
@@ -79,7 +107,6 @@ export default function DashboardPage() {
     );
   }
 
-  // TODO: Implement actual view, edit, export logic when Firestore is integrated
   const handleViewPrompt = (prompt: PromptHistory) => alert(`Viewing prompt (ID: ${prompt.id}): ${prompt.goal}`);
   const handleEditPrompt = (prompt: PromptHistory) => alert(`Editing prompt (ID: ${prompt.id}): ${prompt.goal}`);
   const handleExportPrompt = (prompt: PromptHistory) => alert(`Exporting prompt (ID: ${prompt.id}): ${prompt.goal}`);
@@ -88,18 +115,17 @@ export default function DashboardPage() {
     setPromptToDelete(prompt);
   };
 
-  const handleDeletePrompt = () => {
-    if (!promptToDelete) return;
+  const handleDeletePrompt = async () => {
+    if (!promptToDelete || !currentUser) return;
     try {
-      const updatedPrompts = prompts.filter(p => p.id !== promptToDelete.id);
-      setPrompts(updatedPrompts);
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedPrompts));
-      toast({ title: "Prompt Deleted", description: `Prompt "${promptToDelete.goal.substring(0,30)}..." has been deleted.`});
+      await deleteDoc(doc(db, `users/${currentUser.uid}/promptHistory`, promptToDelete.id));
+      setPrompts(prevPrompts => prevPrompts.filter(p => p.id !== promptToDelete.id));
+      toast({ title: "Prompt Deleted", description: `Prompt "${promptToDelete.goal.substring(0,30)}..." has been deleted from your cloud history.`});
     } catch (error) {
-      console.error("Error deleting prompt from localStorage:", error);
-      toast({ title: "Error Deleting Prompt", description: "Could not delete prompt from local history.", variant: "destructive"});
+      console.error("Error deleting prompt from Firestore:", error);
+      toast({ title: "Error Deleting Prompt", description: "Could not delete prompt from cloud history.", variant: "destructive"});
     } finally {
-      setPromptToDelete(null); // Close dialog
+      setPromptToDelete(null); 
     }
   };
 
@@ -194,7 +220,7 @@ export default function DashboardPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure you want to delete this prompt?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. The prompt titled &quot;{promptToDelete.goal.substring(0,50)}...&quot; will be permanently deleted from your local history.
+                This action cannot be undone. The prompt titled &quot;{promptToDelete.goal.substring(0,50)}...&quot; will be permanently deleted from your cloud history.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

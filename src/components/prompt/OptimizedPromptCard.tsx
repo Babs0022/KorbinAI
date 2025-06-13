@@ -4,22 +4,25 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
-import { CheckCircle, Copy, Edit3, Download, Save, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Copy, Edit3, Download, Save, AlertTriangle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem';
+import { useAuth } from '@/contexts/AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 interface OptimizedPromptCardProps {
   optimizedPrompt: string;
   originalGoal: string;
 }
 
-const LOCAL_STORAGE_KEY = 'brieflyai_prompt_history';
-
 export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: OptimizedPromptCardProps) {
   const [editedPrompt, setEditedPrompt] = useState(optimizedPrompt);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSavingToHistory, setIsSavingToHistory] = useState(false);
   const { toast } = useToast();
+  const { currentUser } = useAuth();
 
   const handleCopy = () => {
     navigator.clipboard.writeText(editedPrompt);
@@ -27,8 +30,6 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: Optimized
   };
 
   const handleSaveEdit = () => {
-    // This only saves the edit locally in the component state for now.
-    // If "Save to History" is clicked later, this edited version will be saved.
     toast({ title: "Changes Applied!", description: "Your edits are applied. Click 'Save to History' to persist." });
     setIsEditing(false);
   };
@@ -44,26 +45,28 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: Optimized
     toast({ title: "Prompt Exported!", description: "The prompt has been downloaded." });
   };
 
-  const handleSaveToHistory = () => {
+  const handleSaveToHistory = async () => {
+    if (!currentUser) {
+      toast({ title: "Login Required", description: "Please log in to save prompts to your history.", variant: "destructive" });
+      return;
+    }
+    setIsSavingToHistory(true);
     try {
-      const existingHistoryString = localStorage.getItem(LOCAL_STORAGE_KEY);
-      const existingHistory: PromptHistory[] = existingHistoryString ? JSON.parse(existingHistoryString) : [];
-      
-      const newPromptEntry: PromptHistory = {
-        id: crypto.randomUUID(), // Generate a unique ID
+      const newPromptEntry: Omit<PromptHistory, 'id' | 'timestamp'> & { timestamp: any } = { // Allow serverTimestamp type
         goal: originalGoal,
         optimizedPrompt: editedPrompt, // Save the potentially edited prompt
-        timestamp: new Date().toISOString(),
+        timestamp: serverTimestamp(), // Use Firestore server timestamp for ordering
         // tags: [] // Add tags functionality later if needed
       };
 
-      const updatedHistory = [newPromptEntry, ...existingHistory]; // Add new prompt to the beginning
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedHistory));
+      await addDoc(collection(db, `users/${currentUser.uid}/promptHistory`), newPromptEntry);
       
-      toast({ title: "Prompt Saved!", description: "This prompt has been saved to your local history." });
+      toast({ title: "Prompt Saved!", description: "This prompt has been saved to your cloud history." });
     } catch (error) {
-      console.error("Error saving to localStorage:", error);
-      toast({ title: "Save Failed", description: "Could not save prompt to local history.", variant: "destructive" });
+      console.error("Error saving to Firestore:", error);
+      toast({ title: "Save Failed", description: "Could not save prompt to cloud history. Please try again.", variant: "destructive" });
+    } finally {
+      setIsSavingToHistory(false);
     }
   };
 
@@ -119,8 +122,9 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: Optimized
               <Edit3 className="mr-2 h-4 w-4" /> Edit
             </Button>
           )}
-          <Button variant="outline" onClick={handleSaveToHistory} size="sm">
-            <Save className="mr-2 h-4 w-4" /> Save to History
+          <Button variant="outline" onClick={handleSaveToHistory} size="sm" disabled={isSavingToHistory || !currentUser}>
+            {isSavingToHistory ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Save to History
           </Button>
           <Button variant="outline" onClick={handleExport} size="sm">
             <Download className="mr-2 h-4 w-4" /> Export
