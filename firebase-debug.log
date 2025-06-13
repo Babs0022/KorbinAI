@@ -31,3 +31,33 @@
 [info] 
 [info] 3. Paste or enter the authorization code below once you have it:
 [info] 
+[debug] [2025-06-13T07:21:12.020Z] ----------------------------------------------------------------------
+[debug] [2025-06-13T07:21:12.024Z] Command:       /nix/store/rbdrkcs5kkwpalxcd7c6bnm33lk2955n-nodejs-20.19.0/bin/node /home/user/.global_modules/bin/firebase login
+[debug] [2025-06-13T07:21:12.024Z] CLI Version:   14.7.0
+[debug] [2025-06-13T07:21:12.025Z] Platform:      linux
+[debug] [2025-06-13T07:21:12.025Z] Node Version:  v20.19.0
+[debug] [2025-06-13T07:21:12.025Z] Time:          Fri Jun 13 2025 07:21:12 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-06-13T07:21:12.025Z] ----------------------------------------------------------------------
+[debug] 
+[info] i  Firebase CLI integrates with Gemini in Firebase API to provide assistant features. Learn more about using Gemini in Firebase and how we train our models: https://firebase.google.com/docs/gemini-in-firebase/set-up-gemini#required-permissions 
+[info] 
+[info] i  Firebase optionally collects CLI and Emulator Suite usage and error reporting information to help improve our products. Data is collected in accordance with Google's privacy policy (https://policies.google.com/privacy) and is not used to identify you. 
+[info] 
+[info] i  To change your the preference at any time, run `firebase logout` and `firebase login` again. 
+[debug] [2025-06-13T07:21:20.806Z] >>> [apiv2][query] POST https://auth.firebase.tools/attest [none]
+[debug] [2025-06-13T07:21:20.807Z] >>> [apiv2][body] POST https://auth.firebase.tools/attest {"session_id":"0ffbe39a-3550-4e61-b0f4-819a9f61ab47"}
+[debug] [2025-06-13T07:21:21.309Z] <<< [apiv2][status] POST https://auth.firebase.tools/attest 200
+[debug] [2025-06-13T07:21:21.310Z] <<< [apiv2][body] POST https://auth.firebase.tools/attest {"token":"OAsM1ValLNGBnDImQCWyfRt4ZJvZQHCKKR9N7vs3UwY"}
+[info] 
+[info] To sign in to the Firebase CLI:
+[info] 
+[info] 1. Take note of your session ID:
+[info] 
+[info]    0FFBE
+[info] 
+[info] 2. Visit the URL below on any device and follow the instructions to get your code:
+[info] 
+[info]    https://auth.firebase.tools/login?code_challenge=joOaLA_dVcvvpH2ntf2RZ_3Vszlnh0jS5dRVrak7IuE&session=0ffbe39a-3550-4e61-b0f4-819a9f61ab47&attest=OAsM1ValLNGBnDImQCWyfRt4ZJvZQHCKKR9N7vs3UwY
+[info] 
+[info] 3. Paste or enter the authorization code below once you have it:
+[info] 
