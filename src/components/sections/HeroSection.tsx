@@ -55,7 +55,7 @@ export function HeroSection() {
               Start Prompting Now <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </Button>
-          <Button size="lg" variant="outline" asChild className="shadow-lg transition-transform hover:scale-105 border-indigo-300 text-indigo-100 hover:bg-indigo-100/10 hover:text-white">
+          <Button size="lg" variant="outline" asChild className="shadow-lg transition-transform hover:scale-105 border-indigo-300 text-indigo-100 bg-transparent hover:bg-indigo-100/10 hover:text-white">
             <Link href="#how-it-works">
               Learn How It Works
             </Link>
