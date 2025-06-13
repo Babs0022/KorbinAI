@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
-import { Footer } from '@/components/layout/Footer';
+import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { CreatePromptForm } from '@/components/prompt/CreatePromptForm';
 import { OptimizedPromptCard } from '@/components/prompt/OptimizedPromptCard';
@@ -68,7 +68,7 @@ export default function CreatePromptPage() {
           )}
         </Container>
       </main>
-      <Footer />
+      <MinimalFooter />
     </div>
   );
 }

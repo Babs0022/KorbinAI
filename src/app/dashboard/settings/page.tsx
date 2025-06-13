@@ -3,7 +3,7 @@
 
 import { useEffect } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
-import { Footer } from '@/components/layout/Footer';
+import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { Button } from '@/components/ui/button';
@@ -108,7 +108,7 @@ export default function SettingsPage() {
           </div>
         </Container>
       </main>
-      <Footer />
+      <MinimalFooter />
     </div>
   );
 }

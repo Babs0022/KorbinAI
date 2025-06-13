@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
-import { Footer } from '@/components/layout/Footer';
+import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { AccountInfoCard } from '@/components/dashboard/AccountInfoCard';
 import { PromptHistoryItem, type PromptHistory } from '@/components/dashboard/PromptHistoryItem';
@@ -187,7 +187,7 @@ export default function DashboardPage() {
           </div>
         </Container>
       </main>
-      <Footer />
+      <MinimalFooter />
       {promptToDelete && (
         <AlertDialog open={!!promptToDelete} onOpenChange={() => setPromptToDelete(null)}>
           <AlertDialogContent>

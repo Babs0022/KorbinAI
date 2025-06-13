@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, type FormEvent } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
-import { Footer } from '@/components/layout/Footer';
+import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
+import { auth, storage } from '@/lib/firebase'; // Import storage
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from 'firebase/auth';
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"; // Storage imports
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -75,11 +76,9 @@ export default function AccountPage() {
         profileUpdates.displayName = newDisplayName;
         profileChanged = true;
       }
-
-      // Check if selectedIconUrl is one of the predefined ones or if it's different from the current authContext.avatarUrl
-      // and also not the default placeholder if the current avatar is already the default placeholder
-      const currentAvatar = authContext.avatarUrl || defaultPlaceholderUrl;
-      if (selectedIconUrl !== currentAvatar) {
+      
+      const currentAuthAvatar = authContext.avatarUrl || defaultPlaceholderUrl;
+      if (selectedIconUrl !== currentAuthAvatar) {
           profileUpdates.photoURL = selectedIconUrl;
           profileChanged = true;
       }
@@ -89,6 +88,13 @@ export default function AccountPage() {
         await updateProfile(currentUser, profileUpdates);
         // Manually trigger a refresh of auth context state if possible, or rely on onAuthStateChanged
         // For immediate UI update, you might need to update authContext values directly or re-fetch user
+        // This part requires context to have a refresh method or similar
+        if (authContext.currentUser?.reload) { // Check if reload method exists
+            await authContext.currentUser.reload();
+        }
+        // Manually update context if possible to avoid waiting for onAuthStateChanged listener
+        // This would require a setter in AuthContext, which is not currently implemented there.
+        // For now, we rely on onAuthStateChanged to pick up changes eventually, or user re-navigates.
         toast({ title: "Profile Updated", description: "Your profile has been successfully updated." });
       } else {
         toast({ title: "No Changes", description: "No changes were made to your profile." });
@@ -371,9 +377,7 @@ export default function AccountPage() {
           </div>
         </Container>
       </main>
-      <Footer />
+      <MinimalFooter />
     </div>
   );
 }
-
-    
