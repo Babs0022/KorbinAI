@@ -31,6 +31,8 @@ export function MainHeader() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
   const renderNavLinks = (isMobile = false) =>
     navLinks.map((link) => (
       <Button
@@ -41,12 +43,12 @@ export function MainHeader() {
           "text-sm font-medium transition-colors",
           isMobile ? "w-full justify-start" : "",
           isScrolled
-            ? "text-primary hover:text-primary/80" // All links are primary when scrolled
-            : (pathname === link.href && !link.external
-                ? "text-primary hover:text-primary/80" // Active link when not scrolled
-                : "text-muted-foreground hover:text-primary") // Inactive link when not scrolled
+            ? "text-foreground hover:text-foreground/80" // Darkest text for max contrast on light blurred bg
+            : (pathname === link.href && !link.external // Over dark hero section
+                ? "text-primary hover:text-primary/80" // Active link is primary
+                : "text-muted-foreground hover:text-primary") // Inactive link is muted
         )}
-        onClick={() => isMobile && setIsMobileMenuOpen(false)}
+        onClick={() => isMobile && closeMobileMenu()}
       >
         {link.external ? (
           <a href={link.href} target="_blank" rel="noopener noreferrer">
@@ -89,15 +91,15 @@ export function MainHeader() {
                 <SheetTitle>Navigation Menu</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col h-full py-4">
-                <Logo className="mb-6 self-start px-0" />
+                <Logo className="mb-6 self-start px-0" onClick={closeMobileMenu}/>
                 <nav className="flex flex-col space-y-1">
                   {renderNavLinks(true)}
                 </nav>
                 <div className="mt-auto flex flex-col space-y-2 pt-6">
-                  <Button variant="outline" asChild className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button variant="outline" asChild className="w-full" onClick={closeMobileMenu}>
                      <Link href="/login">Login</Link>
                   </Button>
-                  <Button variant="default" asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button variant="default" asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" onClick={closeMobileMenu}>
                     <Link href="/signup">Sign Up</Link>
                   </Button>
                 </div>
