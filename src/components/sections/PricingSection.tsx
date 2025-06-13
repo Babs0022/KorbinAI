@@ -9,20 +9,20 @@ import { CheckCircle2, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '@/lib/firebase'; // Ensure app is exported from firebase config
+import { app } from '@/lib/firebase'; 
 import React, { useState } from 'react';
 
 interface Tier {
   name: string;
-  planId: string; // e.g., 'free', 'premium', 'unlimited' or actual Paystack Plan Codes
+  planId: string; 
   price: string;
   frequency: string;
   description: string;
   features: string[];
   cta: string;
-  href: string; // Fallback for free tier or if user not logged in
+  href: string; 
   emphasized: boolean;
-  paystackPlanCode?: string; // Optional: if you create plans in Paystack
+  paystackPlanCode?: string; 
 }
 
 const pricingTiers: Tier[] = [
@@ -45,8 +45,9 @@ const pricingTiers: Tier[] = [
   {
     name: 'Premium',
     planId: 'premium',
-    paystackPlanCode: 'PLN_xxxxxxx_premium', // Replace with your actual Paystack Plan Code
-    price: '$10',
+    // Replace with your actual Paystack Plan Code if you create one on Paystack
+    // paystackPlanCode: 'PLN_YOUR_PREMIUM_PLAN_CODE', 
+    price: '$10', // Placeholder, ensure your backend uses correct NGN amount or plan code
     frequency: '/mo',
     description: 'For individuals who want to supercharge their AI interactions.',
     features: [
@@ -63,8 +64,9 @@ const pricingTiers: Tier[] = [
   {
     name: 'Unlimited',
     planId: 'unlimited',
-    paystackPlanCode: 'PLN_xxxxxxx_unlimited', // Replace with your actual Paystack Plan Code
-    price: '$35',
+    // Replace with your actual Paystack Plan Code if you create one on Paystack
+    // paystackPlanCode: 'PLN_YOUR_UNLIMITED_PLAN_CODE', 
+    price: '$35', // Placeholder, ensure your backend uses correct NGN amount or plan code
     frequency: '/mo',
     description: 'For power users and teams who need unlimited prompting capabilities.',
     features: [
@@ -82,7 +84,7 @@ const pricingTiers: Tier[] = [
 export function PricingSection() {
   const { currentUser } = useAuth();
   const { toast } = useToast();
-  const functions = getFunctions(app);
+  const functions = getFunctions(app); // Initialize Firebase Functions
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
   const handleSubscription = async (tier: Tier) => {
@@ -92,37 +94,45 @@ export function PricingSection() {
         description: 'Please log in or sign up to subscribe.',
         variant: 'destructive',
       });
-      // Optionally redirect to login: router.push('/login');
+      // Consider redirecting to login: router.push('/login');
       return;
     }
 
     if (tier.planId === 'free') {
-      // Handle free plan selection, e.g., navigate to signup or dashboard
-      // For now, we assume free plan users just sign up.
+      // Free plan usually just involves signing up or is the default state.
+      // If already signed up, user is likely on free tier or needs to go to dashboard.
+      // You might want to redirect to dashboard or handle this case differently.
+      toast({ title: 'Free Plan', description: 'You are currently on the free plan.'});
       return;
     }
     
     setLoadingPlan(tier.planId);
 
     try {
+      // Name of the Cloud Function you will create
       const createSubscriptionFunction = httpsCallable(functions, 'createPaystackSubscription');
+      
       const result: any = await createSubscriptionFunction({ 
         userId: currentUser.uid, 
-        email: currentUser.email,
-        planId: tier.planId, // You might pass tier.paystackPlanCode if using Paystack plans
-        // amount: parseFloat(tier.price.replace('$', '')) * 100 // Amount in kobo/cents if not using Paystack plans
+        email: currentUser.email, // Make sure user.email is available and verified
+        planId: tier.planId, 
+        // If you are using Paystack's "Plans", pass tier.paystackPlanCode
+        // paystackPlanCode: tier.paystackPlanCode,
+        // Otherwise, your backend will use a predefined amount for the planId
       });
 
       if (result.data && result.data.authorization_url) {
+        // Redirect user to Paystack's checkout page
         window.location.href = result.data.authorization_url;
       } else {
+        // Handle cases where authorization_url is not returned
         throw new Error(result.data.error || 'Could not initiate payment. Please try again.');
       }
     } catch (error: any) {
-      console.error('Subscription error:', error);
+      console.error('Subscription Error:', error);
       toast({
         title: 'Subscription Failed',
-        description: error.message || 'An unexpected error occurred.',
+        description: error.message || 'An unexpected error occurred. Please contact support if this persists.',
         variant: 'destructive',
       });
     } finally {
@@ -174,7 +184,7 @@ export function PricingSection() {
                   <Button
                     size="lg"
                     onClick={() => handleSubscription(tier)}
-                    disabled={loadingPlan === tier.planId}
+                    disabled={loadingPlan === tier.planId || !currentUser}
                     className={`w-full ${tier.emphasized ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-accent hover:bg-accent/90 text-accent-foreground'}`}
                   >
                     {loadingPlan === tier.planId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : tier.cta}
