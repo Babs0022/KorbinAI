@@ -13,18 +13,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LayoutGrid, LogOut, PlusCircle, Settings, UserCircle, Loader2 } from 'lucide-react';
+import { LayoutGrid, LogOut, PlusCircle, Settings, UserCircle, Loader2, Menu } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/contexts/AuthContext';
-
+import { DashboardSidebar } from './DashboardSidebar';
+import { useState } from 'react';
 
 export function DashboardHeader() {
   const router = useRouter();
   const { toast } = useToast();
   const { currentUser, loading, displayName, displayEmail, avatarUrl, userInitials } = useAuth();
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -53,13 +56,25 @@ export function DashboardHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        <Logo />
-        <nav className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/dashboard">
-              <LayoutGrid className="mr-2 h-4 w-4" /> Dashboard
-            </Link>
-          </Button>
+        <div className="flex items-center">
+          <div className="md:hidden mr-2">
+            <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-72">
+                <DashboardSidebar onLinkClick={() => setIsMobileSidebarOpen(false)} />
+              </SheetContent>
+            </Sheet>
+          </div>
+          <div className="hidden md:block">
+            <Logo />
+          </div>
+        </div>
+        
+        <nav className="flex items-center space-x-2 sm:space-x-4">
           <Button variant="default" size="sm" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Link href="/create-prompt">
               <PlusCircle className="mr-2 h-4 w-4" /> Create Prompt
@@ -86,6 +101,10 @@ export function DashboardHeader() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                 <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                  <LayoutGrid className="mr-2 h-4 w-4" />
+                  Dashboard
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/dashboard/account')}>
                   <UserCircle className="mr-2 h-4 w-4" />
                   Account
