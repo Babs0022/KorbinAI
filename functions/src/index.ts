@@ -1,13 +1,18 @@
 
-import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import * as Paystack from "paystack-node";
 import * as crypto from "crypto";
+import * as functions from "firebase-functions"; // For top-level access and v2 onRequest
+import { onCall as onCallV1, HttpsError, type CallableContext } from "firebase-functions/v1/https"; // Specific v1 imports for onCall
+
+// Import Paystack using require for broader compatibility if 'paystack-node' causes issues with ES module resolution in Functions
+// If you have "type": "module" in your functions/package.json, you might use: import Paystack from 'paystack-node';
+const Paystack = require("paystack-node");
+
 
 // Initialize CORS. Update with your actual app domain for production.
 // For local testing, ensure "http://localhost:9002" (or your frontend's port) is included.
-// For production, replace "https:brieflyai.xyz" with your actual live domain.
-const corsHandler = require("cors")({ origin: ["http://localhost:9002", "https:brieflyai.xyz"] }); 
+// For production, replace "https://brieflyai.xyz" with your actual live domain.
+const corsHandler = require("cors")({ origin: ["http://localhost:9002", "https://brieflyai.xyz"] }); 
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -24,35 +29,39 @@ const PAYSTACK_SECRET_KEY = functions.config().paystack?.secret_key;
 const PAYSTACK_WEBHOOK_SECRET = functions.config().paystack?.webhook_secret;
 const APP_CALLBACK_URL = functions.config().app?.callback_url;
 
-// Initialize Paystack SDK only if the secret key is available
-const paystack = PAYSTACK_SECRET_KEY ? new Paystack(PAYSTACK_SECRET_KEY) : null;
+let paystack: any = null; // Initialize as null, type will be Paystack instance
 
+if (PAYSTACK_SECRET_KEY) {
+    paystack = new Paystack(PAYSTACK_SECRET_KEY);
+} else {
+    console.error("Paystack secret key not configured in Firebase functions environment. Paystack SDK not initialized.");
+}
 
 // Define amounts (in Kobo) and plan codes for your plans
 const planDetails: Record<string, { amount: number, name: string, plan_code: string }> = {
     premium: { 
         amount: 16000 * 100, // NGN 16,000 in Kobo
         name: "BrieflyAI Premium", 
-        plan_code: "YOUR_PREMIUM_PLAN_CODE_FROM_PAYSTACK" // TODO: Replace with your actual Premium plan code
+        plan_code: "PLN_c7d9pwc77ezn3a8" // TODO: Replace with your actual Premium plan code
     },
     unlimited: { 
         amount: 56000 * 100, // NGN 56,000 in Kobo
         name: "BrieflyAI Unlimited", 
-        plan_code: "YOUR_UNLIMITED_PLAN_CODE_FROM_PAYSTACK" // TODO: Replace with your actual Unlimited plan code
+        plan_code: "PLN_kb83pnnocije9fz" // TODO: Replace with your actual Unlimited plan code
     },
 };
 
-export const createPaystackSubscription = functions.https.onCall(async (data: { email?: string; planId: string }, context: functions.https.CallableContext) => {
+export const createPaystackSubscription = onCallV1(async (data: { email?: string; planId: string }, context: CallableContext) => {
     if (!paystack) { // Check if paystack was initialized
         console.error("Paystack SDK not initialized due to missing secret key. Cannot create subscription.");
-        throw new functions.https.HttpsError("internal", "Payment system not configured on the server.");
+        throw new HttpsError("internal", "Payment system not configured on the server.");
     }
     if (!context.auth) {
-        throw new functions.https.HttpsError("unauthenticated", "User must be authenticated to subscribe.");
+        throw new HttpsError("unauthenticated", "User must be authenticated to subscribe.");
     }
     if (!APP_CALLBACK_URL) {
         console.error("Application callback URL is not configured. Cannot create subscription.");
-        throw new functions.https.HttpsError("internal", "Application callback URL not configured.");
+        throw new HttpsError("internal", "Application callback URL not configured.");
     }
 
     const userId = context.auth.uid;
@@ -63,7 +72,7 @@ export const createPaystackSubscription = functions.https.onCall(async (data: { 
 
     if (!emailToUse || !planId || !planDetails[planId] || !planDetails[planId].plan_code) {
         console.error("Invalid data received for subscription:", {emailExists: !!emailToUse, planId, planDetailsExist: !!planDetails[planId], planCodeExists: !!planDetails[planId]?.plan_code });
-        throw new functions.https.HttpsError("invalid-argument", "Valid email, planId, and configured plan code are required.");
+        throw new HttpsError("invalid-argument", "Valid email, planId, and configured plan code are required.");
     }
 
     const plan = planDetails[planId];
@@ -98,12 +107,12 @@ export const createPaystackSubscription = functions.https.onCall(async (data: { 
         } else {
             console.error("Paystack transaction.initialize failed:", response.message, response.data);
             const errorMessage = response.message || "Paystack initialization failed.";
-            throw new functions.https.HttpsError("internal", errorMessage);
+            throw new HttpsError("internal", errorMessage);
         }
     } catch (error: any) {
         console.error("Error initializing Paystack transaction:", error);
         const errorMessage = error.message || "An unknown error occurred while initiating payment.";
-        throw new functions.https.HttpsError("internal", errorMessage);
+        throw new HttpsError("internal", errorMessage);
     }
 });
 
@@ -190,3 +199,4 @@ export const paystackWebhookHandler = functions.https.onRequest(async (req, res)
         }
     });
 });
+    
