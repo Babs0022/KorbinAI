@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LayoutGrid, LogOut, PlusCircle, Settings, UserCircle, Loader2, Menu } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -67,6 +67,9 @@ export function DashboardHeader() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-72">
+                <SheetHeader className="p-4 border-b border-border/50 sr-only"> {/* Visually hide if not desired, but keep for ARIA */}
+                  <SheetTitle>Main Menu</SheetTitle>
+                </SheetHeader>
                 {/* Pass onLinkClick to close sidebar on navigation */}
                 <DashboardSidebar onLinkClick={() => setIsMobileSidebarOpen(false)} />
               </SheetContent>
@@ -134,5 +137,4 @@ export function DashboardHeader() {
     </header>
   );
 }
-
     
