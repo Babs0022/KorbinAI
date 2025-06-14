@@ -4,11 +4,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
-import { DashboardSidebar } from '@/components/layout/DashboardSidebar';
-import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCard';
 import { PromptHistoryItem, type PromptHistory } from '@/components/dashboard/PromptHistoryItem';
+import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, ListFilter, Loader2, Copy, Activity, Bell, Edit, Download, Eye, TrendingUp, BarChart3, Lightbulb } from 'lucide-react';
+import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, CheckCheck, Maximize } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import {
@@ -30,7 +29,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,6 +37,95 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp, limit } from 'firebase/firestore';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
+import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCard';
+
+const features: FeatureInfo[] = [
+  {
+    title: "Prompt Generator",
+    description: "Input goals, answer surveys, and get optimized AI prompts.",
+    href: "/create-prompt",
+    icon: Lightbulb,
+    enabled: true,
+  },
+  {
+    title: "Prompt Vault",
+    description: "Store, organize, and categorize your most effective prompts.",
+    href: "/dashboard/prompt-vault",
+    icon: Archive,
+    enabled: true, 
+  },
+  {
+    title: "Prompt Refinement Hub",
+    description: "Modify previously generated prompts with suggested refinements.",
+    href: "/dashboard/refinement-hub",
+    icon: Settings2,
+    enabled: true, 
+  },
+  {
+    title: "Model-Specific Prompts",
+    description: "Customize prompts based on the AI model you intend to use.",
+    href: "/dashboard/model-specific-prompts",
+    icon: Puzzle,
+    enabled: true,
+  },
+  {
+    title: "Contextual Prompting",
+    description: "Generate prompts based on existing content you provide.",
+    href: "/dashboard/contextual-prompting",
+    icon: FileText,
+    enabled: true,
+  },
+  {
+    title: "Prompt Academy",
+    description: "Learn advanced prompting techniques with tutorials and best practices.",
+    href: "/dashboard/academy",
+    icon: School,
+    enabled: true, 
+  },
+  {
+    title: "Real-Time AI Prompt Suggestions",
+    description: "Get AI-powered suggestions as you type your prompts.",
+    href: "/dashboard/real-time-suggestions",
+    icon: Wand2,
+    enabled: true,
+  },
+  {
+    title: "Prompt Feedback & Analysis",
+    description: "Receive a quality score and actionable feedback on your prompts.",
+    href: "/dashboard/feedback-analysis",
+    icon: BarChart3,
+    enabled: true,
+  },
+  {
+    title: "Reverse Prompting",
+    description: "Reverse-engineer AI output back into a potential prompt.",
+    href: "/dashboard/reverse-prompting",
+    icon: Undo2,
+    enabled: true, 
+  },
+  {
+    title: "Prompt Analytics Dashboard",
+    description: "Track the performance and effectiveness of your generated prompts.",
+    href: "/dashboard/analytics",
+    icon: TrendingUp,
+    enabled: true,
+  },
+  {
+    title: "Prompt Learning Mode",
+    description: "BrieflyAI learns your style to suggest more personalized prompts.",
+    href: "/dashboard/learning-mode",
+    icon: Brain,
+    enabled: true,
+  },
+  {
+    title: "AI Model Compatibility Checker",
+    description: "Verify and adjust your prompt for optimal performance with specific AI models.",
+    href: "/dashboard/compatibility-checker",
+    icon: CheckCheck,
+    enabled: true,
+  },
+];
+
 
 export default function DashboardPage() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -49,7 +137,7 @@ export default function DashboardPage() {
   const [viewingPrompt, setViewingPrompt] = useState<PromptHistory | null>(null);
   const { toast } = useToast();
 
-  const fetchPrompts = useCallback(async (fetchLimit: number = 5) => {
+  const fetchPrompts = useCallback(async (fetchLimit: number = 3) => { // Reduced limit for dashboard card
     if (!currentUser) {
       setIsLoadingPrompts(false);
       setPrompts([]); 
@@ -173,107 +261,102 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <DashboardHeader />
-      <div className="flex flex-1">
-        <div className="hidden md:block md:w-64 xl:w-72">
-           <DashboardSidebar className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 xl:w-72"/>
-        </div>
-        <main className="flex-1 bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-          {/* Featured Box: Generate Your Prompt */}
-          <GlassCard className="mb-8 bg-primary/10 border-primary/30">
-            <GlassCardHeader>
-                <GlassCardTitle className="text-2xl font-headline text-primary flex items-center">
-                    <Lightbulb className="mr-3 h-7 w-7" /> Create a New Masterpiece
-                </GlassCardTitle>
-            </GlassCardHeader>
-            <GlassCardContent>
-                <p className="text-muted-foreground mb-4">
-                    Ready to craft the perfect AI prompt? Let BrieflyAI guide you.
-                </p>
-                <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md">
-                    <Link href="/create-prompt">
-                    <PlusCircle className="mr-2 h-5 w-5" /> Generate Your Prompt
-                    </Link>
-                </Button>
-            </GlassCardContent>
-          </GlassCard>
-
-          {/* Top Section: Quick Stats/Analytics */}
-          <section className="mb-8">
+      <main className="flex-1 bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        
+        {/* Top Section: Quick Stats/Analytics */}
+        <section className="mb-8">
             <h2 className="font-headline text-xl font-semibold text-foreground mb-4">Your Prompting Snapshot</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <AnalyticsSummaryCard title="Total Prompts Generated" value={String(prompts.length || 0)} icon={BarChart3} description="Across all your sessions" />
               <AnalyticsSummaryCard title="Average Prompt Score" value="N/A" icon={TrendingUp} description="Feedback coming soon!" />
-              <AnalyticsSummaryCard title="Most Used Category" value="N/A" icon={ListFilter} description="Categorization coming soon!" />
+              <AnalyticsSummaryCard title="Most Used Category" value="N/A" icon={Eye} description="Categorization coming soon!" />
             </div>
-          </section>
+        </section>
 
-          {/* Main Section: Recent Prompts */}
-          <section className="mb-8">
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="font-headline text-xl font-semibold text-foreground">Recent Prompts</h2>
-              <Button variant="outline" asChild>
-                  <Link href="/dashboard/prompt-vault">
-                    View Full Prompt Vault <Eye className="ml-2 h-4 w-4" />
-                  </Link>
+        {/* Features Grid */}
+        <section className="mb-8">
+          <h2 className="font-headline text-xl font-semibold text-foreground mb-6">Explore Features</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {features.map((feature) => (
+              <FeatureCard key={feature.title} feature={feature} />
+            ))}
+          </div>
+        </section>
+
+        {/* Recent Prompts Card */}
+        <section className="mb-8">
+          <GlassCard>
+            <GlassCardHeader>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <GlassCardTitle className="text-xl font-headline">Recent Prompts</GlassCardTitle>
+                <Button variant="outline" size="sm" asChild className="mt-2 sm:mt-0">
+                    <Link href="/dashboard/prompt-vault">
+                      View Full Prompt Vault <Maximize className="ml-2 h-4 w-4" />
+                    </Link>
                 </Button>
-            </div>
-             <div className="mb-4 flex gap-2">
-                <div className="relative flex-grow">
-                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input 
-                    type="search" 
-                    placeholder="Search recent prompts..." 
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+              </div>
+            </GlassCardHeader>
+            <GlassCardContent>
+              <div className="mb-4 flex gap-2">
+                  <div className="relative flex-grow">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input 
+                      type="search" 
+                      placeholder="Search recent prompts..." 
+                      className="pl-10"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
                 </div>
-              </div>
 
-            {isLoadingPrompts ? (
-              <div className="text-center py-10 rounded-lg bg-card/50 p-6">
-                <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary mb-3" />
-                <h3 className="font-semibold text-lg text-foreground">Loading Recent Prompts...</h3>
-              </div>
-            ) : filteredPrompts.length > 0 ? (
-              <div className="space-y-4">
-                {filteredPrompts.map((prompt) => (
-                  <PromptHistoryItem
-                    key={prompt.id}
-                    prompt={prompt}
-                    onView={handleViewPrompt}
-                    onEdit={handleEditPrompt}
-                    onExport={handleExportPrompt}
-                    onDelete={() => openDeleteDialog(prompt)} 
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-10 rounded-lg bg-card/50 p-6">
-                <Search className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-                <h3 className="font-semibold text-lg text-foreground">No Recent Prompts Found</h3>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  {searchTerm ? "Try adjusting your search terms." : "Create a new prompt to see it here!"}
-                </p>
-              </div>
-            )}
-          </section>
+              {isLoadingPrompts ? (
+                <div className="text-center py-10">
+                  <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary mb-3" />
+                  <h3 className="font-semibold text-lg text-foreground">Loading Recent Prompts...</h3>
+                </div>
+              ) : filteredPrompts.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredPrompts.map((prompt) => (
+                    <PromptHistoryItem
+                      key={prompt.id}
+                      prompt={prompt}
+                      onView={handleViewPrompt}
+                      onEdit={handleEditPrompt}
+                      onExport={handleExportPrompt}
+                      onDelete={() => openDeleteDialog(prompt)} 
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-10">
+                  <Search className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
+                  <h3 className="font-semibold text-lg text-foreground">No Recent Prompts Found</h3>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    {searchTerm ? "Try adjusting your search terms." : "Create a new prompt to see it here!"}
+                  </p>
+                </div>
+              )}
+            </GlassCardContent>
+          </GlassCard>
+        </section>
 
-          {/* Footer Section: Notifications Placeholder */}
-          <section>
-            <h2 className="font-headline text-xl font-semibold text-foreground mb-4">Notifications & Updates</h2>
+        {/* Notifications Placeholder */}
+        <section>
             <GlassCard>
-                <GlassCardContent className="pt-6">
+                <GlassCardHeader>
+                    <GlassCardTitle className="text-xl font-headline flex items-center"><Bell className="mr-2 h-5 w-5"/> Notifications & Updates</GlassCardTitle>
+                </GlassCardHeader>
+                <GlassCardContent>
                     <div className="flex items-center text-muted-foreground">
                         <Bell className="mr-3 h-6 w-6 text-primary" />
                         <p>New features and learning resources will be announced here. Stay tuned!</p>
                     </div>
                 </GlassCardContent>
             </GlassCard>
-          </section>
+        </section>
 
-        </main>
-      </div>
+      </main>
       <MinimalFooter />
       
       {promptToDelete && (
@@ -334,3 +417,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

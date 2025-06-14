@@ -6,14 +6,20 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/shared/Logo';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Archive, Settings2, School, Undo2, LayoutDashboard, ScrollText, Rocket } from 'lucide-react';
+import { LayoutDashboard, UserCircle, Settings, ScrollText, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext'; // For logout functionality
+import { useToast } from '@/hooks/use-toast';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
+
+// Simplified sidebar for mobile header navigation, focusing on core app sections
 const sidebarNavItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/dashboard/prompt-vault', label: 'Prompt Vault', icon: Archive },
-  { href: '/dashboard/refinement-hub', label: 'Refinement Hub', icon: Settings2 },
-  { href: '/dashboard/academy', label: 'Prompt Academy', icon: School },
-  { href: '/dashboard/reverse-prompting', label: 'Reverse Prompting', icon: Undo2 },
+  { href: '/create-prompt', label: 'New Prompt', icon: ScrollText },
+  { href: '/dashboard/account', label: 'Account', icon: UserCircle },
+  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 
 interface DashboardSidebarProps {
@@ -23,6 +29,21 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ className, onLinkClick }: DashboardSidebarProps) {
   const pathname = usePathname();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    if (onLinkClick) onLinkClick(); // Close sidebar if open
+    try {
+      await signOut(auth);
+      toast({ title: "Logged Out", description: "You have been successfully logged out."});
+      router.push('/login');
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({ title: "Logout Failed", description: "Could not log out. Please try again.", variant: "destructive"});
+    }
+  };
+
 
   return (
     <aside className={cn("h-full flex flex-col bg-card/80 dark:bg-card/60 border-r border-border/50", className)}>
@@ -49,12 +70,12 @@ export function DashboardSidebar({ className, onLinkClick }: DashboardSidebarPro
         ))}
       </nav>
       <div className="p-4 mt-auto border-t border-border/50">
-        <Button variant="outline" className="w-full" asChild>
-            <Link href="/create-prompt" onClick={onLinkClick}>
-                <Rocket className="mr-2 h-4 w-4" /> New Prompt
-            </Link>
+        <Button variant="outline" className="w-full" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" /> Logout
         </Button>
       </div>
     </aside>
   );
 }
+
+    
