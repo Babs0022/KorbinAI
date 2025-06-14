@@ -129,7 +129,7 @@ export const createPaystackSubscription = onCallV1(
         reference: reference,
         callback_url:
           `${APP_CALLBACK_URL}&ref=${reference}&planId=${planId}`,
-        metadata: { userId, planId, service: "BrieflyAI Subscription" },
+        metadata: {userId, planId, service: "BrieflyAI Subscription"},
       };
 
       const response = await paystack.transaction.initialize(transactionArgs);
@@ -156,13 +156,15 @@ export const createPaystackSubscription = onCallV1(
           response.message,
           response.data
         );
-        const errorMessage = response.message || "Paystack initialization failed.";
+        const errorMessage =
+          response.message || "Paystack initialization failed.";
         throw new HttpsError("internal", errorMessage);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error initializing Paystack transaction:", error);
       const errorMessage =
-        error.message || "An unknown error occurred while initiating payment.";
+        (error instanceof Error ? error.message : String(error)) ||
+        "An unknown error occurred while initiating payment.";
       throw new HttpsError("internal", errorMessage);
     }
   }
@@ -212,7 +214,7 @@ export const paystackWebhookHandler = functions.https.onRequest(
         if (!userId || !planId) {
           console.error(
             "Missing userId or planId in webhook metadata for charge.success",
-            { effectiveMetadata, planObject }
+            {effectiveMetadata, planObject}
           );
           res.status(400).send(
             "Missing user or plan identifier in metadata."
@@ -221,7 +223,7 @@ export const paystackWebhookHandler = functions.https.onRequest(
         }
 
         try {
-          const verification = await paystack.transaction.verify({ reference });
+          const verification = await paystack.transaction.verify({reference});
           if (!verification.status || verification.data.status !== "success") {
             console.error(
               "Paystack transaction re-verification failed or not successful " +
@@ -232,10 +234,11 @@ export const paystackWebhookHandler = functions.https.onRequest(
             res.status(400).send("Transaction re-verification failed.");
             return;
           }
-        } catch (verifyError: any) {
+        } catch (verifyError: unknown) {
           console.error(
             "Error re-verifying transaction with Paystack:",
-            verifyError.message
+            (verifyError instanceof Error ?
+              verifyError.message : String(verifyError))
           );
           res.status(500).send("Error during transaction re-verification.");
           return;
@@ -252,7 +255,7 @@ export const paystackWebhookHandler = functions.https.onRequest(
             admin.firestore.Timestamp.fromDate(new Date(actualPaidAt)),
           currentPeriodEnd: admin.firestore.Timestamp.fromDate(
             new Date(new Date(actualPaidAt).getTime() +
-              30 * 24 * 60 * 60 * 1000)
+              30 * 24 * 60 * 60 * 1000) // Approx 30 days
           ),
           paystackReference: reference,
           amountPaid: amount,
@@ -263,7 +266,7 @@ export const paystackWebhookHandler = functions.https.onRequest(
         try {
           await db.collection("userSubscriptions").doc(userId).set(
             subscriptionData,
-            { merge: true }
+            {merge: true}
           );
           await db.collection("transactions").doc(reference).update({
             status: "success",
@@ -274,8 +277,11 @@ export const paystackWebhookHandler = functions.https.onRequest(
             `Subscription for ${userId} (plan: ${planId}) processed successfully.`
           );
           res.status(200).send("Webhook processed successfully.");
-        } catch (error: any) {
-          console.error("Error updating Firestore from webhook:", error.message);
+        } catch (error: unknown) {
+          console.error(
+            "Error updating Firestore from webhook:",
+            (error instanceof Error ? error.message : String(error))
+          );
           res.status(500).send("Error processing subscription update.");
         }
       } else {
@@ -288,3 +294,5 @@ export const paystackWebhookHandler = functions.https.onRequest(
     });
   }
 );
+
+    
