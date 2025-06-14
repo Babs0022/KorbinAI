@@ -10,13 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, Palette, DownloadCloud, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Bell, Palette, DownloadCloud, Loader2, Save } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem';
+import Link from 'next/link'; // Added Link import
 
 interface UserSettings {
   emailNotifications: boolean;
