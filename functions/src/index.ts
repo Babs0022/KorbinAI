@@ -1,13 +1,13 @@
 
-import * as admin from "firebase-admin";
-import * as crypto from "crypto";
-import * as functions from "firebase-functions"; // For top-level access and v2 onRequest
+import * as functions from "firebase-functions";
 import {
   onCall as onCallV1,
   HttpsError,
   type CallableContext,
 } from "firebase-functions/v1/https"; // Specific v1 imports for onCall
-import Paystack from "paystack-node";
+import * as admin from "firebase-admin";
+import Paystack from "paystack-node"; // Changed from import * as Paystack
+import * as crypto from "crypto";
 import cors from "cors";
 
 
@@ -54,12 +54,12 @@ const planDetails: Record<string, {
   premium: {
     amount: 16000 * 100, // NGN 16,000 in Kobo
     name: "BrieflyAI Premium",
-    plan_code: "YOUR_PREMIUM_PLAN_CODE_FROM_PAYSTACK", // TODO: Replace
+    plan_code: "PLN_c7d9pwc77ezn3a8", // YOUR_PREMIUM_PLAN_CODE_FROM_PAYSTACK
   },
   unlimited: {
     amount: 56000 * 100, // NGN 56,000 in Kobo
     name: "BrieflyAI Unlimited",
-    plan_code: "YOUR_UNLIMITED_PLAN_CODE_FROM_PAYSTACK", // TODO: Replace
+    plan_code: "PLN_kb83pnnocije9fz", // YOUR_UNLIMITED_PLAN_CODE_FROM_PAYSTACK
   },
 };
 
