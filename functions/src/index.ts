@@ -24,10 +24,12 @@ const db = admin.firestore();
 
 // --- IMPORTANT: SET THESE IN FIREBASE ENVIRONMENT CONFIGURATION ---
 // In your terminal, run (replace placeholders with your actual values):
-// firebase functions:config:set paystack.secret_key="sk_test_YOUR_PAYSTACK_TEST_SECRET_KEY"
+// firebase functions:config:set paystack.secret_key="sk_test_YOUR_PAYSTACK_SECRET_KEY"
 // firebase functions:config:set paystack.webhook_secret="YOUR_CHOSEN_STRONG_WEBHOOK_SECRET"
-// firebase functions:config:set app.callback_url="http://localhost:9002/dashboard?payment=success" // For local dev
-// For production, callback_url: "https://your-production-app-domain.com/dashboard?payment=success"
+// firebase functions:config:set app.callback_url="http://localhost:9002/dashboard?payment=success"
+// For local dev.
+// For production, callback_url:
+// "https://your-production-app-domain.com/dashboard?payment=success"
 // ---
 
 const PAYSTACK_SECRET_KEY = functions.config().paystack?.secret_key;
@@ -294,5 +296,3 @@ export const paystackWebhookHandler = functions.https.onRequest(
     });
   }
 );
-
-    
