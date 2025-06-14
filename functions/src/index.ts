@@ -275,7 +275,7 @@ export const paystackWebhookHandler = functions.https.onRequest(
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
           functions.logger.info(
-            `Subscription for ${userId} (plan: ${planId}) processed successfully.`
+            `Subscription for ${userId}(plan:${planId}) processed successfully.`
           );
           res.status(200).send("Webhook processed successfully.");
         } catch (error: unknown) {

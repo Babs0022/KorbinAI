@@ -17,7 +17,6 @@ declare module "paystack-node" {
       // fetch(args: { id?: number, reference?: string }): Promise<any>;
       // chargeAuthorization(args: any): Promise<any>;
       // checkAuthorization(args: any): Promise<any>;
-      // viewTransactionTimeline(args: { id?: number, reference?: string }): Promise<any>;
       // export(args?: any): Promise<any>;
       // partialDebit(args: any): Promise<any>;
     };
@@ -33,7 +32,7 @@ declare module "paystack-node" {
     //   list(args?: any): Promise<any>;
     //   fetch(args: { id?: number, email_or_code?: string }): Promise<any>;
     //   update(args: { id?: number, code?: string, body: any }): Promise<any>;
-    //   validate(args: { id?: number, code?: string, body: any }): Promise<any>;
+    //   validate(args: {id?: number, code?: string, body: any}): Promise<any>;
     //   setRiskAction(args: any): Promise<any>;
     //   deactivateAuthorization(args: any): Promise<any>;
     // };
