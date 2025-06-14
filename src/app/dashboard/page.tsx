@@ -7,7 +7,7 @@ import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import { PromptHistoryItem, type PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, CheckCheck, Maximize, ArrowLeft } from 'lucide-react';
+import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, CheckCheck, Maximize, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import {
@@ -35,7 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp, limit } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp, limit,getCountFromServer } from 'firebase/firestore';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCard';
 import Container from '@/components/layout/Container';
@@ -131,24 +131,27 @@ const features: FeatureInfo[] = [
 export default function DashboardPage() {
   const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [prompts, setPrompts] = useState<PromptHistory[]>([]); 
-  const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
+  const [recentPrompts, setRecentPrompts] = useState<PromptHistory[]>([]); 
+  const [totalPromptsCount, setTotalPromptsCount] = useState(0);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [promptToDelete, setPromptToDelete] = useState<PromptHistory | null>(null);
   const [viewingPrompt, setViewingPrompt] = useState<PromptHistory | null>(null);
   const { toast } = useToast();
 
-  const fetchPrompts = useCallback(async (fetchLimit: number = 3) => { 
+  const fetchDashboardData = useCallback(async () => { 
     if (!currentUser) {
-      setIsLoadingPrompts(false);
-      setPrompts([]); 
+      setIsLoadingData(false);
+      setRecentPrompts([]); 
+      setTotalPromptsCount(0);
       return;
     }
-    setIsLoadingPrompts(true);
+    setIsLoadingData(true);
     try {
-      const q = query(collection(db, `users/${currentUser.uid}/promptHistory`), orderBy("timestamp", "desc"), limit(fetchLimit));
-      const querySnapshot = await getDocs(q);
-      const firestorePrompts = querySnapshot.docs.map(docSnap => {
+      // Fetch recent prompts (limit 3 for dashboard)
+      const recentPromptsQuery = query(collection(db, `users/${currentUser.uid}/promptHistory`), orderBy("timestamp", "desc"), limit(3));
+      const recentQuerySnapshot = await getDocs(recentPromptsQuery);
+      const firestoreRecentPrompts = recentQuerySnapshot.docs.map(docSnap => {
         const data = docSnap.data();
         let timestampStr = data.timestamp;
         if (data.timestamp instanceof Timestamp) {
@@ -165,13 +168,20 @@ export default function DashboardPage() {
           tags: data.tags || [],
         } as PromptHistory;
       });
-      setPrompts(firestorePrompts);
+      setRecentPrompts(firestoreRecentPrompts);
+
+      // Fetch total prompts count
+      const allPromptsQuery = query(collection(db, `users/${currentUser.uid}/promptHistory`));
+      const countSnapshot = await getCountFromServer(allPromptsQuery);
+      setTotalPromptsCount(countSnapshot.data().count);
+
     } catch (error) {
-      console.error("Error loading prompts from Firestore:", error);
-      toast({ title: "Error Loading History", description: "Could not load prompt history.", variant: "destructive"});
-      setPrompts([]); 
+      console.error("Error loading dashboard data from Firestore:", error);
+      toast({ title: "Error Loading Data", description: "Could not load dashboard data.", variant: "destructive"});
+      setRecentPrompts([]); 
+      setTotalPromptsCount(0);
     } finally {
-      setIsLoadingPrompts(false);
+      setIsLoadingData(false);
     }
   }, [currentUser, toast]);
 
@@ -179,12 +189,13 @@ export default function DashboardPage() {
     if (!authLoading && !currentUser) {
       router.push('/login');
     } else if (currentUser) {
-      fetchPrompts();
+      fetchDashboardData();
     } else if (!authLoading && !currentUser) {
-      setIsLoadingPrompts(false);
-      setPrompts([]);
+      setIsLoadingData(false);
+      setRecentPrompts([]);
+      setTotalPromptsCount(0);
     }
-  }, [currentUser, authLoading, router, fetchPrompts]);
+  }, [currentUser, authLoading, router, fetchDashboardData]);
 
   const handleViewPrompt = (prompt: PromptHistory) => {
     setViewingPrompt(prompt);
@@ -226,9 +237,9 @@ export default function DashboardPage() {
     if (!promptToDelete || !currentUser) return;
     try {
       await deleteDoc(doc(db, `users/${currentUser.uid}/promptHistory`, promptToDelete.id));
-      setPrompts(prevPrompts => prevPrompts.filter(p => p.id !== promptToDelete.id));
-      // Optionally re-fetch to ensure consistency if pagination or other complex state is involved
-      // await fetchPrompts(); 
+      // Optimistically update UI or re-fetch
+      setRecentPrompts(prevPrompts => prevPrompts.filter(p => p.id !== promptToDelete.id));
+      setTotalPromptsCount(prevCount => prevCount - 1);
       toast({ title: "Prompt Deleted", description: `Prompt "${promptToDelete.goal.substring(0,30)}..." has been deleted.`});
     } catch (error) {
       console.error("Error deleting prompt from Firestore:", error);
@@ -238,12 +249,12 @@ export default function DashboardPage() {
     }
   };
 
-  const filteredPrompts = prompts.filter(prompt => 
+  const filteredRecentPrompts = recentPrompts.filter(prompt => 
     prompt.goal.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (prompt.optimizedPrompt && prompt.optimizedPrompt.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
-  if (authLoading || (!currentUser && authLoading)) { 
+  if (authLoading || isLoadingData) { 
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -252,9 +263,10 @@ export default function DashboardPage() {
     );
   }
   
-  if (!currentUser) { 
+  if (!currentUser && !authLoading) { 
      return (
       <div className="flex min-h-screen flex-col items-center justify-center">
+        <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
         <p className="mt-4 text-muted-foreground">Please log in to view your dashboard.</p>
         <Button asChild className="mt-4"><Link href="/login">Login</Link></Button>
       </div>
@@ -275,8 +287,8 @@ export default function DashboardPage() {
           <section className="mb-8">
               <h2 className="font-headline text-xl font-semibold text-foreground mb-4">Your Prompting Snapshot</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <AnalyticsSummaryCard title="Total Prompts Generated" value={String(prompts.length || 0)} icon={BarChart3} description="In your vault" />
-                <AnalyticsSummaryCard title="Average Prompt Score" value="N/A" icon={TrendingUp} description="Feedback coming soon!" />
+                <AnalyticsSummaryCard title="Total Prompts in Vault" value={String(totalPromptsCount)} icon={Archive} description="Your saved prompts" />
+                <AnalyticsSummaryCard title="Average Prompt Score" value="N/A" icon={TrendingUp} description="Feedback feature active" />
                 <AnalyticsSummaryCard title="Most Used Category" value="N/A" icon={Eye} description="Categorization coming soon!" />
               </div>
           </section>
@@ -319,14 +331,14 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                {isLoadingPrompts ? (
+                {isLoadingData ? (
                   <div className="text-center py-10">
                     <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary mb-3" />
                     <h3 className="font-semibold text-lg text-foreground">Loading Recent Prompts...</h3>
                   </div>
-                ) : filteredPrompts.length > 0 ? (
+                ) : filteredRecentPrompts.length > 0 ? (
                   <div className="space-y-4">
-                    {filteredPrompts.map((prompt) => (
+                    {filteredRecentPrompts.map((prompt) => (
                       <PromptHistoryItem
                         key={prompt.id}
                         prompt={prompt}
