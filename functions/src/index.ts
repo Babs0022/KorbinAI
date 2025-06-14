@@ -5,7 +5,9 @@ import * as Paystack from "paystack-node";
 import * as crypto from "crypto";
 
 // Initialize CORS. Update with your actual app domain for production.
-const corsHandler = require("cors")({ origin: ["http://localhost:9002", "https://your-app-domain.com"] }); // TODO: Replace "https://your-app-domain.com" with your actual live domain
+// For local testing, ensure "http://localhost:9002" (or your frontend's port) is included.
+// For production, replace "https:brieflyai.xyz" with your actual live domain.
+const corsHandler = require("cors")({ origin: ["http://localhost:9002", "https:brieflyai.xyz"] }); 
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -22,9 +24,6 @@ const PAYSTACK_SECRET_KEY = functions.config().paystack?.secret_key;
 const PAYSTACK_WEBHOOK_SECRET = functions.config().paystack?.webhook_secret;
 const APP_CALLBACK_URL = functions.config().app?.callback_url;
 
-if (!PAYSTACK_SECRET_KEY) {
-    console.error("CRITICAL: Paystack secret key not configured in Firebase functions environment. Payment functions will fail.");
-}
 // Initialize Paystack SDK only if the secret key is available
 const paystack = PAYSTACK_SECRET_KEY ? new Paystack(PAYSTACK_SECRET_KEY) : null;
 
@@ -43,7 +42,7 @@ const planDetails: Record<string, { amount: number, name: string, plan_code: str
     },
 };
 
-export const createPaystackSubscription = functions.https.onCall(async (data, context) => {
+export const createPaystackSubscription = functions.https.onCall(async (data: { email?: string; planId: string }, context: functions.https.CallableContext) => {
     if (!paystack) { // Check if paystack was initialized
         console.error("Paystack SDK not initialized due to missing secret key. Cannot create subscription.");
         throw new functions.https.HttpsError("internal", "Payment system not configured on the server.");
@@ -57,11 +56,13 @@ export const createPaystackSubscription = functions.https.onCall(async (data, co
     }
 
     const userId = context.auth.uid;
-    const email = data.email || context.auth.token?.email; 
-    const planId = data.planId as string;
+    const clientProvidedEmail = data.email;
+    const authenticatedUserEmail = context.auth.token?.email;
+    const emailToUse = clientProvidedEmail || authenticatedUserEmail; 
+    const planId = data.planId; // planId from client payload
 
-    if (!email || !planId || !planDetails[planId] || !planDetails[planId].plan_code) {
-        console.error("Invalid data received for subscription:", {emailExists: !!email, planId, planDetailsExist: !!planDetails[planId], planCodeExists: !!planDetails[planId]?.plan_code });
+    if (!emailToUse || !planId || !planDetails[planId] || !planDetails[planId].plan_code) {
+        console.error("Invalid data received for subscription:", {emailExists: !!emailToUse, planId, planDetailsExist: !!planDetails[planId], planCodeExists: !!planDetails[planId]?.plan_code });
         throw new functions.https.HttpsError("invalid-argument", "Valid email, planId, and configured plan code are required.");
     }
 
@@ -70,10 +71,8 @@ export const createPaystackSubscription = functions.https.onCall(async (data, co
 
     try {
         const transactionArgs = {
-            email: email,
-            amount: plan.amount, // Paystack requires amount even with plan codes for some API versions or direct charges.
-                                 // If your plan code handles the amount entirely on Paystack, this might be optional,
-                                 // but it's safer to include it for consistency.
+            email: emailToUse,
+            // amount: plan.amount, // Paystack uses amount from plan_code if provided
             plan: plan.plan_code, // Use the plan code from your Paystack dashboard
             reference: reference,
             callback_url: `${APP_CALLBACK_URL}&ref=${reference}&planId=${planId}`, // Ensure planId is passed back
@@ -84,7 +83,7 @@ export const createPaystackSubscription = functions.https.onCall(async (data, co
 
         if (response.status && response.data) {
             await db.collection("transactions").doc(reference).set({
-                userId, planId, email, 
+                userId, planId, email: emailToUse, 
                 amount: plan.amount, // Log the amount used for this transaction
                 planCode: plan.plan_code, // Log the plan code used
                 status: "pending_paystack_redirect",
@@ -98,7 +97,8 @@ export const createPaystackSubscription = functions.https.onCall(async (data, co
             };
         } else {
             console.error("Paystack transaction.initialize failed:", response.message, response.data);
-            throw new functions.https.HttpsError("internal", response.message || "Paystack initialization failed.");
+            const errorMessage = response.message || "Paystack initialization failed.";
+            throw new functions.https.HttpsError("internal", errorMessage);
         }
     } catch (error: any) {
         console.error("Error initializing Paystack transaction:", error);
@@ -109,7 +109,7 @@ export const createPaystackSubscription = functions.https.onCall(async (data, co
 
 export const paystackWebhookHandler = functions.https.onRequest(async (req, res) => {
     corsHandler(req, res, async () => {
-        if (!paystack || !PAYSTACK_WEBHOOK_SECRET) {
+        if (!paystack || !PAYSTACK_WEBHOOK_SECRET) { // Check if paystack SDK initialized and webhook secret exists
             console.error("Paystack SDK not initialized or webhook secret not configured. Cannot process webhook.");
             res.status(500).send("Server configuration error for webhooks.");
             return;
@@ -143,7 +143,6 @@ export const paystackWebhookHandler = functions.https.onRequest(async (req, res)
             }
             
             // Optional: Verify transaction with Paystack again here before granting access
-            // This ensures the webhook is not stale or replayed, and data is consistent.
             try {
                const verification = await paystack.transaction.verify({ reference });
                if(!verification.status || verification.data.status !== 'success') {
@@ -162,15 +161,13 @@ export const paystackWebhookHandler = functions.https.onRequest(async (req, res)
 
             const subscriptionData = {
                 userId, planId, 
-                email: customer?.email, // customer object might not always be present on all charge.success events
+                email: customer?.email, 
                 status: "active",
                 currentPeriodStart: admin.firestore.Timestamp.fromDate(new Date(actualPaidAt)),
-                // For simplicity, setting a 30-day period. For actual recurring subscriptions,
-                // you'd manage this based on Paystack's subscription events or plan details.
                 currentPeriodEnd: admin.firestore.Timestamp.fromDate(new Date(new Date(actualPaidAt).getTime() + 30 * 24 * 60 * 60 * 1000)), 
                 paystackReference: reference,
                 amountPaid: amount,
-                currency: currency,
+                currency: currency, // Added currency
                 lastEventTimestamp: admin.firestore.FieldValue.serverTimestamp(),
             };
 
@@ -193,4 +190,3 @@ export const paystackWebhookHandler = functions.https.onRequest(async (req, res)
         }
     });
 });
-
