@@ -6,9 +6,9 @@ import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Brain } from 'lucide-react';
+import { ArrowLeft, Brain, TrendingUp, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
-import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
+import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 
 export default function LearningModePage() {
   return (
@@ -30,12 +30,70 @@ export default function LearningModePage() {
                 <Brain className="mr-3 h-8 w-8 text-primary" />
                 Prompt Learning Mode
               </GlassCardTitle>
+              <GlassCardDescription className="mt-2 text-lg">
+                BrieflyAI is designed to get smarter and more helpful the more you use it.
+              </GlassCardDescription>
             </GlassCardHeader>
-            <GlassCardContent>
-              <p className="text-muted-foreground mb-4">
-                BrieflyAI adapts to you! Over time, it learns your prompting style and preferences to offer more personalized and accurate suggestions, making future prompt creation even easier.
+            <GlassCardContent className="space-y-6">
+              <div>
+                <h3 className="font-headline text-xl font-semibold text-foreground mb-2 flex items-center">
+                  <TrendingUp className="mr-2 h-5 w-5 text-accent" />
+                  Our Goal: Personalized Prompting
+                </h3>
+                <p className="text-muted-foreground">
+                  The "Prompt Learning Mode" is our commitment to making BrieflyAI adapt to your unique style and needs. 
+                  Over time, the system aims to learn from the types of prompts you generate, the refinements you make, 
+                  and the features you use most. This helps us tailor survey questions, refine prompt suggestions, 
+                  and ultimately make your prompt creation process faster and more effective.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-headline text-xl font-semibold text-foreground mb-2 flex items-center">
+                  <Lightbulb className="mr-2 h-5 w-5 text-accent" />
+                  How It Works (and Will Improve!)
+                </h3>
+                <p className="text-muted-foreground mb-2">
+                  Currently, BrieflyAI uses the immediate context you provide—your goal and survey answers—to generate and optimize prompts.
+                </p>
+                <p className="text-muted-foreground">
+                  <strong>Our Vision for Enhancement:</strong> As you continue to use BrieflyAI, especially features like the Prompt Vault and Refinement Hub, 
+                  we plan to develop capabilities that analyze broader patterns in your activity (e.g., common topics, preferred output styles, frequently used models). 
+                  This information will be used to:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground mt-2 pl-4 space-y-1">
+                  <li>Offer more relevant initial survey questions.</li>
+                  <li>Provide more insightful real-time suggestions.</li>
+                  <li>Suggest refinements that align better with your past successes.</li>
+                </ul>
+                 <p className="text-muted-foreground mt-3">
+                  This is an evolving aspect of BrieflyAI. The more you interact with the platform and its features, 
+                  the better the foundation we have for building these intelligent personalization layers.
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-headline text-xl font-semibold text-foreground mb-2">
+                  Your Role in Enhancing Learning
+                </h3>
+                <p className="text-muted-foreground">
+                  For now, the best way to "teach" BrieflyAI is by actively using it:
+                </p>
+                 <ul className="list-disc list-inside text-muted-foreground mt-2 pl-4 space-y-1">
+                  <li>Consistently use the <strong>Prompt Generator</strong> for various tasks.</li>
+                  <li>Save your most effective prompts to the <strong>Prompt Vault</strong>.</li>
+                  <li>Utilize the <strong>Refinement Hub</strong> to tweak and improve your prompts.</li>
+                  <li>Explore different <strong>Model-Specific Adaptations</strong> to see what works best for you.</li>
+                </ul>
+                <p className="text-muted-foreground mt-3">
+                   Your interactions provide valuable (anonymized, where appropriate) insights that will guide the development of a more intelligent and personalized BrieflyAI.
+                </p>
+              </div>
+              
+              <p className="text-md font-semibold text-primary text-center pt-4 border-t border-border/50">
+                Thank you for being part of BrieflyAI's journey to smarter prompting!
               </p>
-              <p className="text-lg font-semibold text-primary">Full feature coming soon!</p>
+
             </GlassCardContent>
           </GlassCard>
         </Container>
@@ -44,5 +102,3 @@ export default function LearningModePage() {
     </div>
   );
 }
-
-    
