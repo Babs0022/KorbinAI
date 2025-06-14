@@ -1,2 +1,2 @@
 
-declare module 'paystack-node';
+declare module "paystack-node";
