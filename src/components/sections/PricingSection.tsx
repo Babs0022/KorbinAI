@@ -11,25 +11,25 @@ import { useToast } from '@/hooks/use-toast';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { app } from '@/lib/firebase'; 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Tier {
   name: string;
-  planId: string; 
-  price: string;
+  planId: string; // This will be 'premium' or 'unlimited'
+  price: string; // Display price
   frequency: string;
   description: string;
   features: string[];
   cta: string;
-  href: string; 
+  href?: string; // For free tier link
   emphasized: boolean;
-  paystackPlanCode?: string; 
 }
 
 const pricingTiers: Tier[] = [
   {
     name: 'Free',
     planId: 'free',
-    price: '$0',
+    price: 'NGN 0',
     frequency: '/mo',
     description: 'Get started and experience the power of optimized prompts.',
     features: [
@@ -44,10 +44,8 @@ const pricingTiers: Tier[] = [
   },
   {
     name: 'Premium',
-    planId: 'premium',
-    // Replace with your actual Paystack Plan Code if you create one on Paystack
-    // paystackPlanCode: 'PLN_YOUR_PREMIUM_PLAN_CODE', 
-    price: '$10', // Placeholder, ensure your backend uses correct NGN amount or plan code
+    planId: 'premium', // This ID is used to call the backend
+    price: 'NGN 16,000',
     frequency: '/mo',
     description: 'For individuals who want to supercharge their AI interactions.',
     features: [
@@ -58,15 +56,12 @@ const pricingTiers: Tier[] = [
       'Priority email support',
     ],
     cta: 'Go Premium',
-    href: '/signup?plan=premium', 
     emphasized: true,
   },
   {
     name: 'Unlimited',
-    planId: 'unlimited',
-    // Replace with your actual Paystack Plan Code if you create one on Paystack
-    // paystackPlanCode: 'PLN_YOUR_UNLIMITED_PLAN_CODE', 
-    price: '$35', // Placeholder, ensure your backend uses correct NGN amount or plan code
+    planId: 'unlimited', // This ID is used to call the backend
+    price: 'NGN 56,000',
     frequency: '/mo',
     description: 'For power users and teams who need unlimited prompting capabilities.',
     features: [
@@ -76,7 +71,6 @@ const pricingTiers: Tier[] = [
       'Dedicated support channel',
     ],
     cta: 'Go Unlimited',
-    href: '/signup?plan=unlimited', 
     emphasized: false,
   },
 ];
@@ -84,7 +78,8 @@ const pricingTiers: Tier[] = [
 export function PricingSection() {
   const { currentUser } = useAuth();
   const { toast } = useToast();
-  const functions = getFunctions(app); // Initialize Firebase Functions
+  const functions = getFunctions(app);
+  const router = useRouter();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
   const handleSubscription = async (tier: Tier) => {
@@ -94,39 +89,31 @@ export function PricingSection() {
         description: 'Please log in or sign up to subscribe.',
         variant: 'destructive',
       });
-      // Consider redirecting to login: router.push('/login');
+      router.push('/login?redirect=/'); // Redirect to login, then back to home/pricing
       return;
     }
 
     if (tier.planId === 'free') {
-      // Free plan usually just involves signing up or is the default state.
-      // If already signed up, user is likely on free tier or needs to go to dashboard.
-      // You might want to redirect to dashboard or handle this case differently.
-      toast({ title: 'Free Plan', description: 'You are currently on the free plan.'});
+      // User is already on free or can just proceed to dashboard if logged in.
+      router.push('/dashboard');
       return;
     }
     
     setLoadingPlan(tier.planId);
 
     try {
-      // Name of the Cloud Function you will create
       const createSubscriptionFunction = httpsCallable(functions, 'createPaystackSubscription');
       
       const result: any = await createSubscriptionFunction({ 
-        userId: currentUser.uid, 
-        email: currentUser.email, // Make sure user.email is available and verified
+        // userId is derived from context.auth in the Cloud Function
+        email: currentUser.email, 
         planId: tier.planId, 
-        // If you are using Paystack's "Plans", pass tier.paystackPlanCode
-        // paystackPlanCode: tier.paystackPlanCode,
-        // Otherwise, your backend will use a predefined amount for the planId
       });
 
       if (result.data && result.data.authorization_url) {
-        // Redirect user to Paystack's checkout page
         window.location.href = result.data.authorization_url;
       } else {
-        // Handle cases where authorization_url is not returned
-        throw new Error(result.data.error || 'Could not initiate payment. Please try again.');
+        throw new Error(result.data?.error || 'Could not initiate payment. Please try again.');
       }
     } catch (error: any) {
       console.error('Subscription Error:', error);
@@ -148,7 +135,7 @@ export function PricingSection() {
             Flexible Pricing for Everyone
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Choose the plan that’s right for you. No hidden fees, cancel anytime.
+            Choose the plan that’s right for you. All prices in Nigerian Naira (NGN). No hidden fees, cancel anytime.
           </p>
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
@@ -176,7 +163,7 @@ export function PricingSection() {
                 </ul>
               </GlassCardContent>
               <GlassCardFooter className="mt-6">
-                {tier.planId === 'free' ? (
+                {tier.planId === 'free' && tier.href ? (
                    <Button asChild size="lg" className={`w-full ${tier.emphasized ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-accent hover:bg-accent/90 text-accent-foreground'}`}>
                     <Link href={tier.href}>{tier.cta}</Link>
                   </Button>
@@ -184,7 +171,7 @@ export function PricingSection() {
                   <Button
                     size="lg"
                     onClick={() => handleSubscription(tier)}
-                    disabled={loadingPlan === tier.planId || !currentUser}
+                    disabled={loadingPlan === tier.planId}
                     className={`w-full ${tier.emphasized ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-accent hover:bg-accent/90 text-accent-foreground'}`}
                   >
                     {loadingPlan === tier.planId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : tier.cta}
@@ -201,3 +188,4 @@ export function PricingSection() {
     </section>
   );
 }
+
