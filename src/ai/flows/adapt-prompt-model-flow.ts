@@ -1,0 +1,105 @@
+
+'use server';
+/**
+ * @fileOverview A flow to adapt a given prompt for a specific AI model.
+ *
+ * - adaptPromptForModel - A function that calls the flow.
+ * - AdaptPromptForModelInput - The input type for the flow.
+ * - AdaptPromptForModelOutput - The return type for the flow.
+ * - AIModelEnumSchema - Zod schema for AI model selection.
+ */
+
+import {ai} from '@/ai/genkit';
+import {z} from 'genkit';
+
+export const AIModelEnumSchema = z.enum([
+  "gpt-4",
+  "gpt-3.5-turbo",
+  "gemini-1.5-pro",
+  "gemini-1.0-pro",
+  "claude-3-opus",
+  "claude-3-sonnet",
+  "dall-e-3",
+  "midjourney",
+  "stable-diffusion"
+]).describe("The target AI model for which the prompt should be adapted.");
+export type AIModelEnum = z.infer<typeof AIModelEnumSchema>;
+
+const AdaptPromptForModelInputSchema = z.object({
+  originalPrompt: z.string().describe('The initial prompt text provided by the user.'),
+  targetModel: AIModelEnumSchema,
+});
+export type AdaptPromptForModelInput = z.infer<typeof AdaptPromptForModelInputSchema>;
+
+const AdaptPromptForModelOutputSchema = z.object({
+  adaptedPrompt: z.string().describe('The prompt text adapted for the specified AI model.'),
+  adaptationTips: z.array(z.string()).describe('An array of tips explaining the adaptations made or general advice for the target model.'),
+  modelType: z.enum(["text", "image", "unknown"]).describe("The general type of the target model (text or image generation).")
+});
+export type AdaptPromptForModelOutput = z.infer<typeof AdaptPromptForModelOutputSchema>;
+
+export async function adaptPromptForModel(input: AdaptPromptForModelInput): Promise<AdaptPromptForModelOutput> {
+  return adaptPromptForModelFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'adaptPromptForModelPrompt',
+  input: {schema: AdaptPromptForModelInputSchema},
+  output: {schema: AdaptPromptForModelOutputSchema},
+  prompt: `You are an expert AI Prompt Engineer. Your task is to adapt the "Original Prompt" to be highly effective for the specified "Target AI Model".
+Additionally, provide 2-4 concise "Adaptation Tips" that explain the key changes made or offer general advice for using this type of prompt with the target model.
+Determine if the target model is primarily for 'text' generation or 'image' generation and set the 'modelType' field accordingly.
+
+Original Prompt:
+"{{{originalPrompt}}}"
+
+Target AI Model: "{{targetModel}}"
+
+Consider these model-specific nuances:
+- **GPT-4 / GPT-3.5-Turbo / Gemini / Claude (Text Models):**
+  - Clarity and Specificity: Ensure instructions are unambiguous.
+  - Context: Provide sufficient background if needed.
+  - Persona: Define a role for the AI if it helps (e.g., "Act as an expert marketer...").
+  - Format: Specify the desired output format (e.g., list, paragraph, JSON).
+  - Constraints: Mention length, topics to avoid, style (e.g., formal, casual).
+  - For complex tasks, break them down into steps.
+- **DALL-E 3 (Image Model):**
+  - Descriptive Language: Use vivid adjectives and nouns.
+  - Scene Details: Include objects, characters, setting, atmosphere.
+  - Artistic Style: Suggest styles (e.g., "photorealistic", "impressionist painting", "pixel art").
+  - Camera View/Angle: (e.g., "close-up", "wide-angle shot").
+  - Lighting: (e.g., "soft morning light", "dramatic studio lighting").
+  - DALL-E 3 understands natural language well, so full sentences are effective. Avoid overly complex Midjourney-style keyword lists.
+- **Midjourney (Image Model):**
+  - Keywords and Phrases: Often relies on comma-separated keywords.
+  - Artistic Styles & Mediums: (e.g., "impressionism", "cyberpunk", "watercolor").
+  - Influences: Mention specific artists or art styles.
+  - Parameters: Use Midjourney parameters like "--ar 16:9" (aspect ratio), "--v 6.0" (version), "--style raw".
+  - Subject Emphasis: Use "::" for weighting, e.g., "cat::2 dog::1".
+- **Stable Diffusion (Image Model):**
+  - Detailed Descriptions: Similar to DALL-E 3 but can be more keyword-driven.
+  - Negative Prompts: Often benefits from specifying what *not* to include.
+  - Artist Names & Styles: Effective for guiding the output.
+  - Technical Terms: (e.g., "8k", "UHD", "trending on ArtStation").
+
+If the Original Prompt seems fundamentally unsuited for the Target AI Model's primary function (e.g., a text-generation goal for an image model), state this in the 'adaptedPrompt' and explain why in the 'adaptationTips'. For example, if the original prompt is "Write a poem" and the target is DALL-E 3, the adapted prompt could be "The original prompt 'Write a poem' is for text generation. For DALL-E 3 (an image model), you might want to generate an image *inspired by* a poem. What imagery would you like to see?".
+
+Return the adapted prompt and 2-4 unique, actionable tips.
+Determine the 'modelType' based on the 'targetModel':
+- gpt-4, gpt-3.5-turbo, gemini-1.5-pro, gemini-1.0-pro, claude-3-opus, claude-3-sonnet are 'text' models.
+- dall-e-3, midjourney, stable-diffusion are 'image' models.
+- If unsure, use 'unknown'.
+`,
+});
+
+const adaptPromptForModelFlow = ai.defineFlow(
+  {
+    name: 'adaptPromptForModelFlow',
+    inputSchema: AdaptPromptForModelInputSchema,
+    outputSchema: AdaptPromptForModelOutputSchema,
+  },
+  async (input) => {
+    const {output} = await prompt(input);
+    return output!;
+  }
+);
