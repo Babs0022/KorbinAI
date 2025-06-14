@@ -3,9 +3,11 @@
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
-import { CheckCircle, Copy, Edit3, Download, Save, AlertTriangle, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { CheckCircle, Copy, Edit3, Download, Save, AlertTriangle, Loader2, Tag } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,31 +20,42 @@ interface OptimizedPromptCardProps {
 }
 
 export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: OptimizedPromptCardProps) {
-  const [editedPrompt, setEditedPrompt] = useState(optimizedPrompt);
+  const [promptName, setPromptName] = useState('');
+  const [promptTags, setPromptTags] = useState('');
+  const [editedPromptText, setEditedPromptText] = useState(optimizedPrompt);
   const [isEditing, setIsEditing] = useState(false);
   const [isSavingToHistory, setIsSavingToHistory] = useState(false);
   const { toast } = useToast();
   const { currentUser } = useAuth();
 
+  useEffect(() => {
+    setPromptName(originalGoal.substring(0, 50) + (originalGoal.length > 50 ? '...' : ''));
+    setEditedPromptText(optimizedPrompt);
+  }, [originalGoal, optimizedPrompt]);
+
   const handleCopy = () => {
-    navigator.clipboard.writeText(editedPrompt);
+    navigator.clipboard.writeText(editedPromptText);
     toast({ title: "Prompt Copied!", description: "The optimized prompt has been copied to your clipboard." });
   };
 
   const handleSaveEdit = () => {
+    // No longer saving to a backend here, just applying to local state
+    // The main "Save to History" will handle persistence
     toast({ title: "Changes Applied!", description: "Your edits are applied. Click 'Save to History' to persist." });
     setIsEditing(false);
   };
   
   const handleExport = () => {
-    const blob = new Blob([editedPrompt], { type: 'text/plain;charset=utf-8' });
+    const content = `Name: ${promptName}\nGoal: ${originalGoal}\nTags: ${promptTags}\n\nOptimized Prompt:\n${editedPromptText}`;
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `brieflyai_prompt_${originalGoal.substring(0,20).replace(/\s+/g, '_')}.txt`;
+    const safeName = promptName.substring(0,20).replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'prompt';
+    link.download = `brieflyai_${safeName}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast({ title: "Prompt Exported!", description: "The prompt has been downloaded." });
+    toast({ title: "Prompt Exported!", description: "The prompt details have been downloaded." });
   };
 
   const handleSaveToHistory = async () => {
@@ -50,18 +63,26 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: Optimized
       toast({ title: "Login Required", description: "Please log in to save prompts to your history.", variant: "destructive" });
       return;
     }
+    if (!promptName.trim()) {
+      toast({ title: "Prompt Name Required", description: "Please enter a name for your prompt.", variant: "destructive" });
+      return;
+    }
+
     setIsSavingToHistory(true);
     try {
-      const newPromptEntry: Omit<PromptHistory, 'id' | 'timestamp'> & { timestamp: any } = { // Allow serverTimestamp type
+      const tagsArray = promptTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+      
+      const newPromptEntry: Omit<PromptHistory, 'id' | 'timestamp'> & { timestamp: any } = {
+        name: promptName,
         goal: originalGoal,
-        optimizedPrompt: editedPrompt, // Save the potentially edited prompt
-        timestamp: serverTimestamp(), // Use Firestore server timestamp for ordering
-        // tags: [] // Add tags functionality later if needed
+        optimizedPrompt: editedPromptText, 
+        tags: tagsArray,
+        timestamp: serverTimestamp(),
       };
 
       await addDoc(collection(db, `users/${currentUser.uid}/promptHistory`), newPromptEntry);
       
-      toast({ title: "Prompt Saved!", description: "This prompt has been saved to your cloud history." });
+      toast({ title: "Prompt Saved!", description: `"${promptName}" has been saved to your cloud history.` });
     } catch (error) {
       console.error("Error saving to Firestore:", error);
       toast({ title: "Save Failed", description: "Could not save prompt to cloud history. Please try again.", variant: "destructive" });
@@ -99,19 +120,45 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: Optimized
       <GlassCardContent>
         {isEditing ? (
           <Textarea
-            value={editedPrompt}
-            onChange={(e) => setEditedPrompt(e.target.value)}
+            value={editedPromptText}
+            onChange={(e) => setEditedPromptText(e.target.value)}
             rows={10}
             className="text-sm leading-relaxed font-code bg-muted/50 p-4 rounded-md border focus:ring-accent"
+            aria-label="Editable optimized prompt"
           />
         ) : (
           <div className="text-sm leading-relaxed font-code bg-muted/50 p-4 rounded-md border whitespace-pre-wrap min-h-[150px]">
-            {editedPrompt}
+            {editedPromptText}
           </div>
         )}
+         <div className="mt-4 space-y-4">
+            <div>
+              <Label htmlFor="promptName" className="text-sm font-medium">Prompt Name</Label>
+              <Input 
+                id="promptName" 
+                value={promptName} 
+                onChange={(e) => setPromptName(e.target.value)} 
+                placeholder="Enter a descriptive name" 
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="promptTags" className="text-sm font-medium flex items-center">
+                <Tag className="mr-2 h-4 w-4 text-muted-foreground"/>
+                Tags (comma-separated)
+              </Label>
+              <Input 
+                id="promptTags" 
+                value={promptTags} 
+                onChange={(e) => setPromptTags(e.target.value)} 
+                placeholder="e.g., marketing, email, saas" 
+                className="mt-1"
+              />
+            </div>
+          </div>
         <div className="mt-6 flex flex-wrap gap-2 justify-end">
           <Button variant="outline" onClick={handleCopy} size="sm">
-            <Copy className="mr-2 h-4 w-4" /> Copy
+            <Copy className="mr-2 h-4 w-4" /> Copy Prompt Text
           </Button>
           {isEditing ? (
             <Button variant="default" onClick={handleSaveEdit} size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">
@@ -119,15 +166,21 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: Optimized
             </Button>
           ) : (
             <Button variant="outline" onClick={() => setIsEditing(true)} size="sm">
-              <Edit3 className="mr-2 h-4 w-4" /> Edit
+              <Edit3 className="mr-2 h-4 w-4" /> Edit Prompt Text
             </Button>
           )}
-          <Button variant="outline" onClick={handleSaveToHistory} size="sm" disabled={isSavingToHistory || !currentUser}>
+          <Button 
+            variant="default" // Changed to default to make it more prominent
+            onClick={handleSaveToHistory} 
+            size="sm" 
+            disabled={isSavingToHistory || !currentUser || !promptName.trim()}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
             {isSavingToHistory ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Save to History
           </Button>
           <Button variant="outline" onClick={handleExport} size="sm">
-            <Download className="mr-2 h-4 w-4" /> Export
+            <Download className="mr-2 h-4 w-4" /> Export Details
           </Button>
         </div>
       </GlassCardContent>

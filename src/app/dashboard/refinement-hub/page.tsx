@@ -8,15 +8,16 @@ import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input'; // Added Input for name and tags
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
-import { Loader2, Save, Edit3, ArrowLeft, Settings2, AlertTriangle, Info } from 'lucide-react';
+import { Loader2, Save, Edit3, ArrowLeft, Settings2, AlertTriangle, Info, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs, doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem'; // Assuming this type is exported
+import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem'; 
 
 export default function RefinementHubPage() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -27,8 +28,10 @@ export default function RefinementHubPage() {
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
   const [selectedPrompt, setSelectedPrompt] = useState<PromptHistory | null>(null);
   
+  const [editableName, setEditableName] = useState('');
   const [editableGoal, setEditableGoal] = useState('');
   const [editableOptimizedPrompt, setEditableOptimizedPrompt] = useState('');
+  const [editableTags, setEditableTags] = useState(''); // Comma-separated string
   const [isSaving, setIsSaving] = useState(false);
 
   const fetchPrompts = useCallback(async () => {
@@ -51,6 +54,7 @@ export default function RefinementHubPage() {
         }
         return {
           id: docSnap.id,
+          name: data.name || data.goal, // Fallback for older entries
           goal: data.goal,
           optimizedPrompt: data.optimizedPrompt,
           timestamp: timestampStr,
@@ -77,8 +81,10 @@ export default function RefinementHubPage() {
 
   const handleSelectPrompt = (prompt: PromptHistory) => {
     setSelectedPrompt(prompt);
+    setEditableName(prompt.name);
     setEditableGoal(prompt.goal);
     setEditableOptimizedPrompt(prompt.optimizedPrompt);
+    setEditableTags(prompt.tags?.join(', ') || '');
   };
 
   const handleSaveChanges = async (event: FormEvent) => {
@@ -87,23 +93,35 @@ export default function RefinementHubPage() {
       toast({ title: "Error", description: "No prompt selected or user not logged in.", variant: "destructive" });
       return;
     }
-    if (!editableGoal.trim() || !editableOptimizedPrompt.trim()) {
-        toast({ title: "Fields Required", description: "Goal and Optimized Prompt cannot be empty.", variant: "destructive" });
+    if (!editableName.trim() || !editableGoal.trim() || !editableOptimizedPrompt.trim()) {
+        toast({ title: "Fields Required", description: "Name, Goal, and Optimized Prompt cannot be empty.", variant: "destructive" });
         return;
     }
 
     setIsSaving(true);
     try {
+      const tagsArray = editableTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
       const promptRef = doc(db, `users/${currentUser.uid}/promptHistory`, selectedPrompt.id);
+      
       await updateDoc(promptRef, {
+        name: editableName,
         goal: editableGoal,
         optimizedPrompt: editableOptimizedPrompt,
+        tags: tagsArray,
         timestamp: serverTimestamp() // Update timestamp to reflect refinement
       });
+      
       toast({ title: "Prompt Refined!", description: "Your changes have been saved." });
-      // Refresh the list or update the selected prompt in the local state
+      // Refresh the list and update the selected prompt in the local state
       fetchPrompts(); 
-      setSelectedPrompt(prev => prev ? {...prev, goal: editableGoal, optimizedPrompt: editableOptimizedPrompt, timestamp: new Date().toISOString()} : null);
+      setSelectedPrompt(prev => prev ? {
+        ...prev, 
+        name: editableName, 
+        goal: editableGoal, 
+        optimizedPrompt: editableOptimizedPrompt, 
+        tags: tagsArray,
+        timestamp: new Date().toISOString()
+      } : null);
     } catch (error) {
       console.error("Error saving refined prompt:", error);
       toast({ title: "Save Failed", description: "Could not save your refined prompt. Please try again.", variant: "destructive" });
@@ -152,7 +170,7 @@ export default function RefinementHubPage() {
                 <GlassCardHeader>
                   <GlassCardTitle className="font-headline text-xl">Select Prompt to Refine</GlassCardTitle>
                 </GlassCardHeader>
-                <GlassCardContent className="max-h-[60vh] overflow-y-auto">
+                <GlassCardContent className="max-h-[70vh] overflow-y-auto">
                   {isLoadingPrompts ? (
                     <div className="text-center py-10">
                       <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary mb-2" />
@@ -169,7 +187,7 @@ export default function RefinementHubPage() {
                                 ? 'bg-primary/10 border-primary ring-1 ring-primary' 
                                 : 'bg-muted/30 hover:bg-muted/70 border-transparent'}`}
                           >
-                            <p className="font-medium text-sm text-foreground truncate" title={p.goal}>{p.goal}</p>
+                            <p className="font-medium text-sm text-foreground truncate" title={p.name}>{p.name}</p>
                             <p className="text-xs text-muted-foreground">
                               Last updated: {new Date(p.timestamp).toLocaleDateString()}
                             </p>
@@ -190,15 +208,25 @@ export default function RefinementHubPage() {
                 <GlassCardHeader>
                   <GlassCardTitle className="font-headline text-xl flex items-center">
                     <Settings2 className="mr-3 h-6 w-6 text-primary" />
-                    Prompt Refinement Hub
+                    Prompt Refinement Editor
                   </GlassCardTitle>
                   <GlassCardDescription>
-                    Select a prompt from the list to directly edit its goal or optimized text. AI-powered suggestions are coming soon!
+                    Select a prompt to edit its name, goal, optimized text, and tags. AI suggestions coming soon!
                   </GlassCardDescription>
                 </GlassCardHeader>
                 <GlassCardContent>
                   {selectedPrompt ? (
                     <form onSubmit={handleSaveChanges} className="space-y-6">
+                      <div>
+                        <Label htmlFor="editableName" className="text-base font-semibold">Prompt Name</Label>
+                        <Input
+                          id="editableName"
+                          value={editableName}
+                          onChange={(e) => setEditableName(e.target.value)}
+                          className="mt-1 text-sm"
+                          placeholder="Enter a descriptive name"
+                        />
+                      </div>
                       <div>
                         <Label htmlFor="editableGoal" className="text-base font-semibold">Original Goal</Label>
                         <Textarea
@@ -221,10 +249,22 @@ export default function RefinementHubPage() {
                           placeholder="Your AI-ready prompt text goes here..."
                         />
                       </div>
-                      <div className="flex justify-between items-center">
-                         <div className="flex items-start space-x-2 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-xs text-blue-700 dark:text-blue-300 w-fit">
+                      <div>
+                        <Label htmlFor="editableTags" className="text-base font-semibold flex items-center">
+                           <Tag className="mr-2 h-4 w-4 text-muted-foreground"/> Tags (comma-separated)
+                        </Label>
+                        <Input
+                          id="editableTags"
+                          value={editableTags}
+                          onChange={(e) => setEditableTags(e.target.value)}
+                          className="mt-1 text-sm"
+                          placeholder="e.g., marketing, email, saas"
+                        />
+                      </div>
+                      <div className="flex justify-between items-center pt-2">
+                         <div className="flex items-start space-x-2 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-xs text-blue-700 dark:text-blue-300 w-fit max-w-[calc(100%-150px)]">
                             <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                            <p><strong>Coming Soon:</strong> AI-powered suggestions for tone, specificity, and more!</p>
+                            <p><strong>Coming Soon:</strong> AI-powered suggestions for further refinement!</p>
                         </div>
                         <Button type="submit" disabled={isSaving} className="bg-primary text-primary-foreground hover:bg-primary/90">
                           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -236,7 +276,7 @@ export default function RefinementHubPage() {
                     <div className="text-center py-16">
                       <Edit3 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                       <p className="text-lg font-medium text-foreground">Select a prompt from the left panel to start refining.</p>
-                      <p className="text-muted-foreground mt-1">Make direct edits to your saved goals and prompts.</p>
+                      <p className="text-muted-foreground mt-1">Make direct edits to your saved prompts.</p>
                     </div>
                   )}
                 </GlassCardContent>

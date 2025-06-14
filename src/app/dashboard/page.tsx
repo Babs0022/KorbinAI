@@ -7,7 +7,7 @@ import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import { PromptHistoryItem, type PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, CheckCheck, Maximize, AlertTriangle } from 'lucide-react';
+import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, CheckCheck, Maximize, AlertTriangle, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import {
@@ -35,10 +35,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp, limit,getCountFromServer } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp, limit, getCountFromServer } from 'firebase/firestore';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCard';
 import Container from '@/components/layout/Container';
+import { Badge } from '@/components/ui/badge';
 
 const features: FeatureInfo[] = [
   {
@@ -162,6 +163,7 @@ export default function DashboardPage() {
 
         return {
           id: docSnap.id,
+          name: data.name || data.goal, // Fallback to goal if name is missing for older entries
           goal: data.goal,
           optimizedPrompt: data.optimizedPrompt,
           timestamp: timestampStr,
@@ -211,22 +213,28 @@ export default function DashboardPage() {
   };
 
   const handleEditPrompt = (prompt: PromptHistory) => {
-    const queryParams = new URLSearchParams({ goal: prompt.goal, optimizedPrompt: prompt.optimizedPrompt });
+    // Pass name, goal, optimizedPrompt, and tags to the create page
+    const queryParams = new URLSearchParams({
+      name: prompt.name,
+      goal: prompt.goal,
+      optimizedPrompt: prompt.optimizedPrompt,
+      tags: prompt.tags?.join(',') || ''
+    });
     router.push(`/create-prompt?${queryParams.toString()}`);
-    toast({ title: "Editing Prompt", description: `Loading "${prompt.goal.substring(0,30)}..." for editing.`});
+    toast({ title: "Loading Prompt", description: `Loading "${prompt.name}" for a new session.`});
   };
 
   const handleExportPrompt = (prompt: PromptHistory) => {
-    const content = `Original Goal:\n${prompt.goal}\n\nOptimized Prompt:\n${prompt.optimizedPrompt}`;
+    const content = `Name: ${prompt.name}\nGoal: ${prompt.goal}\nTags: ${prompt.tags?.join(', ') || 'N/A'}\n\nOptimized Prompt:\n${prompt.optimizedPrompt}`;
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    const safeGoal = prompt.goal.substring(0,20).replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    link.download = `brieflyai_prompt_${safeGoal}.txt`;
+    const safeName = prompt.name.substring(0,20).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    link.download = `brieflyai_prompt_${safeName}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast({ title: "Prompt Exported", description: "The prompt has been downloaded as a .txt file." });
+    toast({ title: "Prompt Exported", description: "The prompt details have been downloaded as a .txt file." });
   };
   
   const openDeleteDialog = (prompt: PromptHistory) => {
@@ -239,8 +247,8 @@ export default function DashboardPage() {
       await deleteDoc(doc(db, `users/${currentUser.uid}/promptHistory`, promptToDelete.id));
       // Optimistically update UI or re-fetch
       setRecentPrompts(prevPrompts => prevPrompts.filter(p => p.id !== promptToDelete.id));
-      setTotalPromptsCount(prevCount => prevCount - 1);
-      toast({ title: "Prompt Deleted", description: `Prompt "${promptToDelete.goal.substring(0,30)}..." has been deleted.`});
+      setTotalPromptsCount(prevCount => prevCount - 1); // Decrement total count
+      toast({ title: "Prompt Deleted", description: `Prompt "${promptToDelete.name}" has been deleted.`});
     } catch (error) {
       console.error("Error deleting prompt from Firestore:", error);
       toast({ title: "Error Deleting Prompt", description: "Could not delete prompt.", variant: "destructive"});
@@ -249,10 +257,15 @@ export default function DashboardPage() {
     }
   };
 
-  const filteredRecentPrompts = recentPrompts.filter(prompt => 
-    prompt.goal.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (prompt.optimizedPrompt && prompt.optimizedPrompt.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredRecentPrompts = recentPrompts.filter(prompt => {
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return (
+      prompt.name.toLowerCase().includes(lowerSearchTerm) ||
+      prompt.goal.toLowerCase().includes(lowerSearchTerm) ||
+      (prompt.optimizedPrompt && prompt.optimizedPrompt.toLowerCase().includes(lowerSearchTerm)) ||
+      (prompt.tags && prompt.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm)))
+    );
+  });
   
   if (authLoading || isLoadingData) { 
     return (
@@ -322,7 +335,7 @@ export default function DashboardPage() {
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input 
                         type="search" 
-                        placeholder="Search recent prompts..." 
+                        placeholder="Search recent prompts by name, goal, tags..." 
                         className="pl-10"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -345,7 +358,7 @@ export default function DashboardPage() {
                         onView={handleViewPrompt}
                         onEdit={handleEditPrompt}
                         onExport={handleExportPrompt}
-                        onDelete={() => openDeleteDialog(prompt)} 
+                        onDelete={() => openDeleteDialog(prompt)} // Pass prompt itself
                       />
                     ))}
                   </div>
@@ -393,7 +406,7 @@ export default function DashboardPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. Prompt: &quot;{promptToDelete.goal.substring(0,50)}...&quot; will be deleted.
+                This action cannot be undone. Prompt &quot;{promptToDelete.name}&quot; will be deleted.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -410,8 +423,8 @@ export default function DashboardPage() {
         <Dialog open={!!viewingPrompt} onOpenChange={(isOpen) => { if (!isOpen) setViewingPrompt(null); }}>
           <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-headline">View Prompt Details</DialogTitle>
-              <DialogDescription>Review your original goal and optimized prompt.</DialogDescription>
+              <DialogTitle className="text-2xl font-headline">{viewingPrompt.name}</DialogTitle>
+              <DialogDescription>Review your original goal, optimized prompt, and tags.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4 overflow-y-auto px-1 flex-grow">
               <div>
@@ -429,6 +442,14 @@ export default function DashboardPage() {
                 </div>
                 <Textarea id="viewOptimizedPrompt" value={viewingPrompt.optimizedPrompt} readOnly rows={10} className="text-sm leading-relaxed font-code bg-muted/50 border whitespace-pre-wrap" />
               </div>
+               {viewingPrompt.tags && viewingPrompt.tags.length > 0 && (
+                <div>
+                  <Label className="text-sm font-semibold text-foreground flex items-center"><Tag className="mr-2 h-4 w-4"/>Tags</Label>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {viewingPrompt.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+                  </div>
+                </div>
+              )}
               <div>
                 <Label className="text-sm font-semibold text-foreground">Created</Label>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -445,5 +466,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

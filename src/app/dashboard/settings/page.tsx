@@ -17,7 +17,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem';
-import Link from 'next/link'; // Added Link import
+import Link from 'next/link'; 
 
 interface UserSettings {
   emailNotifications: boolean;
@@ -44,7 +44,7 @@ export default function SettingsPage() {
   const fetchSettings = useCallback(async () => {
     if (!currentUser) {
       setIsLoadingSettings(false);
-      setSettings(defaultSettings); // Reset to defaults if user logs out
+      setSettings(defaultSettings); 
       return;
     }
     setIsLoadingSettings(true);
@@ -54,9 +54,7 @@ export default function SettingsPage() {
       if (docSnap.exists()) {
         setSettings(docSnap.data() as UserSettings);
       } else {
-        // No settings saved yet, use defaults (and optionally save them)
         setSettings(defaultSettings);
-        // await setDoc(settingsDocRef, defaultSettings); // Optionally save defaults immediately
       }
     } catch (error) {
       console.error("Error loading settings:", error);
@@ -114,8 +112,10 @@ export default function SettingsPage() {
         } else if (typeof data.timestamp === 'object' && data.timestamp.seconds) {
           timestampStr = new Timestamp(data.timestamp.seconds, data.timestamp.nanoseconds).toDate().toISOString();
         }
+        // Ensure all fields from PromptHistory are included
         return {
           id: docSnap.id,
+          name: data.name || data.goal, // Fallback for older entries
           goal: data.goal,
           optimizedPrompt: data.optimizedPrompt,
           timestamp: timestampStr,
@@ -281,5 +281,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
