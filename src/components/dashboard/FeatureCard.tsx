@@ -4,15 +4,15 @@
 import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, type LucideIcon } from 'lucide-react';
+import { ArrowRight, type LucideIcon, Users, Settings2 } from 'lucide-react'; // Added Users, Settings2
 import { cn } from '@/lib/utils';
 
 export interface FeatureInfo {
   title: string;
   description: string;
   href: string;
-  icon: LucideIcon;
-  enabled: boolean; // To potentially disable cards for features not yet launched
+  icon: LucideIcon | React.ElementType; // Allow React.ElementType for custom icons if needed
+  enabled: boolean; 
 }
 
 interface FeatureCardProps {
