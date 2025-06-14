@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, type LucideIcon, Users, Settings2 } from 'lucide-react'; // Added Users, Settings2
+import { ArrowRight, type LucideIcon } from 'lucide-react'; 
 import { cn } from '@/lib/utils';
 
 export interface FeatureInfo {
@@ -56,5 +56,3 @@ export function FeatureCard({ feature }: FeatureCardProps) {
     </GlassCard>
   );
 }
-
-    

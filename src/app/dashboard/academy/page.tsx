@@ -6,7 +6,7 @@ import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, School, BookOpen, Lightbulb, CheckSquare } from 'lucide-react';
+import { ArrowLeft, School, BookOpen, Lightbulb, CheckSquare, Users, Settings2 } from 'lucide-react';
 import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 
@@ -31,12 +31,12 @@ const keyTopics: AcademyTopic[] = [
   {
     title: "Crafting Effective Personas",
     description: "Explore techniques for assigning roles to your AI to guide its tone, style, and knowledge base.",
-    icon: Users, // Placeholder, consider a more fitting icon
+    icon: Users,
   },
   {
     title: "Iterative Prompt Refinement",
     description: "Master the process of testing and tweaking your prompts to achieve optimal results.",
-    icon: Settings2, // Placeholder
+    icon: Settings2,
   },
 ];
 
@@ -146,5 +146,3 @@ export default function AcademyPage() {
     </div>
   );
 }
-
-    
