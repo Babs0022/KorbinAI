@@ -6,13 +6,13 @@ import { Logo } from '@/components/shared/Logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Loader2, UserCircle, LayoutGrid, LogOut } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation'; // Added useRouter
+import { usePathname, useRouter } from 'next/navigation'; 
 import { cn } from '@/lib/utils';
-import React, { useState, useEffect } from 'react'; // Added useState, useEffect
-import { useAuth } from '@/contexts/AuthContext'; // Added useAuth
-import { signOut } from 'firebase/auth'; // Added signOut
-import { auth } from '@/lib/firebase'; // Added auth
-import { useToast } from '@/hooks/use-toast'; // Added useToast
+import React, { useState, useEffect } from 'react'; 
+import { useAuth } from '@/contexts/AuthContext'; 
+import { signOut } from 'firebase/auth'; 
+import { auth } from '@/lib/firebase'; 
+import { useToast } from '@/hooks/use-toast'; 
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,18 +24,18 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navLinks = [
-  { href: '/#how-it-works', label: 'How It Works' },
-  { href: '/#use-cases', label: 'Use Cases' },
+  { href: '/#features', label: 'Features' },
+  { href: '/#solutions', label: 'Solutions' },
   { href: '/#pricing', label: 'Pricing' },
-  { href: '/#about-founder', label: 'About Founder' },
+  { href: '/#faq', label: 'FAQ' },
   { href: 'https://discord.gg/your-discord-invite', label: 'Join Discord', external: true },
 ];
 
 export function MainHeader() {
   const pathname = usePathname();
-  const router = useRouter(); // Added router
-  const { toast } = useToast(); // Added toast
-  const { currentUser, loading: authLoading, displayName, avatarUrl, userInitials } = useAuth(); // Auth context
+  const router = useRouter(); 
+  const { toast } = useToast(); 
+  const { currentUser, loading: authLoading, displayName, avatarUrl, userInitials, displayEmail } = useAuth(); 
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
@@ -53,7 +53,7 @@ export function MainHeader() {
     try {
       await signOut(auth);
       toast({ title: "Logged Out", description: "You have been successfully logged out."});
-      router.push('/'); // Redirect to landing page after logout
+      router.push('/'); 
     } catch (error) {
       console.error("Logout error:", error);
       toast({ title: "Logout Failed", description: "Could not log out. Please try again.", variant: "destructive"});
@@ -69,11 +69,11 @@ export function MainHeader() {
         className={cn(
           "text-sm font-medium transition-colors",
           isMobile ? "w-full justify-start" : "",
-          isScrolled || authLoading || currentUser // Apply foreground text if scrolled, loading, or user is logged in
+           (isScrolled || authLoading || currentUser || pathname !== '/') 
             ? "text-foreground hover:text-foreground/80" 
             : (pathname === link.href && !link.external 
                 ? "text-primary hover:text-primary/80" 
-                : "text-muted-foreground hover:text-primary") 
+                : "text-indigo-100 hover:text-white") 
         )}
         onClick={() => isMobile && closeMobileMenu()}
       >
@@ -91,12 +91,12 @@ export function MainHeader() {
     <header
       className={cn(
         "sticky top-0 z-50 w-full border-b border-transparent transition-all duration-300",
-        isScrolled || currentUser ? "border-border/40 bg-background/80 backdrop-blur-lg" : "bg-transparent"
+        (isScrolled || currentUser || pathname !== '/') ? "border-border/40 bg-background/80 backdrop-blur-lg" : "bg-transparent"
       )}
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        <Logo className={cn(isScrolled || currentUser ? "text-primary" : "text-primary")} />
-        <nav className="hidden items-center space-x-2 md:flex">
+        <Logo className={cn((isScrolled || currentUser || pathname !== '/') ? "text-primary" : "text-white")} />
+        <nav className="hidden items-center space-x-1 md:flex"> {/* Reduced space for more links */}
           {renderNavLinks()}
           {authLoading ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
@@ -114,6 +114,9 @@ export function MainHeader() {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{displayName}</p>
+                     <p className="text-xs leading-none text-muted-foreground">
+                      {displayEmail}
+                    </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -130,10 +133,10 @@ export function MainHeader() {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="outline" asChild className={cn(isScrolled ? "" : "border-indigo-300 text-indigo-100 bg-transparent hover:bg-indigo-100/10 hover:text-white")}>
+              <Button variant="ghost" size="sm" asChild className={cn( (isScrolled || pathname !== '/') ? "text-foreground hover:bg-accent/50" : "text-indigo-100 hover:bg-white/10 hover:text-white")}>
                 <Link href="/login">Login</Link>
               </Button>
-              <Button variant="default" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Button variant="default" size="sm" asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
                 <Link href="/signup">Sign Up</Link>
               </Button>
             </>
@@ -142,16 +145,19 @@ export function MainHeader() {
         <div className="md:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className={cn(isScrolled || currentUser ? "text-primary" : "text-white hover:text-primary")}>
+              <Button variant="ghost" size="icon" className={cn((isScrolled || currentUser || pathname !== '/') ? "text-primary" : "text-white hover:text-primary")}>
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
-              <SheetHeader className="mb-6">
+              <SheetHeader className="mb-6 sr-only"> {/* Visually hide if not desired */}
                 <SheetTitle><Logo onClick={closeMobileMenu}/></SheetTitle>
               </SheetHeader>
               <div className="flex flex-col h-full py-4">
+                 <div className="mb-6 px-2">
+                    <Logo onClick={closeMobileMenu}/>
+                </div>
                 <nav className="flex flex-col space-y-1">
                   {renderNavLinks(true)}
                 </nav>

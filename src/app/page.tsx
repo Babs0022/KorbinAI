@@ -1,11 +1,14 @@
+
 import { MainHeader } from '@/components/layout/MainHeader';
 import { Footer } from '@/components/layout/Footer';
 import { HeroSection } from '@/components/sections/HeroSection';
-import { DemoVideoSection } from '@/components/sections/DemoVideoSection';
+import { KeyFeaturesHighlightSection } from '@/components/sections/KeyFeaturesHighlightSection';
+import { InteractiveDemoSection } from '@/components/sections/DemoVideoSection'; // Re-using existing animated demo
 import { HowItWorksSection } from '@/components/sections/HowItWorksSection';
-import { UseCasesSection } from '@/components/sections/UseCasesSection';
+import { TargetAudienceSection } from '@/components/sections/TargetAudienceSection';
+import { SocialProofSection } from '@/components/sections/SocialProofSection';
 import { PricingSection } from '@/components/sections/PricingSection';
-import { AboutFounderSection } from '@/components/sections/AboutFounderSection';
+import { FAQSection } from '@/components/sections/FAQSection';
 import { FinalCTASection } from '@/components/sections/FinalCTASection';
 
 export default function HomePage() {
@@ -14,11 +17,13 @@ export default function HomePage() {
       <MainHeader />
       <main className="flex-grow">
         <HeroSection />
-        <DemoVideoSection />
+        <KeyFeaturesHighlightSection />
+        <InteractiveDemoSection />
         <HowItWorksSection />
-        <UseCasesSection />
+        <TargetAudienceSection />
+        <SocialProofSection />
         <PricingSection />
-        <AboutFounderSection />
+        <FAQSection />
         <FinalCTASection />
       </main>
       <Footer />
