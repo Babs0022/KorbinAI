@@ -33,7 +33,7 @@ export default function RealTimeSuggestionsPage() {
             </GlassCardHeader>
             <GlassCardContent>
               <p className="text-muted-foreground mb-4">
-                As you type your initial prompt idea, BrieflyAI will offer intelligent, real-time suggestions to improve clarity, specificity, and overall effectiveness.
+                As you type your initial prompt idea, BrieflyAI will offer intelligent, real-time suggestions to improve clarity, specificity, and overall effectiveness. These suggestions could be for improving clarity, adjusting length, or making the prompt more specific for AI models.
               </p>
               <p className="text-lg font-semibold text-primary">Full feature coming soon!</p>
             </GlassCardContent>
