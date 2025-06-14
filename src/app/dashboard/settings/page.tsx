@@ -124,6 +124,7 @@ export default function SettingsPage() {
 
       if (firestorePrompts.length === 0) {
         toast({ title: "No Data to Export", description: "You don't have any prompt history to export yet.", variant: "default"});
+        setIsExportingData(false);
         return;
       }
 
@@ -163,6 +164,14 @@ export default function SettingsPage() {
       <DashboardHeader />
       <main className="flex-grow bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8">
         <Container>
+          <div className="mb-6">
+            <Button variant="outline" asChild size="sm">
+              <Link href="/dashboard">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Dashboard
+              </Link>
+            </Button>
+          </div>
           <h1 className="font-headline text-3xl font-bold text-foreground mb-8">Settings</h1>
           
           <div className="max-w-2xl mx-auto space-y-8">
@@ -183,6 +192,7 @@ export default function SettingsPage() {
                     id="email-notifications" 
                     checked={settings.emailNotifications}
                     onCheckedChange={(checked) => handleSettingChange('emailNotifications', checked)}
+                    aria-label="Toggle email notifications"
                   />
                 </div>
                 <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
@@ -196,6 +206,7 @@ export default function SettingsPage() {
                     id="promotional-emails" 
                     checked={settings.promotionalEmails}
                     onCheckedChange={(checked) => handleSettingChange('promotionalEmails', checked)}
+                    aria-label="Toggle promotional emails"
                   />
                 </div>
               </GlassCardContent>
@@ -213,7 +224,7 @@ export default function SettingsPage() {
                     value={settings.theme} 
                     onValueChange={(value) => handleSettingChange('theme', value)}
                   >
-                    <SelectTrigger id="theme" className="w-full mt-1">
+                    <SelectTrigger id="theme" className="w-full mt-1" aria-label="Select theme">
                       <SelectValue placeholder="Select theme" />
                     </SelectTrigger>
                     <SelectContent>
@@ -241,7 +252,7 @@ export default function SettingsPage() {
                     {isExportingData ? (
                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Exporting...</>
                     ) : (
-                        "Export Prompt History"
+                       <> <DownloadCloud className="mr-2 h-4 w-4" /> Export Prompt History</>
                     )}
                  </Button>
                  <p className="text-xs text-muted-foreground mt-2">Download your prompt history as a JSON file.</p>
@@ -269,3 +280,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    

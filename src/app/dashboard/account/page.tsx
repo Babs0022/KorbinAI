@@ -10,12 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon } from 'lucide-react';
+import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { auth, storage } from '@/lib/firebase'; // Import storage
+import Link from 'next/link';
+import { auth } from '@/lib/firebase'; 
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from 'firebase/auth';
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"; // Storage imports
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import Image from 'next/image'; // For displaying predefined icons
+import NextImage from 'next/image'; // Renamed to avoid conflict with Lucide's Image
 
 const predefinedIcons = Array.from({ length: 10 }, (_, i) => `https://avatar.iran.liara.run/public/${i + 1}`);
 const defaultPlaceholderUrl = "https://placehold.co/40x40.png";
@@ -86,15 +86,9 @@ export default function AccountPage() {
 
       if (profileChanged) {
         await updateProfile(currentUser, profileUpdates);
-        // Manually trigger a refresh of auth context state if possible, or rely on onAuthStateChanged
-        // For immediate UI update, you might need to update authContext values directly or re-fetch user
-        // This part requires context to have a refresh method or similar
-        if (authContext.currentUser?.reload) { // Check if reload method exists
+        if (authContext.currentUser?.reload) { 
             await authContext.currentUser.reload();
         }
-        // Manually update context if possible to avoid waiting for onAuthStateChanged listener
-        // This would require a setter in AuthContext, which is not currently implemented there.
-        // For now, we rely on onAuthStateChanged to pick up changes eventually, or user re-navigates.
         toast({ title: "Profile Updated", description: "Your profile has been successfully updated." });
       } else {
         toast({ title: "No Changes", description: "No changes were made to your profile." });
@@ -206,6 +200,14 @@ export default function AccountPage() {
       <DashboardHeader />
       <main className="flex-grow bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8">
         <Container>
+          <div className="mb-6">
+            <Button variant="outline" asChild size="sm">
+              <Link href="/dashboard">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Dashboard
+              </Link>
+            </Button>
+          </div>
           <h1 className="font-headline text-3xl font-bold text-foreground mb-8">Account Management</h1>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -218,7 +220,7 @@ export default function AccountPage() {
                   <form onSubmit={handleSaveProfile} className="space-y-6">
                     <div className="flex flex-col items-center space-y-4">
                       <Avatar className="h-24 w-24">
-                        <AvatarImage src={selectedIconUrl} alt={newDisplayName || authContext.displayName} data-ai-hint="user profile large"/>
+                        <AvatarImage src={selectedIconUrl} alt={newDisplayName || authContext.displayName || 'User Avatar'} data-ai-hint="user profile large"/>
                         <AvatarFallback>{authContext.userInitials}</AvatarFallback>
                       </Avatar>
                        <div className="w-full space-y-3">
@@ -233,8 +235,9 @@ export default function AccountPage() {
                               onClick={() => setSelectedIconUrl(iconSrc)}
                               className={`rounded-full aspect-square relative overflow-hidden border-2 transition-all duration-150 ease-in-out
                                 ${selectedIconUrl === iconSrc ? 'border-primary ring-2 ring-primary scale-110' : 'border-transparent hover:border-primary/50'}`}
+                              aria-label={`Select avatar ${iconSrc.substring(iconSrc.lastIndexOf('/') + 1)}`}
                             >
-                              <Image src={iconSrc} alt="Selectable avatar icon" layout="fill" objectFit="cover" data-ai-hint="avatar icon" />
+                              <NextImage src={iconSrc} alt="Selectable avatar icon" layout="fill" objectFit="cover" data-ai-hint="avatar icon" />
                             </button>
                           ))}
                         </div>
@@ -248,11 +251,12 @@ export default function AccountPage() {
                         onChange={(e) => setNewDisplayName(e.target.value)} 
                         className="mt-1"
                         disabled={isSavingProfile}
+                        aria-label="Full Name"
                       />
                     </div>
                     <div>
                       <Label htmlFor="email">Email Address</Label>
-                      <Input id="email" type="email" value={authContext.displayEmail} disabled className="mt-1"/>
+                      <Input id="email" type="email" value={authContext.displayEmail} disabled className="mt-1" aria-label="Email Address (cannot be changed)"/>
                       <p className="text-xs text-muted-foreground mt-1">Email cannot be changed.</p>
                     </div>
                     <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSavingProfile}>
@@ -273,15 +277,15 @@ export default function AccountPage() {
                     <form onSubmit={handleUpdatePassword} className="space-y-4">
                       <div>
                           <Label htmlFor="currentPassword">Current Password</Label>
-                          <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="mt-1" required/>
+                          <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="mt-1" required aria-label="Current Password"/>
                       </div>
                       <div>
                           <Label htmlFor="newPassword">New Password (min. 6 characters)</Label>
-                          <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="mt-1" required/>
+                          <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="mt-1" required aria-label="New Password"/>
                       </div>
                       <div>
                           <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
-                          <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} className="mt-1" required/>
+                          <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} className="mt-1" required aria-label="Confirm New Password"/>
                       </div>
                       <Button type="submit" variant="outline" className="w-full" disabled={isUpdatingPassword}>
                          {isUpdatingPassword ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...</> : "Update Password"}
@@ -350,6 +354,7 @@ export default function AccountPage() {
                             placeholder="Enter your password" 
                             value={reAuthPassword}
                             onChange={(e) => setReAuthPassword(e.target.value)}
+                            aria-label="Password for delete confirmation"
                           />
                         </div>
                       )}
@@ -381,3 +386,5 @@ export default function AccountPage() {
     </div>
   );
 }
+
+    

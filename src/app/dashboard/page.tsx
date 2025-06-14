@@ -7,7 +7,7 @@ import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import { PromptHistoryItem, type PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, CheckCheck, Maximize } from 'lucide-react';
+import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, CheckCheck, Maximize, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import {
@@ -38,6 +38,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp, limit } from 'firebase/firestore';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCard';
+import Container from '@/components/layout/Container';
 
 const features: FeatureInfo[] = [
   {
@@ -137,7 +138,7 @@ export default function DashboardPage() {
   const [viewingPrompt, setViewingPrompt] = useState<PromptHistory | null>(null);
   const { toast } = useToast();
 
-  const fetchPrompts = useCallback(async (fetchLimit: number = 3) => { // Reduced limit for dashboard card
+  const fetchPrompts = useCallback(async (fetchLimit: number = 3) => { 
     if (!currentUser) {
       setIsLoadingPrompts(false);
       setPrompts([]); 
@@ -226,6 +227,8 @@ export default function DashboardPage() {
     try {
       await deleteDoc(doc(db, `users/${currentUser.uid}/promptHistory`, promptToDelete.id));
       setPrompts(prevPrompts => prevPrompts.filter(p => p.id !== promptToDelete.id));
+      // Optionally re-fetch to ensure consistency if pagination or other complex state is involved
+      // await fetchPrompts(); 
       toast({ title: "Prompt Deleted", description: `Prompt "${promptToDelete.goal.substring(0,30)}..." has been deleted.`});
     } catch (error) {
       console.error("Error deleting prompt from Firestore:", error);
@@ -261,101 +264,114 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <DashboardHeader />
-      <main className="flex-1 bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+      <main className="flex-1 bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 overflow-y-auto">
+        <Container className="py-8">
+          <h1 className="font-headline text-3xl font-bold text-foreground mb-2">Welcome to BrieflyAI</h1>
+          <p className="text-muted-foreground mb-8">
+            Your central hub for creating, managing, and optimizing AI prompts.
+          </p>
         
-        {/* Top Section: Quick Stats/Analytics */}
-        <section className="mb-8">
-            <h2 className="font-headline text-xl font-semibold text-foreground mb-4">Your Prompting Snapshot</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <AnalyticsSummaryCard title="Total Prompts Generated" value={String(prompts.length || 0)} icon={BarChart3} description="Across all your sessions" />
-              <AnalyticsSummaryCard title="Average Prompt Score" value="N/A" icon={TrendingUp} description="Feedback coming soon!" />
-              <AnalyticsSummaryCard title="Most Used Category" value="N/A" icon={Eye} description="Categorization coming soon!" />
-            </div>
-        </section>
-
-        {/* Features Grid */}
-        <section className="mb-8">
-          <h2 className="font-headline text-xl font-semibold text-foreground mb-6">Explore Features</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {features.map((feature) => (
-              <FeatureCard key={feature.title} feature={feature} />
-            ))}
-          </div>
-        </section>
-
-        {/* Recent Prompts Card */}
-        <section className="mb-8">
-          <GlassCard>
-            <GlassCardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <GlassCardTitle className="text-xl font-headline">Recent Prompts</GlassCardTitle>
-                <Button variant="outline" size="sm" asChild className="mt-2 sm:mt-0">
-                    <Link href="/dashboard/prompt-vault">
-                      View Full Prompt Vault <Maximize className="ml-2 h-4 w-4" />
-                    </Link>
-                </Button>
+          {/* Top Section: Quick Stats/Analytics */}
+          <section className="mb-8">
+              <h2 className="font-headline text-xl font-semibold text-foreground mb-4">Your Prompting Snapshot</h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <AnalyticsSummaryCard title="Total Prompts Generated" value={String(prompts.length || 0)} icon={BarChart3} description="In your vault" />
+                <AnalyticsSummaryCard title="Average Prompt Score" value="N/A" icon={TrendingUp} description="Feedback coming soon!" />
+                <AnalyticsSummaryCard title="Most Used Category" value="N/A" icon={Eye} description="Categorization coming soon!" />
               </div>
-            </GlassCardHeader>
-            <GlassCardContent>
-              <div className="mb-4 flex gap-2">
-                  <div className="relative flex-grow">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input 
-                      type="search" 
-                      placeholder="Search recent prompts..." 
-                      className="pl-10"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                </div>
+          </section>
 
-              {isLoadingPrompts ? (
-                <div className="text-center py-10">
-                  <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary mb-3" />
-                  <h3 className="font-semibold text-lg text-foreground">Loading Recent Prompts...</h3>
-                </div>
-              ) : filteredPrompts.length > 0 ? (
-                <div className="space-y-4">
-                  {filteredPrompts.map((prompt) => (
-                    <PromptHistoryItem
-                      key={prompt.id}
-                      prompt={prompt}
-                      onView={handleViewPrompt}
-                      onEdit={handleEditPrompt}
-                      onExport={handleExportPrompt}
-                      onDelete={() => openDeleteDialog(prompt)} 
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-10">
-                  <Search className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-                  <h3 className="font-semibold text-lg text-foreground">No Recent Prompts Found</h3>
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    {searchTerm ? "Try adjusting your search terms." : "Create a new prompt to see it here!"}
-                  </p>
-                </div>
-              )}
-            </GlassCardContent>
-          </GlassCard>
-        </section>
+          {/* Features Grid */}
+          <section className="mb-8">
+            <h2 className="font-headline text-xl font-semibold text-foreground mb-6">Explore Features</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {features.map((feature) => (
+                <FeatureCard key={feature.title} feature={feature} />
+              ))}
+            </div>
+          </section>
 
-        {/* Notifications Placeholder */}
-        <section>
+          {/* Recent Prompts Card */}
+          <section className="mb-8">
             <GlassCard>
-                <GlassCardHeader>
-                    <GlassCardTitle className="text-xl font-headline flex items-center"><Bell className="mr-2 h-5 w-5"/> Notifications & Updates</GlassCardTitle>
-                </GlassCardHeader>
-                <GlassCardContent>
-                    <div className="flex items-center text-muted-foreground">
-                        <Bell className="mr-3 h-6 w-6 text-primary" />
-                        <p>New features and learning resources will be announced here. Stay tuned!</p>
+              <GlassCardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                  <GlassCardTitle className="text-xl font-headline">Recent Prompts</GlassCardTitle>
+                  <Button variant="outline" size="sm" asChild className="mt-2 sm:mt-0">
+                      <Link href="/dashboard/prompt-vault">
+                        View Full Prompt Vault <Maximize className="ml-2 h-4 w-4" />
+                      </Link>
+                  </Button>
+                </div>
+              </GlassCardHeader>
+              <GlassCardContent>
+                <div className="mb-4 flex gap-2">
+                    <div className="relative flex-grow">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input 
+                        type="search" 
+                        placeholder="Search recent prompts..." 
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        aria-label="Search recent prompts"
+                      />
                     </div>
-                </GlassCardContent>
-            </GlassCard>
-        </section>
+                  </div>
 
+                {isLoadingPrompts ? (
+                  <div className="text-center py-10">
+                    <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary mb-3" />
+                    <h3 className="font-semibold text-lg text-foreground">Loading Recent Prompts...</h3>
+                  </div>
+                ) : filteredPrompts.length > 0 ? (
+                  <div className="space-y-4">
+                    {filteredPrompts.map((prompt) => (
+                      <PromptHistoryItem
+                        key={prompt.id}
+                        prompt={prompt}
+                        onView={handleViewPrompt}
+                        onEdit={handleEditPrompt}
+                        onExport={handleExportPrompt}
+                        onDelete={() => openDeleteDialog(prompt)} 
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-10">
+                    <Search className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
+                    <h3 className="font-semibold text-lg text-foreground">No Recent Prompts Found</h3>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                      {searchTerm ? "Try adjusting your search terms." : "Create a new prompt to see it here!"}
+                    </p>
+                    {!searchTerm && (
+                      <Button asChild className="mt-4">
+                        <Link href="/create-prompt">
+                          <PlusCircle className="mr-2 h-4 w-4"/> Create New Prompt
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </GlassCardContent>
+            </GlassCard>
+          </section>
+
+          {/* Notifications Placeholder */}
+          <section>
+              <GlassCard>
+                  <GlassCardHeader>
+                      <GlassCardTitle className="text-xl font-headline flex items-center"><Bell className="mr-2 h-5 w-5"/> Notifications & Updates</GlassCardTitle>
+                  </GlassCardHeader>
+                  <GlassCardContent>
+                      <div className="flex items-center text-muted-foreground">
+                          <Bell className="mr-3 h-6 w-6 text-primary" />
+                          <p>New features and learning resources will be announced here. Stay tuned!</p>
+                      </div>
+                  </GlassCardContent>
+              </GlassCard>
+          </section>
+        </Container>
       </main>
       <MinimalFooter />
       
