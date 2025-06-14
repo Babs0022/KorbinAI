@@ -13,10 +13,23 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { adaptPromptForModel, type AdaptPromptForModelInput, type AdaptPromptForModelOutput, AIModelEnumSchema } from '@/ai/flows/adapt-prompt-model-flow';
+// Import the types and the async function, but not the Zod schema object itself
+import { adaptPromptForModel, type AdaptPromptForModelInput, type AdaptPromptForModelOutput, type AIModelEnum } from '@/ai/flows/adapt-prompt-model-flow';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
+// Define the model options directly in the component
+const modelOptions = [
+  "gpt-4",
+  "gpt-3.5-turbo",
+  "gemini-1.5-pro",
+  "gemini-1.0-pro",
+  "claude-3-opus",
+  "claude-3-sonnet",
+  "dall-e-3",
+  "midjourney",
+  "stable-diffusion"
+];
 
 export default function ModelSpecificPromptsPage() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -27,8 +40,6 @@ export default function ModelSpecificPromptsPage() {
   const [targetModel, setTargetModel] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AdaptPromptForModelOutput | null>(null);
-
-  const modelOptions = AIModelEnumSchema.options;
 
   const handleAdaptPrompt = async (e: FormEvent) => {
     e.preventDefault();
@@ -46,7 +57,7 @@ export default function ModelSpecificPromptsPage() {
     try {
       const input: AdaptPromptForModelInput = {
         originalPrompt,
-        targetModel: targetModel as any, // Cast as AIModelEnum is validated by Zod in flow
+        targetModel: targetModel as AIModelEnum, // Cast as AIModelEnum, validated by Zod in flow
       };
       const adaptationResult = await adaptPromptForModel(input);
       setResult(adaptationResult);

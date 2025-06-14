@@ -6,13 +6,14 @@
  * - adaptPromptForModel - A function that calls the flow.
  * - AdaptPromptForModelInput - The input type for the flow.
  * - AdaptPromptForModelOutput - The return type for the flow.
- * - AIModelEnumSchema - Zod schema for AI model selection.
+ * - AIModelEnum - TypeScript enum for AI model selection.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const AIModelEnumSchema = z.enum([
+// Define the Zod schema locally, but do not export it.
+const AIModelEnumSchema = z.enum([
   "gpt-4",
   "gpt-3.5-turbo",
   "gemini-1.5-pro",
@@ -23,11 +24,13 @@ export const AIModelEnumSchema = z.enum([
   "midjourney",
   "stable-diffusion"
 ]).describe("The target AI model for which the prompt should be adapted.");
+
+// Export the TypeScript type derived from the schema.
 export type AIModelEnum = z.infer<typeof AIModelEnumSchema>;
 
 const AdaptPromptForModelInputSchema = z.object({
   originalPrompt: z.string().describe('The initial prompt text provided by the user.'),
-  targetModel: AIModelEnumSchema,
+  targetModel: AIModelEnumSchema, // Use the local schema here for input validation
 });
 export type AdaptPromptForModelInput = z.infer<typeof AdaptPromptForModelInputSchema>;
 
