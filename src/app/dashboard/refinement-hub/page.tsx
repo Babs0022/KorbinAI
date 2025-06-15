@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, type FormEvent } from 'react';
+import React, { useState, useEffect, useCallback, type FormEvent, useMemo } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
-import { Loader2, Save, Edit3, ArrowLeft, Settings2, AlertTriangle, Info, Tag, Wand2, Lightbulb } from 'lucide-react';
+import { Loader2, Save, Edit3, ArrowLeft, Settings2, AlertTriangle, Info, Tag, Wand2, Lightbulb, ArrowDownUp } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -19,15 +19,19 @@ import { collection, query, orderBy, getDocs, doc, updateDoc, serverTimestamp, T
 import { useToast } from '@/hooks/use-toast';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem'; 
 import { getPromptRefinementSuggestions, type GetPromptRefinementSuggestionsInput, type GetPromptRefinementSuggestionsOutput } from '@/ai/flows/refine-prompt-suggestions-flow';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type SortOption = "timestamp_desc" | "timestamp_asc" | "name_asc" | "name_desc";
 
 export default function RefinementHubPage() {
   const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
-  const [prompts, setPrompts] = useState<PromptHistory[]>([]);
+  const [allPrompts, setAllPrompts] = useState<PromptHistory[]>([]);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
   const [selectedPrompt, setSelectedPrompt] = useState<PromptHistory | null>(null);
+  const [sortOption, setSortOption] = useState<SortOption>("timestamp_desc");
   
   const [editableName, setEditableName] = useState('');
   const [editableGoal, setEditableGoal] = useState('');
@@ -41,11 +45,12 @@ export default function RefinementHubPage() {
   const fetchPrompts = useCallback(async () => {
     if (!currentUser) {
       setIsLoadingPrompts(false);
-      setPrompts([]);
+      setAllPrompts([]);
       return;
     }
     setIsLoadingPrompts(true);
     try {
+      // Initial fetch is always ordered by timestamp desc for consistency before client-side sort
       const q = query(collection(db, `users/${currentUser.uid}/promptHistory`), orderBy("timestamp", "desc"));
       const querySnapshot = await getDocs(q);
       const firestorePrompts = querySnapshot.docs.map(docSnap => {
@@ -65,11 +70,11 @@ export default function RefinementHubPage() {
           tags: data.tags || [],
         } as PromptHistory;
       });
-      setPrompts(firestorePrompts);
+      setAllPrompts(firestorePrompts);
     } catch (error) {
       console.error("Error loading prompts from Firestore:", error);
       toast({ title: "Error Loading Prompts", description: "Could not load your prompts for refinement.", variant: "destructive" });
-      setPrompts([]);
+      setAllPrompts([]);
     } finally {
       setIsLoadingPrompts(false);
     }
@@ -83,13 +88,28 @@ export default function RefinementHubPage() {
     }
   }, [currentUser, authLoading, router, fetchPrompts]);
 
+  const sortedPrompts = useMemo(() => {
+    let promptsToSort = [...allPrompts];
+    switch (sortOption) {
+      case "timestamp_asc":
+        return promptsToSort.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      case "name_asc":
+        return promptsToSort.sort((a, b) => a.name.localeCompare(b.name));
+      case "name_desc":
+        return promptsToSort.sort((a, b) => b.name.localeCompare(a.name));
+      case "timestamp_desc":
+      default:
+        return promptsToSort.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }
+  }, [allPrompts, sortOption]);
+
   const handleSelectPrompt = (prompt: PromptHistory) => {
     setSelectedPrompt(prompt);
     setEditableName(prompt.name);
     setEditableGoal(prompt.goal);
     setEditableOptimizedPrompt(prompt.optimizedPrompt);
     setEditableTags(prompt.tags?.join(', ') || '');
-    setAiSuggestions([]); // Clear previous suggestions when a new prompt is selected
+    setAiSuggestions([]); 
   };
 
   const handleSaveChanges = async (event: FormEvent) => {
@@ -117,14 +137,16 @@ export default function RefinementHubPage() {
       });
       
       toast({ title: "Prompt Refined!", description: "Your changes have been saved." });
+      // Refresh prompt list to reflect update time for sorting
       fetchPrompts(); 
+      // Update selected prompt in state to reflect changes immediately in editor
       setSelectedPrompt(prev => prev ? {
         ...prev, 
         name: editableName, 
         goal: editableGoal, 
         optimizedPrompt: editableOptimizedPrompt, 
         tags: tagsArray,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString() // Reflect immediate update for display
       } : null);
     } catch (error) {
       console.error("Error saving refined prompt:", error);
@@ -200,16 +222,30 @@ export default function RefinementHubPage() {
               <GlassCard>
                 <GlassCardHeader>
                   <GlassCardTitle className="font-headline text-xl">Select Prompt to Refine</GlassCardTitle>
+                   <div className="mt-3">
+                     <Select value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
+                        <SelectTrigger className="w-full text-xs" aria-label="Sort prompts by">
+                           <ArrowDownUp className="mr-2 h-3 w-3 text-muted-foreground" />
+                           <SelectValue placeholder="Sort by..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="timestamp_desc">Last Updated (Newest)</SelectItem>
+                          <SelectItem value="timestamp_asc">Last Updated (Oldest)</SelectItem>
+                          <SelectItem value="name_asc">Name (A-Z)</SelectItem>
+                          <SelectItem value="name_desc">Name (Z-A)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                   </div>
                 </GlassCardHeader>
-                <GlassCardContent className="max-h-[70vh] overflow-y-auto">
+                <GlassCardContent className="max-h-[60vh] overflow-y-auto">
                   {isLoadingPrompts ? (
                     <div className="text-center py-10">
                       <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary mb-2" />
                       <p className="text-muted-foreground text-sm">Loading your prompts...</p>
                     </div>
-                  ) : prompts.length > 0 ? (
+                  ) : sortedPrompts.length > 0 ? (
                     <ul className="space-y-3">
-                      {prompts.map(p => (
+                      {sortedPrompts.map(p => (
                         <li key={p.id}>
                           <button
                             onClick={() => handleSelectPrompt(p)}
@@ -357,4 +393,3 @@ export default function RefinementHubPage() {
     </div>
   );
 }
-

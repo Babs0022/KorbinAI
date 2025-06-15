@@ -1,13 +1,13 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Search, Archive, ArrowLeft, Copy, Eye, Tag } from 'lucide-react';
+import { Loader2, Search, Archive, ArrowLeft, Copy, Eye, Tag, ArrowDownUp } from 'lucide-react';
 import Link from 'next/link';
 import { PromptHistoryItem, type PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
@@ -38,6 +38,9 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type SortOption = "timestamp_desc" | "timestamp_asc" | "name_asc" | "name_desc";
 
 export default function PromptVaultPage() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -47,6 +50,7 @@ export default function PromptVaultPage() {
   const [prompts, setPrompts] = useState<PromptHistory[]>([]);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortOption, setSortOption] = useState<SortOption>("timestamp_desc");
   const [promptToDelete, setPromptToDelete] = useState<PromptHistory | null>(null);
   const [viewingPrompt, setViewingPrompt] = useState<PromptHistory | null>(null);
 
@@ -58,6 +62,7 @@ export default function PromptVaultPage() {
     }
     setIsLoadingPrompts(true);
     try {
+      // Initial fetch is always ordered by timestamp desc for consistency before client-side sort/filter
       const q = query(collection(db, `users/${currentUser.uid}/promptHistory`), orderBy("timestamp", "desc"));
       const querySnapshot = await getDocs(q);
       const firestorePrompts = querySnapshot.docs.map(docSnap => {
@@ -70,7 +75,7 @@ export default function PromptVaultPage() {
         }
         return {
           id: docSnap.id,
-          name: data.name || data.goal, // Fallback to goal if name is missing
+          name: data.name || data.goal, 
           goal: data.goal,
           optimizedPrompt: data.optimizedPrompt,
           timestamp: timestampStr,
@@ -109,7 +114,6 @@ export default function PromptVaultPage() {
   };
   
   const handleEditPrompt = (prompt: PromptHistory) => {
-    // Pass name as well, though CreatePromptForm doesn't directly use it for editing flow currently
     const queryParams = new URLSearchParams({ 
         name: prompt.name, 
         goal: prompt.goal, 
@@ -151,15 +155,30 @@ export default function PromptVaultPage() {
     }
   };
 
-  const filteredPrompts = prompts.filter(prompt => {
-    const lowerSearchTerm = searchTerm.toLowerCase();
-    return (
-      prompt.name.toLowerCase().includes(lowerSearchTerm) ||
-      prompt.goal.toLowerCase().includes(lowerSearchTerm) ||
-      (prompt.optimizedPrompt && prompt.optimizedPrompt.toLowerCase().includes(lowerSearchTerm)) ||
-      (prompt.tags && prompt.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm)))
-    );
-  });
+  const sortedAndFilteredPrompts = useMemo(() => {
+    let filtered = prompts.filter(prompt => {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      return (
+        prompt.name.toLowerCase().includes(lowerSearchTerm) ||
+        prompt.goal.toLowerCase().includes(lowerSearchTerm) ||
+        (prompt.optimizedPrompt && prompt.optimizedPrompt.toLowerCase().includes(lowerSearchTerm)) ||
+        (prompt.tags && prompt.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm)))
+      );
+    });
+
+    switch (sortOption) {
+      case "timestamp_asc":
+        return filtered.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      case "name_asc":
+        return filtered.sort((a, b) => a.name.localeCompare(b.name));
+      case "name_desc":
+        return filtered.sort((a, b) => b.name.localeCompare(a.name));
+      case "timestamp_desc":
+      default:
+        return filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }
+  }, [prompts, searchTerm, sortOption]);
+
 
   if (authLoading || (!currentUser && authLoading)) {
     return (
@@ -201,9 +220,9 @@ export default function PromptVaultPage() {
             </GlassCardHeader>
             <GlassCardContent>
               <p className="text-muted-foreground mb-4">
-                Browse, search, and manage all your saved prompts.
+                Browse, search, sort, and manage all your saved prompts.
               </p>
-              <div className="mb-6 flex gap-2">
+              <div className="mb-6 flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-grow">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -214,6 +233,20 @@ export default function PromptVaultPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
+                <div className="flex-shrink-0 sm:w-auto w-full">
+                  <Select value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
+                    <SelectTrigger className="w-full sm:w-[220px]" aria-label="Sort prompts by">
+                      <ArrowDownUp className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Sort by..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="timestamp_desc">Last Updated (Newest)</SelectItem>
+                      <SelectItem value="timestamp_asc">Last Updated (Oldest)</SelectItem>
+                      <SelectItem value="name_asc">Name (A-Z)</SelectItem>
+                      <SelectItem value="name_desc">Name (Z-A)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {isLoadingPrompts ? (
@@ -221,16 +254,16 @@ export default function PromptVaultPage() {
                   <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary mb-4" />
                   <h3 className="font-semibold text-xl text-foreground">Loading Your Prompts...</h3>
                 </div>
-              ) : filteredPrompts.length > 0 ? (
+              ) : sortedAndFilteredPrompts.length > 0 ? (
                 <div className="space-y-4">
-                  {filteredPrompts.map((prompt) => (
+                  {sortedAndFilteredPrompts.map((prompt) => (
                     <PromptHistoryItem
                       key={prompt.id}
                       prompt={prompt}
                       onView={handleViewPrompt}
                       onEdit={handleEditPrompt}
                       onExport={handleExportPrompt}
-                      onDelete={() => openDeleteDialog(prompt)} // Pass prompt.id directly
+                      onDelete={() => openDeleteDialog(prompt)}
                     />
                   ))}
                 </div>
@@ -305,7 +338,7 @@ export default function PromptVaultPage() {
                 </div>
               )}
               <div>
-                <Label className="text-sm font-semibold text-foreground">Created</Label>
+                <Label className="text-sm font-semibold text-foreground">Created/Updated</Label>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {new Date(viewingPrompt.timestamp).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
                 </p>
