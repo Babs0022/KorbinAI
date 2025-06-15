@@ -58,7 +58,7 @@ export default function CreatePromptPage() {
             Follow the steps below to generate a highly optimized prompt for your AI tasks.
           </p>
           
-          <CreatePromptForm onPromptOptimized={(output) => handlePromptOptimized(output, (document.getElementById('goal') as HTMLTextAreaElement)?.value || '')} />
+          <CreatePromptForm onPromptOptimized={handlePromptOptimized} />
 
           {optimizedOutput && (
             <OptimizedPromptCard 

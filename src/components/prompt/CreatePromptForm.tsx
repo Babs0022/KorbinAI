@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface CreatePromptFormProps {
-  onPromptOptimized: (output: OptimizePromptOutput) => void;
+  onPromptOptimized: (output: OptimizePromptOutput, goal: string) => void;
 }
 
 export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
@@ -97,7 +97,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
 
     try {
       const result = await optimizePrompt(input);
-      onPromptOptimized(result);
+      onPromptOptimized(result, goal); // Pass the goal along with the result
       toast({ title: "Prompt Optimized!", description: "Your optimized prompt is ready." });
     } catch (error) {
       console.error("Error optimizing prompt:", error);

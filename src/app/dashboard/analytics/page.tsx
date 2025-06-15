@@ -164,7 +164,7 @@ export default function AnalyticsPage() {
                             yAxisId="right" 
                             orientation="right" 
                             stroke="hsl(var(--accent))"
-                            domain={[6, 10]} // Assuming scores are in this range
+                            domain={[0, 10]} // Adjusted domain
                             tickLine={false}
                             axisLine={false}
                             tickMargin={8}
