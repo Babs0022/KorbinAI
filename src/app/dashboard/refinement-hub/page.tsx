@@ -8,9 +8,9 @@ import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input'; // Added Input for name and tags
+import { Input } from '@/components/ui/input';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
-import { Loader2, Save, Edit3, ArrowLeft, Settings2, AlertTriangle, Info, Tag } from 'lucide-react';
+import { Loader2, Save, Edit3, ArrowLeft, Settings2, AlertTriangle, Info, Tag, Wand2, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -18,6 +18,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs, doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem'; 
+import { getPromptRefinementSuggestions, type GetPromptRefinementSuggestionsInput, type GetPromptRefinementSuggestionsOutput } from '@/ai/flows/refine-prompt-suggestions-flow';
 
 export default function RefinementHubPage() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -31,8 +32,11 @@ export default function RefinementHubPage() {
   const [editableName, setEditableName] = useState('');
   const [editableGoal, setEditableGoal] = useState('');
   const [editableOptimizedPrompt, setEditableOptimizedPrompt] = useState('');
-  const [editableTags, setEditableTags] = useState(''); // Comma-separated string
+  const [editableTags, setEditableTags] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   const fetchPrompts = useCallback(async () => {
     if (!currentUser) {
@@ -54,7 +58,7 @@ export default function RefinementHubPage() {
         }
         return {
           id: docSnap.id,
-          name: data.name || data.goal, // Fallback for older entries
+          name: data.name || data.goal, 
           goal: data.goal,
           optimizedPrompt: data.optimizedPrompt,
           timestamp: timestampStr,
@@ -85,6 +89,7 @@ export default function RefinementHubPage() {
     setEditableGoal(prompt.goal);
     setEditableOptimizedPrompt(prompt.optimizedPrompt);
     setEditableTags(prompt.tags?.join(', ') || '');
+    setAiSuggestions([]); // Clear previous suggestions when a new prompt is selected
   };
 
   const handleSaveChanges = async (event: FormEvent) => {
@@ -108,11 +113,10 @@ export default function RefinementHubPage() {
         goal: editableGoal,
         optimizedPrompt: editableOptimizedPrompt,
         tags: tagsArray,
-        timestamp: serverTimestamp() // Update timestamp to reflect refinement
+        timestamp: serverTimestamp() 
       });
       
       toast({ title: "Prompt Refined!", description: "Your changes have been saved." });
-      // Refresh the list and update the selected prompt in the local state
       fetchPrompts(); 
       setSelectedPrompt(prev => prev ? {
         ...prev, 
@@ -129,6 +133,34 @@ export default function RefinementHubPage() {
       setIsSaving(false);
     }
   };
+
+  const handleGetAISuggestions = async () => {
+    if (!selectedPrompt) {
+      toast({ title: "No Prompt Selected", description: "Please select a prompt to get AI suggestions.", variant: "destructive" });
+      return;
+    }
+    setIsLoadingSuggestions(true);
+    setAiSuggestions([]);
+    try {
+      const input: GetPromptRefinementSuggestionsInput = {
+        currentPromptText: editableOptimizedPrompt,
+        originalGoal: editableGoal,
+      };
+      const result = await getPromptRefinementSuggestions(input);
+      if (result.suggestions && result.suggestions.length > 0) {
+        setAiSuggestions(result.suggestions);
+        toast({ title: "AI Suggestions Ready!", description: "Check below for tips to improve your prompt." });
+      } else {
+        toast({ title: "No Specific Suggestions", description: "The AI didn't have specific new suggestions for this prompt at the moment.", variant: "default" });
+      }
+    } catch (error) {
+      console.error("Error getting AI suggestions:", error);
+      toast({ title: "Failed to Get Suggestions", description: "Could not fetch AI suggestions. Please try again.", variant: "destructive" });
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
+
 
   if (authLoading) {
     return (
@@ -164,7 +196,6 @@ export default function RefinementHubPage() {
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Prompt Selection Column */}
             <div className="lg:col-span-1">
               <GlassCard>
                 <GlassCardHeader>
@@ -202,7 +233,6 @@ export default function RefinementHubPage() {
               </GlassCard>
             </div>
 
-            {/* Refinement Area Column */}
             <div className="lg:col-span-2">
               <GlassCard>
                 <GlassCardHeader>
@@ -211,7 +241,7 @@ export default function RefinementHubPage() {
                     Prompt Refinement Editor
                   </GlassCardTitle>
                   <GlassCardDescription>
-                    Select a prompt to edit its name, goal, optimized text, and tags. AI suggestions coming soon!
+                    Select a prompt to edit its name, goal, optimized text, and tags. Use AI to get suggestions!
                   </GlassCardDescription>
                 </GlassCardHeader>
                 <GlassCardContent>
@@ -261,12 +291,23 @@ export default function RefinementHubPage() {
                           placeholder="e.g., marketing, email, saas"
                         />
                       </div>
-                      <div className="flex justify-between items-center pt-2">
-                         <div className="flex items-start space-x-2 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-xs text-blue-700 dark:text-blue-300 w-fit max-w-[calc(100%-150px)]">
-                            <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                            <p><strong>Coming Soon:</strong> AI-powered suggestions for further refinement!</p>
-                        </div>
-                        <Button type="submit" disabled={isSaving} className="bg-primary text-primary-foreground hover:bg-primary/90">
+
+                      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
+                        <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={handleGetAISuggestions} 
+                            disabled={isLoadingSuggestions || !selectedPrompt}
+                            className="w-full sm:w-auto"
+                        >
+                          {isLoadingSuggestions ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                          Get AI Suggestions
+                        </Button>
+                        <Button 
+                            type="submit" 
+                            disabled={isSaving} 
+                            className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90"
+                        >
                           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                           Save Refinements
                         </Button>
@@ -276,9 +317,36 @@ export default function RefinementHubPage() {
                     <div className="text-center py-16">
                       <Edit3 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                       <p className="text-lg font-medium text-foreground">Select a prompt from the left panel to start refining.</p>
-                      <p className="text-muted-foreground mt-1">Make direct edits to your saved prompts.</p>
+                      <p className="text-muted-foreground mt-1">Make direct edits or get AI-powered suggestions.</p>
                     </div>
                   )}
+
+                  {selectedPrompt && (isLoadingSuggestions || aiSuggestions.length > 0) && (
+                    <div className="mt-8 border-t border-border/50 pt-6">
+                      <h4 className="font-headline text-lg font-semibold text-foreground mb-3 flex items-center">
+                        <Lightbulb className="mr-2 h-5 w-5 text-yellow-500" />
+                        AI Refinement Suggestions
+                      </h4>
+                      {isLoadingSuggestions ? (
+                        <div className="flex items-center justify-center py-6">
+                          <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary" />
+                          <p className="text-muted-foreground">Fetching suggestions...</p>
+                        </div>
+                      ) : aiSuggestions.length > 0 ? (
+                        <ul className="space-y-3">
+                          {aiSuggestions.map((suggestion, index) => (
+                            <li key={index} className="flex items-start p-3 border rounded-md bg-muted/20 shadow-sm">
+                              <Wand2 className="mr-3 h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                              <span className="text-sm text-muted-foreground">{suggestion}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                         !isLoadingSuggestions && <p className="text-sm text-muted-foreground">No specific suggestions at this time.</p>
+                      )}
+                    </div>
+                  )}
+
                 </GlassCardContent>
               </GlassCard>
             </div>
@@ -289,3 +357,4 @@ export default function RefinementHubPage() {
     </div>
   );
 }
+
