@@ -86,7 +86,7 @@ const pricingTiers: Tier[] = [
 export function PricingSection() {
   const { currentUser } = useAuth();
   const { toast } = useToast();
-  const functions = getFunctions(app);
+  const functions = getFunctions(app, "us-central1"); // Specify the region here
   const router = useRouter();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
