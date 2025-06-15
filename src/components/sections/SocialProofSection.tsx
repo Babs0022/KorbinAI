@@ -48,11 +48,9 @@ export function SocialProofSection() {
       <Container>
         <div className="text-center mb-12 md:mb-16">
           <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Loved by Innovators Like You
+            See What Our Users Are Saying
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            See what our users are saying and who's building better with BrieflyAI. (Testimonials are illustrative)
-          </p>
+          {/* Description paragraph removed as per request */}
         </div>
 
         {/* Testimonials */}
