@@ -4,20 +4,20 @@
 
 @layer base {
   :root {
-    --background: 208 100% 97%; /* #F0F8FF Alice Blue */
+    --background: 220 10% 96%; /* Neutral light gray */
     --foreground: 274 100% 15%; /* Dark Indigo for text */
 
-    --muted: 274 50% 85%; /* Lighter Indigo/Purple */
-    --muted-foreground: 274 70% 45%; /* Medium Indigo/Purple for muted text */
+    --muted: 220 10% 85%; /* Slightly darker gray for muted elements */
+    --muted-foreground: 220 8% 45%; /* Darker gray for muted text */
 
-    --popover: 208 100% 97%; /* Light gray */
+    --popover: 0 0% 100%; /* White for popovers */
     --popover-foreground: 274 100% 15%;
 
-    --card: 208 100% 97%; /* Base for cards, opacity applied in components for glass effect */
+    --card: 0 0% 100%; /* White base for cards, opacity applied in components for glass effect */
     --card-foreground: 274 100% 15%;
 
-    --border: 274 40% 75%; /* Softer Indigo/Purple border */
-    --input: 208 60% 93%; /* Very light gray-blue for input background */
+    --border: 220 10% 88%; /* Soft gray for borders */
+    --input: 220 10% 93%; /* Very light gray for input background */
 
     --primary: 274 100% 25%; /* Indigo #4B0082 */
     --primary-foreground: 208 100% 97%; /* Light gray on primary */
@@ -42,20 +42,20 @@
   }
 
   .dark {
-    --background: 274 20% 5%; /* Very dark desaturated indigo */
-    --foreground: 208 100% 90%; /* Light blueish-gray */
+    --background: 220 10% 10%; /* Dark Gray */
+    --foreground: 220 10% 90%; /* Light Gray for text */
 
-    --muted: 274 15% 20%; /* Darker muted indigo */
-    --muted-foreground: 208 50% 65%; /* Lighter muted blue-gray */
+    --muted: 220 10% 25%; /* Muted dark gray */
+    --muted-foreground: 220 10% 65%; /* Medium gray for muted text */
 
-    --popover: 274 20% 8%; 
-    --popover-foreground: 208 100% 90%;
+    --popover: 220 10% 15%; 
+    --popover-foreground: 220 10% 90%;
 
-    --card: 274 20% 8%; 
-    --card-foreground: 208 100% 90%;
+    --card: 220 10% 15%; 
+    --card-foreground: 220 10% 90%;
 
-    --border: 274 15% 35%; /* Muted indigo border */
-    --input: 274 15% 15%;   /* Dark input background */
+    --border: 220 10% 30%; /* Gray border */
+    --input: 220 10% 20%;   /* Dark gray for input background */
 
     --primary: 160 100% 70%; /* Mint as primary in dark mode */
     --primary-foreground: 274 100% 10%; /* Dark indigo text on mint */
