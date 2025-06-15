@@ -97,6 +97,7 @@ const features: FeatureInfo[] = [
     icon: Wand2,
     enabled: true,
     isPremium: true,
+    isUnlimitedFeature: true, // Example of an "unlimited" premium feature
   },
   {
     title: "Prompt Feedback & Analysis",
