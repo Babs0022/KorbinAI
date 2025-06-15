@@ -104,3 +104,16 @@
     transform: translateY(0);
   }
 }
+
+/* Blinking cursor animation */
+@keyframes blink-cursor-animation {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.animate-blink-cursor {
+  animation: blink-cursor-animation 1s step-end infinite;
+  font-weight: normal; /* Keep cursor weight consistent with text or slightly lighter */
+  margin-left: 1px; /* Small space for cursor */
+  /* display: inline-block; /* Ensures it takes space */
+  /* vertical-align: text-bottom; /* Aligns cursor with text baseline */
+}

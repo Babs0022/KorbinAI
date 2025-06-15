@@ -16,21 +16,59 @@ const benefits = [
   "Effortless Optimization",
 ];
 
+const dynamicHeroWords = ["Intelligent", "High-Impact", "Tailored", "Contextual", "Effective", "Curated", "Optimized"];
+const TYPE_SPEED = 120;
+const DELETE_SPEED = 80;
+const PAUSE_DURATION = 2000;
+
 export function HeroSection() {
   const [currentBenefitIndex, setCurrentBenefitIndex] = useState(0);
 
+  // State for typewriter effect
+  const [dynamicWordIndex, setDynamicWordIndex] = useState(0);
+  const [displayedDynamicText, setDisplayedDynamicText] = useState('');
+  const [isDeletingDynamicText, setIsDeletingDynamicText] = useState(false);
+
   useEffect(() => {
-    const intervalId = setInterval(() => {
+    const benefitIntervalId = setInterval(() => {
       setCurrentBenefitIndex((prevIndex) => (prevIndex + 1) % benefits.length);
     }, 3000);
-    return () => clearInterval(intervalId);
+    return () => clearInterval(benefitIntervalId);
   }, []);
+
+  useEffect(() => {
+    let typingTimeout: NodeJS.Timeout;
+
+    if (isDeletingDynamicText) {
+      if (displayedDynamicText.length > 0) {
+        typingTimeout = setTimeout(() => {
+          setDisplayedDynamicText(prev => prev.slice(0, -1));
+        }, DELETE_SPEED);
+      } else {
+        // Finished deleting
+        setIsDeletingDynamicText(false);
+        setDynamicWordIndex(prev => (prev + 1) % dynamicHeroWords.length);
+      }
+    } else { // Typing
+      const targetWord = dynamicHeroWords[dynamicWordIndex];
+      if (displayedDynamicText.length < targetWord.length) {
+        typingTimeout = setTimeout(() => {
+          setDisplayedDynamicText(prev => targetWord.slice(0, prev.length + 1));
+        }, TYPE_SPEED);
+      } else { // Word fully typed
+        typingTimeout = setTimeout(() => {
+          setIsDeletingDynamicText(true);
+        }, PAUSE_DURATION);
+      }
+    }
+
+    return () => clearTimeout(typingTimeout);
+  }, [displayedDynamicText, isDeletingDynamicText, dynamicWordIndex]);
+
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-primary via-indigo-700 to-slate-900 py-20 md:py-32">
-      {/* Background subtle elements */}
       <div className="absolute inset-0 -z-10 opacity-10">
-        {/* You could add SVG patterns or very subtle animated shapes here */}
       </div>
       <Container className="relative z-10">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
@@ -41,21 +79,28 @@ export function HeroSection() {
             </div>
             <h1 className="font-headline text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl">
               Unlock Peak AI Performance with{' '}
-              <span className="text-mint-400">Intelligent Prompts</span>
+              <span 
+                className="inline-block text-left text-mint-400" 
+                style={{ minWidth: '240px' }} // Adjusted min-width for longer words like "High-Impact"
+              >
+                {displayedDynamicText}
+                <span className="animate-blink-cursor select-none text-mint-400">|</span>
+              </span>
+              {' '}Prompts
             </h1>
             <p className="mx-auto mt-6 max-w-xl text-lg text-indigo-100 lg:mx-0 md:text-xl">
               BrieflyAI transforms your ideas into high-impact AI prompts. Craft, adapt, and analyze with our comprehensive suite of tools designed for clarity, precision, and superior results.
             </p>
             <div className="mt-8">
               <div className="font-medium text-indigo-200 mb-3">Experience:</div>
-              <div className="h-7 overflow-hidden"> {/* Container to manage height for cycling text */}
+              <div className="h-7 overflow-hidden">
                 {benefits.map((benefit, index) => (
                   <div
                     key={benefit}
                     className={cn(
                       "flex items-center text-mint-300 text-lg transition-all duration-500 ease-in-out",
                       index === currentBenefitIndex ? "opacity-100 translate-y-0" : "opacity-0 absolute -translate-y-full",
-                      index > currentBenefitIndex && "translate-y-full" // For items coming from bottom
+                      index > currentBenefitIndex && "translate-y-full" 
                     )}
                   >
                     <CheckCircle className="mr-2 h-5 w-5 text-mint-400 flex-shrink-0" />
@@ -78,7 +123,6 @@ export function HeroSection() {
             </div>
           </div>
           <div className="relative hidden lg:block">
-            {/* Placeholder for a more abstract/techy visual. Using a simple placeholder image for now. */}
             <Image
               src="https://placehold.co/600x400.png"
               alt="BrieflyAI Platform Showcase"
