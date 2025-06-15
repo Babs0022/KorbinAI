@@ -33,9 +33,9 @@ const pricingTiers: Tier[] = [
     frequency: '/mo',
     description: 'Get started and experience the power of optimized prompts.',
     features: [
-      '5 prompts per month',
+      '5 Prompts per month (Prompt Generator)',
+      'Basic Prompt Analytics Dashboard',
       'Standard prompt optimization',
-      'Access to basic survey questions',
       'Community support',
     ],
     cta: 'Start for Free',
@@ -44,15 +44,23 @@ const pricingTiers: Tier[] = [
   },
   {
     name: 'Premium',
-    planId: 'premium', // This ID is used to call the backend
+    planId: 'premium', 
     price: 'NGN 16,000',
     frequency: '/mo',
     description: 'For individuals who want to supercharge their AI interactions.',
     features: [
-      '50 prompts per month',
-      'Advanced prompt optimization',
-      'Full access to adaptive survey',
-      'Prompt history',
+      '50 Prompts per month',
+      'Advanced prompt optimization & adaptive surveys',
+      'Prompt Vault & Organization',
+      'Prompt Refinement Hub',
+      'Model-Specific Prompt Adaptation',
+      'Contextual Prompting Tools',
+      'Full Access to Prompt Academy',
+      'Prompt Feedback & Quality Analysis',
+      'Prompt Learning Mode',
+      'AI Model Compatibility Checker',
+      'Real-Time AI Suggestions (Standard)',
+      'Reverse Prompting (Standard)',
       'Priority email support',
     ],
     cta: 'Go Premium',
@@ -60,15 +68,17 @@ const pricingTiers: Tier[] = [
   },
   {
     name: 'Unlimited',
-    planId: 'unlimited', // This ID is used to call the backend
+    planId: 'unlimited', 
     price: 'NGN 56,000',
     frequency: '/mo',
     description: 'For power users and teams who need unlimited prompting capabilities.',
     features: [
-      'Unlimited prompts',
-      'All Premium features',
+      'Unlimited Prompts',
+      'All Premium Features, Unlocked & Uncapped',
+      '**Fully Unlimited** Real-Time AI Suggestions',
+      '**Fully Unlimited** Reverse Prompting',
       'Early access to new features',
-      'Dedicated support channel',
+      'Dedicated support channel (Coming Soon)',
     ],
     cta: 'Go Unlimited',
     emphasized: false,
@@ -89,12 +99,11 @@ export function PricingSection() {
         description: 'Please log in or sign up to subscribe.',
         variant: 'destructive',
       });
-      router.push('/login?redirect=/'); // Redirect to login, then back to home/pricing
+      router.push('/login?redirect=/'); 
       return;
     }
 
     if (tier.planId === 'free') {
-      // User is already on free or can just proceed to dashboard if logged in.
       router.push('/dashboard');
       return;
     }
@@ -105,7 +114,6 @@ export function PricingSection() {
       const createSubscriptionFunction = httpsCallable(functions, 'createPaystackSubscription');
       
       const result: any = await createSubscriptionFunction({ 
-        // userId is derived from context.auth in the Cloud Function
         email: currentUser.email, 
         planId: tier.planId, 
       });
@@ -157,7 +165,7 @@ export function PricingSection() {
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex items-center text-sm">
                       <CheckCircle2 className="mr-2 h-4 w-4 text-accent flex-shrink-0" />
-                      <span className="text-muted-foreground">{feature}</span>
+                      <span className="text-muted-foreground" dangerouslySetInnerHTML={{ __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}></span>
                     </li>
                   ))}
                 </ul>
