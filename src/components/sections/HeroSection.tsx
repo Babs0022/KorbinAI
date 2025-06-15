@@ -17,9 +17,9 @@ const benefits = [
 ];
 
 const dynamicHeroWords = ["Intelligent", "High-Impact", "Tailored", "Contextual", "Effective", "Curated", "Optimized"];
-const TYPE_SPEED = 120;
-const DELETE_SPEED = 80;
-const PAUSE_DURATION = 2000;
+const TYPE_SPEED = 100; // Faster typing
+const DELETE_SPEED = 60; // Faster deleting
+const PAUSE_DURATION = 2200; // Slightly longer pause
 
 export function HeroSection() {
   const [currentBenefitIndex, setCurrentBenefitIndex] = useState(0);
@@ -80,11 +80,11 @@ export function HeroSection() {
             <h1 className="font-headline text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl">
               Unlock Peak AI Performance with{' '}
               <span 
-                className="inline-block text-left text-mint-400" 
-                style={{ minWidth: '240px' }} // Adjusted min-width for longer words like "High-Impact"
+                className="inline-block text-left text-accent" // Changed to text-accent
+                style={{ minWidth: '280px' }} // Adjusted min-width for potentially longer words and visual balance
               >
                 {displayedDynamicText}
-                <span className="animate-blink-cursor select-none text-mint-400">|</span>
+                <span className="animate-blink-cursor select-none text-accent">|</span> 
               </span>
               {' '}Prompts
             </h1>
