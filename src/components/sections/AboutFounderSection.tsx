@@ -27,26 +27,16 @@ export function AboutFounderSection() {
           </p>
         </div>
         <GlassCard className="max-w-3xl mx-auto">
-          <div className="md:flex md:items-center md:gap-8 p-6">
-            <div className="md:w-1/3 mb-6 md:mb-0 text-center">
-              <Image
-                src="https://placehold.co/200x200.png"
-                alt="Elijah Babatunde - Founder of BrieflyAI"
-                width={200}
-                height={200}
-                className="rounded-full mx-auto shadow-lg"
-                data-ai-hint="founder portrait"
-              />
-            </div>
-            <div className="md:w-2/3">
+          <div className="p-6 md:p-8">
+            <div className="w-full text-center">
               <h3 className="font-headline text-2xl font-semibold text-foreground">Elijah Babatunde</h3>
-              <p className="mt-2 text-muted-foreground">
+              <p className="mt-4 text-muted-foreground md:px-8">
                 Hey, I’m Elijah Babatunde (you might know me as Babs)! I'm building BrieflyAI to solve a problem I faced daily: crafting effective AI prompts. 
                 My goal is to provide a straightforward, honest tool that genuinely helps you get more out of AI. 
                 I believe in building in public, listening to users, and creating products that deliver real value.
                 No hype, just utility.
               </p>
-              <div className="mt-6 flex flex-wrap gap-3">
+              <div className="mt-8 flex flex-wrap gap-3 justify-center">
                 <Button variant="outline" size="sm" asChild>
                   <a href="https://twitter.com/babsbuilds" target="_blank" rel="noopener noreferrer">
                     <XLogoIcon className="mr-2 h-4 w-4" /> X (@babsbuilds)
