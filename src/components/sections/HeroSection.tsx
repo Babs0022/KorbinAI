@@ -63,15 +63,8 @@ export function HeroSection() {
 
 
   return (
-    <section className="relative overflow-hidden bg-background py-20 md:py-32">
-      {/* New Background Effect */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-1/4 -left-1/4 w-3/4 h-3/4 bg-pink-200/40 blur-[100px] rounded-full animate-pulse delay-500"></div>
-        <div className="absolute top-1/8 left-1/8 w-1/2 h-1/2 bg-purple-200/40 blur-[120px] rounded-full animate-pulse"></div>
-        <div className="absolute -bottom-1/4 -right-1/4 w-3/4 h-3/4 bg-orange-200/40 blur-[100px] rounded-full animate-pulse delay-1000"></div>
-         <div className="absolute bottom-1/8 right-1/8 w-2/5 h-2/5 bg-yellow-100/30 blur-[90px] rounded-full animate-pulse delay-1500"></div>
-      </div>
-
+    <section className="hero-background relative overflow-hidden py-20 md:py-32">
+      {/* The old blob container div is removed. The .hero-background class on section handles the new gradient. */}
       <Container className="relative z-10">
         <div className="grid grid-cols-1 items-center gap-12"> {/* Removed lg:grid-cols-2, content is now centered */}
           <div className="text-center"> {/* Centering content */}
@@ -124,7 +117,6 @@ export function HeroSection() {
               </Button>
             </div>
           </div>
-          {/* Visual container removed as per previous steps */}
         </div>
       </Container>
     </section>
