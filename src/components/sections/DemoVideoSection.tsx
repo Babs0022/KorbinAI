@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -159,7 +158,7 @@ Model: GPT-4 (for copy), DALL-E 3 (for image ideas).`;
       duration: optimizingDuration,
       element: (
         <div className="p-4 md:p-6 flex flex-col items-center justify-center h-full space-y-4">
-          <div className="flex items-center justify-center gap-4">
+           <div className="flex items-center justify-center gap-4">
             <Loader2 className="h-10 w-10 text-primary animate-spin" />
             <BarChart3 className="h-10 w-10 text-accent animate-pulse" />
           </div>
@@ -233,11 +232,14 @@ Model: GPT-4 (for copy), DALL-E 3 (for image ideas).`;
         effectTimeoutRefs.current.push(setTimeout(() => { setSelectedModel('GPT-4'); setModelButtonEnabled(true); }, modelSelectDuration/2));
     } else if (currentSceneConfig.id === 'aiOptimizing') {
       let progress = 0;
-      const intervalTime = optimizingDuration / 20;
+      const intervalTime = optimizingDuration / 20; // Update progress 20 times
       typingIntervalRef.current = setInterval(() => {
-        progress += 5;
-        if (progress <= 100) setOptimizingProgress(progress);
-        else if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+        progress += 5; // Increment by 5%
+        if (progress <= 100) {
+          setOptimizingProgress(progress);
+        } else {
+          if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+        }
       }, intervalTime);
     } else if (currentSceneConfig.id === 'optimizedPrompt') {
       let charIndex = 0;
@@ -249,7 +251,7 @@ Model: GPT-4 (for copy), DALL-E 3 (for image ideas).`;
           setPromptScore(9.2); 
           setCopyButtonEnabled(true);
         }
-      }, typingSpeed / 2.5);
+      }, typingSpeed / 2.5); // Faster typing for prompt text
     }
 
     sceneTimeoutRef.current = setTimeout(() => {
@@ -258,7 +260,7 @@ Model: GPT-4 (for copy), DALL-E 3 (for image ideas).`;
 
     if (sceneContainerRef.current) {
       sceneContainerRef.current.classList.remove('fade-in');
-      void sceneContainerRef.current.offsetWidth;
+      void sceneContainerRef.current.offsetWidth; // Trigger reflow
       sceneContainerRef.current.classList.add('fade-in');
     }
 
@@ -270,14 +272,15 @@ Model: GPT-4 (for copy), DALL-E 3 (for image ideas).`;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSceneIndex]); 
 
+
   return (
     <GlassCard
       className={cn(
-        "aspect-[16/10] sm:aspect-video overflow-hidden bg-card/80 backdrop-blur-md border-0 rounded-xl", 
+        "aspect-[16/10] sm:aspect-video overflow-hidden bg-card border-0 rounded-xl", // Changed bg-card/80 and removed backdrop-blur-md
         "w-full transition-opacity duration-500 ease-in-out relative"
       )}
     >
-      <div ref={sceneContainerRef} className="h-full w-full flex flex-col justify-center text-foreground">
+      <div ref={sceneContainerRef} className="h-full w-full flex flex-col justify-center text-foreground p-1"> {/* Added p-1 for inner padding to prevent content touching border */}
         {scenes[currentSceneIndex].element}
       </div>
     </GlassCard>
@@ -294,7 +297,7 @@ export function InteractiveDemoSection() {
         <p className="mx-auto mt-3 sm:mt-4 max-w-xl sm:max-w-2xl text-md sm:text-lg text-muted-foreground">
           Watch our interactive demo to see how easy it is to go from idea to perfectly optimized AI prompt, adapted for your chosen model and graded for quality.
         </p>
-        <div className="mt-8 sm:mt-10 p-1 rounded-xl bg-gradient-to-r from-primary to-accent shadow-lg">
+        <div className="mt-8 sm:mt-10 p-1 rounded-xl bg-gradient-to-r from-primary to-accent shadow-lg w-full"> {/* Ensure this div is w-full */}
           <AnimatedDemo />
         </div>
         <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
@@ -304,3 +307,4 @@ export function InteractiveDemoSection() {
     </section>
   );
 }
+
