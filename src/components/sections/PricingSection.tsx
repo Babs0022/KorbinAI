@@ -59,8 +59,6 @@ const pricingTiers: Tier[] = [
       'Prompt Feedback & Quality Analysis',
       'Prompt Learning Mode',
       'AI Model Compatibility Checker',
-      'Real-Time AI Suggestions (Standard)',
-      'Reverse Prompting (Standard)',
       'Priority email support',
     ],
     cta: 'Go Premium',
