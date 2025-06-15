@@ -1,6 +1,4 @@
 
-'use server'; // This directive is typically for Next.js server components, not Firebase Functions. Removing.
-
 import {onCall, HttpsError, onRequest} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
@@ -9,15 +7,16 @@ import * as crypto from "crypto";
 import cors from "cors";
 
 const corsHandler = cors({
-  origin: [ "https://6000-firebase-studio-1749655004240.cluster-axf5tvtfjjfekvhwxwkkkzsk2y.cloudworkstations.dev/", "https://brieflyai.xyz" ],
+  origin: ["http://localhost:9002", "https://brieflyai.xyz"],
 });
 
 admin.initializeApp();
 const db = admin.firestore();
 
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
-const PAYSTACK_WEBHOOK_SECRET = process.env.PAYSTACK_WEBHOOK_SECRET;
-const APP_CALLBACK_URL = process.env.APP_CALLBACK_URL;
+const functionsConfig = globalThis.functions?.config?.() || {};
+const PAYSTACK_SECRET_KEY = functionsConfig.paystack?.secret_key;
+const PAYSTACK_WEBHOOK_SECRET = functionsConfig.paystack?.webhook_secret;
+const APP_CALLBACK_URL = functionsConfig.app?.callback_url;
 
 let paystack: Paystack | null = null;
 
@@ -31,11 +30,10 @@ if (PAYSTACK_SECRET_KEY) {
   );
 }
 
-const planDetails: Record<string, {
-  amount: number,
-  name: string,
-  plan_code: string
-}> = {
+const planDetails: Record<
+  string,
+  {amount: number, name: string, plan_code: string}
+> = {
   premium: {
     amount: 16000 * 100, // NGN 16,000 in Kobo
     name: "BrieflyAI Premium",
@@ -49,7 +47,7 @@ const planDetails: Record<string, {
 };
 
 export const createPaystackSubscription = onCall(
-  { region: "us-central1" },
+  {region: "us-central1"},
   async (request) => {
     logger.info("createPaystackSubscription invoked. Checking configuration...");
     logger.info(`PAYSTACK_SECRET_KEY available: ${!!PAYSTACK_SECRET_KEY}`);
@@ -163,7 +161,15 @@ export const createPaystackSubscription = onCall(
   }
 );
 
-async function processChargeSuccessEvent(eventData: any): Promise<void> {
+/**
+ * Processes a successful charge event from Paystack.
+ * Verifies the transaction and updates Firestore.
+ * @param {Record<string, any>} eventData The data from the Paystack charge.success event.
+ * @return {Promise<void>}
+ */
+async function processChargeSuccessEvent(
+  eventData: Record<string, any>
+): Promise<void> {
   const {
     reference,
     customer,
@@ -177,7 +183,8 @@ async function processChargeSuccessEvent(eventData: any): Promise<void> {
   if (!paystack) {
     logger.error(
       "processChargeSuccessEvent: Paystack SDK not available during event " +
-      "processing for reference:", reference
+      "processing for reference:",
+      reference
     );
     return;
   }
@@ -269,7 +276,7 @@ async function processChargeSuccessEvent(eventData: any): Promise<void> {
 }
 
 export const paystackWebhookHandler = onRequest(
-  { region: "us-central1" },
+  {region: "us-central1"},
   async (req, res) => {
     logger.info("paystackWebhookHandler invoked. Checking configuration...");
     logger.info(`PAYSTACK_SECRET_KEY available: ${!!PAYSTACK_SECRET_KEY}`);
@@ -369,5 +376,3 @@ export const paystackWebhookHandler = onRequest(
     });
   }
 );
-
-    
