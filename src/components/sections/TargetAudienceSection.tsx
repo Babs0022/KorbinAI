@@ -4,9 +4,9 @@
 import React from 'react';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import Container from '@/components/layout/Container';
-import { Briefcase, Zap, GraduationCap, PenTool, Users, CheckCircle } from 'lucide-react';
+import { Briefcase, Zap, GraduationCap, PenTool, Users, CheckCircle, Code } from 'lucide-react'; // Added Code icon
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Image from 'next/image';
+// Removed Image import as it's no longer used
 
 const audienceSegments = [
   {
@@ -15,8 +15,8 @@ const audienceSegments = [
     icon: <Briefcase className="h-6 w-6 mr-2" />,
     valueProp: "Accelerate growth with compelling pitches, product descriptions, and strategic content.",
     benefits: ["Craft investor-ready narratives", "Define unique selling propositions", "Generate marketing copy quickly"],
-    image: "https://placehold.co/500x350.png",
-    imageHint: "startup meeting",
+    // image: "https://placehold.co/500x350.png", // Removed
+    // imageHint: "startup meeting", // Removed
   },
   {
     id: "marketers",
@@ -24,8 +24,8 @@ const audienceSegments = [
     icon: <Zap className="h-6 w-6 mr-2" />,
     valueProp: "Launch high-converting campaigns with optimized ad copy, emails, and social media content.",
     benefits: ["Boost engagement rates", "Personalize messaging at scale", "A/B test prompt variations"],
-    image: "https://placehold.co/500x350.png",
-    imageHint: "marketing campaign",
+    // image: "https://placehold.co/500x350.png", // Removed
+    // imageHint: "marketing campaign", // Removed
   },
   {
     id: "creators",
@@ -33,8 +33,8 @@ const audienceSegments = [
     icon: <PenTool className="h-6 w-6 mr-2" />,
     valueProp: "Overcome writer's block and generate fresh ideas for articles, scripts, and creative projects.",
     benefits: ["Brainstorm unique concepts", "Develop detailed outlines", "Refine tone and style"],
-    image: "https://placehold.co/500x350.png",
-    imageHint: "creative writing",
+    // image: "https://placehold.co/500x350.png", // Removed
+    // imageHint: "creative writing", // Removed
   },
   {
     id: "students",
@@ -42,17 +42,17 @@ const audienceSegments = [
     icon: <GraduationCap className="h-6 w-6 mr-2" />,
     valueProp: "Enhance research, essays, and presentations with well-structured and insightful AI assistance.",
     benefits: ["Summarize complex information", "Generate research questions", "Improve clarity in writing"],
-    image: "https://placehold.co/500x350.png",
-    imageHint: "student studying",
+    // image: "https://placehold.co/500x350.png", // Removed
+    // imageHint: "student studying", // Removed
   },
   {
     id: "developers",
     name: "Developers",
-    icon: <Users className="h-6 w-6 mr-2" />, // Placeholder, consider Code icon if available
-    valueProp: "Generate boilerplate code, write documentation, or explain complex algorithms.",
+    icon: <Code className="h-6 w-6 mr-2" />, // Changed to Code icon
+    valueProp: "Generate boilerplate code, write documentation, or explain complex algorithms efficiently.",
     benefits: ["Speed up development tasks", "Understand code structures better", "Automate repetitive coding prompts"],
-    image: "https://placehold.co/500x350.png",
-    imageHint: "developer coding",
+    // image: "https://placehold.co/500x350.png", // Removed
+    // imageHint: "developer coding", // Removed
   },
 ];
 
@@ -86,35 +86,25 @@ export function TargetAudienceSection() {
           {audienceSegments.map((segment) => (
             <TabsContent key={segment.id} value={segment.id} className="mt-8">
               <GlassCard className="overflow-hidden border-primary/20">
-                <div className="grid grid-cols-1 md:grid-cols-2 items-center">
-                  <div className="p-6 md:p-8 order-2 md:order-1">
-                    <h3 className="font-headline text-2xl font-semibold text-foreground mb-3">{segment.name}</h3>
-                    <p className="text-muted-foreground mb-6 text-md leading-relaxed">{segment.valueProp}</p>
-                    <ul className="space-y-2 mb-6">
-                      {segment.benefits.map((benefit) => (
-                        <li key={benefit} className="flex items-start text-sm">
-                          <CheckCircle className="h-5 w-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                          <span className="text-foreground/90">{benefit}</span>
-                        </li>
-                      ))}
-                    </ul>
-                     <div className="mt-4">
-                        <a href="/signup" className="text-primary hover:text-primary/80 font-semibold text-sm">
-                          Learn more &rarr;
-                        </a>
-                    </div>
-                  </div>
-                  <div className="order-1 md:order-2 h-64 md:h-full w-full bg-muted/30">
-                    <Image 
-                        src={segment.image} 
-                        alt={`${segment.name} using BrieflyAI`} 
-                        width={500} 
-                        height={350} 
-                        className="object-cover w-full h-full"
-                        data-ai-hint={segment.imageHint}
-                    />
+                {/* Removed the md:grid-cols-2 structure, content will now flow in a single column */}
+                <div className="p-6 md:p-8">
+                  <h3 className="font-headline text-2xl font-semibold text-foreground mb-3">{segment.name}</h3>
+                  <p className="text-muted-foreground mb-6 text-md leading-relaxed">{segment.valueProp}</p>
+                  <ul className="space-y-2 mb-6">
+                    {segment.benefits.map((benefit) => (
+                      <li key={benefit} className="flex items-start text-sm">
+                        <CheckCircle className="h-5 w-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
+                        <span className="text-foreground/90">{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                   <div className="mt-4">
+                      <a href="/signup" className="text-primary hover:text-primary/80 font-semibold text-sm">
+                        Learn more &rarr;
+                      </a>
                   </div>
                 </div>
+                {/* Image and its container div have been removed */}
               </GlassCard>
             </TabsContent>
           ))}
