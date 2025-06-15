@@ -48,6 +48,7 @@ const features: FeatureInfo[] = [
     href: "/create-prompt",
     icon: Lightbulb,
     enabled: true,
+    isPremium: false,
   },
   {
     title: "Prompt Vault",
@@ -55,6 +56,7 @@ const features: FeatureInfo[] = [
     href: "/dashboard/prompt-vault",
     icon: Archive,
     enabled: true, 
+    isPremium: true,
   },
   {
     title: "Prompt Refinement Hub",
@@ -62,6 +64,7 @@ const features: FeatureInfo[] = [
     href: "/dashboard/refinement-hub",
     icon: Settings2,
     enabled: true, 
+    isPremium: true,
   },
   {
     title: "Model-Specific Prompts",
@@ -69,6 +72,7 @@ const features: FeatureInfo[] = [
     href: "/dashboard/model-specific-prompts",
     icon: Puzzle,
     enabled: true,
+    isPremium: true,
   },
   {
     title: "Contextual Prompting",
@@ -76,6 +80,7 @@ const features: FeatureInfo[] = [
     href: "/dashboard/contextual-prompting",
     icon: FileText,
     enabled: true,
+    isPremium: true,
   },
   {
     title: "Prompt Academy",
@@ -83,6 +88,7 @@ const features: FeatureInfo[] = [
     href: "/dashboard/academy",
     icon: School,
     enabled: true, 
+    isPremium: true,
   },
   {
     title: "Real-Time AI Prompt Suggestions",
@@ -90,6 +96,7 @@ const features: FeatureInfo[] = [
     href: "/dashboard/real-time-suggestions",
     icon: Wand2,
     enabled: true,
+    isPremium: true,
   },
   {
     title: "Prompt Feedback & Analysis",
@@ -97,6 +104,7 @@ const features: FeatureInfo[] = [
     href: "/dashboard/feedback-analysis",
     icon: BarChart3,
     enabled: true,
+    isPremium: true,
   },
   {
     title: "Reverse Prompting",
@@ -104,6 +112,7 @@ const features: FeatureInfo[] = [
     href: "/dashboard/reverse-prompting",
     icon: Undo2,
     enabled: true, 
+    isPremium: true,
   },
   {
     title: "Prompt Analytics Dashboard",
@@ -111,6 +120,7 @@ const features: FeatureInfo[] = [
     href: "/dashboard/analytics",
     icon: TrendingUp,
     enabled: true,
+    isPremium: false,
   },
   {
     title: "Prompt Learning Mode",
@@ -118,6 +128,7 @@ const features: FeatureInfo[] = [
     href: "/dashboard/learning-mode",
     icon: Brain,
     enabled: true,
+    isPremium: true,
   },
   {
     title: "AI Model Compatibility Checker",
@@ -125,6 +136,7 @@ const features: FeatureInfo[] = [
     href: "/dashboard/compatibility-checker",
     icon: CheckCheck,
     enabled: true,
+    isPremium: true,
   },
 ];
 
