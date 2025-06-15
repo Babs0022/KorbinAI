@@ -1,0 +1,724 @@
+[debug] [2025-06-14T23:04:33.880Z] ----------------------------------------------------------------------
+[debug] [2025-06-14T23:04:33.885Z] Command:       /nix/store/rbdrkcs5kkwpalxcd7c6bnm33lk2955n-nodejs-20.19.0/bin/node /home/user/.global_modules/bin/firebase deploy --only functions
+[debug] [2025-06-14T23:04:33.886Z] CLI Version:   14.7.0
+[debug] [2025-06-14T23:04:33.886Z] Platform:      linux
+[debug] [2025-06-14T23:04:33.886Z] Node Version:  v20.19.0
+[debug] [2025-06-14T23:04:33.887Z] Time:          Sat Jun 14 2025 23:04:33 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-06-14T23:04:33.887Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-06-14T23:04:34.401Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:04:34.402Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:04:34.402Z] [iam] checking project brieflyai-gtgc2 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-06-14T23:04:34.404Z] No OAuth tokens found
+[debug] [2025-06-14T23:04:34.404Z] No OAuth tokens found
+[debug] [2025-06-14T23:04:34.404Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:04:34.405Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:04:34.406Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions [none]
+[debug] [2025-06-14T23:04:34.406Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions x-goog-quota-user=projects/brieflyai-gtgc2
+[debug] [2025-06-14T23:04:34.407Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-06-14T23:04:35.114Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions 200
+[debug] [2025-06-14T23:04:35.115Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-06-14T23:04:35.116Z] No OAuth tokens found
+[debug] [2025-06-14T23:04:35.116Z] No OAuth tokens found
+[debug] [2025-06-14T23:04:35.116Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:04:35.116Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:04:35.117Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/brieflyai-gtgc2/serviceAccounts/brieflyai-gtgc2@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2025-06-14T23:04:35.117Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/brieflyai-gtgc2/serviceAccounts/brieflyai-gtgc2@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-06-14T23:04:35.814Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/brieflyai-gtgc2/serviceAccounts/brieflyai-gtgc2@appspot.gserviceaccount.com:testIamPermissions 404
+[debug] [2025-06-14T23:04:35.814Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/brieflyai-gtgc2/serviceAccounts/brieflyai-gtgc2@appspot.gserviceaccount.com:testIamPermissions {"error":{"code":404,"message":"Unknown service account","status":"NOT_FOUND"}}
+[debug] [2025-06-14T23:04:35.816Z] [functions] service account IAM check errored, deploy may fail: Request to https://iam.googleapis.com/v1/projects/brieflyai-gtgc2/serviceAccounts/brieflyai-gtgc2@appspot.gserviceaccount.com:testIamPermissions had HTTP Error: 404, Unknown service account {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":404,"message":"Unknown service account","status":"NOT_FOUND"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://iam.googleapis.com/v1/projects/brieflyai-gtgc2/serviceAccounts/brieflyai-gtgc2@appspot.gserviceaccount.com:testIamPermissions had HTTP Error: 404, Unknown service account","status":404}
+[info] 
+[info] === Deploying to 'brieflyai-gtgc2'...
+[info] 
+[info] i  deploying functions 
+[info] Running command: npm --prefix "$RESOURCE_DIR" run lint
+[info] Running command: npm --prefix "$RESOURCE_DIR" run build
+[info] ✔  functions: Finished running predeploy script. 
+[info] Running command: npm --prefix "$RESOURCE_DIR" run lint
+[info] Running command: npm --prefix "$RESOURCE_DIR" run build
+[info] ✔  functions: Finished running predeploy script. 
+[debug] [2025-06-14T23:06:11.664Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:11.664Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:11.665Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:11.666Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:11.666Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudresourcemanager.googleapis.com [none]
+[debug] [2025-06-14T23:06:11.666Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudresourcemanager.googleapis.com x-goog-quota-user=projects/brieflyai-gtgc2
+[debug] [2025-06-14T23:06:12.495Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudresourcemanager.googleapis.com 200
+[debug] [2025-06-14T23:06:12.496Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudresourcemanager.googleapis.com [omitted]
+[debug] [2025-06-14T23:06:12.496Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:12.497Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:12.497Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:12.497Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:12.497Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2 [none]
+[debug] [2025-06-14T23:06:13.170Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2 200
+[debug] [2025-06-14T23:06:13.170Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2 {"projectNumber":"429810342473","projectId":"brieflyai-gtgc2","lifecycleState":"ACTIVE","name":"BrieflyAI","labels":{"monospace-workspace-id":"studio-3713567362","firebase":"enabled","firebase-core":"disabled","generative-language":"enabled"},"createTime":"2025-06-11T15:28:12.125454Z"}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: preparing codebase brieflyai for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[debug] [2025-06-14T23:06:13.173Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:13.173Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:13.173Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:13.173Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:13.174Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:13.174Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:13.174Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:13.174Z] > authorizing via signed-in user (babseli933@gmail.com)
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[debug] [2025-06-14T23:06:13.175Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:13.176Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:13.176Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:13.176Z] > authorizing via signed-in user (babseli933@gmail.com)
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2025-06-14T23:06:13.178Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:13.179Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:13.179Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:13.179Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:13.179Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudfunctions.googleapis.com [none]
+[debug] [2025-06-14T23:06:13.180Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/brieflyai-gtgc2
+[debug] [2025-06-14T23:06:13.181Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/runtimeconfig.googleapis.com [none]
+[debug] [2025-06-14T23:06:13.181Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/runtimeconfig.googleapis.com x-goog-quota-user=projects/brieflyai-gtgc2
+[debug] [2025-06-14T23:06:13.184Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudbuild.googleapis.com [none]
+[debug] [2025-06-14T23:06:13.184Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudbuild.googleapis.com x-goog-quota-user=projects/brieflyai-gtgc2
+[debug] [2025-06-14T23:06:13.186Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/artifactregistry.googleapis.com [none]
+[debug] [2025-06-14T23:06:13.187Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/artifactregistry.googleapis.com x-goog-quota-user=projects/brieflyai-gtgc2
+[debug] [2025-06-14T23:06:13.498Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudfunctions.googleapis.com 200
+[debug] [2025-06-14T23:06:13.498Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudfunctions.googleapis.com [omitted]
+[info] ✔  functions: required API cloudfunctions.googleapis.com is enabled 
+[debug] [2025-06-14T23:06:13.988Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/artifactregistry.googleapis.com 200
+[debug] [2025-06-14T23:06:13.988Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/artifactregistry.googleapis.com [omitted]
+[info] ✔  artifactregistry: required API artifactregistry.googleapis.com is enabled 
+[debug] [2025-06-14T23:06:13.990Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/runtimeconfig.googleapis.com 200
+[debug] [2025-06-14T23:06:13.991Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/runtimeconfig.googleapis.com [omitted]
+[debug] [2025-06-14T23:06:13.993Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudbuild.googleapis.com 200
+[debug] [2025-06-14T23:06:13.993Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudbuild.googleapis.com [omitted]
+[info] ✔  functions: required API cloudbuild.googleapis.com is enabled 
+[debug] [2025-06-14T23:06:13.995Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:13.995Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:13.995Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:13.995Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:13.996Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/brieflyai-gtgc2/adminSdkConfig [none]
+[debug] [2025-06-14T23:06:14.403Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/brieflyai-gtgc2/adminSdkConfig 200
+[debug] [2025-06-14T23:06:14.404Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/brieflyai-gtgc2/adminSdkConfig {"projectId":"brieflyai-gtgc2","storageBucket":"brieflyai-gtgc2.firebasestorage.app"}
+[debug] [2025-06-14T23:06:14.405Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:14.405Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:14.406Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:14.406Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:14.406Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs [none]
+[debug] [2025-06-14T23:06:14.618Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs 200
+[debug] [2025-06-14T23:06:14.618Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs {"configs":[{"name":"projects/brieflyai-gtgc2/configs/app"},{"name":"projects/brieflyai-gtgc2/configs/paystack"}]}
+[debug] [2025-06-14T23:06:14.619Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:14.619Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:14.620Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:14.620Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:14.620Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:14.620Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:14.620Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:14.621Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:14.621Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/app/variables [none]
+[debug] [2025-06-14T23:06:14.622Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/paystack/variables [none]
+[debug] [2025-06-14T23:06:14.794Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/app/variables 200
+[debug] [2025-06-14T23:06:14.795Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/app/variables {"variables":[{"name":"projects/brieflyai-gtgc2/configs/app/variables/callback_url","updateTime":"2025-06-14T23:04:14.232303442Z"}]}
+[debug] [2025-06-14T23:06:14.796Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:14.796Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:14.797Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:14.797Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:14.797Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/app/variables/callback_url [none]
+[debug] [2025-06-14T23:06:14.809Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/paystack/variables 200
+[debug] [2025-06-14T23:06:14.810Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/paystack/variables {"variables":[{"name":"projects/brieflyai-gtgc2/configs/paystack/variables/webhook_secret","updateTime":"2025-06-14T23:04:08.767100986Z"},{"name":"projects/brieflyai-gtgc2/configs/paystack/variables/secret_key","updateTime":"2025-06-14T23:04:02.217396780Z"}]}
+[debug] [2025-06-14T23:06:14.810Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:14.810Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:14.811Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:14.811Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:14.811Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:14.812Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:14.812Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:14.812Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:14.812Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/paystack/variables/webhook_secret [none]
+[debug] [2025-06-14T23:06:14.813Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/paystack/variables/secret_key [none]
+[debug] [2025-06-14T23:06:14.970Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/app/variables/callback_url 200
+[debug] [2025-06-14T23:06:14.970Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/app/variables/callback_url {"name":"projects/brieflyai-gtgc2/configs/app/variables/callback_url","updateTime":"2025-06-14T23:04:14.232303442Z","text":"http://localhost:9002/dashboard?payment=success"}
+[debug] [2025-06-14T23:06:15.035Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/paystack/variables/secret_key 200
+[debug] [2025-06-14T23:06:15.036Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/paystack/variables/secret_key {"name":"projects/brieflyai-gtgc2/configs/paystack/variables/secret_key","updateTime":"2025-06-14T23:04:02.217396780Z","text":"sk_test_3caeb6529d864c27749151bff7a1173b23d1be67"}
+[debug] [2025-06-14T23:06:15.519Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/paystack/variables/webhook_secret 200
+[debug] [2025-06-14T23:06:15.519Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/brieflyai-gtgc2/configs/paystack/variables/webhook_secret {"name":"projects/brieflyai-gtgc2/configs/paystack/variables/webhook_secret","updateTime":"2025-06-14T23:04:08.767100986Z","text":"pk_test_fe4c8f2573e90b153eb3bbcd2bb7f19411ef626a"}
+[debug] [2025-06-14T23:06:15.524Z] Validating nodejs source
+[debug] [2025-06-14T23:06:16.848Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1",
+    "paystack-node": "^0.3.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.4",
+    "firebase-functions-test": "^3.1.0",
+    "typescript": "^5.7.3"
+  },
+  "private": true
+}
+[debug] [2025-06-14T23:06:16.849Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[debug] [2025-06-14T23:06:16.854Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-06-14T23:06:16.898Z] Found firebase-functions binary at '/home/user/studio/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 9003
+
+[debug] [2025-06-14T23:06:23.446Z] Got response from /__/functions.yaml {"endpoints":{"createPaystackSubscription":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"createPaystackSubscription"},"paystackWebhookHandler":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"paystackWebhookHandler"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[debug] [2025-06-14T23:06:27.497Z] Validating nodejs source
+[debug] [2025-06-14T23:06:28.256Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.4",
+    "firebase-functions-test": "^3.1.0",
+    "typescript": "^5.7.3"
+  },
+  "private": true
+}
+[debug] [2025-06-14T23:06:28.257Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase brieflyai to determine what to deploy 
+[debug] [2025-06-14T23:06:28.260Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-06-14T23:06:28.281Z] Found firebase-functions binary at '/home/user/studio/brieflyai/node_modules/.bin/firebase-functions'
+[info] Serving at port 8960
+
+[debug] [2025-06-14T23:06:30.218Z] Got response from /__/functions.yaml {"endpoints":{},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] i  extensions: ensuring required API firebaseextensions.googleapis.com is enabled... 
+[debug] [2025-06-14T23:06:34.242Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:34.242Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:34.243Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:34.243Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:34.243Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/firebaseextensions.googleapis.com [none]
+[debug] [2025-06-14T23:06:34.243Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/firebaseextensions.googleapis.com x-goog-quota-user=projects/brieflyai-gtgc2
+[debug] [2025-06-14T23:06:35.037Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/firebaseextensions.googleapis.com 200
+[debug] [2025-06-14T23:06:35.037Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/firebaseextensions.googleapis.com [omitted]
+[info] ✔  extensions: required API firebaseextensions.googleapis.com is enabled 
+[debug] [2025-06-14T23:06:35.038Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:35.038Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:35.039Z] [iam] checking project brieflyai-gtgc2 for permissions ["firebase.projects.get","firebaseextensions.instances.list"]
+[debug] [2025-06-14T23:06:35.039Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:35.039Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:35.039Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:35.040Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:35.040Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions [none]
+[debug] [2025-06-14T23:06:35.040Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions x-goog-quota-user=projects/brieflyai-gtgc2
+[debug] [2025-06-14T23:06:35.040Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-06-14T23:06:35.688Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions 200
+[debug] [2025-06-14T23:06:35.688Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-06-14T23:06:35.689Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:35.689Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:35.689Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:35.689Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:35.691Z] >>> [apiv2][query] GET https://firebaseextensions.googleapis.com/v1beta/projects/brieflyai-gtgc2/instances pageSize=100&pageToken=
+[debug] [2025-06-14T23:06:36.452Z] <<< [apiv2][status] GET https://firebaseextensions.googleapis.com/v1beta/projects/brieflyai-gtgc2/instances 200
+[debug] [2025-06-14T23:06:36.452Z] <<< [apiv2][body] GET https://firebaseextensions.googleapis.com/v1beta/projects/brieflyai-gtgc2/instances {}
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged /home/user/studio/functions (105.07 KB) for uploading 
+[info] i  functions: packaged /home/user/studio/functions (105.43 KB) for uploading 
+[debug] [2025-06-14T23:06:36.700Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:36.701Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:36.701Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:36.701Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:36.701Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/brieflyai-gtgc2/locations/-/functions [none]
+[debug] [2025-06-14T23:06:37.237Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/brieflyai-gtgc2/locations/-/functions 200
+[debug] [2025-06-14T23:06:37.237Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/brieflyai-gtgc2/locations/-/functions {}
+[debug] [2025-06-14T23:06:37.238Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:37.238Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:37.238Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:37.238Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:37.239Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2025-06-14T23:06:38.226Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/-/functions 200
+[debug] [2025-06-14T23:06:38.226Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/-/functions {}
+[info] i  functions: ensuring required API run.googleapis.com is enabled... 
+[debug] [2025-06-14T23:06:38.231Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:38.231Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:38.232Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:38.232Z] > authorizing via signed-in user (babseli933@gmail.com)
+[info] i  functions: ensuring required API eventarc.googleapis.com is enabled... 
+[debug] [2025-06-14T23:06:38.233Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:38.233Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:38.233Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:38.233Z] > authorizing via signed-in user (babseli933@gmail.com)
+[info] i  functions: ensuring required API pubsub.googleapis.com is enabled... 
+[debug] [2025-06-14T23:06:38.236Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:38.236Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:38.236Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:38.236Z] > authorizing via signed-in user (babseli933@gmail.com)
+[info] i  functions: ensuring required API storage.googleapis.com is enabled... 
+[debug] [2025-06-14T23:06:38.237Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:38.237Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:38.238Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:38.238Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:38.238Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/run.googleapis.com [none]
+[debug] [2025-06-14T23:06:38.238Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/run.googleapis.com x-goog-quota-user=projects/429810342473
+[debug] [2025-06-14T23:06:38.239Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/eventarc.googleapis.com [none]
+[debug] [2025-06-14T23:06:38.239Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/eventarc.googleapis.com x-goog-quota-user=projects/429810342473
+[debug] [2025-06-14T23:06:38.241Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/pubsub.googleapis.com [none]
+[debug] [2025-06-14T23:06:38.241Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/pubsub.googleapis.com x-goog-quota-user=projects/429810342473
+[debug] [2025-06-14T23:06:38.247Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/storage.googleapis.com [none]
+[debug] [2025-06-14T23:06:38.247Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/storage.googleapis.com x-goog-quota-user=projects/429810342473
+[debug] [2025-06-14T23:06:38.700Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/run.googleapis.com 200
+[debug] [2025-06-14T23:06:38.700Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/run.googleapis.com [omitted]
+[info] ✔  functions: required API run.googleapis.com is enabled 
+[debug] [2025-06-14T23:06:39.050Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/eventarc.googleapis.com 200
+[debug] [2025-06-14T23:06:39.050Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/eventarc.googleapis.com [omitted]
+[warn] ⚠  functions: missing required API eventarc.googleapis.com. Enabling now... 
+[debug] [2025-06-14T23:06:39.052Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:39.052Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:39.052Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:39.052Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:39.052Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/429810342473/services/eventarc.googleapis.com:enable [none]
+[debug] [2025-06-14T23:06:39.052Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/429810342473/services/eventarc.googleapis.com:enable x-goog-quota-user=projects/429810342473
+[debug] [2025-06-14T23:06:39.055Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/pubsub.googleapis.com 200
+[debug] [2025-06-14T23:06:39.056Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/pubsub.googleapis.com [omitted]
+[info] ✔  functions: required API pubsub.googleapis.com is enabled 
+[debug] [2025-06-14T23:06:39.062Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/storage.googleapis.com 200
+[debug] [2025-06-14T23:06:39.062Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/storage.googleapis.com [omitted]
+[info] ✔  functions: required API storage.googleapis.com is enabled 
+[debug] [2025-06-14T23:06:40.180Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/429810342473/services/eventarc.googleapis.com:enable 200
+[debug] [2025-06-14T23:06:40.180Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/429810342473/services/eventarc.googleapis.com:enable [omitted]
+[debug] [2025-06-14T23:06:50.185Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:50.185Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:50.186Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:50.186Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:50.186Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/eventarc.googleapis.com [none]
+[debug] [2025-06-14T23:06:50.186Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/eventarc.googleapis.com x-goog-quota-user=projects/429810342473
+[debug] [2025-06-14T23:06:51.018Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/eventarc.googleapis.com 200
+[debug] [2025-06-14T23:06:51.019Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/429810342473/services/eventarc.googleapis.com [omitted]
+[info] ✔  functions: required API eventarc.googleapis.com is enabled 
+[info] i  functions: generating the service identity for pubsub.googleapis.com... 
+[debug] [2025-06-14T23:06:51.024Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:51.024Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:51.025Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:51.025Z] > authorizing via signed-in user (babseli933@gmail.com)
+[info] i  functions: generating the service identity for eventarc.googleapis.com... 
+[debug] [2025-06-14T23:06:51.025Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:51.026Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:51.026Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:51.026Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:51.027Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/429810342473/services/pubsub.googleapis.com:generateServiceIdentity [none]
+[debug] [2025-06-14T23:06:51.027Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/429810342473/services/eventarc.googleapis.com:generateServiceIdentity [none]
+[debug] [2025-06-14T23:06:51.702Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/429810342473/services/eventarc.googleapis.com:generateServiceIdentity 200
+[debug] [2025-06-14T23:06:51.702Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/429810342473/services/eventarc.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-429810342473@gcp-sa-eventarc.iam.gserviceaccount.com","uniqueId":"116242864580855162248"}}
+[debug] [2025-06-14T23:06:52.000Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/429810342473/services/pubsub.googleapis.com:generateServiceIdentity 200
+[debug] [2025-06-14T23:06:52.000Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/429810342473/services/pubsub.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-429810342473@gcp-sa-pubsub.iam.gserviceaccount.com","uniqueId":"105826353315130626179"}}
+[debug] [2025-06-14T23:06:52.005Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:52.005Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:52.005Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:52.005Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:52.007Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudresourcemanager.googleapis.com [none]
+[debug] [2025-06-14T23:06:52.008Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudresourcemanager.googleapis.com x-goog-quota-user=projects/brieflyai-gtgc2
+[debug] [2025-06-14T23:06:53.002Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudresourcemanager.googleapis.com 200
+[debug] [2025-06-14T23:06:53.002Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudresourcemanager.googleapis.com [omitted]
+[debug] [2025-06-14T23:06:53.003Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:53.003Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:53.003Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:53.003Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:53.003Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2 [none]
+[debug] [2025-06-14T23:06:53.690Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2 200
+[debug] [2025-06-14T23:06:53.690Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2 {"projectNumber":"429810342473","projectId":"brieflyai-gtgc2","lifecycleState":"ACTIVE","name":"BrieflyAI","labels":{"monospace-workspace-id":"studio-3713567362","firebase":"enabled","firebase-core":"disabled","generative-language":"enabled"},"createTime":"2025-06-11T15:28:12.125454Z"}
+[debug] [2025-06-14T23:06:53.692Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:53.692Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:53.693Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:53.693Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:53.694Z] >>> [apiv2][query] GET https://compute.googleapis.com/compute/v1/projects/429810342473 [none]
+[debug] [2025-06-14T23:06:53.832Z] <<< [apiv2][status] GET https://compute.googleapis.com/compute/v1/projects/429810342473 403
+[debug] [2025-06-14T23:06:53.832Z] <<< [apiv2][body] GET https://compute.googleapis.com/compute/v1/projects/429810342473 {"error":{"code":403,"message":"Compute Engine API has not been used in project 429810342473 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=429810342473 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 429810342473 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=429810342473 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"consumer":"projects/429810342473","serviceTitle":"Compute Engine API","containerInfo":"429810342473","service":"compute.googleapis.com","activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=429810342473"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 429810342473 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=429810342473 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=429810342473"}]}]}}
+[debug] [2025-06-14T23:06:53.833Z] unable to look up default compute service account. Falling back to 429810342473-compute@developer.gserviceaccount.com. Error: {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":403,"message":"Compute Engine API has not been used in project 429810342473 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=429810342473 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 429810342473 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=429810342473 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"consumer":"projects/429810342473","serviceTitle":"Compute Engine API","containerInfo":"429810342473","service":"compute.googleapis.com","activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=429810342473"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 429810342473 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=429810342473 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=429810342473"}]}]}},"response":{"statusCode":403}},"exit":1,"message":"Request to https://compute.googleapis.com/compute/v1/projects/429810342473 had HTTP Error: 403, Compute Engine API has not been used in project 429810342473 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=429810342473 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","status":403}
+[debug] [2025-06-14T23:06:53.836Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:53.836Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:53.836Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:53.836Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:53.837Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/brieflyai-gtgc2/billingInfo [none]
+[debug] [2025-06-14T23:06:54.512Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/brieflyai-gtgc2/billingInfo 200
+[debug] [2025-06-14T23:06:54.512Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/brieflyai-gtgc2/billingInfo {"name":"projects/brieflyai-gtgc2/billingInfo","projectId":"brieflyai-gtgc2","billingAccountName":"billingAccounts/01E092-12D71A-05FB2F","billingEnabled":true}
+[debug] [2025-06-14T23:06:54.515Z] [functions] found 1 new HTTP functions, testing setIamPolicy permission...
+[debug] [2025-06-14T23:06:54.515Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:54.516Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:54.516Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:54.516Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:54.516Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions [none]
+[debug] [2025-06-14T23:06:54.516Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions x-goog-quota-user=projects/brieflyai-gtgc2
+[debug] [2025-06-14T23:06:54.516Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions {"permissions":["cloudfunctions.functions.setIamPolicy"]}
+[debug] [2025-06-14T23:06:54.654Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions 200
+[debug] [2025-06-14T23:06:54.655Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions {"permissions":["cloudfunctions.functions.setIamPolicy"]}
+[debug] [2025-06-14T23:06:54.655Z] [functions] found setIamPolicy permission, proceeding with deploy
+[debug] [2025-06-14T23:06:54.657Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:54.657Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:54.657Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:54.657Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:54.658Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:54.658Z] No OAuth tokens found
+[debug] [2025-06-14T23:06:54.658Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:06:54.658Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:06:54.658Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/functions:generateUploadUrl [none]
+[debug] [2025-06-14T23:06:54.658Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/functions:generateUploadUrl {}
+[debug] [2025-06-14T23:06:54.661Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/functions:generateUploadUrl [none]
+[debug] [2025-06-14T23:06:57.286Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/functions:generateUploadUrl 200
+[debug] [2025-06-14T23:06:57.286Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/functions:generateUploadUrl {"uploadUrl":"https://storage.googleapis.com/gcf-v2-uploads-429810342473.us-central1.cloudfunctions.appspot.com/9693b9de-b55c-4c65-9f76-28ba5ce0c6cd.zip?GoogleAccessId=service-429810342473@gcf-admin-robot.iam.gserviceaccount.com&Expires=1749944217&Signature=rnKTybZX%2B8tlNOjxFHUmmlmYK8kG1R3GlszrIgDqh%2Be9ZncGRL7NP91JFWRLOSE9qXhiVwhm%2Fsg1fQPPSQfPM3P9QsaAwUUw43MrRwhivQVtot%2BvDNO4RxRnWVzGXhWyAKBqmGbHI%2B0GH1hV%2FEmKAg2JS%2BKx3fiGlII8xrzPQhHz5jhxYxx%2Fq1nHp25NX3NNEdPihbwFSv8pj0dtM6boEBK3P8AoBPU9ttiyoCHsYszG6G1cWupTCdXzR8cpn6HB2g0d8eO9nSS7JATyWBoajgOu1u5qfIbegNZMCCeKU0xyDV1WlmTtAZ8TYiWnbWO6RHn7G1gjYrJvVwlFjqU0hA%3D%3D","storageSource":{"bucket":"gcf-v2-uploads-429810342473.us-central1.cloudfunctions.appspot.com","object":"9693b9de-b55c-4c65-9f76-28ba5ce0c6cd.zip"}}
+[debug] [2025-06-14T23:06:57.289Z] >>> [apiv2][query] PUT https://storage.googleapis.com/gcf-v2-uploads-429810342473.us-central1.cloudfunctions.appspot.com/9693b9de-b55c-4c65-9f76-28ba5ce0c6cd.zip GoogleAccessId=service-429810342473%40gcf-admin-robot.iam.gserviceaccount.com&Expires=1749944217&Signature=rnKTybZX%2B8tlNOjxFHUmmlmYK8kG1R3GlszrIgDqh%2Be9ZncGRL7NP91JFWRLOSE9qXhiVwhm%2Fsg1fQPPSQfPM3P9QsaAwUUw43MrRwhivQVtot%2BvDNO4RxRnWVzGXhWyAKBqmGbHI%2B0GH1hV%2FEmKAg2JS%2BKx3fiGlII8xrzPQhHz5jhxYxx%2Fq1nHp25NX3NNEdPihbwFSv8pj0dtM6boEBK3P8AoBPU9ttiyoCHsYszG6G1cWupTCdXzR8cpn6HB2g0d8eO9nSS7JATyWBoajgOu1u5qfIbegNZMCCeKU0xyDV1WlmTtAZ8TYiWnbWO6RHn7G1gjYrJvVwlFjqU0hA%3D%3D
+[debug] [2025-06-14T23:06:57.289Z] >>> [apiv2][body] PUT https://storage.googleapis.com/gcf-v2-uploads-429810342473.us-central1.cloudfunctions.appspot.com/9693b9de-b55c-4c65-9f76-28ba5ce0c6cd.zip [stream]
+[debug] [2025-06-14T23:06:58.375Z] <<< [apiv2][status] PUT https://storage.googleapis.com/gcf-v2-uploads-429810342473.us-central1.cloudfunctions.appspot.com/9693b9de-b55c-4c65-9f76-28ba5ce0c6cd.zip 200
+[debug] [2025-06-14T23:06:58.377Z] <<< [apiv2][body] PUT https://storage.googleapis.com/gcf-v2-uploads-429810342473.us-central1.cloudfunctions.appspot.com/9693b9de-b55c-4c65-9f76-28ba5ce0c6cd.zip [omitted]
+[debug] [2025-06-14T23:07:07.941Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/functions:generateUploadUrl 200
+[debug] [2025-06-14T23:07:07.942Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/functions:generateUploadUrl {"uploadUrl":"https://storage.googleapis.com/uploads-199375709279.us-central1.cloudfunctions.appspot.com/712d4b90-c8ac-4b60-952a-d5d528797f75.zip?GoogleAccessId=service-429810342473@gcf-admin-robot.iam.gserviceaccount.com&Expires=1749944227&Signature=AtjQp3uE3dU71QaSZQEVj1osoPtiJPGmcX427weP%2F%2BPTxOH5DtmivrpjVK1NzPvt8TS5tOeBZogqTTIhhcVaTTKg9bbBE1ukKNYmxOabcCeOtLi0BIFiPm%2FhAHm1TvdmQOeeT6olcPg%2BbQnJ9sYufTOaWjDKr%2Bt%2F9D0Gcbb1VUz5hsBX4qbcizT3O9mymHtuTCvvz647I8RkmKYIzbINkYMBwbmmC1gyjqrre%2FZN4P2xhAxIh51MqooOv0Nq3CH5UG%2B3eT4XYFod%2FPEJgoDiQB2F8WJ7MTfranJvpo%2FnbahsUL64FQNsDd%2BXTQTy7wBfoQsYImhMhqiTaWYrTrAW6w%3D%3D"}
+[debug] [2025-06-14T23:07:07.943Z] >>> [apiv2][query] PUT https://storage.googleapis.com/uploads-199375709279.us-central1.cloudfunctions.appspot.com/712d4b90-c8ac-4b60-952a-d5d528797f75.zip GoogleAccessId=service-429810342473%40gcf-admin-robot.iam.gserviceaccount.com&Expires=1749944227&Signature=AtjQp3uE3dU71QaSZQEVj1osoPtiJPGmcX427weP%2F%2BPTxOH5DtmivrpjVK1NzPvt8TS5tOeBZogqTTIhhcVaTTKg9bbBE1ukKNYmxOabcCeOtLi0BIFiPm%2FhAHm1TvdmQOeeT6olcPg%2BbQnJ9sYufTOaWjDKr%2Bt%2F9D0Gcbb1VUz5hsBX4qbcizT3O9mymHtuTCvvz647I8RkmKYIzbINkYMBwbmmC1gyjqrre%2FZN4P2xhAxIh51MqooOv0Nq3CH5UG%2B3eT4XYFod%2FPEJgoDiQB2F8WJ7MTfranJvpo%2FnbahsUL64FQNsDd%2BXTQTy7wBfoQsYImhMhqiTaWYrTrAW6w%3D%3D
+[debug] [2025-06-14T23:07:07.943Z] >>> [apiv2][body] PUT https://storage.googleapis.com/uploads-199375709279.us-central1.cloudfunctions.appspot.com/712d4b90-c8ac-4b60-952a-d5d528797f75.zip [stream]
+[debug] [2025-06-14T23:07:08.975Z] <<< [apiv2][status] PUT https://storage.googleapis.com/uploads-199375709279.us-central1.cloudfunctions.appspot.com/712d4b90-c8ac-4b60-952a-d5d528797f75.zip 200
+[debug] [2025-06-14T23:07:08.975Z] <<< [apiv2][body] PUT https://storage.googleapis.com/uploads-199375709279.us-central1.cloudfunctions.appspot.com/712d4b90-c8ac-4b60-952a-d5d528797f75.zip [omitted]
+[info] ✔  functions: functions folder uploaded successfully 
+[info] i  functions: creating Node.js 22 (1st Gen) function createPaystackSubscription(us-central1)... 
+[info] i  functions: creating Node.js 22 (2nd Gen) function paystackWebhookHandler(us-central1)... 
+[debug] [2025-06-14T23:07:08.989Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:08.990Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:08.990Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:07:08.990Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:07:08.990Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:08.990Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:08.991Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:07:08.991Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:07:08.991Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/functions [none]
+[debug] [2025-06-14T23:07:08.991Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/functions {"name":"projects/brieflyai-gtgc2/locations/us-central1/functions/createPaystackSubscription","sourceUploadUrl":"https://storage.googleapis.com/uploads-199375709279.us-central1.cloudfunctions.appspot.com/712d4b90-c8ac-4b60-952a-d5d528797f75.zip?GoogleAccessId=service-429810342473@gcf-admin-robot.iam.gserviceaccount.com&Expires=1749944227&Signature=AtjQp3uE3dU71QaSZQEVj1osoPtiJPGmcX427weP%2F%2BPTxOH5DtmivrpjVK1NzPvt8TS5tOeBZogqTTIhhcVaTTKg9bbBE1ukKNYmxOabcCeOtLi0BIFiPm%2FhAHm1TvdmQOeeT6olcPg%2BbQnJ9sYufTOaWjDKr%2Bt%2F9D0Gcbb1VUz5hsBX4qbcizT3O9mymHtuTCvvz647I8RkmKYIzbINkYMBwbmmC1gyjqrre%2FZN4P2xhAxIh51MqooOv0Nq3CH5UG%2B3eT4XYFod%2FPEJgoDiQB2F8WJ7MTfranJvpo%2FnbahsUL64FQNsDd%2BXTQTy7wBfoQsYImhMhqiTaWYrTrAW6w%3D%3D","entryPoint":"createPaystackSubscription","runtime":"nodejs22","dockerRegistry":"ARTIFACT_REGISTRY","labels":{"deployment-tool":"cli-firebase--project-idx","deployment-callable":"true","firebase-functions-hash":"50a77e9ac96fe70a01811085f941dfd4d5530dff"},"httpsTrigger":{"securityLevel":"SECURE_ALWAYS"},"minInstances":null,"maxInstances":null,"ingressSettings":null,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/functions/createPaystackSubscription"},"serviceAccountEmail":null,"availableMemoryMb":null,"timeout":null,"vpcConnector":null,"vpcConnectorEgressSettings":null,"buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""}}
+[debug] [2025-06-14T23:07:08.992Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/functions functionId=paystackWebhookHandler
+[debug] [2025-06-14T23:07:08.992Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/functions {"name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-uploads-429810342473.us-central1.cloudfunctions.appspot.com","object":"9693b9de-b55c-4c65-9f76-28ba5ce0c6cd.zip"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""}},"serviceConfig":{"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":null,"timeoutSeconds":null,"serviceAccountEmail":null,"availableMemory":"256Mi","minInstanceCount":null,"maxInstanceCount":null,"maxInstanceRequestConcurrency":80,"availableCpu":"1","vpcConnector":null,"vpcConnectorEgressSettings":null},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"}}
+[debug] [2025-06-14T23:07:10.540Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/functions 400
+[debug] [2025-06-14T23:07:10.540Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/functions {"error":{"code":400,"message":"Failed to create 1st Gen function projects/brieflyai-gtgc2/locations/us-central1/functions/createPaystackSubscription: runtime: Runtime validation errors: [error_code: INVALID_RUNTIME\nmessage: \"Runtime \\\"nodejs22\\\" is not supported on GCF Gen1\"\n]","status":"INVALID_ARGUMENT"}}
+[warn] ⚠  functions: failed to create function projects/brieflyai-gtgc2/locations/us-central1/functions/createPaystackSubscription 
+[error] Failed to create function projects/brieflyai-gtgc2/locations/us-central1/functions/createPaystackSubscription
+[debug] [2025-06-14T23:07:11.356Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/functions 200
+[debug] [2025-06-14T23:07:11.357Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/functions {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2"},"done":false}
+[debug] [2025-06-14T23:07:11.360Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:11.360Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:11.361Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:07:11.361Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:07:11.362Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b [none]
+[debug] [2025-06-14T23:07:12.028Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b 200
+[debug] [2025-06-14T23:07:12.028Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-sources-429810342473-us-central1","object":"paystackWebhookHandler/function-source.zip","generation":"1749942430917959"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/brieflyai-gtgc2/serviceAccounts/429810342473-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"429810342473-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"},"environment":"GEN_2"},"stages":[{"name":"BUILD","state":"NOT_STARTED"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION"},"done":false}
+[debug] [2025-06-14T23:07:12.530Z] [create-default-us-central1-paystackWebhookHandler] Retrying task index 0
+[debug] [2025-06-14T23:07:12.534Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:12.534Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:12.535Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:07:12.535Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:07:12.536Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b [none]
+[debug] [2025-06-14T23:07:13.203Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b 200
+[debug] [2025-06-14T23:07:13.204Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-sources-429810342473-us-central1","object":"paystackWebhookHandler/function-source.zip","generation":"1749942430917959"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/brieflyai-gtgc2/serviceAccounts/429810342473-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"429810342473-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"},"environment":"GEN_2"},"stages":[{"name":"BUILD","state":"NOT_STARTED"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION"},"done":false}
+[debug] [2025-06-14T23:07:14.204Z] [create-default-us-central1-paystackWebhookHandler] Retrying task index 0
+[debug] [2025-06-14T23:07:14.206Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:14.206Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:14.206Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:07:14.206Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:07:14.206Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b [none]
+[debug] [2025-06-14T23:07:14.861Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b 200
+[debug] [2025-06-14T23:07:14.862Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-sources-429810342473-us-central1","object":"paystackWebhookHandler/function-source.zip","generation":"1749942430917959"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/brieflyai-gtgc2/serviceAccounts/429810342473-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"429810342473-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"},"environment":"GEN_2"},"stages":[{"name":"BUILD","state":"NOT_STARTED"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION"},"done":false}
+[debug] [2025-06-14T23:07:16.862Z] [create-default-us-central1-paystackWebhookHandler] Retrying task index 0
+[debug] [2025-06-14T23:07:16.864Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:16.865Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:16.865Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:07:16.868Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:07:16.868Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b [none]
+[debug] [2025-06-14T23:07:17.529Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b 200
+[debug] [2025-06-14T23:07:17.529Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-sources-429810342473-us-central1","object":"paystackWebhookHandler/function-source.zip","generation":"1749942430917959"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/brieflyai-gtgc2/serviceAccounts/429810342473-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"429810342473-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"},"environment":"GEN_2"},"stages":[{"name":"BUILD","state":"NOT_STARTED"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION"},"done":false}
+[debug] [2025-06-14T23:07:21.531Z] [create-default-us-central1-paystackWebhookHandler] Retrying task index 0
+[debug] [2025-06-14T23:07:21.532Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:21.533Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:21.533Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:07:21.533Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:07:21.533Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b [none]
+[debug] [2025-06-14T23:07:22.210Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b 200
+[debug] [2025-06-14T23:07:22.211Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-sources-429810342473-us-central1","object":"paystackWebhookHandler/function-source.zip","generation":"1749942430917959"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/brieflyai-gtgc2/serviceAccounts/429810342473-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"429810342473-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"},"environment":"GEN_2"},"stages":[{"name":"BUILD","state":"NOT_STARTED"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION"},"done":false}
+[debug] [2025-06-14T23:07:30.214Z] [create-default-us-central1-paystackWebhookHandler] Retrying task index 0
+[debug] [2025-06-14T23:07:30.214Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:30.215Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:30.215Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:07:30.215Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:07:30.215Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b [none]
+[debug] [2025-06-14T23:07:30.897Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b 200
+[debug] [2025-06-14T23:07:30.897Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-sources-429810342473-us-central1","object":"paystackWebhookHandler/function-source.zip","generation":"1749942430917959"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/brieflyai-gtgc2/serviceAccounts/429810342473-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"429810342473-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"},"environment":"GEN_2"},"stages":[{"name":"BUILD","state":"NOT_STARTED"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION"},"done":false}
+[debug] [2025-06-14T23:07:40.903Z] [create-default-us-central1-paystackWebhookHandler] Retrying task index 0
+[debug] [2025-06-14T23:07:40.904Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:40.905Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:40.905Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:07:40.905Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:07:40.906Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b [none]
+[debug] [2025-06-14T23:07:41.590Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b 200
+[debug] [2025-06-14T23:07:41.591Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-sources-429810342473-us-central1","object":"paystackWebhookHandler/function-source.zip","generation":"1749942430917959"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/brieflyai-gtgc2/serviceAccounts/429810342473-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"429810342473-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"},"environment":"GEN_2"},"stages":[{"name":"BUILD","state":"NOT_STARTED"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION"},"done":false}
+[debug] [2025-06-14T23:07:51.594Z] [create-default-us-central1-paystackWebhookHandler] Retrying task index 0
+[debug] [2025-06-14T23:07:51.595Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:51.595Z] No OAuth tokens found
+[debug] [2025-06-14T23:07:51.595Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:07:51.595Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:07:51.596Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b [none]
+[debug] [2025-06-14T23:07:52.268Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b 200
+[debug] [2025-06-14T23:07:52.268Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-sources-429810342473-us-central1","object":"paystackWebhookHandler/function-source.zip","generation":"1749942430917959"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/brieflyai-gtgc2/serviceAccounts/429810342473-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"429810342473-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"},"environment":"GEN_2"},"stages":[{"name":"BUILD","state":"NOT_STARTED"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION"},"done":false}
+[debug] [2025-06-14T23:08:02.275Z] [create-default-us-central1-paystackWebhookHandler] Retrying task index 0
+[debug] [2025-06-14T23:08:02.276Z] No OAuth tokens found
+[debug] [2025-06-14T23:08:02.276Z] No OAuth tokens found
+[debug] [2025-06-14T23:08:02.276Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:08:02.277Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:08:02.277Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b [none]
+[debug] [2025-06-14T23:08:02.932Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b 200
+[debug] [2025-06-14T23:08:02.932Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-sources-429810342473-us-central1","object":"paystackWebhookHandler/function-source.zip","generation":"1749942430917959"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/brieflyai-gtgc2/serviceAccounts/429810342473-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"429810342473-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"},"environment":"GEN_2"},"stages":[{"name":"BUILD","state":"NOT_STARTED"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION"},"done":false}
+[debug] [2025-06-14T23:08:12.938Z] [create-default-us-central1-paystackWebhookHandler] Retrying task index 0
+[debug] [2025-06-14T23:08:12.939Z] No OAuth tokens found
+[debug] [2025-06-14T23:08:12.940Z] No OAuth tokens found
+[debug] [2025-06-14T23:08:12.940Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:08:12.940Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:08:12.940Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b [none]
+[debug] [2025-06-14T23:08:13.621Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b 200
+[debug] [2025-06-14T23:08:13.622Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-sources-429810342473-us-central1","object":"paystackWebhookHandler/function-source.zip","generation":"1749942430917959"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/brieflyai-gtgc2/serviceAccounts/429810342473-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"429810342473-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"},"environment":"GEN_2"},"stages":[{"name":"BUILD","message":"Build in progress","state":"IN_PROGRESS","resource":"projects/429810342473/locations/us-central1/builds/e63dc84e-17eb-4e6f-b6f2-a6050493efec","resourceUri":"https://console.cloud.google.com/cloud-build/builds;region=us-central1/e63dc84e-17eb-4e6f-b6f2-a6050493efec?project=429810342473"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION","buildName":"projects/429810342473/locations/us-central1/builds/e63dc84e-17eb-4e6f-b6f2-a6050493efec"},"done":false}
+[debug] [2025-06-14T23:08:23.625Z] [create-default-us-central1-paystackWebhookHandler] Retrying task index 0
+[debug] [2025-06-14T23:08:23.626Z] No OAuth tokens found
+[debug] [2025-06-14T23:08:23.626Z] No OAuth tokens found
+[debug] [2025-06-14T23:08:23.626Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:08:23.630Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:08:23.630Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b [none]
+[debug] [2025-06-14T23:08:24.314Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b 200
+[debug] [2025-06-14T23:08:24.314Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-sources-429810342473-us-central1","object":"paystackWebhookHandler/function-source.zip","generation":"1749942430917959"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/brieflyai-gtgc2/serviceAccounts/429810342473-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"429810342473-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"},"environment":"GEN_2"},"stages":[{"name":"BUILD","message":"Build in progress","state":"IN_PROGRESS","resource":"projects/429810342473/locations/us-central1/builds/e63dc84e-17eb-4e6f-b6f2-a6050493efec","resourceUri":"https://console.cloud.google.com/cloud-build/builds;region=us-central1/e63dc84e-17eb-4e6f-b6f2-a6050493efec?project=429810342473"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION","buildName":"projects/429810342473/locations/us-central1/builds/e63dc84e-17eb-4e6f-b6f2-a6050493efec"},"done":false}
+[debug] [2025-06-14T23:08:34.321Z] [create-default-us-central1-paystackWebhookHandler] Retrying task index 0
+[debug] [2025-06-14T23:08:34.322Z] No OAuth tokens found
+[debug] [2025-06-14T23:08:34.322Z] No OAuth tokens found
+[debug] [2025-06-14T23:08:34.323Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:08:34.325Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:08:34.325Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b [none]
+[debug] [2025-06-14T23:08:35.011Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b 200
+[debug] [2025-06-14T23:08:35.011Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-sources-429810342473-us-central1","object":"paystackWebhookHandler/function-source.zip","generation":"1749942430917959"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/brieflyai-gtgc2/serviceAccounts/429810342473-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"429810342473-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"},"environment":"GEN_2"},"stages":[{"name":"BUILD","message":"Build in progress","state":"IN_PROGRESS","resource":"projects/429810342473/locations/us-central1/builds/e63dc84e-17eb-4e6f-b6f2-a6050493efec","resourceUri":"https://console.cloud.google.com/cloud-build/builds;region=us-central1/e63dc84e-17eb-4e6f-b6f2-a6050493efec?project=429810342473"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION","buildName":"projects/429810342473/locations/us-central1/builds/e63dc84e-17eb-4e6f-b6f2-a6050493efec"},"done":false}
+[debug] [2025-06-14T23:08:45.017Z] [create-default-us-central1-paystackWebhookHandler] Retrying task index 0
+[debug] [2025-06-14T23:08:45.018Z] No OAuth tokens found
+[debug] [2025-06-14T23:08:45.018Z] No OAuth tokens found
+[debug] [2025-06-14T23:08:45.018Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:08:45.018Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:08:45.019Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b [none]
+[debug] [2025-06-14T23:08:45.701Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b 200
+[debug] [2025-06-14T23:08:45.701Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-sources-429810342473-us-central1","object":"paystackWebhookHandler/function-source.zip","generation":"1749942430917959"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/brieflyai-gtgc2/serviceAccounts/429810342473-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"429810342473-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"},"environment":"GEN_2"},"stages":[{"name":"ARTIFACT_REGISTRY","state":"NOT_STARTED"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION"},"done":false}
+[debug] [2025-06-14T23:08:55.707Z] [create-default-us-central1-paystackWebhookHandler] Retrying task index 0
+[debug] [2025-06-14T23:08:55.709Z] No OAuth tokens found
+[debug] [2025-06-14T23:08:55.710Z] No OAuth tokens found
+[debug] [2025-06-14T23:08:55.710Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:08:55.710Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:08:55.710Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b [none]
+[debug] [2025-06-14T23:08:56.371Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b 200
+[debug] [2025-06-14T23:08:56.371Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b {"name":"projects/brieflyai-gtgc2/locations/us-central1/operations/operation-1749942429623-6379038e5265f-72364230-8ae2b33b","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-14T23:07:11.282386246Z","endTime":"2025-06-14T23:08:46.017296501Z","target":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/brieflyai-gtgc2/locations/us-central1/functions/paystackWebhookHandler","buildConfig":{"runtime":"nodejs22","entryPoint":"paystackWebhookHandler","source":{"storageSource":{"bucket":"gcf-v2-sources-429810342473-us-central1","object":"paystackWebhookHandler/function-source.zip","generation":"1749942430917959"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/brieflyai-gtgc2/serviceAccounts/429810342473-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}","GCLOUD_PROJECT":"brieflyai-gtgc2","EVENTARC_CLOUD_EVENT_SOURCE":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler","FUNCTION_TARGET":"paystackWebhookHandler","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"429810342473-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase--project-idx","firebase-functions-hash":"7cc0e2e2ef2cbf037271736d12bde499d6b67e80"},"environment":"GEN_2"},"stages":[{"name":"ARTIFACT_REGISTRY","message":"Deleting function artifacts in Artifact Registry","state":"COMPLETE"},{"name":"SERVICE","message":"Deleting Cloud Run service","state":"COMPLETE","resource":"projects/brieflyai-gtgc2/locations/us-central1/services/paystackwebhookhandler"}],"operationType":"CREATE_FUNCTION"},"done":true,"error":{"code":3,"message":"Build failed with status: FAILURE and message: npm error code EUSAGE\nnpm error\nnpm error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.\nnpm error\nnpm error Missing: paystack-node@0.3.0 from lock file\nnpm error Missing: got@9.6.0 from lock file\nnpm error Missing: @sindresorhus/is@0.14.0 from lock file\nnpm error Missing: @szmarczak/http-timer@1.1.2 from lock file\nnpm error Missing: cacheable-request@6.1.0 from lock file\nnpm error Missing: decompress-response@3.3.0 from lock file\nnpm error Missing: duplexer3@0.1.5 from lock file\nnpm error Missing: get-stream@4.1.0 from lock file\nnpm error Missing: lowercase-keys@1.0.1 from lock file\nnpm error Missing: mimic-response@1.0.1 from lock file\nnpm error Missing: p-cancelable@1.1.0 from lock file\nnpm error Missing: to-readable-stream@1.0.0 from lock file\nnpm error Missing: url-parse-lax@3.0.0 from lock file\nnpm error Missing: defer-to-connect@1.1.3 from lock file\nnpm error Missing: clone-response@1.0.3 from lock file\nnpm error Missing: get-stream@5.2.0 from lock file\nnpm error Missing: http-cache-semantics@4.2.0 from lock file\nnpm error Missing: keyv@3.1.0 from lock file\nnpm error Missing: lowercase-keys@2.0.0 from lock file\nnpm error Missing: normalize-url@4.5.1 from lock file\nnpm error Missing: responselike@1.0.2 from lock file\nnpm error Missing: prepend-http@2.0.0 from lock file\nnpm error Missing: pump@3.0.2 from lock file\nnpm error Missing: json-buffer@3.0.0 from lock file\nnpm error\nnpm error Clean install a project\nnpm error\nnpm error Usage:\nnpm error npm ci\nnpm error\nnpm error Options:\nnpm error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]\nnpm error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]\nnpm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]\nnpm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]\nnpm error [--no-bin-links] [--no-fund] [--dry-run]\nnpm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]\nnpm error [-ws|--workspaces] [--include-workspace-root] [--install-links]\nnpm error\nnpm error aliases: clean-install, ic, install-clean, isntall-clean\nnpm error\nnpm error Run \"npm help ci\" for more info\nnpm error A complete log of this run can be found in: /www-data-home/.npm/_logs/2025-06-14T23_08_28_012Z-debug-0.log. For more details see the logs at https://console.cloud.google.com/cloud-build/builds;region=us-central1/e63dc84e-17eb-4e6f-b6f2-a6050493efec?project=429810342473."}}
+[debug] [2025-06-14T23:08:56.372Z] Got source token undefined for region us-central1
+[error] Build failed with status: FAILURE and message: npm error code EUSAGE
+npm error
+npm error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.
+npm error
+npm error Missing: paystack-node@0.3.0 from lock file
+npm error Missing: got@9.6.0 from lock file
+npm error Missing: @sindresorhus/is@0.14.0 from lock file
+npm error Missing: @szmarczak/http-timer@1.1.2 from lock file
+npm error Missing: cacheable-request@6.1.0 from lock file
+npm error Missing: decompress-response@3.3.0 from lock file
+npm error Missing: duplexer3@0.1.5 from lock file
+npm error Missing: get-stream@4.1.0 from lock file
+npm error Missing: lowercase-keys@1.0.1 from lock file
+npm error Missing: mimic-response@1.0.1 from lock file
+npm error Missing: p-cancelable@1.1.0 from lock file
+npm error Missing: to-readable-stream@1.0.0 from lock file
+npm error Missing: url-parse-lax@3.0.0 from lock file
+npm error Missing: defer-to-connect@1.1.3 from lock file
+npm error Missing: clone-response@1.0.3 from lock file
+npm error Missing: get-stream@5.2.0 from lock file
+npm error Missing: http-cache-semantics@4.2.0 from lock file
+npm error Missing: keyv@3.1.0 from lock file
+npm error Missing: lowercase-keys@2.0.0 from lock file
+npm error Missing: normalize-url@4.5.1 from lock file
+npm error Missing: responselike@1.0.2 from lock file
+npm error Missing: prepend-http@2.0.0 from lock file
+npm error Missing: pump@3.0.2 from lock file
+npm error Missing: json-buffer@3.0.0 from lock file
+npm error
+npm error Clean install a project
+npm error
+npm error Usage:
+npm error npm ci
+npm error
+npm error Options:
+npm error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]
+npm error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]
+npm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]
+npm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]
+npm error [--no-bin-links] [--no-fund] [--dry-run]
+npm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]
+npm error [-ws|--workspaces] [--include-workspace-root] [--install-links]
+npm error
+npm error aliases: clean-install, ic, install-clean, isntall-clean
+npm error
+npm error Run "npm help ci" for more info
+npm error A complete log of this run can be found in: /www-data-home/.npm/_logs/2025-06-14T23_08_28_012Z-debug-0.log. For more details see the logs at https://console.cloud.google.com/cloud-build/builds;region=us-central1/e63dc84e-17eb-4e6f-b6f2-a6050493efec?project=429810342473.
+[debug] [2025-06-14T23:08:56.383Z] Total Function Deployment time: 107393
+[debug] [2025-06-14T23:08:56.383Z] 2 Functions Deployed
+[debug] [2025-06-14T23:08:56.383Z] 2 Functions Errored
+[debug] [2025-06-14T23:08:56.383Z] 0 Function Deployments Aborted
+[debug] [2025-06-14T23:08:56.383Z] Average Function Deployment time: 54473.5
+[info] 
+[info] Functions deploy had errors with the following functions:
+	paystackWebhookHandler(us-central1)
+	createPaystackSubscription(us-central1)
+[debug] [2025-06-14T23:08:56.413Z] Not printing URL for HTTPS function. Typically this means it didn't match a filter or we failed deployment
+[debug] [2025-06-14T23:08:56.414Z] No OAuth tokens found
+[debug] [2025-06-14T23:08:56.414Z] No OAuth tokens found
+[debug] [2025-06-14T23:08:56.414Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:08:56.415Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:08:56.415Z] >>> [apiv2][query] GET https://artifactregistry.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/repositories/gcf-artifacts [none]
+[debug] [2025-06-14T23:08:57.128Z] <<< [apiv2][status] GET https://artifactregistry.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/repositories/gcf-artifacts 200
+[debug] [2025-06-14T23:08:57.128Z] <<< [apiv2][body] GET https://artifactregistry.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/repositories/gcf-artifacts {"name":"projects/brieflyai-gtgc2/locations/us-central1/repositories/gcf-artifacts","format":"DOCKER","description":"This repository is created and used by Cloud Functions for storing function docker images.","labels":{"goog-managed-by":"cloudfunctions"},"createTime":"2025-06-14T23:08:07.347892Z","updateTime":"2025-06-14T23:08:07.347892Z","mode":"STANDARD_REPOSITORY","vulnerabilityScanningConfig":{"lastEnableTime":"2025-06-14T23:08:06.648600697Z","enablementState":"SCANNING_DISABLED","enablementStateReason":"API containerscanning.googleapis.com is not enabled."},"satisfiesPzi":true,"registryUri":"us-central1-docker.pkg.dev/brieflyai-gtgc2/gcf-artifacts"}
+[warn] ⚠  functions: No cleanup policy detected for repositories in us-central1. This may result in a small monthly bill as container images accumulate over time. 
+[info] i  functions: Configuring cleanup policy for repository in us-central1. Images older than 7 days will be automatically deleted. 
+[debug] [2025-06-14T23:11:01.945Z] Setting up artifact cleanup policy for region us-central1
+[debug] [2025-06-14T23:11:01.947Z] No OAuth tokens found
+[debug] [2025-06-14T23:11:01.948Z] No OAuth tokens found
+[debug] [2025-06-14T23:11:01.948Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T23:11:01.948Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-14T23:11:01.949Z] >>> [apiv2][query] PATCH https://artifactregistry.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/repositories/gcf-artifacts updateMask=name%2CcleanupPolicies%2CcleanupPolicyDryRun%2Clabels
+[debug] [2025-06-14T23:11:01.949Z] >>> [apiv2][body] PATCH https://artifactregistry.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/repositories/gcf-artifacts {"name":"projects/brieflyai-gtgc2/locations/us-central1/repositories/gcf-artifacts","cleanupPolicies":{"firebase-functions-cleanup":{"id":"firebase-functions-cleanup","condition":{"tagState":"ANY","olderThan":"604800s"},"action":"DELETE"}},"cleanupPolicyDryRun":false,"labels":{"goog-managed-by":"cloudfunctions"}}
+[debug] [2025-06-14T23:11:02.736Z] <<< [apiv2][status] PATCH https://artifactregistry.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/repositories/gcf-artifacts 200
+[debug] [2025-06-14T23:11:02.737Z] <<< [apiv2][body] PATCH https://artifactregistry.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/repositories/gcf-artifacts {"name":"projects/brieflyai-gtgc2/locations/us-central1/repositories/gcf-artifacts","format":"DOCKER","description":"This repository is created and used by Cloud Functions for storing function docker images.","labels":{"goog-managed-by":"cloudfunctions"},"createTime":"2025-06-14T23:08:07.347892Z","updateTime":"2025-06-14T23:11:02.632322Z","mode":"STANDARD_REPOSITORY","cleanupPolicies":{"firebase-functions-cleanup":{"id":"firebase-functions-cleanup","action":"DELETE","condition":{"tagState":"ANY","olderThan":"604800s"}}},"vulnerabilityScanningConfig":{"lastEnableTime":"2025-06-14T23:08:06.648600697Z","enablementState":"SCANNING_DISABLED","enablementStateReason":"API containerscanning.googleapis.com is not enabled."},"satisfiesPzi":true}
+[info] i  functions: Configured cleanup policy for repository in us-central1. 
+[debug] [2025-06-14T23:11:02.738Z] Functions deploy failed.
+[debug] [2025-06-14T23:11:02.738Z] {
+  "endpoint": {
+    "id": "createPaystackSubscription",
+    "project": "brieflyai-gtgc2",
+    "region": "us-central1",
+    "entryPoint": "createPaystackSubscription",
+    "platform": "gcfv1",
+    "runtime": "nodejs22",
+    "callableTrigger": {},
+    "labels": {
+      "deployment-tool": "cli-firebase--project-idx"
+    },
+    "serviceAccount": null,
+    "ingressSettings": null,
+    "availableMemoryMb": null,
+    "timeoutSeconds": null,
+    "maxInstances": null,
+    "minInstances": null,
+    "vpc": null,
+    "environmentVariables": {
+      "FIREBASE_CONFIG": "{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}",
+      "GCLOUD_PROJECT": "brieflyai-gtgc2",
+      "EVENTARC_CLOUD_EVENT_SOURCE": "projects/brieflyai-gtgc2/locations/us-central1/functions/createPaystackSubscription"
+    },
+    "codebase": "default",
+    "targetedByOnly": false,
+    "hash": "50a77e9ac96fe70a01811085f941dfd4d5530dff"
+  },
+  "op": "create",
+  "original": {
+    "name": "FirebaseError",
+    "children": [],
+    "context": {
+      "function": "projects/brieflyai-gtgc2/locations/us-central1/functions/createPaystackSubscription"
+    },
+    "exit": 1,
+    "message": "Failed to create function projects/brieflyai-gtgc2/locations/us-central1/functions/createPaystackSubscription",
+    "original": {
+      "name": "FirebaseError",
+      "children": [],
+      "context": {
+        "body": {
+          "error": {
+            "code": 400,
+            "message": "Failed to create 1st Gen function projects/brieflyai-gtgc2/locations/us-central1/functions/createPaystackSubscription: runtime: Runtime validation errors: [error_code: INVALID_RUNTIME\nmessage: \"Runtime \\\"nodejs22\\\" is not supported on GCF Gen1\"\n]",
+            "status": "INVALID_ARGUMENT"
+          }
+        },
+        "response": {
+          "statusCode": 400
+        }
+      },
+      "exit": 1,
+      "message": "Request to https://cloudfunctions.googleapis.com/v1/projects/brieflyai-gtgc2/locations/us-central1/functions had HTTP Error: 400, Failed to create 1st Gen function projects/brieflyai-gtgc2/locations/us-central1/functions/createPaystackSubscription: runtime: Runtime validation errors: [error_code: INVALID_RUNTIME\nmessage: \"Runtime \\\"nodejs22\\\" is not supported on GCF Gen1\"\n]",
+      "status": 400
+    },
+    "status": 400,
+    "code": 400
+  }
+}
+[debug] [2025-06-14T23:11:02.739Z] {
+  "endpoint": {
+    "id": "paystackWebhookHandler",
+    "project": "brieflyai-gtgc2",
+    "region": "us-central1",
+    "entryPoint": "paystackWebhookHandler",
+    "platform": "gcfv2",
+    "runtime": "nodejs22",
+    "httpsTrigger": {},
+    "labels": {
+      "deployment-tool": "cli-firebase--project-idx"
+    },
+    "serviceAccount": null,
+    "ingressSettings": null,
+    "availableMemoryMb": null,
+    "timeoutSeconds": null,
+    "maxInstances": null,
+    "minInstances": null,
+    "concurrency": 80,
+    "vpc": null,
+    "environmentVariables": {
+      "FIREBASE_CONFIG": "{\"projectId\":\"brieflyai-gtgc2\",\"storageBucket\":\"brieflyai-gtgc2.firebasestorage.app\"}",
+      "GCLOUD_PROJECT": "brieflyai-gtgc2",
+      "EVENTARC_CLOUD_EVENT_SOURCE": "projects/brieflyai-gtgc2/locations/us-central1/services/paystackWebhookHandler"
+    },
+    "codebase": "default",
+    "cpu": 1,
+    "targetedByOnly": false,
+    "hash": "7cc0e2e2ef2cbf037271736d12bde499d6b67e80"
+  },
+  "op": "create",
+  "original": {
+    "name": "FirebaseError",
+    "children": [],
+    "exit": 1,
+    "message": "Build failed with status: FAILURE and message: npm error code EUSAGE\nnpm error\nnpm error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.\nnpm error\nnpm error Missing: paystack-node@0.3.0 from lock file\nnpm error Missing: got@9.6.0 from lock file\nnpm error Missing: @sindresorhus/is@0.14.0 from lock file\nnpm error Missing: @szmarczak/http-timer@1.1.2 from lock file\nnpm error Missing: cacheable-request@6.1.0 from lock file\nnpm error Missing: decompress-response@3.3.0 from lock file\nnpm error Missing: duplexer3@0.1.5 from lock file\nnpm error Missing: get-stream@4.1.0 from lock file\nnpm error Missing: lowercase-keys@1.0.1 from lock file\nnpm error Missing: mimic-response@1.0.1 from lock file\nnpm error Missing: p-cancelable@1.1.0 from lock file\nnpm error Missing: to-readable-stream@1.0.0 from lock file\nnpm error Missing: url-parse-lax@3.0.0 from lock file\nnpm error Missing: defer-to-connect@1.1.3 from lock file\nnpm error Missing: clone-response@1.0.3 from lock file\nnpm error Missing: get-stream@5.2.0 from lock file\nnpm error Missing: http-cache-semantics@4.2.0 from lock file\nnpm error Missing: keyv@3.1.0 from lock file\nnpm error Missing: lowercase-keys@2.0.0 from lock file\nnpm error Missing: normalize-url@4.5.1 from lock file\nnpm error Missing: responselike@1.0.2 from lock file\nnpm error Missing: prepend-http@2.0.0 from lock file\nnpm error Missing: pump@3.0.2 from lock file\nnpm error Missing: json-buffer@3.0.0 from lock file\nnpm error\nnpm error Clean install a project\nnpm error\nnpm error Usage:\nnpm error npm ci\nnpm error\nnpm error Options:\nnpm error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]\nnpm error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]\nnpm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]\nnpm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]\nnpm error [--no-bin-links] [--no-fund] [--dry-run]\nnpm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]\nnpm error [-ws|--workspaces] [--include-workspace-root] [--install-links]\nnpm error\nnpm error aliases: clean-install, ic, install-clean, isntall-clean\nnpm error\nnpm error Run \"npm help ci\" for more info\nnpm error A complete log of this run can be found in: /www-data-home/.npm/_logs/2025-06-14T23_08_28_012Z-debug-0.log. For more details see the logs at https://console.cloud.google.com/cloud-build/builds;region=us-central1/e63dc84e-17eb-4e6f-b6f2-a6050493efec?project=429810342473.",
+    "original": {
+      "code": 3,
+      "message": "Build failed with status: FAILURE and message: npm error code EUSAGE\nnpm error\nnpm error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.\nnpm error\nnpm error Missing: paystack-node@0.3.0 from lock file\nnpm error Missing: got@9.6.0 from lock file\nnpm error Missing: @sindresorhus/is@0.14.0 from lock file\nnpm error Missing: @szmarczak/http-timer@1.1.2 from lock file\nnpm error Missing: cacheable-request@6.1.0 from lock file\nnpm error Missing: decompress-response@3.3.0 from lock file\nnpm error Missing: duplexer3@0.1.5 from lock file\nnpm error Missing: get-stream@4.1.0 from lock file\nnpm error Missing: lowercase-keys@1.0.1 from lock file\nnpm error Missing: mimic-response@1.0.1 from lock file\nnpm error Missing: p-cancelable@1.1.0 from lock file\nnpm error Missing: to-readable-stream@1.0.0 from lock file\nnpm error Missing: url-parse-lax@3.0.0 from lock file\nnpm error Missing: defer-to-connect@1.1.3 from lock file\nnpm error Missing: clone-response@1.0.3 from lock file\nnpm error Missing: get-stream@5.2.0 from lock file\nnpm error Missing: http-cache-semantics@4.2.0 from lock file\nnpm error Missing: keyv@3.1.0 from lock file\nnpm error Missing: lowercase-keys@2.0.0 from lock file\nnpm error Missing: normalize-url@4.5.1 from lock file\nnpm error Missing: responselike@1.0.2 from lock file\nnpm error Missing: prepend-http@2.0.0 from lock file\nnpm error Missing: pump@3.0.2 from lock file\nnpm error Missing: json-buffer@3.0.0 from lock file\nnpm error\nnpm error Clean install a project\nnpm error\nnpm error Usage:\nnpm error npm ci\nnpm error\nnpm error Options:\nnpm error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]\nnpm error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]\nnpm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]\nnpm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]\nnpm error [--no-bin-links] [--no-fund] [--dry-run]\nnpm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]\nnpm error [-ws|--workspaces] [--include-workspace-root] [--install-links]\nnpm error\nnpm error aliases: clean-install, ic, install-clean, isntall-clean\nnpm error\nnpm error Run \"npm help ci\" for more info\nnpm error A complete log of this run can be found in: /www-data-home/.npm/_logs/2025-06-14T23_08_28_012Z-debug-0.log. For more details see the logs at https://console.cloud.google.com/cloud-build/builds;region=us-central1/e63dc84e-17eb-4e6f-b6f2-a6050493efec?project=429810342473."
+    },
+    "status": 3,
+    "code": 3
+  }
+}
+[error] Error: There was an error deploying functions:
+[error] - Error Failed to create function createPaystackSubscription in region us-central1
+[error] - Error Failed to create function paystackWebhookHandler in region us-central1

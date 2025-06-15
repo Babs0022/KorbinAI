@@ -1,12 +1,9 @@
 
 import * as functions from "firebase-functions";
-import {
-  onCall as onCallV1,
-  HttpsError,
-  type CallableContext,
-} from "firebase-functions/v1/https"; // Specific v1 imports for onCall
+// Changed from v1 to v2 onCall
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
-import Paystack from "paystack-node"; // Changed from import * as Paystack
+import Paystack from "paystack-node";
 import * as crypto from "crypto";
 import cors from "cors";
 
@@ -64,11 +61,12 @@ const planDetails: Record<string, {
   },
 };
 
-export const createPaystackSubscription = onCallV1(
-  async (
-    data: { email?: string; planId: string },
-    context: CallableContext
-  ) => {
+export const createPaystackSubscription = onCall(
+  async (request) => {
+    // Extract data and auth from v2 request object
+    const data = request.data as { email?: string; planId: string };
+    const auth = request.auth;
+
     if (!paystack) {
       console.error(
         "Paystack SDK not initialized due to missing secret key. " +
@@ -79,7 +77,7 @@ export const createPaystackSubscription = onCallV1(
         "Payment system not configured on the server."
       );
     }
-    if (!context.auth) {
+    if (!auth) {
       throw new HttpsError(
         "unauthenticated",
         "User must be authenticated to subscribe."
@@ -96,9 +94,9 @@ export const createPaystackSubscription = onCallV1(
       );
     }
 
-    const userId = context.auth.uid;
+    const userId = auth.uid;
     const clientProvidedEmail = data.email;
-    const authenticatedUserEmail = context.auth.token?.email;
+    const authenticatedUserEmail = auth.token?.email;
     const emailToUse = clientProvidedEmail || authenticatedUserEmail;
     const planId = data.planId;
 
@@ -295,3 +293,4 @@ export const paystackWebhookHandler = functions.https.onRequest(
     });
   }
 );
+
