@@ -268,9 +268,7 @@ Model: GPT-4 (for copy), DALL-E 3 (for image ideas).`;
       effectTimeoutRefs.current.forEach(clearTimeout);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSceneIndex]); // Dependencies intentionally limited to currentSceneIndex
-
-  const progressPercentage = ((currentSceneIndex + 1) / scenes.length) * 100;
+  }, [currentSceneIndex]); 
 
   return (
     <GlassCard
@@ -279,13 +277,7 @@ Model: GPT-4 (for copy), DALL-E 3 (for image ideas).`;
         "w-full transition-opacity duration-500 ease-in-out relative"
       )}
     >
-      <div className="w-full h-1.5 bg-muted absolute top-0 left-0 z-10 rounded-t-lg overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-300 ease-linear"
-          style={{ width: `${progressPercentage}%` }}
-        />
-      </div>
-      <div ref={sceneContainerRef} className="pt-1.5 h-full w-full flex flex-col justify-center text-foreground">
+      <div ref={sceneContainerRef} className="h-full w-full flex flex-col justify-center text-foreground">
         {scenes[currentSceneIndex].element}
       </div>
     </GlassCard>
@@ -312,4 +304,3 @@ export function InteractiveDemoSection() {
     </section>
   );
 }
-
