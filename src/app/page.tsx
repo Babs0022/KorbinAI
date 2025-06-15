@@ -3,7 +3,7 @@ import { MainHeader } from '@/components/layout/MainHeader';
 import { Footer } from '@/components/layout/Footer';
 import { HeroSection } from '@/components/sections/HeroSection';
 import { KeyFeaturesHighlightSection } from '@/components/sections/KeyFeaturesHighlightSection';
-import { InteractiveDemoSection } from '@/components/sections/DemoVideoSection'; // Re-using existing animated demo
+import { InteractiveDemoSection } from '@/components/sections/DemoVideoSection';
 import { HowItWorksSection } from '@/components/sections/HowItWorksSection';
 import { TargetAudienceSection } from '@/components/sections/TargetAudienceSection';
 import { SocialProofSection } from '@/components/sections/SocialProofSection';
