@@ -275,8 +275,8 @@ Model: GPT-4 (for copy), DALL-E 3 (for image ideas).`;
   return (
     <GlassCard
       className={cn(
-        "aspect-[16/10] sm:aspect-video overflow-hidden shadow-2xl bg-card/80 backdrop-blur-md border-white/30",
-        "w-full transition-opacity duration-500 ease-in-out relative" // Removed specific max-w and mx-auto
+        "aspect-[16/10] sm:aspect-video overflow-hidden bg-card/80 backdrop-blur-md border-0 rounded-xl", 
+        "w-full transition-opacity duration-500 ease-in-out relative"
       )}
     >
       <div className="w-full h-1.5 bg-muted absolute top-0 left-0 z-10 rounded-t-lg overflow-hidden">
@@ -292,7 +292,7 @@ Model: GPT-4 (for copy), DALL-E 3 (for image ideas).`;
   );
 };
 
-export function InteractiveDemoSection() { // Renamed from DemoVideoSection
+export function InteractiveDemoSection() {
   return (
     <section id="interactive-demo" className="py-12 md:py-16 lg:py-24 bg-gradient-to-b from-background via-indigo-50/30 to-mint-50/30">
       <Container className="text-center">
@@ -302,7 +302,7 @@ export function InteractiveDemoSection() { // Renamed from DemoVideoSection
         <p className="mx-auto mt-3 sm:mt-4 max-w-xl sm:max-w-2xl text-md sm:text-lg text-muted-foreground">
           Watch our interactive demo to see how easy it is to go from idea to perfectly optimized AI prompt, adapted for your chosen model and graded for quality.
         </p>
-        <div className="mt-8 sm:mt-10">
+        <div className="mt-8 sm:mt-10 p-1 rounded-xl bg-gradient-to-r from-primary to-accent shadow-lg">
           <AnimatedDemo />
         </div>
         <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
@@ -312,3 +312,4 @@ export function InteractiveDemoSection() { // Renamed from DemoVideoSection
     </section>
   );
 }
+
