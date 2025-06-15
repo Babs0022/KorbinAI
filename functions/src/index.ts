@@ -9,7 +9,7 @@ import * as crypto from "crypto";
 import cors from "cors";
 
 const corsHandler = cors({
-  origin: ["http://localhost:9002", "https://brieflyai.xyz"],
+  origin: [ "https://6000-firebase-studio-1749655004240.cluster-axf5tvtfjjfekvhwxwkkkzsk2y.cloudworkstations.dev/", "https://brieflyai.xyz" ],
 });
 
 admin.initializeApp();
@@ -26,8 +26,8 @@ if (PAYSTACK_SECRET_KEY) {
   logger.info("Paystack SDK initialized with secret key.");
 } else {
   logger.error(
-    "Paystack secret key not found in environment variables (process.env.PAYSTACK_SECRET_KEY). " +
-    "Paystack SDK NOT initialized."
+    "Paystack secret key not found in environment variables " +
+    "(process.env.PAYSTACK_SECRET_KEY). Paystack SDK NOT initialized."
   );
 }
 
@@ -60,7 +60,8 @@ export const createPaystackSubscription = onCall(
 
     if (!paystack) {
       logger.error(
-        "createPaystackSubscription: Paystack SDK not initialized. This usually means PAYSTACK_SECRET_KEY was missing."
+        "createPaystackSubscription: Paystack SDK not initialized. " +
+        "This usually means PAYSTACK_SECRET_KEY was missing."
       );
       throw new HttpsError(
         "internal",
@@ -75,7 +76,8 @@ export const createPaystackSubscription = onCall(
     }
     if (!APP_CALLBACK_URL) {
       logger.error(
-        "createPaystackSubscription: Application callback URL (APP_CALLBACK_URL) is not configured."
+        "createPaystackSubscription: Application callback URL " +
+        "(APP_CALLBACK_URL) is not configured."
       );
       throw new HttpsError(
         "internal",
@@ -149,7 +151,10 @@ export const createPaystackSubscription = onCall(
         throw new HttpsError("internal", errorMessage);
       }
     } catch (error: unknown) {
-      logger.error("createPaystackSubscription: Error initializing transaction:", error);
+      logger.error(
+        "createPaystackSubscription: Error initializing transaction:",
+        error
+      );
       const errorMessage =
         (error instanceof Error ? error.message : String(error)) ||
         "An unknown error occurred while initiating payment.";
@@ -170,8 +175,11 @@ async function processChargeSuccessEvent(eventData: any): Promise<void> {
   } = eventData;
 
   if (!paystack) {
-      logger.error("processChargeSuccessEvent: Paystack SDK not available during event processing for reference:", reference);
-      return; 
+    logger.error(
+      "processChargeSuccessEvent: Paystack SDK not available during event " +
+      "processing for reference:", reference
+    );
+    return;
   }
 
   const effectiveMetadata = metadata || planObject?.metadata || {};
@@ -180,7 +188,8 @@ async function processChargeSuccessEvent(eventData: any): Promise<void> {
 
   if (!userId || !planId) {
     logger.error(
-      "processChargeSuccessEvent: Missing userId or planId in webhook metadata for reference:",
+      "processChargeSuccessEvent: Missing userId or planId in webhook " +
+      "metadata for reference:",
       reference,
       {effectiveMetadata, planObject}
     );
@@ -191,16 +200,25 @@ async function processChargeSuccessEvent(eventData: any): Promise<void> {
     const verification = await paystack.transaction.verify({reference});
     if (!verification.status || verification.data.status !== "success") {
       logger.error(
-        "processChargeSuccessEvent: Paystack transaction re-verification failed or not successful for reference:",
+        "processChargeSuccessEvent: Paystack transaction re-verification " +
+        "failed or not successful for reference:",
         reference,
-        { verificationStatus: verification.data?.status, verificationMessage: verification.message, verificationData: verification.data }
+        {
+          verificationStatus: verification.data?.status,
+          verificationMessage: verification.message,
+          verificationData: verification.data,
+        }
       );
       return;
     }
-    logger.info("processChargeSuccessEvent: Transaction successfully re-verified with Paystack for reference:", reference);
+    logger.info(
+      "processChargeSuccessEvent: Transaction successfully re-verified " +
+      "with Paystack for reference:", reference
+    );
   } catch (verifyError: unknown) {
     logger.error(
-      "processChargeSuccessEvent: Error re-verifying transaction with Paystack for reference:",
+      "processChargeSuccessEvent: Error re-verifying transaction with " +
+      "Paystack for reference:",
       reference,
       (verifyError instanceof Error ? verifyError.message : String(verifyError))
     );
@@ -213,10 +231,11 @@ async function processChargeSuccessEvent(eventData: any): Promise<void> {
     planId,
     email: customer?.email,
     status: "active",
-    currentPeriodStart: admin.firestore.Timestamp.fromDate(new Date(actualPaidAt)),
+    currentPeriodStart:
+      admin.firestore.Timestamp.fromDate(new Date(actualPaidAt)),
     currentPeriodEnd: admin.firestore.Timestamp.fromDate(
-      new Date(new Date(actualPaidAt).getTime() + 30 * 24 * 60 * 60 * 1000) // Approx 30 days
-    ),
+      new Date(new Date(actualPaidAt).getTime() + 30 * 24 * 60 * 60 * 1000)
+    ), // Approx 30 days
     paystackReference: reference,
     amountPaid: amount,
     currency: currency,
@@ -224,20 +243,27 @@ async function processChargeSuccessEvent(eventData: any): Promise<void> {
   };
 
   try {
-    await db.collection("userSubscriptions").doc(userId).set(subscriptionData, {merge: true});
+    await db.collection("userSubscriptions").doc(userId).set(
+      subscriptionData,
+      {merge: true}
+    );
     await db.collection("transactions").doc(reference).update({
       status: "success",
       paidAt: admin.firestore.Timestamp.fromDate(new Date(actualPaidAt)),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     logger.info(
-      `processChargeSuccessEvent: Subscription for ${userId}(plan:${planId}, ref:${reference}) data updated in Firestore.`
+      `processChargeSuccessEvent: Subscription for ${userId}` +
+      `(plan:${planId}, ref:${reference}) data updated in Firestore.`
     );
   } catch (dbError: unknown) {
     logger.error(
       "processChargeSuccessEvent: Error updating Firestore for reference:",
       reference,
-      { userId, error: (dbError instanceof Error ? dbError.message : String(dbError)) }
+      {
+        userId,
+        error: (dbError instanceof Error ? dbError.message : String(dbError)),
+      }
     );
   }
 }
@@ -247,74 +273,101 @@ export const paystackWebhookHandler = onRequest(
   async (req, res) => {
     logger.info("paystackWebhookHandler invoked. Checking configuration...");
     logger.info(`PAYSTACK_SECRET_KEY available: ${!!PAYSTACK_SECRET_KEY}`);
-    logger.info(`PAYSTACK_WEBHOOK_SECRET available: ${!!PAYSTACK_WEBHOOK_SECRET}`);
+    logger.info(
+      `PAYSTACK_WEBHOOK_SECRET available: ${!!PAYSTACK_WEBHOOK_SECRET}`
+    );
 
     if (!PAYSTACK_SECRET_KEY || !PAYSTACK_WEBHOOK_SECRET) {
       logger.error(
-        "paystackWebhookHandler: Paystack secret key or webhook secret not configured in environment variables."
+        "paystackWebhookHandler: Paystack secret key or webhook secret not " +
+        "configured in environment variables."
       );
-      res.status(500).send("Server configuration error for webhooks (secrets missing).");
+      res.status(500).send(
+        "Server configuration error for webhooks (secrets missing)."
+      );
       return;
     }
 
     if (!paystack) {
       logger.error(
-        "paystackWebhookHandler: Paystack SDK not initialized (PAYSTACK_SECRET_KEY missing at startup or other init issue)."
+        "paystackWebhookHandler: Paystack SDK not initialized " +
+        "(PAYSTACK_SECRET_KEY missing at startup or other init issue)."
       );
-      // Attempt to re-initialize if PAYSTACK_SECRET_KEY is now available but paystack object is null.
-      // This is a fallback; ideally, it's initialized globally.
-      if (PAYSTACK_SECRET_KEY) { // Check again, in case config loaded late
-          paystack = new Paystack(PAYSTACK_SECRET_KEY);
-          logger.info("Paystack SDK re-attempted initialization in webhook handler.");
-          if (!paystack) { // Still couldn't initialize
-             res.status(500).send("Payment system could not be initialized on re-attempt.");
-             return;
-          }
-      } else {
-          res.status(500).send("Payment system critical configuration (secret key) missing.");
+      if (PAYSTACK_SECRET_KEY) { // Check again
+        paystack = new Paystack(PAYSTACK_SECRET_KEY);
+        logger.info(
+          "Paystack SDK re-attempted initialization in webhook handler."
+        );
+        if (!paystack) { // Still couldn't initialize
+          res.status(500).send(
+            "Payment system could not be initialized on re-attempt."
+          );
           return;
+        }
+      } else {
+        res.status(500).send(
+          "Payment system critical configuration (secret key) missing."
+        );
+        return;
       }
     }
 
     corsHandler(req, res, async () => {
-      const webhookSecret = PAYSTACK_WEBHOOK_SECRET!; // Already checked PAYSTACK_WEBHOOK_SECRET is not null
+      const webhookSecret = PAYSTACK_WEBHOOK_SECRET!;
       const hash = crypto.createHmac("sha512", webhookSecret)
         .update(JSON.stringify(req.body))
         .digest("hex");
 
       if (hash !== req.headers["x-paystack-signature"]) {
-        logger.warn("paystackWebhookHandler: Invalid Paystack webhook signature.");
+        logger.warn(
+          "paystackWebhookHandler: Invalid Paystack webhook signature."
+        );
         res.status(401).send("Invalid signature.");
         return;
       }
 
       const event = req.body;
-      logger.info("paystackWebhookHandler: Received Paystack webhook event:", event.event, "for reference:", event.data?.reference);
+      logger.info(
+        "paystackWebhookHandler: Received Paystack webhook event:",
+        event.event,
+        "for reference:",
+        event.data?.reference
+      );
 
       if (event.event === "charge.success") {
         // Acknowledge immediately to Paystack
-        res.status(200).send("Webhook for charge.success acknowledged. Processing in background.");
-        
+        res.status(200).send(
+          "Webhook for charge.success acknowledged. Processing in background."
+        );
         // Perform the actual processing asynchronously
         try {
           await processChargeSuccessEvent(event.data);
-          logger.info("paystackWebhookHandler: Background processing for charge.success completed for event reference:", event.data?.reference);
+          logger.info(
+            "paystackWebhookHandler: Background processing for " +
+            "charge.success completed for event reference:",
+            event.data?.reference
+          );
         } catch (processingError) {
           logger.error(
-            "paystackWebhookHandler: Error during background processing of charge.success for event reference:",
+            "paystackWebhookHandler: Error during background processing of " +
+            "charge.success for event reference:",
             event.data?.reference,
             processingError
           );
-          // Do not send another res here as it's already acknowledged.
         }
       } else {
         logger.info(
-          "paystackWebhookHandler: Unhandled or synchronously processed Paystack event type:",
+          "paystackWebhookHandler: Unhandled or synchronously processed " +
+          "Paystack event type:",
           event.event
         );
-        // For other events, acknowledge after minimal processing (or if no processing is needed for them)
-        res.status(200).send("Event received and acknowledged (non-charge.success or unhandled).");
+        res.status(200).send(
+          "Event received and acknowledged " +
+          "(non-charge.success or unhandled)."
+        );
       }
     });
   }
 );
+
+    

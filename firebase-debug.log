@@ -1,0 +1,94 @@
+[debug] [2025-06-15T21:23:57.634Z] ----------------------------------------------------------------------
+[debug] [2025-06-15T21:23:57.638Z] Command:       /nix/store/rbdrkcs5kkwpalxcd7c6bnm33lk2955n-nodejs-20.19.0/bin/node /home/user/.global_modules/bin/firebase init functions
+[debug] [2025-06-15T21:23:57.639Z] CLI Version:   14.7.0
+[debug] [2025-06-15T21:23:57.640Z] Platform:      linux
+[debug] [2025-06-15T21:23:57.640Z] Node Version:  v20.19.0
+[debug] [2025-06-15T21:23:57.640Z] Time:          Sun Jun 15 2025 21:23:57 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-06-15T21:23:57.641Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-06-15T21:23:58.593Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-15T21:23:58.594Z] > authorizing via signed-in user (babseli933@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /home/user/studio
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2025-06-15T21:23:58.600Z] Using project from CLI flag: brieflyai-gtgc2
+[debug] [2025-06-15T21:23:58.602Z] Checked if tokens are valid: false, expires at: 1749952773432
+[debug] [2025-06-15T21:23:58.603Z] Checked if tokens are valid: false, expires at: 1749952773432
+[debug] [2025-06-15T21:23:58.603Z] > refreshing access token with scopes: []
+[debug] [2025-06-15T21:23:58.609Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-06-15T21:23:58.610Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-06-15T21:23:58.800Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-06-15T21:23:58.801Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-06-15T21:23:58.820Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/brieflyai-gtgc2 [none]
+[debug] [2025-06-15T21:23:59.064Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/brieflyai-gtgc2 200
+[debug] [2025-06-15T21:23:59.065Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/brieflyai-gtgc2 {"projectId":"brieflyai-gtgc2","projectNumber":"429810342473","displayName":"BrieflyAI","name":"projects/brieflyai-gtgc2","resources":{"hostingSite":"brieflyai-gtgc2"},"state":"ACTIVE","etag":"1_33fe50e3-c41a-4f57-9737-59bf9559a3cc"}
+[info] i  Using project brieflyai-gtgc2 (BrieflyAI) 
+[info] 
+=== Functions Setup
+[debug] [2025-06-15T21:23:59.082Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-15T21:23:59.082Z] > authorizing via signed-in user (babseli933@gmail.com)
+[debug] [2025-06-15T21:23:59.083Z] [iam] checking project brieflyai-gtgc2 for permissions ["firebase.projects.get"]
+[debug] [2025-06-15T21:23:59.083Z] Checked if tokens are valid: true, expires at: 1750026237802
+[debug] [2025-06-15T21:23:59.084Z] Checked if tokens are valid: true, expires at: 1750026237802
+[debug] [2025-06-15T21:23:59.084Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions [none]
+[debug] [2025-06-15T21:23:59.084Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions x-goog-quota-user=projects/brieflyai-gtgc2
+[debug] [2025-06-15T21:23:59.084Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-06-15T21:23:59.742Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions 200
+[debug] [2025-06-15T21:23:59.743Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/brieflyai-gtgc2:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-06-15T21:23:59.744Z] Checked if tokens are valid: true, expires at: 1750026237802
+[debug] [2025-06-15T21:23:59.744Z] Checked if tokens are valid: true, expires at: 1750026237802
+[debug] [2025-06-15T21:23:59.745Z] Checked if tokens are valid: true, expires at: 1750026237802
+[debug] [2025-06-15T21:23:59.745Z] Checked if tokens are valid: true, expires at: 1750026237802
+[debug] [2025-06-15T21:23:59.745Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudfunctions.googleapis.com [none]
+[debug] [2025-06-15T21:23:59.745Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/brieflyai-gtgc2
+[debug] [2025-06-15T21:23:59.748Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/runtimeconfig.googleapis.com [none]
+[debug] [2025-06-15T21:23:59.748Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/runtimeconfig.googleapis.com x-goog-quota-user=projects/brieflyai-gtgc2
+[debug] [2025-06-15T21:24:00.560Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/runtimeconfig.googleapis.com 200
+[debug] [2025-06-15T21:24:00.561Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/runtimeconfig.googleapis.com [omitted]
+[debug] [2025-06-15T21:24:00.703Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudfunctions.googleapis.com 200
+[debug] [2025-06-15T21:24:00.703Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/brieflyai-gtgc2/services/cloudfunctions.googleapis.com [omitted]
+[info] 
+Detected existing codebase(s): default, brieflyai
+
+[info] Let's create a new codebase for your functions.
+[info] A directory corresponding to the codebase will be created in your project
+[info] with sample code pre-configured.
+
+[info] See https://firebase.google.com/docs/functions/organize-functions for
+[info] more information on organizing your functions using codebases.
+
+[info] Functions can be deployed with firebase deploy.
+
+[error] Invalid codebase name. Codebase must be less than 64 characters and can contain only lowercase letters, numeric characters, underscores, and dashes.
+[debug] [2025-06-15T21:25:28.270Z] ExitPromptError: User force closed the prompt with SIGINT
+    at Interface.sigint (/home/user/.global_modules/lib/node_modules/firebase-tools/node_modules/@inquirer/core/dist/commonjs/lib/create-prompt.js:101:37)
+    at Interface.emit (node:events:524:28)
+    at Interface.emit (node:domain:489:12)
+    at [_ttyWrite] [as _ttyWrite] (node:internal/readline/interface:1125:18)
+    at ReadStream.onkeypress (node:internal/readline/interface:264:20)
+    at ReadStream.emit (node:events:536:35)
+    at ReadStream.emit (node:domain:489:12)
+    at emitKeys (node:internal/readline/utils:371:14)
+    at emitKeys.next (<anonymous>)
+    at ReadStream.onData (node:internal/readline/emitKeypressEvents:64:36)
+[error] 
+[error] Error: An unexpected error has occurred.
