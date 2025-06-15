@@ -20,7 +20,7 @@ const functionsConfig = (
       config?: () => {
         paystack?: { secret_key?: string; webhook_secret?: string };
         app?: { callback_url?: string };
-        [key: string]: any; // Allows other config values
+        [key: string]: unknown; // Allows other config values
       };
     };
   }
@@ -58,6 +58,11 @@ const planDetails: Record<
   },
 };
 
+interface CreateSubscriptionData {
+  email?: string;
+  planId: string;
+}
+
 export const createPaystackSubscription = onCall(
   {region: "us-central1"},
   async (request) => {
@@ -65,7 +70,7 @@ export const createPaystackSubscription = onCall(
     logger.info(`PAYSTACK_SECRET_KEY available: ${!!PAYSTACK_SECRET_KEY}`);
     logger.info(`APP_CALLBACK_URL available: ${!!APP_CALLBACK_URL}`);
 
-    const data = request.data as { email?: string; planId: string };
+    const data = request.data as CreateSubscriptionData;
     const auth = request.auth;
 
     if (!paystack) {
@@ -111,7 +116,7 @@ export const createPaystackSubscription = onCall(
         "createPaystackSubscription: Invalid data received:",
         {
           emailExists: !!emailToUse,
-          planId,
+          planId: planId,
           planDetailsExist: !!planDetails[planId],
           planCodeExists: !!planDetails[planId]?.plan_code,
         }
@@ -177,15 +182,43 @@ export const createPaystackSubscription = onCall(
   }
 );
 
+interface PaystackCustomer {
+  email?: string;
+  // Add other customer fields if needed
+}
+
+interface PaystackPlanObject {
+  metadata?: {
+    userId?: string;
+    planId?: string;
+    [key: string]: unknown;
+  };
+  // Add other plan_object fields if needed
+}
+
+interface PaystackChargeSuccessData {
+  reference: string;
+  customer?: PaystackCustomer;
+  amount: number;
+  currency: string;
+  metadata?: {
+    userId?: string;
+    planId?: string;
+    [key: string]: unknown;
+  };
+  plan_object?: PaystackPlanObject;
+  paid_at?: string | number; // Can be a string (ISO date) or timestamp
+  // Add other event data fields if needed
+}
+
 /**
  * Processes a successful charge event from Paystack.
  * Verifies the transaction and updates Firestore.
- * @param {Record<string, any>} eventData The data from the Paystack
+ * @param {PaystackChargeSuccessData} eventData The data from the Paystack
  * charge.success event.
- * @return {Promise<void>}
  */
 async function processChargeSuccessEvent(
-  eventData: Record<string, any>
+  eventData: PaystackChargeSuccessData
 ): Promise<void> {
   const {
     reference,
@@ -342,7 +375,7 @@ export const paystackWebhookHandler = onRequest(
     }
 
     corsHandler(req, res, async () => {
-      const webhookSecret = PAYSTACK_WEBHOOK_SECRET; // Non-null assertion
+      const webhookSecret = PAYSTACK_WEBHOOK_SECRET;
       const hash = crypto.createHmac("sha512", webhookSecret)
         .update(JSON.stringify(req.body))
         .digest("hex");
@@ -370,7 +403,9 @@ export const paystackWebhookHandler = onRequest(
         );
         // Perform the actual processing asynchronously
         try {
-          await processChargeSuccessEvent(event.data);
+          await processChargeSuccessEvent(
+            event.data as PaystackChargeSuccessData
+          );
           logger.info(
             "paystackWebhookHandler: Background processing for " +
             "charge.success completed for event reference:",
@@ -383,8 +418,6 @@ export const paystackWebhookHandler = onRequest(
             event.data?.reference,
             processingError
           );
-          // Note: We've already sent 200 OK, so this log is for server-side
-          // debugging.
         }
       } else {
         logger.info(
