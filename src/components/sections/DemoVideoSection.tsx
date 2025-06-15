@@ -276,7 +276,7 @@ Model: GPT-4 (for copy), DALL-E 3 (for image ideas).`;
     <GlassCard
       className={cn(
         "aspect-[16/10] sm:aspect-video overflow-hidden shadow-2xl bg-card/80 backdrop-blur-md border-white/30",
-        "w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mx-auto transition-opacity duration-500 ease-in-out relative"
+        "w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-3xl xl:max-w-5xl mx-auto transition-opacity duration-500 ease-in-out relative"
       )}
     >
       <div className="w-full h-1.5 bg-muted absolute top-0 left-0 z-10 rounded-t-lg overflow-hidden">
@@ -312,3 +312,4 @@ export function InteractiveDemoSection() { // Renamed from DemoVideoSection
     </section>
   );
 }
+
