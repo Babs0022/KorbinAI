@@ -97,7 +97,7 @@ const features: FeatureInfo[] = [
     icon: Wand2,
     enabled: true,
     isPremium: true,
-    isUnlimitedFeature: true, // Example of an "unlimited" premium feature
+    isUnlimitedFeature: true,
   },
   {
     title: "Prompt Feedback & Analysis",
@@ -114,6 +114,7 @@ const features: FeatureInfo[] = [
     icon: Undo2,
     enabled: true, 
     isPremium: true,
+    isUnlimitedFeature: true,
   },
   {
     title: "Prompt Analytics Dashboard",
@@ -479,3 +480,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
