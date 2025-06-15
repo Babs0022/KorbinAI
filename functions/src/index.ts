@@ -13,14 +13,13 @@ const corsHandler = cors({
 admin.initializeApp();
 const db = admin.firestore();
 
-// Type assertion for globalThis to inform TypeScript about the 'functions' property
 const functionsConfig = (
   globalThis as typeof globalThis & {
     functions?: {
       config?: () => {
         paystack?: { secret_key?: string; webhook_secret?: string };
         app?: { callback_url?: string };
-        [key: string]: unknown; // Allows other config values
+        [key: string]: unknown;
       };
     };
   }
@@ -375,7 +374,7 @@ export const paystackWebhookHandler = onRequest(
     }
 
     corsHandler(req, res, async () => {
-      const webhookSecret = PAYSTACK_WEBHOOK_SECRET;
+      const webhookSecret = PAYSTACK_WEBHOOK_SECRET as string;
       const hash = crypto.createHmac("sha512", webhookSecret)
         .update(JSON.stringify(req.body))
         .digest("hex");
@@ -433,3 +432,4 @@ export const paystackWebhookHandler = onRequest(
     });
   }
 );
+
