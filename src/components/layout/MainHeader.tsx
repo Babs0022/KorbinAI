@@ -60,6 +60,10 @@ export function MainHeader() {
     }
   };
 
+  // Determine if header should use dark text (for light backgrounds) or light text (for dark backgrounds)
+  // It should use dark text if scrolled, if user is logged in, or if not on homepage OR if on homepage hero (which is now light)
+  const useDarkText = isScrolled || currentUser || pathname !== '/';
+
   const renderNavLinks = (isMobile = false) =>
     navLinks.map((link) => (
       <Button
@@ -69,11 +73,11 @@ export function MainHeader() {
         className={cn(
           "text-sm font-medium transition-colors",
           isMobile ? "w-full justify-start" : "",
-           (isScrolled || authLoading || currentUser || pathname !== '/') 
+          useDarkText 
             ? "text-foreground hover:text-foreground/80" 
-            : (pathname === link.href && !link.external 
-                ? "text-primary hover:text-primary/80" 
-                : "text-indigo-100 hover:text-white") 
+            : (pathname === link.href && !link.external && pathname === '/'
+                ? "text-primary hover:text-primary/80" // Active link on light hero
+                : "text-muted-foreground hover:text-foreground") // Default link on light hero
         )}
         onClick={() => isMobile && closeMobileMenu()}
       >
@@ -90,13 +94,13 @@ export function MainHeader() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 w-full border-b border-transparent transition-all duration-300",
-        (isScrolled || currentUser || pathname !== '/') ? "border-border/40 bg-background/80 backdrop-blur-lg" : "bg-transparent"
+        "sticky top-0 z-50 w-full border-b transition-all duration-300",
+        useDarkText ? "border-border/40 bg-background/80 backdrop-blur-lg" : "border-transparent bg-transparent"
       )}
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        <Logo className={cn((isScrolled || currentUser || pathname !== '/') ? "text-primary" : "text-white")} />
-        <nav className="hidden items-center space-x-1 md:flex"> {/* Reduced space for more links */}
+        <Logo className={cn(useDarkText ? "text-primary" : "text-primary")} /> {/* Always primary color now for hero */}
+        <nav className="hidden items-center space-x-1 md:flex">
           {renderNavLinks()}
           {authLoading ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
@@ -133,7 +137,7 @@ export function MainHeader() {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="ghost" size="sm" asChild className={cn( (isScrolled || pathname !== '/') ? "text-foreground hover:bg-accent/50" : "text-indigo-100 hover:bg-white/10 hover:text-white")}>
+              <Button variant="ghost" size="sm" asChild className={cn( useDarkText ? "text-foreground hover:bg-accent/50" : "text-muted-foreground hover:bg-muted/20 hover:text-foreground")}>
                 <Link href="/login">Login</Link>
               </Button>
               <Button variant="default" size="sm" asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
@@ -145,13 +149,13 @@ export function MainHeader() {
         <div className="md:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className={cn((isScrolled || currentUser || pathname !== '/') ? "text-primary" : "text-white hover:text-primary")}>
+              <Button variant="ghost" size="icon" className={cn(useDarkText ? "text-primary" : "text-primary")}> {/* Always primary for mobile menu icon */}
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
-              <SheetHeader className="mb-6 sr-only"> {/* Visually hide if not desired */}
+              <SheetHeader className="mb-6 sr-only"> 
                 <SheetTitle><Logo onClick={closeMobileMenu}/></SheetTitle>
               </SheetHeader>
               <div className="flex flex-col h-full py-4">

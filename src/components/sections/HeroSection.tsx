@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles, Wand2, CheckCircle } from 'lucide-react';
 import Container from '@/components/layout/Container';
 import { cn } from '@/lib/utils';
-// Removed unused Image import: import Image from 'next/image';
 
 const benefits = [
   "Precision Prompting",
@@ -17,9 +16,9 @@ const benefits = [
 ];
 
 const dynamicHeroWords = ["Intelligent", "High-Impact", "Tailored", "Contextual", "Effective", "Curated", "Optimized"];
-const TYPE_SPEED = 80; // Adjusted for smoother feel
-const DELETE_SPEED = 50; // Adjusted for smoother feel
-const PAUSE_DURATION = 2500; // Adjusted for smoother feel
+const TYPE_SPEED = 80;
+const DELETE_SPEED = 50;
+const PAUSE_DURATION = 2000; // Slightly shorter pause
 
 export function HeroSection() {
   const [currentBenefitIndex, setCurrentBenefitIndex] = useState(0);
@@ -64,20 +63,26 @@ export function HeroSection() {
 
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-primary via-indigo-700 to-slate-900 py-20 md:py-32">
-      <div className="absolute inset-0 -z-10 opacity-10">
+    <section className="relative overflow-hidden bg-background py-20 md:py-32">
+      {/* New Background Effect */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-1/4 -left-1/4 w-3/4 h-3/4 bg-pink-200/40 blur-[100px] rounded-full animate-pulse delay-500"></div>
+        <div className="absolute top-1/8 left-1/8 w-1/2 h-1/2 bg-purple-200/40 blur-[120px] rounded-full animate-pulse"></div>
+        <div className="absolute -bottom-1/4 -right-1/4 w-3/4 h-3/4 bg-orange-200/40 blur-[100px] rounded-full animate-pulse delay-1000"></div>
+         <div className="absolute bottom-1/8 right-1/8 w-2/5 h-2/5 bg-yellow-100/30 blur-[90px] rounded-full animate-pulse delay-1500"></div>
       </div>
+
       <Container className="relative z-10">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
-          <div className="text-center lg:text-left">
-            <div className="mb-6 inline-flex items-center rounded-full border border-mint-500/30 bg-mint-500/20 px-4 py-1.5 text-sm font-medium text-white shadow-sm backdrop-blur-sm">
-              <Sparkles className="mr-2 h-4 w-4 text-mint-400" />
+        <div className="grid grid-cols-1 items-center gap-12"> {/* Removed lg:grid-cols-2, content is now centered */}
+          <div className="text-center"> {/* Centering content */}
+            <div className="mb-6 inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary shadow-sm backdrop-blur-sm">
+              <Sparkles className="mr-2 h-4 w-4 text-primary" />
               The Future of AI Interaction is Here
             </div>
-            <h1 className="font-headline text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl">
+            <h1 className="font-headline text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl md:text-6xl">
               Unlock Peak AI Performance with{' '}
               <span 
-                className="inline-block text-left text-accent"
+                className="inline-block text-left text-accent" // Accent color for dynamic word
                 style={{ minWidth: '280px' }} 
               >
                 {displayedDynamicText}
@@ -85,47 +90,41 @@ export function HeroSection() {
               </span>
               {' '}Prompts
             </h1>
-            <p className="mx-auto mt-6 max-w-xl text-lg text-indigo-100 lg:mx-0 md:text-xl">
+            <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground md:text-xl">
               BrieflyAI transforms your ideas into high-impact AI prompts. Craft, adapt, and analyze with our comprehensive suite of tools designed for clarity, precision, and superior results.
             </p>
             <div className="mt-8">
-              <div className="font-medium text-indigo-200 mb-3">Experience:</div>
+              <div className="font-medium text-foreground/80 mb-3">Experience:</div>
               <div className="h-7 overflow-hidden">
                 {benefits.map((benefit, index) => (
                   <div
                     key={benefit}
                     className={cn(
-                      "flex items-center text-mint-300 text-lg transition-all duration-500 ease-in-out",
-                      index === currentBenefitIndex ? "opacity-100 translate-y-0" : "opacity-0 absolute -translate-y-full",
+                      "flex items-center justify-center text-primary text-lg transition-all duration-500 ease-in-out", // Centered benefits
+                      index === currentBenefitIndex ? "opacity-100 translate-y-0" : "opacity-0 absolute -translate-y-full left-1/2 -translate-x-1/2", // Positioning for centering
                       index > currentBenefitIndex && "translate-y-full" 
                     )}
                   >
-                    <CheckCircle className="mr-2 h-5 w-5 text-mint-400 flex-shrink-0" />
+                    <CheckCircle className="mr-2 h-5 w-5 text-primary flex-shrink-0" />
                     {benefit}
                   </div>
                 ))}
               </div>
             </div>
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
-              <Button size="lg" asChild className="bg-mint-500 hover:bg-mint-600 text-primary-foreground shadow-lg transition-transform hover:scale-105">
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"> {/* Centered buttons */}
+              <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-transform hover:scale-105">
                 <Link href="/signup">
                   Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="shadow-lg transition-transform hover:scale-105 border-indigo-300 text-indigo-100 bg-transparent hover:bg-indigo-100/10 hover:text-white">
+              <Button size="lg" variant="outline" asChild className="shadow-lg transition-transform hover:scale-105 border-border text-foreground bg-background/50 hover:bg-accent/10">
                 <Link href="#features">
                   Discover Features
                 </Link>
               </Button>
             </div>
           </div>
-          {/* Image container removed */}
-          <div className="relative hidden lg:block">
-            {/* Placeholder for a future abstract visual or animation if desired */}
-            {/* The decorative blobs will still be visible, creating an abstract background effect */}
-            <div className="absolute -top-8 -right-8 h-40 w-40 bg-mint-500/20 rounded-full blur-2xl animate-pulse"></div>
-            <div className="absolute -bottom-8 -left-8 h-32 w-32 bg-primary/30 rounded-full blur-2xl animate-pulse delay-1000"></div> {/* Changed animation-delay-2000 to delay-1000 for standard Tailwind */}
-          </div>
+          {/* Visual container removed as per previous steps */}
         </div>
       </Container>
     </section>
