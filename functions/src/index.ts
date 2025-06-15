@@ -19,11 +19,12 @@ const functionsConfig = (
       config?: () => {
         paystack?: { secret_key?: string; webhook_secret?: string };
         app?: { callback_url?: string };
-        [key: string]: unknown;
+        [key: string]: unknown; // Adding index signature for broader compatibility
       };
     };
   }
 ).functions?.config?.() || {};
+
 
 const PAYSTACK_SECRET_KEY = functionsConfig.paystack?.secret_key;
 const PAYSTACK_WEBHOOK_SECRET = functionsConfig.paystack?.webhook_secret;
@@ -65,7 +66,7 @@ interface CreateSubscriptionData {
 export const createPaystackSubscription = onCall(
   {region: "us-central1"},
   async (request) => {
-    logger.info("createPaystackSubscription invoked. Checking configuration...");
+    logger.info("createPaystackSubscription invoked.Checking configuration...");
     logger.info(`PAYSTACK_SECRET_KEY available: ${!!PAYSTACK_SECRET_KEY}`);
     logger.info(`APP_CALLBACK_URL available: ${!!APP_CALLBACK_URL}`);
 
@@ -138,8 +139,16 @@ export const createPaystackSubscription = onCall(
           `${APP_CALLBACK_URL}&ref=${reference}&planId=${planId}`,
         metadata: {userId, planId, service: "BrieflyAI Subscription"},
       };
+      logger.info(
+        "createPaystackSubscription: Initializing transaction with args:",
+        transactionArgs
+      );
 
       const response = await paystack.transaction.initialize(transactionArgs);
+      logger.info(
+        "createPaystackSubscription: Paystack transaction.initialize response:",
+        response
+      );
 
       if (response.status && response.data) {
         await db.collection("transactions").doc(reference).set({
@@ -253,7 +262,16 @@ async function processChargeSuccessEvent(
   }
 
   try {
+    logger.info(
+      "processChargeSuccessEvent: Verifying transaction with Paystack " +
+      "for reference:", reference
+    );
     const verification = await paystack.transaction.verify({reference});
+    logger.info(
+      "processChargeSuccessEvent: Paystack transaction.verify response " +
+      "for reference:", reference, verification
+    );
+
     if (!verification.status || verification.data.status !== "success") {
       logger.error(
         "processChargeSuccessEvent: Paystack transaction re-verification " +
@@ -374,6 +392,9 @@ export const paystackWebhookHandler = onRequest(
     }
 
     corsHandler(req, res, async () => {
+      logger.info("paystackWebhookHandler: Request Headers:", req.headers);
+      logger.info("paystackWebhookHandler: Request Body:", req.body);
+
       const webhookSecret = PAYSTACK_WEBHOOK_SECRET as string;
       const hash = crypto.createHmac("sha512", webhookSecret)
         .update(JSON.stringify(req.body))
@@ -381,7 +402,8 @@ export const paystackWebhookHandler = onRequest(
 
       if (hash !== req.headers["x-paystack-signature"]) {
         logger.warn(
-          "paystackWebhookHandler: Invalid Paystack webhook signature."
+          "paystackWebhookHandler: Invalid Paystack webhook signature. " +
+          `Expected: ${hash}, Got: ${req.headers["x-paystack-signature"]}`
         );
         res.status(401).send("Invalid signature.");
         return;
@@ -433,3 +455,5 @@ export const paystackWebhookHandler = onRequest(
   }
 );
 
+
+    
