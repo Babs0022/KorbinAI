@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles, Wand2, CheckCircle } from 'lucide-react';
 import Container from '@/components/layout/Container';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
+// Removed unused Image import: import Image from 'next/image';
 
 const benefits = [
   "Precision Prompting",
@@ -17,14 +17,12 @@ const benefits = [
 ];
 
 const dynamicHeroWords = ["Intelligent", "High-Impact", "Tailored", "Contextual", "Effective", "Curated", "Optimized"];
-const TYPE_SPEED = 100; // Faster typing
-const DELETE_SPEED = 60; // Faster deleting
-const PAUSE_DURATION = 2200; // Slightly longer pause
+const TYPE_SPEED = 80; // Adjusted for smoother feel
+const DELETE_SPEED = 50; // Adjusted for smoother feel
+const PAUSE_DURATION = 2500; // Adjusted for smoother feel
 
 export function HeroSection() {
   const [currentBenefitIndex, setCurrentBenefitIndex] = useState(0);
-
-  // State for typewriter effect
   const [dynamicWordIndex, setDynamicWordIndex] = useState(0);
   const [displayedDynamicText, setDisplayedDynamicText] = useState('');
   const [isDeletingDynamicText, setIsDeletingDynamicText] = useState(false);
@@ -45,17 +43,16 @@ export function HeroSection() {
           setDisplayedDynamicText(prev => prev.slice(0, -1));
         }, DELETE_SPEED);
       } else {
-        // Finished deleting
         setIsDeletingDynamicText(false);
         setDynamicWordIndex(prev => (prev + 1) % dynamicHeroWords.length);
       }
-    } else { // Typing
+    } else { 
       const targetWord = dynamicHeroWords[dynamicWordIndex];
       if (displayedDynamicText.length < targetWord.length) {
         typingTimeout = setTimeout(() => {
           setDisplayedDynamicText(prev => targetWord.slice(0, prev.length + 1));
         }, TYPE_SPEED);
-      } else { // Word fully typed
+      } else { 
         typingTimeout = setTimeout(() => {
           setIsDeletingDynamicText(true);
         }, PAUSE_DURATION);
@@ -80,8 +77,8 @@ export function HeroSection() {
             <h1 className="font-headline text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl">
               Unlock Peak AI Performance with{' '}
               <span 
-                className="inline-block text-left text-accent" // Changed to text-accent
-                style={{ minWidth: '280px' }} // Adjusted min-width for potentially longer words and visual balance
+                className="inline-block text-left text-accent"
+                style={{ minWidth: '280px' }} 
               >
                 {displayedDynamicText}
                 <span className="animate-blink-cursor select-none text-accent">|</span> 
@@ -122,17 +119,12 @@ export function HeroSection() {
               </Button>
             </div>
           </div>
+          {/* Image container removed */}
           <div className="relative hidden lg:block">
-            <Image
-              src="https://placehold.co/600x400.png"
-              alt="BrieflyAI Platform Showcase"
-              width={600}
-              height={400}
-              className="rounded-xl shadow-2xl opacity-80"
-              data-ai-hint="AI interface platform"
-            />
+            {/* Placeholder for a future abstract visual or animation if desired */}
+            {/* The decorative blobs will still be visible, creating an abstract background effect */}
             <div className="absolute -top-8 -right-8 h-40 w-40 bg-mint-500/20 rounded-full blur-2xl animate-pulse"></div>
-            <div className="absolute -bottom-8 -left-8 h-32 w-32 bg-primary/30 rounded-full blur-2xl animate-pulse animation-delay-2000"></div>
+            <div className="absolute -bottom-8 -left-8 h-32 w-32 bg-primary/30 rounded-full blur-2xl animate-pulse delay-1000"></div> {/* Changed animation-delay-2000 to delay-1000 for standard Tailwind */}
           </div>
         </div>
       </Container>
