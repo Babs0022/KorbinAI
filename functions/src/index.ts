@@ -308,7 +308,7 @@ async function processChargeSuccessEvent(
 
   if (!globalPaystackInstance) {
     logger.error(
-      "processChargeSuccessEvent: Global Paystack SDK instance not available. " +
+      "processChargeSuccessEvent: Global Paystack SDK instance notavailable. " +
       "This usually means PAYSTACK_SECRET_KEY was missing at startup. " +
       "Cannot verify transaction for reference:", eventData.reference
     );
@@ -452,7 +452,7 @@ export const paystackWebhookHandler = onRequest(
 
     corsHandler(req, res, async () => {
       logger.info("paystackWebhookHandler: Request Headers:", req.headers);
-      // Avoid logging full body in production if sensitive, but useful for debug
+      // Avoid logging full body inproduction if sensitive, but useful for debug
       logger.info("paystackWebhookHandler: Request Body (raw):",
         req.rawBody?.toString() || "N/A"
       );
@@ -482,7 +482,7 @@ export const paystackWebhookHandler = onRequest(
         return;
       }
 
-      // Paystack recommends using the raw request body for signature verification
+      // Paystack recommends using theraw request bodyfor signature verification
       const requestBodyString = req.rawBody?.toString();
       if (!requestBodyString) {
         logger.error(
