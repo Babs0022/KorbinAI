@@ -29,7 +29,7 @@ const functionsConfig = (
   }
 ).functions?.config?.() || {};
 
-// Global Paystack instance, primarily for webhook verification or other shared uses
+// Global Paystack instance, primarily for webhook verification
 // if PAYSTACK_SECRET_KEY is available globally at startup.
 let globalPaystackInstance: Paystack | null = null;
 if (functionsConfig.paystack?.secret_key) {
@@ -39,7 +39,8 @@ if (functionsConfig.paystack?.secret_key) {
   logger.warn(
     "Global Paystack secret key not found in Firebase config at startup. " +
     "Global Paystack SDK instance NOT initialized. " +
-    "createPaystackSubscription will attempt local initialization."
+    "Functions will attempt local SDK initialization or use this global one if" +
+    " re-attempted."
   );
 }
 
@@ -69,8 +70,7 @@ export const createPaystackSubscription = onCall(
   {region: "us-central1"},
   async (request) => {
     logger.info("createPaystackSubscription invoked. Validating config...");
-    // Log the raw config object for debugging (be careful with sensitive data in prod logs)
-    // Consider removing or redacting sensitive parts of this log in production
+    // Log the raw config object for debugging
     logger.info("Raw functionsConfig object available to function:",
       JSON.stringify(functionsConfig || {config_not_found: true}));
 
@@ -92,7 +92,9 @@ export const createPaystackSubscription = onCall(
           "Local Paystack SDK instance created successfully for this call."
         );
       } catch (sdkError) {
-        logger.error("Error initializing local Paystack SDK instance:", sdkError);
+        logger.error(
+          "Error initializing local Paystack SDK instance:", sdkError
+        );
         throw new HttpsError(
           "internal",
           "Failed to initialize payment service SDK. [Code: SDK_INIT_FAIL]"
@@ -218,7 +220,9 @@ export const createPaystackSubscription = onCall(
         );
         const errorMessage =
           response.message || "Paystack initialization indicated failure.";
-        throw new HttpsError("internal", errorMessage + " [Code: PSTK_INIT_FAIL]");
+        throw new HttpsError(
+          "internal", errorMessage + " [Code: PSTK_INIT_FAIL]"
+        );
       }
     } catch (error: unknown) {
       logger.error(
@@ -228,7 +232,9 @@ export const createPaystackSubscription = onCall(
       const errorMessage =
         (error instanceof Error ? error.message : String(error)) ||
         "An unknown error occurred while initiating payment.";
-      throw new HttpsError("internal", errorMessage + " [Code: UNKNOWN_INIT_ERR]");
+      throw new HttpsError(
+        "internal", errorMessage + " [Code: UNKNOWN_INIT_ERR]"
+      );
     }
   }
 );
@@ -254,7 +260,7 @@ interface PaystackChargeSuccessData {
     [key: string]: unknown;
   };
   plan_object?: PaystackPlanObject;
-  paid_at?: string | number;
+  paid_at?: string | number; // Can be ISO string or timestamp
 }
 
 /**
@@ -288,6 +294,7 @@ async function processChargeSuccessEvent(
     paid_at: paidAt,
   } = eventData;
 
+  // Prioritize direct metadata, then plan_object metadata.
   const effectiveMetadata = metadata || planObject?.metadata || {};
   const userId = effectiveMetadata?.userId;
   const planId = effectiveMetadata?.planId;
@@ -393,7 +400,8 @@ export const paystackWebhookHandler = onRequest(
   async (req, res) => {
     logger.info("paystackWebhookHandler invoked. Validating webhook config...");
     const currentWebhookSecret = functionsConfig.paystack?.webhook_secret;
-    const currentPaystackSecretKeyForVerify = functionsConfig.paystack?.secret_key;
+    const currentPaystackSecretKeyForVerify =
+      functionsConfig.paystack?.secret_key;
 
     logger.info(
       `Extracted PAYSTACK_WEBHOOK_SECRET exists: ${!!currentWebhookSecret}`
@@ -406,7 +414,7 @@ export const paystackWebhookHandler = onRequest(
 
     corsHandler(req, res, async () => {
       logger.info("paystackWebhookHandler: Request Headers:", req.headers);
-      // Avoid logging full body in production if it might contain sensitive data
+      // Avoid logging full body in production if sensitive
       // logger.info("paystackWebhookHandler: Request Body:", req.body);
 
       if (!currentPaystackSecretKeyForVerify && globalPaystackInstance === null) {
@@ -454,9 +462,12 @@ export const paystackWebhookHandler = onRequest(
       );
 
       if (event.event === "charge.success") {
+        // Acknowledge immediately to Paystack
         res.status(200).send(
           "Webhook for charge.success acknowledged. Processing in background."
         );
+
+        // Perform the actual processing asynchronously
         try {
           await processChargeSuccessEvent(
             event.data as PaystackChargeSuccessData
@@ -473,6 +484,8 @@ export const paystackWebhookHandler = onRequest(
             event.data?.reference,
             processingError
           );
+          // Note: We've already sent 200 OK, so can't send error response here.
+          // Errors here are logged for investigation.
         }
       } else {
         logger.info(
@@ -488,3 +501,16 @@ export const paystackWebhookHandler = onRequest(
     });
   }
 );
+
+// Test function (optional, for direct invocation test if needed)
+// export const testConfigAccess = onCall(async () => {
+//   logger.info("testConfigAccess invoked.");
+//   logger.info("functionsConfig from global:", functionsConfig);
+//   const psk = functionsConfig.paystack?.secret_key;
+//   const purl = functionsConfig.app?.callback_url;
+//   const whs = functionsConfig.paystack?.webhook_secret;
+//   logger.info("psk available:", !!psk);
+//   logger.info("purl available:", !!purl);
+//   logger.info("whs available:", !!whs);
+//   return { psk_exists: !!psk, purl_exists: !!purl, whs_exists: !!whs };
+// });
