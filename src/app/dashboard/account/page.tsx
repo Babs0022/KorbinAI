@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon, ArrowLeft } from 'lucide-react';
+import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon, ArrowLeft, CheckCircle2, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -28,10 +28,69 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import NextImage from 'next/image'; // Renamed to avoid conflict with Lucide's Image
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import NextImage from 'next/image';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from '@/lib/firebase';
+import { cn } from '@/lib/utils';
 
 const predefinedIcons = Array.from({ length: 10 }, (_, i) => `https://avatar.iran.liara.run/public/${i + 1}`);
 const defaultPlaceholderUrl = "https://placehold.co/40x40.png";
+
+interface Tier {
+  name: string;
+  planId: string;
+  price: string;
+  frequency: string;
+  description: string;
+  features: string[];
+  cta: string;
+  emphasized: boolean;
+}
+
+const pricingTiers: Tier[] = [
+  {
+    name: 'Premium',
+    planId: 'premium', 
+    price: 'NGN 16,000',
+    frequency: '/mo',
+    description: 'Supercharge your AI interactions.',
+    features: [
+      '50 Prompts per month',
+      'Prompt Vault & Refinement Hub',
+      'Model-Specific Adaptation',
+      'Contextual Prompting & Analysis',
+      'Prompt Academy Access',
+    ],
+    cta: 'Upgrade to Premium',
+    emphasized: true,
+  },
+  {
+    name: 'Unlimited',
+    planId: 'unlimited', 
+    price: 'NGN 56,000',
+    frequency: '/mo',
+    description: 'For power users who need it all.',
+    features: [
+      'Unlimited Prompts',
+      'All Premium Features, Uncapped',
+      'Unlimited Real-Time Suggestions',
+      'Unlimited Reverse Prompting',
+      'Early access to new features',
+    ],
+    cta: 'Go Unlimited',
+    emphasized: false,
+  },
+];
 
 
 export default function AccountPage() {
@@ -39,6 +98,7 @@ export default function AccountPage() {
   const { currentUser, loading } = authContext;
   const router = useRouter();
   const { toast } = useToast();
+  const functions = getFunctions(app, "us-central1");
 
   const [newDisplayName, setNewDisplayName] = useState('');
   const [selectedIconUrl, setSelectedIconUrl] = useState<string>(authContext.avatarUrl || defaultPlaceholderUrl);
@@ -52,6 +112,10 @@ export default function AccountPage() {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [reAuthPassword, setReAuthPassword] = useState('');
+
+  const [isChangePlanModalOpen, setIsChangePlanModalOpen] = useState(false);
+  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!loading && !currentUser) {
@@ -181,6 +245,44 @@ export default function AccountPage() {
       setShowDeleteConfirm(false); 
       setReAuthPassword('');
     } 
+  };
+
+  const handleSubscription = async (tierPlanId: string) => {
+    if (!currentUser) {
+      toast({
+        title: 'Login Required',
+        description: 'Please log in or sign up to subscribe.',
+        variant: 'destructive',
+      });
+      router.push('/login?redirect=/dashboard/account'); 
+      return;
+    }
+    
+    setLoadingPlanId(tierPlanId);
+
+    try {
+      const createSubscriptionFunction = httpsCallable(functions, 'createPaystackSubscription');
+      
+      const result: any = await createSubscriptionFunction({ 
+        email: currentUser.email, 
+        planId: tierPlanId, 
+      });
+
+      if (result.data && result.data.authorization_url) {
+        window.location.href = result.data.authorization_url; // Redirect to Paystack
+      } else {
+        throw new Error(result.data?.error || 'Could not initiate payment. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Subscription Error:', error);
+      toast({
+        title: 'Subscription Failed',
+        description: error.message || 'An unexpected error occurred. Please contact support if this persists.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingPlanId(null);
+    }
   };
 
 
@@ -314,12 +416,73 @@ export default function AccountPage() {
                   <GlassCardDescription>Manage your BrieflyAI plan.</GlassCardDescription>
                 </GlassCardHeader>
                 <GlassCardContent>
-                  <p className="text-sm">Current Plan: <span className="font-semibold text-primary">Basic Plan</span></p>
-                  <p className="text-xs text-muted-foreground mt-1">Full subscription management coming soon!</p>
+                  <p className="text-sm">Current Plan: <span className="font-semibold text-primary">Basic Plan</span> (Feature to dynamically show current plan coming soon!)</p>
+                  
                   <div className="mt-4 flex gap-2">
-                    <Button variant="outline" asChild>
-                      <Link href="/#pricing">Change Plan</Link>
-                    </Button>
+                    <Dialog open={isChangePlanModalOpen} onOpenChange={setIsChangePlanModalOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline">Change Plan</Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
+                        <DialogHeader>
+                          <DialogTitle className="font-headline text-2xl">Choose Your BrieflyAI Plan</DialogTitle>
+                          <DialogDescription>
+                            Select a plan that best suits your prompting needs. All prices in Nigerian Naira (NGN).
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto">
+                          {pricingTiers.map((tier) => (
+                            <div
+                              key={tier.name}
+                              className={cn(
+                                "flex flex-col rounded-lg border p-6 shadow-sm transition-all hover:shadow-lg",
+                                tier.emphasized ? "border-2 border-primary bg-primary/5" : "bg-card"
+                              )}
+                            >
+                              {tier.emphasized && (
+                                <div className="absolute top-0 right-0 -mt-3 -mr-3">
+                                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl">
+                                    <Star className="h-5 w-5" />
+                                  </div>
+                                </div>
+                              )}
+                              <h3 className="text-xl font-semibold font-headline text-foreground">{tier.name}</h3>
+                              <p className="mt-1">
+                                <span className="text-3xl font-bold text-foreground">{tier.price}</span>
+                                <span className="text-sm text-muted-foreground">{tier.frequency}</span>
+                              </p>
+                              <p className="mt-2 text-sm text-muted-foreground h-10">{tier.description}</p>
+                              
+                              <ul className="mt-4 space-y-2 text-sm flex-grow">
+                                {tier.features.map((feature) => (
+                                  <li key={feature} className="flex items-start">
+                                    <CheckCircle2 className="mr-2 h-4 w-4 text-accent flex-shrink-0 mt-0.5" />
+                                    <span className="text-muted-foreground" dangerouslySetInnerHTML={{ __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}></span>
+                                  </li>
+                                ))}
+                              </ul>
+                              <Button
+                                size="lg"
+                                onClick={() => handleSubscription(tier.planId)}
+                                disabled={loadingPlanId === tier.planId}
+                                className={cn(
+                                  "mt-6 w-full",
+                                  tier.emphasized ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-accent hover:bg-accent/90 text-accent-foreground"
+                                )}
+                              >
+                                {loadingPlanId === tier.planId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : tier.cta}
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        <DialogFooter className="mt-auto pt-4 border-t">
+                           <p className="text-xs text-muted-foreground mr-auto">Payments are securely processed via Paystack.</p>
+                          <DialogClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                          </DialogClose>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
                     <Button variant="ghost" disabled>Cancel Subscription</Button>
                   </div>
                 </GlassCardContent>
@@ -388,7 +551,4 @@ export default function AccountPage() {
     </div>
   );
 }
-
-    
-
     
