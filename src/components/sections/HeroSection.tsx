@@ -4,9 +4,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles, Wand2, CheckCircle } from 'lucide-react';
+import { ArrowRight, Sparkles, Wand2, CheckCircle, Loader2 } from 'lucide-react';
 import Container from '@/components/layout/Container';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 const benefits = [
   "Precision Prompting",
@@ -25,6 +26,7 @@ export function HeroSection() {
   const [dynamicWordIndex, setDynamicWordIndex] = useState(0);
   const [displayedDynamicText, setDisplayedDynamicText] = useState('');
   const [isDeletingDynamicText, setIsDeletingDynamicText] = useState(false);
+  const { currentUser, loading: authLoading } = useAuth();
 
   useEffect(() => {
     const benefitIntervalId = setInterval(() => {
@@ -61,13 +63,13 @@ export function HeroSection() {
     return () => clearTimeout(typingTimeout);
   }, [displayedDynamicText, isDeletingDynamicText, dynamicWordIndex]);
 
+  const getStartedHref = authLoading ? "#" : currentUser ? "/dashboard" : "/signup";
 
   return (
     <section className="hero-background relative overflow-hidden py-20 md:py-32">
-      {/* The old blob container div is removed. The .hero-background class on section handles the new gradient. */}
       <Container className="relative z-10">
-        <div className="grid grid-cols-1 items-center gap-12"> {/* Removed lg:grid-cols-2, content is now centered */}
-          <div className="text-center"> {/* Centering content */}
+        <div className="grid grid-cols-1 items-center gap-12">
+          <div className="text-center">
             <div className="mb-6 inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary shadow-sm backdrop-blur-sm">
               <Sparkles className="mr-2 h-4 w-4 text-primary" />
               The Future of AI Interaction is Here
@@ -75,7 +77,7 @@ export function HeroSection() {
             <h1 className="font-headline text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl md:text-6xl">
               Unlock Peak AI Performance with{' '}
               <span 
-                className="inline-block text-left text-accent" // Accent color for dynamic word
+                className="inline-block text-left text-accent"
                 style={{ minWidth: '280px' }} 
               >
                 {displayedDynamicText}
@@ -93,8 +95,8 @@ export function HeroSection() {
                   <div
                     key={benefit}
                     className={cn(
-                      "flex items-center justify-center text-primary text-lg transition-all duration-500 ease-in-out", // Centered benefits
-                      index === currentBenefitIndex ? "opacity-100 translate-y-0" : "opacity-0 absolute -translate-y-full left-1/2 -translate-x-1/2", // Positioning for centering
+                      "flex items-center justify-center text-primary text-lg transition-all duration-500 ease-in-out",
+                      index === currentBenefitIndex ? "opacity-100 translate-y-0" : "opacity-0 absolute -translate-y-full left-1/2 -translate-x-1/2",
                       index > currentBenefitIndex && "translate-y-full" 
                     )}
                   >
@@ -104,10 +106,11 @@ export function HeroSection() {
                 ))}
               </div>
             </div>
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"> {/* Centered buttons */}
-              <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-transform hover:scale-105">
-                <Link href="/signup">
-                  Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-transform hover:scale-105" disabled={authLoading}>
+                <Link href={getStartedHref}>
+                  {authLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Get Started Free"}
+                  {!authLoading && <ArrowRight className="ml-2 h-5 w-5" />}
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild className="shadow-lg transition-transform hover:scale-105 border-border text-foreground bg-background/50 hover:bg-accent/10">

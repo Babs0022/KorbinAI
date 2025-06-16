@@ -15,13 +15,13 @@ import { useRouter } from 'next/navigation';
 
 interface Tier {
   name: string;
-  planId: string; // This will be 'premium' or 'unlimited'
-  price: string; // Display price
+  planId: string; 
+  price: string; 
   frequency: string;
   description: string;
   features: string[];
   cta: string;
-  href?: string; // For free tier link
+  href?: string; 
   emphasized: boolean;
 }
 
@@ -39,7 +39,7 @@ const pricingTiers: Tier[] = [
       'Community support',
     ],
     cta: 'Start for Free',
-    href: '/signup',
+    href: '/signup', // This will be overridden if user is logged in
     emphasized: false,
   },
   {
@@ -84,9 +84,9 @@ const pricingTiers: Tier[] = [
 ];
 
 export function PricingSection() {
-  const { currentUser } = useAuth();
+  const { currentUser, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  const functions = getFunctions(app, "us-central1"); // Specify the region here
+  const functions = getFunctions(app, "us-central1"); 
   const router = useRouter();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
@@ -145,47 +145,55 @@ export function PricingSection() {
           </p>
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
-          {pricingTiers.map((tier) => (
-            <GlassCard
-              key={tier.name}
-              className={`flex flex-col ${tier.emphasized ? 'border-2 border-primary shadow-2xl' : 'border-border'}`}
-            >
-              <GlassCardHeader className="pb-4">
-                <GlassCardTitle className="font-headline text-2xl">{tier.name}</GlassCardTitle>
-                <p className="mt-1">
-                  <span className="text-4xl font-bold text-foreground">{tier.price}</span>
-                  <span className="text-sm text-muted-foreground">{tier.frequency}</span>
-                </p>
-                <GlassCardDescription className="mt-2 text-sm">{tier.description}</GlassCardDescription>
-              </GlassCardHeader>
-              <GlassCardContent className="flex-grow">
-                <ul className="space-y-2">
-                  {tier.features.map((feature) => (
-                    <li key={feature} className="flex items-center text-sm">
-                      <CheckCircle2 className="mr-2 h-4 w-4 text-accent flex-shrink-0" />
-                      <span className="text-muted-foreground" dangerouslySetInnerHTML={{ __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}></span>
-                    </li>
-                  ))}
-                </ul>
-              </GlassCardContent>
-              <GlassCardFooter className="mt-6">
-                {tier.planId === 'free' && tier.href ? (
-                   <Button asChild size="lg" className={`w-full ${tier.emphasized ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-accent hover:bg-accent/90 text-accent-foreground'}`}>
-                    <Link href={tier.href}>{tier.cta}</Link>
-                  </Button>
-                ) : (
-                  <Button
-                    size="lg"
-                    onClick={() => handleSubscription(tier)}
-                    disabled={loadingPlan === tier.planId}
-                    className={`w-full ${tier.emphasized ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-accent hover:bg-accent/90 text-accent-foreground'}`}
-                  >
-                    {loadingPlan === tier.planId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : tier.cta}
-                  </Button>
-                )}
-              </GlassCardFooter>
-            </GlassCard>
-          ))}
+          {pricingTiers.map((tier) => {
+            const ctaHref = tier.planId === 'free' 
+              ? (authLoading ? "#" : (currentUser ? "/dashboard" : (tier.href || "/signup")))
+              : "#"; // Paid plans use onClick handler
+
+            return (
+              <GlassCard
+                key={tier.name}
+                className={`flex flex-col ${tier.emphasized ? 'border-2 border-primary shadow-2xl' : 'border-border'}`}
+              >
+                <GlassCardHeader className="pb-4">
+                  <GlassCardTitle className="font-headline text-2xl">{tier.name}</GlassCardTitle>
+                  <p className="mt-1">
+                    <span className="text-4xl font-bold text-foreground">{tier.price}</span>
+                    <span className="text-sm text-muted-foreground">{tier.frequency}</span>
+                  </p>
+                  <GlassCardDescription className="mt-2 text-sm">{tier.description}</GlassCardDescription>
+                </GlassCardHeader>
+                <GlassCardContent className="flex-grow">
+                  <ul className="space-y-2">
+                    {tier.features.map((feature) => (
+                      <li key={feature} className="flex items-center text-sm">
+                        <CheckCircle2 className="mr-2 h-4 w-4 text-accent flex-shrink-0" />
+                        <span className="text-muted-foreground" dangerouslySetInnerHTML={{ __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}></span>
+                      </li>
+                    ))}
+                  </ul>
+                </GlassCardContent>
+                <GlassCardFooter className="mt-6">
+                  {tier.planId === 'free' ? (
+                    <Button asChild size="lg" className={`w-full ${tier.emphasized ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-accent hover:bg-accent/90 text-accent-foreground'}`} disabled={authLoading}>
+                      <Link href={ctaHref}>
+                        {authLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : tier.cta}
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      size="lg"
+                      onClick={() => handleSubscription(tier)}
+                      disabled={loadingPlan === tier.planId || authLoading}
+                      className={`w-full ${tier.emphasized ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-accent hover:bg-accent/90 text-accent-foreground'}`}
+                    >
+                      {authLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (loadingPlan === tier.planId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : tier.cta)}
+                    </Button>
+                  )}
+                </GlassCardFooter>
+              </GlassCard>
+            );
+          })}
         </div>
         <p className="mt-8 text-center text-sm text-muted-foreground">
           Payments are securely processed by Paystack.
@@ -194,4 +202,3 @@ export function PricingSection() {
     </section>
   );
 }
-
