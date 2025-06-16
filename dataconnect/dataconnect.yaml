@@ -5,7 +5,7 @@ schema:
   source: "./schema"
   datasource:
     postgresql:
-      database: "fdcdb"
+      database: "postgres"
       cloudSql:
         instanceId: "studio-fdc"
       # schemaValidation: "COMPATIBLE"

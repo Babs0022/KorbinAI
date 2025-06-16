@@ -1,0 +1,11 @@
+I0615 23:36:37.925409   55340 load.go:37] Reloading schema and connectors...
+I0615 23:36:37.980607   55340 control.go:84] [/emulator/studio 5d13] UpdateResources(): done
+Schema: sources: schema/schema.gql [2088B] 
+Connector "default": sources: connector/mutations.gql [1233B] connector/queries.gql [1802B] 
+I0615 23:36:38.021284   55340 collector.go:107] schema extensions wrote into "/home/user/studio/dataconnect/.dataconnect/schema"
+Generated sources: prelude.gql [71531B] 
+I0615 23:36:38.021355   55340 load.go:115] Finished reloading
+I0615 23:36:38.021647   55340 dev.go:95] Listening on address (HTTP + gRPC): 127.0.0.1:9399
+I0615 23:36:50.064060   55340 control.go:84] [/emulator/studio 49d8] UpdateResources(): done
+Schema: sources: schema/schema.gql [2088B] 
+Connector "default": sources: connector/mutations.gql [1233B] connector/queries.gql [1802B] 
