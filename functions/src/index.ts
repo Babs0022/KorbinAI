@@ -1,6 +1,6 @@
 
 import {onCall, HttpsError, onRequest} from "firebase-functions/v2/https";
-import * as logger from "firebase-functions/logger";
+import * => logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 import Paystack from "paystack-node";
 import * as crypto from "crypto";
@@ -10,6 +10,7 @@ const corsHandler = cors({
   origin: [
     "http://localhost:9002",
     "https://brieflyai.xyz",
+    // Add your production domain here if different
     "https://6000-firebase-studio-1749655004240.cluster-axf5tvtfjjfekvhwxwkkkzsk2y.cloudworkstations.dev/",
   ],
 });
@@ -29,18 +30,40 @@ const functionsConfig = (
   }
 ).functions?.config?.() || {};
 
+logger.info(
+  "Initial functionsConfig at startup:",
+  JSON.stringify(functionsConfig || {config_not_found: true})
+);
+
+const globalPaystackSecretKey = functionsConfig.paystack?.secret_key;
+logger.info(
+  "Global scope: Attempting to read paystack.secret_key. " +
+  `Found: ${!!globalPaystackSecretKey}. ` +
+  `Value: ${globalPaystackSecretKey ? "********" : "UNDEFINED/EMPTY"}`
+);
+
+
 // Global Paystack instance, primarily for webhook verification
 // if PAYSTACK_SECRET_KEY is available globally at startup.
 let globalPaystackInstance: Paystack | null = null;
-if (functionsConfig.paystack?.secret_key) {
-  globalPaystackInstance = new Paystack(functionsConfig.paystack.secret_key);
-  logger.info("Global Paystack SDK instance initialized with secret key.");
+if (globalPaystackSecretKey) {
+  try {
+    globalPaystackInstance = new Paystack(globalPaystackSecretKey);
+    logger.info(
+      "Global Paystack SDK instance initialized successfully with secret key."
+    );
+  } catch (e) {
+    logger.error(
+      "Error initializing global Paystack SDK instance at startup:", e
+    );
+    globalPaystackInstance = null; // Ensure it's null if init fails
+  }
 } else {
   logger.warn(
-    "Global Paystack secret key not found in Firebase config at startup. " +
-    "Global Paystack SDK instance NOT initialized. " +
-    "Functions will attempt local SDK initialization oruse this global one if" +
-    " re-attempted."
+    "Global Paystack secret key (paystack.secret_key) not found in " +
+    "Firebase config at startup. Global Paystack SDK instance NOT " +
+    "initialized. Functions will attempt local SDK initialization or use " +
+    "this global one if re-attempted."
   );
 }
 
@@ -71,17 +94,23 @@ export const createPaystackSubscription = onCall(
   async (request) => {
     logger.info("createPaystackSubscription invoked. Validating config...");
     // Log the raw config object for debugging
-    logger.info("Raw functionsConfig object available to function:",
-      JSON.stringify(functionsConfig || {config_not_found: true}));
+    logger.info(
+      "Raw functionsConfig object available to function:",
+      JSON.stringify(functionsConfig || {config_not_found: true})
+    );
 
     const currentPaystackSecretKey = functionsConfig.paystack?.secret_key;
     const currentAppCallbackUrl = functionsConfig.app?.callback_url;
 
     logger.info(
-      `Extracted PAYSTACK_SECRET_KEY exists: ${!!currentPaystackSecretKey}`
+      "Attempting to read PAYSTACK_SECRET_KEY. " +
+      `Found: ${!!currentPaystackSecretKey}. ` +
+      `Value: ${currentPaystackSecretKey ? "********" : "UNDEFINED/EMPTY"}`
     );
     logger.info(
-      `Extracted APP_CALLBACK_URL exists: ${!!currentAppCallbackUrl}`
+      "Attempting to read APP_CALLBACK_URL. " +
+      `Found: ${!!currentAppCallbackUrl}. ` +
+      `Value: ${currentAppCallbackUrl || "UNDEFINED/EMPTY"}`
     );
 
     let paystackSdkInstance: Paystack | null = null;
@@ -102,8 +131,9 @@ export const createPaystackSubscription = onCall(
       }
     } else {
       logger.error(
-        "PAYSTACK_SECRET_KEY is missing or undefined in environment config. " +
-        "Paystack SDK cannot be initialized for this call."
+        "CRITICAL: PAYSTACK_SECRET_KEY is MISSING or UNDEFINED in " +
+        "Firebase environment config. Paystack SDK cannot be initialized. " +
+        "Verify with: firebase functions:config:get paystack.secret_key"
       );
     }
 
@@ -122,7 +152,8 @@ export const createPaystackSubscription = onCall(
     if (!currentAppCallbackUrl) {
       logger.error(
         "Critical Error: Application callback URL (APP_CALLBACK_URL) " +
-        "is not configured. Aborting subscription attempt."
+        "is not configured. Aborting subscription attempt. Verify with: " +
+        "firebase functions:config:get app.callback_url"
       );
       throw new HttpsError(
         "internal",
@@ -275,9 +306,9 @@ async function processChargeSuccessEvent(
     "processChargeSuccessEvent: Starting for reference:", eventData.reference
   );
 
-  if (!globalPaystackInstance) { // Use the globally initialized instance
+  if (!globalPaystackInstance) {
     logger.error(
-      "processChargeSuccessEvent:Global Paystack SDK instance not available. " +
+      "processChargeSuccessEvent: Global Paystack SDK instance not available. " +
       "This usually means PAYSTACK_SECRET_KEY was missing at startup. " +
       "Cannot verify transaction for reference:", eventData.reference
     );
@@ -399,28 +430,45 @@ export const paystackWebhookHandler = onRequest(
   {region: "us-central1"},
   async (req, res) => {
     logger.info("paystackWebhookHandler invoked. Validating webhook config...");
+    // Log the raw config object for debugging
+    logger.info(
+      "Raw functionsConfig object available to webhook:",
+      JSON.stringify(functionsConfig || {config_not_found: true})
+    );
+
     const currentWebhookSecret = functionsConfig.paystack?.webhook_secret;
     const currentPaystackSecretKeyForVerify =
       functionsConfig.paystack?.secret_key;
 
     logger.info(
-      `Extracted PAYSTACK_WEBHOOK_SECRET exists: ${!!currentWebhookSecret}`
+      "Attempting to read PAYSTACK_WEBHOOK_SECRET. " +
+      `Found: ${!!currentWebhookSecret}. ` +
+      `Value: ${currentWebhookSecret ? "********" : "UNDEFINED/EMPTY"}`
     );
     logger.info(
-      "Extracted PAYSTACK_SECRET_KEY for " +
-      `verification exists: ${!!currentPaystackSecretKeyForVerify}`
+      "Attempting to read PAYSTACK_SECRET_KEY for verification. " +
+      `Found: ${!!currentPaystackSecretKeyForVerify}. ` +
+      `Value: ${currentPaystackSecretKeyForVerify ? "********" : "UNDEFINED/EMPTY"}`
     );
 
 
     corsHandler(req, res, async () => {
       logger.info("paystackWebhookHandler: Request Headers:", req.headers);
-      // Avoid logging full body in production if sensitive
-      // logger.info("paystackWebhookHandler: Request Body:", req.body);
+      // Avoid logging full body in production if sensitive, but useful for debug
+      logger.info(
+        "paystackWebhookHandler: Request Body (raw):",
+        req.rawBody?.toString() || "N/A"
+      );
+      logger.info(
+        "paystackWebhookHandler: Request Body (parsed):",
+        JSON.stringify(req.body || {})
+      );
 
-      if (!currentPaystackSecretKeyForVerify && globalPaystackInstance===null) {
+
+      if (!currentPaystackSecretKeyForVerify && globalPaystackInstance === null) {
         logger.error(
-          "paystackWebhookHandler: PAYSTACK_SECRET_KEY is missing. " +
-          "Cannot verify transactions. Global Paystack SDK not available."
+          "paystackWebhookHandler: PAYSTACK_SECRET_KEY is missing " +
+          "or global SDK not init. Cannot verify transactions."
         );
         res.status(500).send(
           "Server configuration error (PSK missing for verify)."
@@ -430,18 +478,28 @@ export const paystackWebhookHandler = onRequest(
 
       if (!currentWebhookSecret) {
         logger.error(
-          "paystackWebhookHandler: PAYSTACK_WEBHOOK_SECRET not configured."
+          "paystackWebhookHandler: PAYSTACK_WEBHOOK_SECRET not configured. " +
+          "Verify with: firebase functions:config:get paystack.webhook_secret"
         );
         res.status(500).send("Server configuration error (WHS missing).");
         return;
       }
 
-      // Ensure req.body is parsed for crypto.createHmac
-      const requestBodyString = typeof req.body === "string" ?
-        req.body : JSON.stringify(req.body);
+      // Paystack recommends using the raw request body for signature verification
+      const requestBodyString = req.rawBody?.toString();
+      if (!requestBodyString) {
+        logger.error(
+          "paystackWebhookHandler: Raw request body is missing. " +
+          "Cannot verify signature."
+        );
+        res.status(400).send(
+          "Raw request body required for signature verification."
+        );
+        return;
+      }
 
       const hash = crypto.createHmac("sha512", currentWebhookSecret)
-        .update(requestBodyString) // Use the stringified body
+        .update(requestBodyString) // Use the raw body
         .digest("hex");
 
       if (hash !== req.headers["x-paystack-signature"]) {
@@ -501,16 +559,3 @@ export const paystackWebhookHandler = onRequest(
     });
   }
 );
-
-// Test function (optional, for direct invocation test if needed)
-// export const testConfigAccess = onCall(async () => {
-//   logger.info("testConfigAccess invoked.");
-//   logger.info("functionsConfig from global:", functionsConfig);
-//   const psk = functionsConfig.paystack?.secret_key;
-//   const purl = functionsConfig.app?.callback_url;
-//   const whs = functionsConfig.paystack?.webhook_secret;
-//   logger.info("psk available:", !!psk);
-//   logger.info("purl available:", !!purl);
-//   logger.info("whs available:", !!whs);
-//   return { psk_exists: !!psk, purl_exists: !!purl, whs_exists: !!whs };
-// });
