@@ -39,7 +39,7 @@ if (functionsConfig.paystack?.secret_key) {
   logger.warn(
     "Global Paystack secret key not found in Firebase config at startup. " +
     "Global Paystack SDK instance NOT initialized. " +
-    "Functions will attempt local SDK initialization or use this global one if" +
+    "Functions will attempt local SDK initialization oruse this global one if" +
     " re-attempted."
   );
 }
@@ -226,7 +226,7 @@ export const createPaystackSubscription = onCall(
       }
     } catch (error: unknown) {
       logger.error(
-        "createPaystackSubscription: Error during transaction init or DB write:",
+        "createPaystackSubscription:Error during transaction init or DB write:",
         error
       );
       const errorMessage =
@@ -277,7 +277,7 @@ async function processChargeSuccessEvent(
 
   if (!globalPaystackInstance) { // Use the globally initialized instance
     logger.error(
-      "processChargeSuccessEvent: Global Paystack SDK instance not available. " +
+      "processChargeSuccessEvent:Global Paystack SDK instance not available. " +
       "This usually means PAYSTACK_SECRET_KEY was missing at startup. " +
       "Cannot verify transaction for reference:", eventData.reference
     );
@@ -417,7 +417,7 @@ export const paystackWebhookHandler = onRequest(
       // Avoid logging full body in production if sensitive
       // logger.info("paystackWebhookHandler: Request Body:", req.body);
 
-      if (!currentPaystackSecretKeyForVerify && globalPaystackInstance === null) {
+      if (!currentPaystackSecretKeyForVerify && globalPaystackInstance===null) {
         logger.error(
           "paystackWebhookHandler: PAYSTACK_SECRET_KEY is missing. " +
           "Cannot verify transactions. Global Paystack SDK not available."

@@ -317,7 +317,9 @@ export default function AccountPage() {
                   <p className="text-sm">Current Plan: <span className="font-semibold text-primary">Basic Plan</span></p>
                   <p className="text-xs text-muted-foreground mt-1">Full subscription management coming soon!</p>
                   <div className="mt-4 flex gap-2">
-                    <Button variant="outline" disabled>Change Plan</Button>
+                    <Button variant="outline" asChild>
+                      <Link href="/#pricing">Change Plan</Link>
+                    </Button>
                     <Button variant="ghost" disabled>Cancel Subscription</Button>
                   </div>
                 </GlassCardContent>
@@ -386,5 +388,7 @@ export default function AccountPage() {
     </div>
   );
 }
+
+    
 
     
