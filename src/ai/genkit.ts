@@ -6,20 +6,20 @@ let aiInstance: any;
 
 try {
   console.log("Attempting to initialize Genkit AI instance...");
-  if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+  const googleApiKey = process.env.GOOGLE_API_KEY;
+
+  console.log(`src/ai/genkit.ts: GEMINI_API_KEY from process.env: ${geminiApiKey ? "'********'" : "NOT FOUND"}`);
+  console.log(`src/ai/genkit.ts: GOOGLE_API_KEY from process.env: ${googleApiKey ? "'********'" : "NOT FOUND"}`);
+
+
+  if (!geminiApiKey && !googleApiKey) {
     console.error("********************************************************************************");
     console.error("CRITICAL: NEITHER GEMINI_API_KEY NOR GOOGLE_API_KEY IS SET IN ENVIRONMENT VARIABLES.");
     console.error("Genkit GoogleAI plugin will likely fail to initialize.");
     console.error("Please ensure one of these is set in your .env file (for local development)");
     console.error("or in your deployment environment variables.");
     console.error("********************************************************************************");
-  } else {
-    if (process.env.GEMINI_API_KEY) {
-      console.log("GEMINI_API_KEY found in environment variables.");
-    }
-    if (process.env.GOOGLE_API_KEY) {
-      console.log("GOOGLE_API_KEY found in environment variables.");
-    }
   }
 
   aiInstance = genkit({
