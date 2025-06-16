@@ -1,10 +1,10 @@
 
 import {onCall, HttpsError, onRequest} from "firebase-functions/v2/https";
-import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 import Paystack from "paystack-node";
 import * as crypto from "crypto";
 import cors from "cors";
+import * as logger from "firebase-functions/logger";
 
 const corsHandler = cors({
   origin: [
@@ -439,23 +439,30 @@ export const paystackWebhookHandler = onRequest(
       functionsConfig.paystack?.secret_key;
 
     logger.info(
-      "Attempting to read PAYSTACK_WEBHOOK_SECRET. " +
-      `Found: ${!!currentWebhookSecret}. Value: ${currentWebhookSecret ? "********" : "UNDEFINED/EMPTY"}`
+      "Attempting to read PAYSTACK_WEBHOOK_SECRET. Found: " +
+      `${!!currentWebhookSecret}. Value: ${currentWebhookSecret ?
+        "********" : "UNDEFINED/EMPTY"}`
     );
     logger.info(
-      "Attempting to read PAYSTACK_SECRET_KEY for verification. " +
-      `Found: ${!!currentPaystackSecretKeyForVerify}. Value: ${currentPaystackSecretKeyForVerify ? "********" : "UNDEFINED/EMPTY"}`
+      "Attempting to read PAYSTACK_SECRET_KEY for verification. Found: " +
+      `${!!currentPaystackSecretKeyForVerify}. Value: ` +
+      `${currentPaystackSecretKeyForVerify ? "********" : "UNDEFINED/EMPTY"}`
     );
 
 
     corsHandler(req, res, async () => {
       logger.info("paystackWebhookHandler: Request Headers:", req.headers);
       // Avoid logging full body in production if sensitive, but useful for debug
-      logger.info("paystackWebhookHandler: Request Body (raw):", req.rawBody?.toString() || "N/A");
-      logger.info("paystackWebhookHandler: Request Body (parsed):", JSON.stringify(req.body || {}));
+      logger.info("paystackWebhookHandler: Request Body (raw):",
+        req.rawBody?.toString() || "N/A"
+      );
+      logger.info("paystackWebhookHandler: Request Body (parsed):",
+        JSON.stringify(req.body || {})
+      );
 
 
-      if (!currentPaystackSecretKeyForVerify && globalPaystackInstance === null) {
+      if (!currentPaystackSecretKeyForVerify &&
+         globalPaystackInstance === null) {
         logger.error(
           "paystackWebhookHandler: PAYSTACK_SECRET_KEY is missing " +
           "or global SDK not init. Cannot verify transactions."
@@ -478,8 +485,13 @@ export const paystackWebhookHandler = onRequest(
       // Paystack recommends using the raw request body for signature verification
       const requestBodyString = req.rawBody?.toString();
       if (!requestBodyString) {
-        logger.error("paystackWebhookHandler: Raw request body is missing. Cannot verify signature.");
-        res.status(400).send("Raw request body required for signature verification.");
+        logger.error(
+          "paystackWebhookHandler: Raw request body is missing. " +
+          "Cannot verify signature."
+        );
+        res.status(400).send(
+          "Raw request body required for signature verification."
+        );
         return;
       }
 
