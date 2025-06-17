@@ -22,7 +22,7 @@ import Link from 'next/link';
 interface UserSettings {
   emailNotifications: boolean;
   promotionalEmails: boolean;
-  theme: string;
+  theme: 'light' | 'dark' | 'system';
 }
 
 const defaultSettings: UserSettings = {
@@ -41,40 +41,90 @@ export default function SettingsPage() {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isExportingData, setIsExportingData] = useState(false);
 
+  const applyThemePreference = useCallback((theme: 'light' | 'dark' | 'system') => {
+    localStorage.setItem('theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else if (theme === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else { // system
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, []);
+  
   const fetchSettings = useCallback(async () => {
     if (!currentUser) {
       setIsLoadingSettings(false);
-      setSettings(defaultSettings); 
+      const localTheme = (localStorage.getItem('theme') as UserSettings['theme']) || 'system';
+      setSettings({...defaultSettings, theme: localTheme });
+      applyThemePreference(localTheme);
       return;
     }
     setIsLoadingSettings(true);
     try {
       const settingsDocRef = doc(db, `userSettings/${currentUser.uid}`);
       const docSnap = await getDoc(settingsDocRef);
+      let loadedSettings = defaultSettings;
       if (docSnap.exists()) {
-        setSettings(docSnap.data() as UserSettings);
+        loadedSettings = { ...defaultSettings, ...docSnap.data() } as UserSettings;
       } else {
-        setSettings(defaultSettings);
+         // If no settings in Firestore, check localStorage for theme as a fallback for the initial UI state
+        const localTheme = (localStorage.getItem('theme') as UserSettings['theme']) || 'system';
+        loadedSettings = {...defaultSettings, theme: localTheme};
       }
+      setSettings(loadedSettings);
+      applyThemePreference(loadedSettings.theme);
     } catch (error) {
       console.error("Error loading settings:", error);
       toast({ title: "Error Loading Settings", description: "Could not load your saved settings. Using defaults.", variant: "destructive" });
-      setSettings(defaultSettings);
+      const localTheme = (localStorage.getItem('theme') as UserSettings['theme']) || 'system';
+      setSettings({...defaultSettings, theme: localTheme});
+      applyThemePreference(localTheme);
     } finally {
       setIsLoadingSettings(false);
     }
-  }, [currentUser, toast]);
+  }, [currentUser, toast, applyThemePreference]);
+
 
   useEffect(() => {
     if (!authLoading && !currentUser) {
       router.push('/login');
     } else if (currentUser) {
       fetchSettings();
+    } else if (!authLoading && !currentUser) { // Explicitly handle case where auth is done loading but no user
+      setIsLoadingSettings(false);
+      const localTheme = (localStorage.getItem('theme') as UserSettings['theme']) || 'system';
+      setSettings({...defaultSettings, theme: localTheme });
+      applyThemePreference(localTheme);
     }
-  }, [currentUser, authLoading, router, fetchSettings]);
+  }, [currentUser, authLoading, router, fetchSettings, applyThemePreference]);
+
+
+  // Listen for system theme changes if 'system' is selected
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+      if (settings.theme === 'system') {
+        applyThemePreference('system');
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [settings.theme, applyThemePreference]);
+
 
   const handleSettingChange = (key: keyof UserSettings, value: string | boolean) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    setSettings(prev => {
+      const newSettings = { ...prev, [key]: value };
+      if (key === 'theme') {
+        applyThemePreference(value as UserSettings['theme']);
+      }
+      return newSettings;
+    });
   };
 
   const handleSaveSettings = async () => {
@@ -86,6 +136,7 @@ export default function SettingsPage() {
     try {
       const settingsDocRef = doc(db, `userSettings/${currentUser.uid}`);
       await setDoc(settingsDocRef, settings, { merge: true });
+      applyThemePreference(settings.theme); // Ensure localStorage is also updated on save
       toast({ title: "Settings Saved", description: "Your preferences have been updated." });
     } catch (error) {
       console.error("Error saving settings:", error);
@@ -112,10 +163,9 @@ export default function SettingsPage() {
         } else if (typeof data.timestamp === 'object' && data.timestamp.seconds) {
           timestampStr = new Timestamp(data.timestamp.seconds, data.timestamp.nanoseconds).toDate().toISOString();
         }
-        // Ensure all fields from PromptHistory are included
         return {
           id: docSnap.id,
-          name: data.name || data.goal, // Fallback for older entries
+          name: data.name || data.goal, 
           goal: data.goal,
           optimizedPrompt: data.optimizedPrompt,
           timestamp: timestampStr,
@@ -151,7 +201,7 @@ export default function SettingsPage() {
   };
 
 
-  if (authLoading || isLoadingSettings || (!currentUser && !authLoading)) {
+  if (authLoading || isLoadingSettings) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -223,7 +273,7 @@ export default function SettingsPage() {
                   <Label htmlFor="theme">Theme</Label>
                   <Select 
                     value={settings.theme} 
-                    onValueChange={(value) => handleSettingChange('theme', value)}
+                    onValueChange={(value) => handleSettingChange('theme', value as UserSettings['theme'])}
                   >
                     <SelectTrigger id="theme" className="w-full mt-1" aria-label="Select theme">
                       <SelectValue placeholder="Select theme" />
@@ -264,7 +314,7 @@ export default function SettingsPage() {
                 <Button 
                   className="bg-primary text-primary-foreground hover:bg-primary/90" 
                   onClick={handleSaveSettings}
-                  disabled={isSavingSettings || isLoadingSettings}
+                  disabled={isSavingSettings || isLoadingSettings || (!currentUser && !authLoading)}
                 >
                   {isSavingSettings ? (
                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
