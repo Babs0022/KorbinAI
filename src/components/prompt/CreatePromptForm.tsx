@@ -9,13 +9,19 @@ import { Input } from '@/components/ui/input';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 import { optimizePrompt, type OptimizePromptInput, type OptimizePromptOutput } from '@/ai/flows/optimize-prompt';
 import { generateSurveyQuestions, type GenerateSurveyQuestionsInput, type GenerateSurveyQuestionsOutput, type SurveyQuestion } from '@/ai/flows/generate-survey-questions-flow';
+import { generatePromptMetadata, type GeneratePromptMetadataInput, type GeneratePromptMetadataOutput } from '@/ai/flows/generate-prompt-metadata-flow';
 import { useToast } from '@/hooks/use-toast';
-import { Wand2, Lightbulb, Loader2, Send } from 'lucide-react';
+import { Wand2, Lightbulb, Loader2, Send, Tag } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
+export interface OptimizedPromptResult extends OptimizePromptOutput {
+  originalGoal: string;
+  suggestedName: string;
+  suggestedTags: string[];
+}
 interface CreatePromptFormProps {
-  onPromptOptimized: (output: OptimizePromptOutput, goal: string) => void;
+  onPromptOptimized: (output: OptimizedPromptResult) => void;
 }
 
 export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
@@ -23,7 +29,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
   const [surveyQuestions, setSurveyQuestions] = useState<SurveyQuestion[]>([]);
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string | string[]>>({});
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
-  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); // Combined loading state
   const [questionsFetched, setQuestionsFetched] = useState(false);
   const { toast } = useToast();
 
@@ -31,7 +37,6 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
     setSurveyAnswers(prev => {
       if (type === 'checkbox') {
         const currentValues = (prev[questionId] as string[] || []);
-        // Check if currentValues is indeed an array, if not, initialize it.
         const SaneCurrentValues = Array.isArray(currentValues) ? currentValues : [];
         if (SaneCurrentValues.includes(value)) {
           return { ...prev, [questionId]: SaneCurrentValues.filter(v => v !== value) };
@@ -49,8 +54,8 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       return;
     }
     setIsLoadingQuestions(true);
-    setSurveyQuestions([]); // Clear previous questions
-    setSurveyAnswers({}); // Clear previous answers
+    setSurveyQuestions([]);
+    setSurveyAnswers({});
     setQuestionsFetched(false);
 
     try {
@@ -61,13 +66,13 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
         setQuestionsFetched(true);
         toast({ title: "Survey Ready!", description: "Please answer the tailored questions below." });
       } else {
-        setQuestionsFetched(false); // Still mark as fetched but empty
+        setQuestionsFetched(false);
         toast({ title: "No Specific Questions Needed", description: "Your goal is clear, proceed to optimize or add more details if you wish.", variant: "default"});
       }
     } catch (error) {
       console.error("Error fetching survey questions:", error);
       toast({ title: "Failed to Fetch Questions", description: "Could not load dynamic questions. Please try again or proceed without them.", variant: "destructive" });
-      setQuestionsFetched(false); // Allow proceeding without dynamic questions if API fails
+      setQuestionsFetched(false);
     } finally {
       setIsLoadingQuestions(false);
     }
@@ -79,7 +84,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       toast({ title: "Goal Required", description: "Please enter your goal for the prompt.", variant: "destructive" });
       return;
     }
-    setIsOptimizing(true);
+    setIsProcessing(true);
 
     const formattedAnswers: Record<string, string> = {};
     for (const key in surveyAnswers) {
@@ -90,20 +95,34 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
         }
     }
 
-    const input: OptimizePromptInput = {
+    const optimizeInput: OptimizePromptInput = {
       goal,
       answers: formattedAnswers,
     };
 
     try {
-      const result = await optimizePrompt(input);
-      onPromptOptimized(result, goal); // Pass the goal along with the result
-      toast({ title: "Prompt Optimized!", description: "Your optimized prompt is ready." });
+      const optimizationResult = await optimizePrompt(optimizeInput);
+      toast({ title: "Prompt Optimized!", description: "Now generating name and tags..." });
+
+      const metadataInput: GeneratePromptMetadataInput = {
+        optimizedPrompt: optimizationResult.optimizedPrompt,
+        originalGoal: goal,
+      };
+      const metadataResult = await generatePromptMetadata(metadataInput);
+      
+      onPromptOptimized({
+        ...optimizationResult,
+        originalGoal: goal,
+        suggestedName: metadataResult.suggestedName,
+        suggestedTags: metadataResult.suggestedTags,
+      });
+      toast({ title: "Prompt Ready!", description: "Your optimized prompt with suggested name and tags is complete." });
+
     } catch (error) {
-      console.error("Error optimizing prompt:", error);
-      toast({ title: "Optimization Failed", description: "Something went wrong. Please try again.", variant: "destructive" });
+      console.error("Error during prompt creation process:", error);
+      toast({ title: "Processing Failed", description: "Something went wrong. Please try again.", variant: "destructive" });
     } finally {
-      setIsOptimizing(false);
+      setIsProcessing(false);
     }
   };
 
@@ -125,8 +144,6 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
             value={goal}
             onChange={(e) => {
               setGoal(e.target.value);
-              // Optionally reset questions if goal changes significantly after fetching
-              // if (questionsFetched) setQuestionsFetched(false); 
             }}
             placeholder="e.g., Write a marketing email for a new SaaS product, or Generate a Python function to sort a list of objects by a specific attribute."
             rows={4}
@@ -190,7 +207,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                         <Checkbox 
                           id={`${q.id}-${option.replace(/\s+/g, '-')}`} 
                           onCheckedChange={(checked) => {
-                            handleSurveyChange(q.id, option, q.type); // Value is toggled
+                            handleSurveyChange(q.id, option, q.type);
                           }}
                         />
                         <Label htmlFor={`${q.id}-${option.replace(/\s+/g, '-')}`} className="font-normal">{option}</Label>
@@ -204,11 +221,11 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
         </GlassCard>
       )}
       
-      <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-base" disabled={isOptimizing || isLoadingQuestions}>
-        {isOptimizing ? (
-          <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Optimizing...</>
+      <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-base" disabled={isProcessing || isLoadingQuestions}>
+        {isProcessing ? (
+          <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing...</>
         ) : (
-          <><Wand2 className="mr-2 h-5 w-5" /> Optimize My Prompt</>
+          <><Wand2 className="mr-2 h-5 w-5" /> Generate My Prompt</>
         )}
       </Button>
     </form>

@@ -5,9 +5,8 @@ import React, { useState, useEffect } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
-import { CreatePromptForm } from '@/components/prompt/CreatePromptForm';
+import { CreatePromptForm, type OptimizedPromptResult } from '@/components/prompt/CreatePromptForm';
 import { OptimizedPromptCard } from '@/components/prompt/OptimizedPromptCard';
-import type { OptimizePromptOutput } from '@/ai/flows/optimize-prompt';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -17,18 +16,16 @@ import { useRouter } from 'next/navigation';
 export default function CreatePromptPage() {
   const { currentUser, loading } = useAuth();
   const router = useRouter();
-  const [optimizedOutput, setOptimizedOutput] = useState<OptimizePromptOutput | null>(null);
-  const [originalGoal, setOriginalGoal] = useState<string>('');
-
+  const [optimizedOutput, setOptimizedOutput] = useState<OptimizedPromptResult | null>(null);
+  
   useEffect(() => {
     if (!loading && !currentUser) {
       router.push('/login');
     }
   }, [currentUser, loading, router]);
 
-  const handlePromptOptimized = (output: OptimizePromptOutput, goal: string) => {
+  const handlePromptOptimized = (output: OptimizedPromptResult) => {
     setOptimizedOutput(output);
-    setOriginalGoal(goal);
   };
 
   if (loading || !currentUser) {
@@ -63,7 +60,9 @@ export default function CreatePromptPage() {
           {optimizedOutput && (
             <OptimizedPromptCard 
               optimizedPrompt={optimizedOutput.optimizedPrompt}
-              originalGoal={originalGoal} 
+              originalGoal={optimizedOutput.originalGoal} 
+              generatedName={optimizedOutput.suggestedName}
+              generatedTags={optimizedOutput.suggestedTags}
             />
           )}
         </Container>

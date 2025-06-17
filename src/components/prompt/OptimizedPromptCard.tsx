@@ -17,9 +17,11 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 interface OptimizedPromptCardProps {
   optimizedPrompt: string;
   originalGoal: string;
+  generatedName?: string;
+  generatedTags?: string[];
 }
 
-export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: OptimizedPromptCardProps) {
+export function OptimizedPromptCard({ optimizedPrompt, originalGoal, generatedName, generatedTags }: OptimizedPromptCardProps) {
   const [promptName, setPromptName] = useState('');
   const [promptTags, setPromptTags] = useState('');
   const [editedPromptText, setEditedPromptText] = useState(optimizedPrompt);
@@ -29,9 +31,10 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: Optimized
   const { currentUser } = useAuth();
 
   useEffect(() => {
-    setPromptName(originalGoal.substring(0, 50) + (originalGoal.length > 50 ? '...' : ''));
+    setPromptName(generatedName || originalGoal.substring(0, 50) + (originalGoal.length > 50 ? '...' : ''));
+    setPromptTags(generatedTags?.join(', ') || '');
     setEditedPromptText(optimizedPrompt);
-  }, [originalGoal, optimizedPrompt]);
+  }, [originalGoal, optimizedPrompt, generatedName, generatedTags]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(editedPromptText);
@@ -39,8 +42,6 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: Optimized
   };
 
   const handleSaveEdit = () => {
-    // No longer saving to a backend here, just applying to local state
-    // The main "Save to History" will handle persistence
     toast({ title: "Changes Applied!", description: "Your edits are applied. Click 'Save to History' to persist." });
     setIsEditing(false);
   };
@@ -170,7 +171,7 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal }: Optimized
             </Button>
           )}
           <Button 
-            variant="default" // Changed to default to make it more prominent
+            variant="default" 
             onClick={handleSaveToHistory} 
             size="sm" 
             disabled={isSavingToHistory || !currentUser || !promptName.trim()}
