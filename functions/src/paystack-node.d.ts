@@ -33,6 +33,10 @@ declare module "paystack-node" {
     [key: string]: unknown;
   }
 
+  /**
+   * Represents the Paystack SDK client.
+   * Used for interacting with the Paystack API.
+   */
   class Paystack {
     constructor(secretKey: string);
     transaction: {
@@ -43,3 +47,5 @@ declare module "paystack-node" {
   }
   export = Paystack;
 }
+
+    
