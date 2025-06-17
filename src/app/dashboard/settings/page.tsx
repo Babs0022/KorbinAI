@@ -42,16 +42,21 @@ export default function SettingsPage() {
   const [isExportingData, setIsExportingData] = useState(false);
 
   const applyThemePreference = useCallback((theme: 'light' | 'dark' | 'system') => {
+    console.log('[SettingsPage] applyThemePreference called with theme:', theme);
     localStorage.setItem('theme', theme);
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
+      console.log('[SettingsPage] Applied dark theme.');
     } else if (theme === 'light') {
       document.documentElement.classList.remove('dark');
+      console.log('[SettingsPage] Applied light theme (removed .dark class).');
     } else { // system
       if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
         document.documentElement.classList.add('dark');
+        console.log('[SettingsPage] Applied system theme (dark).');
       } else {
         document.documentElement.classList.remove('dark');
+        console.log('[SettingsPage] Applied system theme (light).');
       }
     }
   }, []);

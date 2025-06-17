@@ -23,21 +23,36 @@ export default function RootLayout({
 }>) {
   useEffect(() => {
     const applyTheme = () => {
-      const storedTheme = localStorage.getItem('theme');
+      const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null;
       const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      console.log('[Layout] applyTheme called. Stored theme:', storedTheme, 'System prefers dark:', systemPrefersDark);
 
-      if (storedTheme === 'dark' || (storedTheme === 'system' && systemPrefersDark)) {
+      let finalThemeDecision: 'light' | 'dark';
+
+      if (storedTheme === 'dark') {
+        finalThemeDecision = 'dark';
+      } else if (storedTheme === 'light') {
+        finalThemeDecision = 'light';
+      } else { // 'system' or null (treat null as system default)
+        finalThemeDecision = systemPrefersDark ? 'dark' : 'light';
+      }
+      
+      console.log('[Layout] Final theme decision:', finalThemeDecision);
+
+      if (finalThemeDecision === 'dark') {
         document.documentElement.classList.add('dark');
+        console.log('[Layout] Applied dark theme.');
       } else {
         document.documentElement.classList.remove('dark');
+        console.log('[Layout] Applied light theme (removed .dark class).');
       }
     };
 
     applyTheme(); // Apply on initial load
 
-    // Listen for changes in system preference if theme is 'system'
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
+      console.log('[Layout] OS color scheme changed.');
       if (localStorage.getItem('theme') === 'system') {
         applyTheme();
       }
@@ -45,19 +60,17 @@ export default function RootLayout({
     mediaQuery.addEventListener('change', handleChange);
 
     // Listen for changes from other tabs/windows
-    window.addEventListener('storage', (event) => {
+    const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'theme') {
+        console.log('[Layout] Theme changed in another tab/window via localStorage.');
         applyTheme();
       }
-    });
+    };
+    window.addEventListener('storage', handleStorageChange);
     
     return () => {
       mediaQuery.removeEventListener('change', handleChange);
-      window.removeEventListener('storage', (event) => {
-        if (event.key === 'theme') {
-          applyTheme();
-        }
-      });
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
