@@ -1,6 +1,6 @@
 
 /**
- * Basic type declarations for the paystack-node module.
+ * @fileOverview Basic type declarations for the paystack-node module.
  * This provides a minimal structure to satisfy TypeScript.
  */
 declare module "paystack-node" {
@@ -23,14 +23,15 @@ declare module "paystack-node" {
   interface PaystackResponseData {
     status: boolean; // Typically true for success
     message: string;
-    data?: Record<string, unknown> & {
+    data?: {
         authorization_url?: string;
         access_code?: string;
         reference?: string;
         status?: string; // For verification status, e.g., "success"
         // other known data properties
+        [key: string]: unknown; // Allow other properties within data
     };
-    [key: string]: unknown;
+    [key: string]: unknown; // Allow other top-level properties
   }
 
   /**
@@ -47,5 +48,3 @@ declare module "paystack-node" {
   }
   export = Paystack;
 }
-
-    
