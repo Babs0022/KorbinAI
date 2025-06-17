@@ -8,14 +8,14 @@
   "theme_color": "#4B0082",
   "icons": [
     {
-      "src": "https://placehold.co/192x192.png",
+      "src": "https://imagekit.io/public/share/babsbuilds/dcf110befb56a3742cfdba66f487393abeaa67a36e6c2525f56b04281e367c382b796b6211630cfb51e45de801bd4c695f55e7ac9db281b307df5779831c8f6622325c1a98161e65ed3a015bdcbb2351",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable",
       "data-ai-hint": "app icon"
     },
     {
-      "src": "https://placehold.co/512x512.png",
+      "src": "https://imagekit.io/public/share/babsbuilds/dcf110befb56a3742cfdba66f487393abeaa67a36e6c2525f56b04281e367c382b796b6211630cfb51e45de801bd4c696b319791f8abe06e3c29e9225423edf2de4755af928f6b57fdb5b1c7a3aac99e",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable",
