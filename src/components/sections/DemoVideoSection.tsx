@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -276,11 +277,11 @@ Model: GPT-4 (for copy), DALL-E 3 (for image ideas).`;
   return (
     <GlassCard
       className={cn(
-        "aspect-[16/10] sm:aspect-video overflow-hidden bg-card border-0 rounded-xl", // Changed bg-card/80 and removed backdrop-blur-md
+        "aspect-[16/10] sm:aspect-video overflow-hidden bg-card border-0 rounded-xl backdrop-blur-none shadow-none",
         "w-full transition-opacity duration-500 ease-in-out relative"
       )}
     >
-      <div ref={sceneContainerRef} className="h-full w-full flex flex-col justify-center text-foreground p-1"> {/* Added p-1 for inner padding to prevent content touching border */}
+      <div ref={sceneContainerRef} className="h-full w-full flex flex-col justify-center text-foreground p-1">
         {scenes[currentSceneIndex].element}
       </div>
     </GlassCard>
@@ -297,7 +298,7 @@ export function InteractiveDemoSection() {
         <p className="mx-auto mt-3 sm:mt-4 max-w-xl sm:max-w-2xl text-md sm:text-lg text-muted-foreground">
           Watch our interactive demo to see how easy it is to go from idea to perfectly optimized AI prompt, adapted for your chosen model and graded for quality.
         </p>
-        <div className="mt-8 sm:mt-10 p-1 rounded-xl bg-gradient-to-r from-primary to-accent shadow-lg w-full"> {/* Ensure this div is w-full */}
+        <div className="mt-8 sm:mt-10 p-1 rounded-xl bg-gradient-to-r from-primary to-accent shadow-lg w-full">
           <AnimatedDemo />
         </div>
         <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
@@ -307,4 +308,3 @@ export function InteractiveDemoSection() {
     </section>
   );
 }
-
