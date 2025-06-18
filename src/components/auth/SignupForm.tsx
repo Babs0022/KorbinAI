@@ -42,7 +42,7 @@ export function SignupForm() {
       const codeToValidate = referralCode.trim().toUpperCase();
       const referralQuery = query(
         collection(db, "referralCodes"),
-        where("code", "==", codeToValidate),
+        where("code", "==", codeToValidate), // Query with uppercase
         where("isActive", "==", true)
       );
       const referralSnapshot = await getDocs(referralQuery);
@@ -50,7 +50,7 @@ export function SignupForm() {
       if (referralSnapshot.empty) {
         toast({
           title: "Invalid Referral Code",
-          description: "The referral code entered is not valid or has expired. Please check the code and try again.",
+          description: "The referral code entered is not valid, not active, or does not exist. Please check the code and try again.",
           variant: "destructive",
         });
         setIsLoading(false);
@@ -79,15 +79,15 @@ export function SignupForm() {
           displayName: name,
         });
 
-        // Update referral code usage in a batch
+        // Update referral code usage and create user document in a batch
         const batch = writeBatch(db);
         const referralCodeRef = doc(db, "referralCodes", referralDoc.id);
         
         const updateData: { usersReferred: any; usesLeft?: any; lastUsedAt: any } = {
           usersReferred: arrayUnion(newUser.uid),
-          lastUsedAt: Timestamp.now(),
+          lastUsedAt: Timestamp.now(), // Uses client-side timestamp, converted to server by Firestore
         };
-        if (referralData.usesLeft !== undefined) {
+        if (referralData.usesLeft !== undefined) { // Only decrement if usesLeft is a defined number
             updateData.usesLeft = increment(-1);
         }
         batch.update(referralCodeRef, updateData);
@@ -98,12 +98,12 @@ export function SignupForm() {
             uid: newUser.uid,
             email: newUser.email,
             displayName: name,
-            createdAt: Timestamp.now(),
-            referredByCode: codeToValidate, // Store the validated (uppercase) code
-            referrerUid: referralData.userId, 
+            createdAt: Timestamp.now(), // Uses client-side timestamp
+            referredByCode: codeToValidate, 
+            referrerUid: referralData.userId, // Ensure referralData.userId is valid
         }, { merge: true });
 
-        await batch.commit();
+        await batch.commit(); // This is a critical point
       }
       
       toast({
@@ -113,18 +113,45 @@ export function SignupForm() {
       router.push("/onboarding"); // Redirect to onboarding flow
 
     } catch (error: any) {
-      console.error("Signup error:", error);
-      let errorMessage = "Failed to create account. Please try again.";
-      if (error.code === "auth/email-already-in-use") {
-        errorMessage = "This email is already in use. Please try another or log in.";
-      } else if (error.code === "auth/weak-password") {
-        errorMessage = "The password is too weak. Please choose a stronger password.";
-      } else if (error.message.includes("referral code")) { 
-        errorMessage = error.message;
+      console.error("Signup process error:", error);
+      let title = "Signup Failed";
+      let description = "An unexpected error occurred. Please try again.";
+
+      if (error.code) { // Firebase specific error
+        title = "Signup Error";
+        switch (error.code) {
+          case "auth/email-already-in-use":
+            description = "This email is already registered. Please log in or use a different email.";
+            break;
+          case "auth/weak-password":
+            description = "Password is too weak. Please choose a stronger one (at least 6 characters).";
+            break;
+          case "auth/invalid-email":
+            description = "The email address is not valid.";
+            break;
+          case "permission-denied": // Firestore permission error
+            description = "Could not finalize signup due to a permission issue. This might be temporary. Please try again. If it persists, contact support.";
+            console.error("Firestore Permission Denied during signup batch:", error.message);
+            break;
+          case "unavailable": // Firestore unavailable
+             description = "Our database seems to be temporarily unavailable. Please try again in a few moments.";
+             console.error("Firestore unavailable during signup batch:", error.message);
+            break;
+          default:
+            description = `An error occurred (${error.code}). Please try again.`;
+            console.error(`Firebase error during signup: ${error.code} - ${error.message}`);
+        }
+      } else if (error.message && error.message.toLowerCase().includes("referral code")) {
+        // Handle custom error messages related to referral codes if thrown explicitly
+        title = "Referral Code Issue";
+        description = error.message;
+      } else {
+         console.error("Non-Firebase error during signup:", error.message);
       }
+      
       toast({
-        title: "Signup Failed",
-        description: errorMessage,
+        title: title,
+        description: description,
         variant: "destructive",
       });
     } finally {
@@ -208,3 +235,5 @@ export function SignupForm() {
     </form>
   );
 }
+
+    
