@@ -38,10 +38,11 @@ export function SignupForm() {
     }
 
     try {
-      // Validate referral code
+      // Validate referral code (case-insensitive)
+      const codeToValidate = referralCode.trim().toUpperCase();
       const referralQuery = query(
         collection(db, "referralCodes"),
-        where("code", "==", referralCode.trim()),
+        where("code", "==", codeToValidate),
         where("isActive", "==", true)
       );
       const referralSnapshot = await getDocs(referralQuery);
@@ -98,7 +99,7 @@ export function SignupForm() {
             email: newUser.email,
             displayName: name,
             createdAt: Timestamp.now(),
-            referredByCode: referralCode.trim(),
+            referredByCode: codeToValidate, // Store the validated (uppercase) code
             referrerUid: referralData.userId, 
         }, { merge: true });
 
