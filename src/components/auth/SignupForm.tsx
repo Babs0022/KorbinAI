@@ -91,15 +91,15 @@ export function SignupForm() {
         }
         batch.update(referralCodeRef, updateData);
         
-        // Optionally, store referredBy information on the new user's profile/doc
-        const userDocRef = doc(db, "users", newUser.uid); // Assuming you have a 'users' collection
+        // Store referredBy information on the new user's profile/doc
+        const userDocRef = doc(db, "users", newUser.uid); 
         batch.set(userDocRef, {
             uid: newUser.uid,
             email: newUser.email,
             displayName: name,
             createdAt: Timestamp.now(),
             referredByCode: referralCode.trim(),
-            referrerUid: referralData.userId, // Store the UID of the user who referred them
+            referrerUid: referralData.userId, 
         }, { merge: true });
 
         await batch.commit();
@@ -107,9 +107,9 @@ export function SignupForm() {
       
       toast({
         title: "Account Created!",
-        description: "Welcome to BrieflyAI. You can now log in.",
+        description: "Welcome to BrieflyAI. Let's get you started.",
       });
-      router.push("/login");
+      router.push("/onboarding"); // Redirect to onboarding flow
 
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -118,7 +118,7 @@ export function SignupForm() {
         errorMessage = "This email is already in use. Please try another or log in.";
       } else if (error.code === "auth/weak-password") {
         errorMessage = "The password is too weak. Please choose a stronger password.";
-      } else if (error.message.includes("referral code")) { // Catch custom referral errors
+      } else if (error.message.includes("referral code")) { 
         errorMessage = error.message;
       }
       toast({
