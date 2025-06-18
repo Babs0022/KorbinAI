@@ -26,7 +26,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger, // Added AlertDialogTrigger here
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
@@ -36,12 +36,13 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
+  DialogTrigger, // Added DialogTrigger here
 } from "@/components/ui/dialog";
 import NextImage from 'next/image';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { app } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
-import { collection, query, where, getDocs, limit, doc, setDoc, serverTimestamp } from "firebase/firestore"; // Added Firestore imports
+import { collection, query, where, getDocs, limit, doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 const predefinedIcons = Array.from({ length: 10 }, (_, i) => `https://avatar.iran.liara.run/public/${i + 1}`);
 const defaultPlaceholderUrl = "https://placehold.co/40x40.png";
@@ -661,3 +662,4 @@ export default function AccountPage() {
     </div>
   );
 }
+
