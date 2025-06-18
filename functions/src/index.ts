@@ -1,5 +1,5 @@
 
-import {onCall, HttpsError, onRequest} from "firebase-functions/v2/https";
+import {HttpsError, onCall, onRequest, CallableRequest} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 import Paystack from "paystack-node";
@@ -7,26 +7,37 @@ import * as crypto from "crypto";
 import cors from "cors";
 
 // Environment variable logging at module load (cold start)
-logger.info("Function Cold Start: Reading environment variables.");
+logger.info(
+  "Function Cold Start: Reading environment variables from process.env."
+);
 const PAYSTACK_SECRET_KEY_AT_LOAD = process.env.PAYSTACK_SECRET_KEY;
 const PAYSTACK_WEBHOOK_SECRET_AT_LOAD = process.env.PAYSTACK_WEBHOOK_SECRET;
 const APP_CALLBACK_URL_AT_LOAD = process.env.APP_CALLBACK_URL;
 
 if (!PAYSTACK_SECRET_KEY_AT_LOAD) {
-  logger.warn("PAYSTACK_SECRET_KEY: MISSING at cold start!");
+  logger.warn(
+    "Cold Start: PAYSTACK_SECRET_KEY env var is MISSING or empty!"
+  );
 } else {
-  logger.info("PAYSTACK_SECRET_KEY: FOUND at cold start (length > 0).");
+  logger.info(
+    "Cold Start: PAYSTACK_SECRET_KEY env var FOUND (length > 0)."
+  );
 }
 if (!PAYSTACK_WEBHOOK_SECRET_AT_LOAD) {
-  logger.warn("PAYSTACK_WEBHOOK_SECRET: MISSING at cold start!");
+  logger.warn(
+    "Cold Start: PAYSTACK_WEBHOOK_SECRET env var is MISSING or empty!"
+  );
 } else {
-  logger.info("PAYSTACK_WEBHOOK_SECRET: FOUND at cold start (length > 0).");
+  logger.info(
+    "Cold Start: PAYSTACK_WEBHOOK_SECRET env var FOUND (length > 0)."
+  );
 }
 if (!APP_CALLBACK_URL_AT_LOAD) {
-  logger.warn("APP_CALLBACK_URL: MISSING at cold start!");
+  logger.warn("Cold Start: APP_CALLBACK_URL env var is MISSING or empty!");
 } else {
-  logger.info("APP_CALLBACK_URL: FOUND at cold start (length > 0).");
+  logger.info("Cold Start: APP_CALLBACK_URL env var FOUND (length > 0).");
 }
+
 
 const corsHandler = cors({
   origin: [
@@ -70,33 +81,41 @@ interface CreateSubscriptionData {
 
 /**
  * Creates a Paystack subscription initialization.
- * @param {onCall.CallableRequest<CreateSubscriptionData>} request The request.
+ * @param {CallableRequest<CreateSubscriptionData>} request The request.
  * @returns {Promise<{authorization_url: string, access_code: string, reference: string}>}
  *  The Paystack authorization details.
  * @throws {HttpsError} If authentication or arguments are invalid.
  */
 export const createPaystackSubscription = onCall(
-  {region: "us-central1", enforceAppCheck: false}, // Adjust region if needed
-  async (request: onCall.CallableRequest<CreateSubscriptionData>) => {
-    logger.info("createPaystackSubscription invoked. Validating config...");
+  {region: "us-central1", enforceAppCheck: false},
+  async (request: CallableRequest<CreateSubscriptionData>) => {
+    logger.info(
+      "createPaystackSubscription invoked. Validating env vars at invocation..."
+    );
     const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
     const appCallbackUrl = process.env.APP_CALLBACK_URL;
 
     if (!paystackSecretKey) {
-      logger.error("CRITICAL: PAYSTACK_SECRET_KEY is MISSING at invocation.");
+      logger.error(
+        "Invocation: CRITICAL: PAYSTACK_SECRET_KEY process.env var is MISSING."
+      );
       throw new HttpsError(
         "internal",
         "Payment system configuration error. [Code: PSK_ENV_MISSING]"
       );
     }
     if (!appCallbackUrl) {
-      logger.error("CRITICAL: APP_CALLBACK_URL is MISSING at invocation.");
+      logger.error(
+        "Invocation: CRITICAL: APP_CALLBACK_URL process.env var is MISSING."
+      );
       throw new HttpsError(
         "internal",
         "Application callback URL configuration error. [Code: CB_ENV_MISSING]"
       );
     }
-    logger.info("Environment variables check passed at invocation.");
+    logger.info(
+      "Invocation: PAYSTACK_SECRET_KEY and APP_CALLBACK_URL check passed."
+    );
 
     let paystackSdkInstance: Paystack;
     try {
@@ -257,7 +276,7 @@ async function processChargeSuccessEvent(
   const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
   if (!paystackSecretKey) {
     logger.error(
-      "processChargeSuccessEvent: PAYSTACK_SECRET_KEY is MISSING. " +
+      "processChargeSuccessEvent: PAYSTACK_SECRET_KEY env var is MISSING. " +
       "Cannot verify transaction."
     );
     return; // Cannot proceed without SDK for verification
@@ -386,7 +405,7 @@ async function processChargeSuccessEvent(
  * @returns {Promise<void>}
  */
 export const paystackWebhookHandler = onRequest(
-  {region: "us-central1", enforceAppCheck: false}, // Adjust region
+  {region: "us-central1"}, // Removed enforceAppCheck
   async (req, res) => {
     corsHandler(req, res, async () => {
       logger.info("paystackWebhookHandler invoked.");
@@ -394,14 +413,17 @@ export const paystackWebhookHandler = onRequest(
 
       if (!paystackWebhookSecret) {
         logger.error(
-          "CRITICAL: PAYSTACK_WEBHOOK_SECRET is MISSING at invocation."
+          "Invocation: CRITICAL: PAYSTACK_WEBHOOK_SECRET process.env " +
+          "var is MISSING."
         );
         res.status(500).send(
           "Webhook secret configuration error. [Code: WHS_ENV_MISSING]"
         );
         return;
       }
-      logger.info("PAYSTACK_WEBHOOK_SECRET check passed at invocation.");
+      logger.info(
+        "Invocation: PAYSTACK_WEBHOOK_SECRET check passed at invocation."
+      );
 
       const requestBodyString = req.rawBody?.toString();
       if (!requestBodyString) {
