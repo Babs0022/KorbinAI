@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, type FormEvent } from 'react';
+import React, { useState, useEffect, type FormEvent, useCallback } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
@@ -10,11 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon, ArrowLeft, CheckCircle2, Star } from 'lucide-react';
+import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon, ArrowLeft, CheckCircle2, Star, Gift, Copy as CopyIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { auth } from '@/lib/firebase'; 
+import { auth, db } from '@/lib/firebase'; 
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -26,7 +26,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
@@ -42,6 +41,7 @@ import NextImage from 'next/image';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { app } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
+import { collection, query, where, getDocs, limit, doc, setDoc, serverTimestamp } from "firebase/firestore"; // Added Firestore imports
 
 const predefinedIcons = Array.from({ length: 10 }, (_, i) => `https://avatar.iran.liara.run/public/${i + 1}`);
 const defaultPlaceholderUrl = "https://placehold.co/40x40.png";
@@ -92,6 +92,14 @@ const pricingTiers: Tier[] = [
   },
 ];
 
+interface ReferralCode {
+  id: string;
+  code: string;
+  userId: string;
+  isActive: boolean;
+  usesLeft?: number; // Optional, for "unlimited" codes this might not exist
+  createdAt: any; // Firestore Timestamp
+}
 
 export default function AccountPage() {
   const authContext = useAuth();
@@ -116,6 +124,32 @@ export default function AccountPage() {
   const [isChangePlanModalOpen, setIsChangePlanModalOpen] = useState(false);
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
 
+  const [userReferralCode, setUserReferralCode] = useState<ReferralCode | null>(null);
+  const [isLoadingReferralCode, setIsLoadingReferralCode] = useState(true);
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+
+  const fetchUserReferralCode = useCallback(async () => {
+    if (!currentUser) {
+      setIsLoadingReferralCode(false);
+      return;
+    }
+    setIsLoadingReferralCode(true);
+    try {
+      const q = query(collection(db, "referralCodes"), where("userId", "==", currentUser.uid), limit(1));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const docData = querySnapshot.docs[0].data() as Omit<ReferralCode, 'id'>;
+        setUserReferralCode({ id: querySnapshot.docs[0].id, ...docData });
+      } else {
+        setUserReferralCode(null);
+      }
+    } catch (error) {
+      console.error("Error fetching referral code:", error);
+      toast({ title: "Referral Code Error", description: "Could not fetch your referral code.", variant: "destructive" });
+    } finally {
+      setIsLoadingReferralCode(false);
+    }
+  }, [currentUser, toast]);
 
   useEffect(() => {
     if (!loading && !currentUser) {
@@ -123,8 +157,41 @@ export default function AccountPage() {
     } else if (currentUser) {
       setNewDisplayName(authContext.displayName || '');
       setSelectedIconUrl(authContext.avatarUrl || defaultPlaceholderUrl);
+      fetchUserReferralCode();
     }
-  }, [currentUser, loading, router, authContext.displayName, authContext.avatarUrl]);
+  }, [currentUser, loading, router, authContext.displayName, authContext.avatarUrl, fetchUserReferralCode]);
+
+  const generateNewReferralCode = async () => {
+    if (!currentUser) return;
+    setIsGeneratingCode(true);
+    try {
+      // Simple code generation logic (consider a more robust one for production)
+      const code = `BRIEFLY${currentUser.uid.substring(0, 4)}${Math.random().toString(36).substring(2, 7)}`.toUpperCase();
+      const newCodeRef = doc(collection(db, "referralCodes"));
+      const newCodeData: Omit<ReferralCode, 'id'> = {
+        code,
+        userId: currentUser.uid,
+        isActive: true,
+        usesLeft: 5, // Default uses for a new code
+        createdAt: serverTimestamp(),
+      };
+      await setDoc(newCodeRef, newCodeData);
+      setUserReferralCode({ id: newCodeRef.id, ...newCodeData });
+      toast({ title: "Referral Code Generated!", description: "Your new referral code is ready." });
+    } catch (error) {
+      console.error("Error generating new referral code:", error);
+      toast({ title: "Code Generation Failed", description: "Could not generate a new referral code.", variant: "destructive" });
+    } finally {
+      setIsGeneratingCode(false);
+    }
+  };
+  
+  const handleCopyReferralCode = () => {
+    if (userReferralCode?.code) {
+      navigator.clipboard.writeText(userReferralCode.code);
+      toast({ title: "Copied!", description: "Referral code copied to clipboard." });
+    }
+  };
 
 
   const handleSaveProfile = async (e: FormEvent) => {
@@ -408,6 +475,49 @@ export default function AccountPage() {
                   </GlassCardContent>
                 </GlassCard>
               )}
+
+              <GlassCard>
+                <GlassCardHeader>
+                  <GlassCardTitle className="flex items-center"><Gift className="mr-2 h-5 w-5"/> Referral Program</GlassCardTitle>
+                  <GlassCardDescription>Share BrieflyAI and earn rewards (coming soon!).</GlassCardDescription>
+                </GlassCardHeader>
+                <GlassCardContent>
+                  {isLoadingReferralCode ? (
+                    <div className="flex items-center space-x-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Loading your referral code...</span>
+                    </div>
+                  ) : userReferralCode ? (
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="referralCodeDisplay">Your Unique Referral Code</Label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Input id="referralCodeDisplay" value={userReferralCode.code} readOnly className="font-mono text-sm" />
+                          <Button variant="outline" size="icon" onClick={handleCopyReferralCode} aria-label="Copy referral code">
+                            <CopyIcon className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      {userReferralCode.usesLeft !== undefined && (
+                        <p className="text-xs text-muted-foreground">
+                          Uses left: {userReferralCode.usesLeft}
+                        </p>
+                      )}
+                      <p className="text-sm text-muted-foreground">
+                        Share this code with friends! For each friend who signs up, you'll both get a bonus (details coming soon).
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center space-y-2">
+                       <p className="text-sm text-muted-foreground">You don't have a referral code yet.</p>
+                       <Button onClick={generateNewReferralCode} disabled={isGeneratingCode} variant="outline" size="sm">
+                          {isGeneratingCode ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Gift className="mr-2 h-4 w-4"/>}
+                          Generate My Code
+                       </Button>
+                    </div>
+                  )}
+                </GlassCardContent>
+              </GlassCard>
 
 
               <GlassCard>
