@@ -14,7 +14,7 @@ import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, I
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { auth, db } from '@/lib/firebase'; 
+import { auth, db } from '@/lib/firebase';
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -26,6 +26,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger, // Added AlertDialogTrigger here
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
@@ -35,7 +36,6 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import NextImage from 'next/image';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -60,7 +60,7 @@ interface Tier {
 const pricingTiers: Tier[] = [
   {
     name: 'Premium',
-    planId: 'premium', 
+    planId: 'premium',
     price: 'NGN 16,000',
     frequency: '/mo',
     description: 'Supercharge your AI interactions.',
@@ -76,7 +76,7 @@ const pricingTiers: Tier[] = [
   },
   {
     name: 'Unlimited',
-    planId: 'unlimited', 
+    planId: 'unlimited',
     price: 'NGN 56,000',
     frequency: '/mo',
     description: 'For power users who need it all.',
@@ -185,7 +185,7 @@ export default function AccountPage() {
       setIsGeneratingCode(false);
     }
   };
-  
+
   const handleCopyReferralCode = () => {
     if (userReferralCode?.code) {
       navigator.clipboard.writeText(userReferralCode.code);
@@ -198,7 +198,7 @@ export default function AccountPage() {
     e.preventDefault();
     if (!currentUser) return;
     setIsSavingProfile(true);
-    
+
     try {
       const profileUpdates: { displayName?: string; photoURL?: string } = {};
       let profileChanged = false;
@@ -207,7 +207,7 @@ export default function AccountPage() {
         profileUpdates.displayName = newDisplayName;
         profileChanged = true;
       }
-      
+
       const currentAuthAvatar = authContext.avatarUrl || defaultPlaceholderUrl;
       if (selectedIconUrl !== currentAuthAvatar) {
           profileUpdates.photoURL = selectedIconUrl;
@@ -217,14 +217,14 @@ export default function AccountPage() {
 
       if (profileChanged) {
         await updateProfile(currentUser, profileUpdates);
-        if (authContext.currentUser?.reload) { 
+        if (authContext.currentUser?.reload) {
             await authContext.currentUser.reload();
         }
         toast({ title: "Profile Updated", description: "Your profile has been successfully updated." });
       } else {
         toast({ title: "No Changes", description: "No changes were made to your profile." });
       }
-      
+
     } catch (error: any) {
       console.error("Error updating profile:", error);
       toast({ title: "Error Updating Profile", description: error.message, variant: "destructive" });
@@ -252,7 +252,7 @@ export default function AccountPage() {
          setIsUpdatingPassword(false);
          return;
       }
-      
+
       if (currentUser.providerData.some(p => p.providerId === EmailAuthProvider.PROVIDER_ID)) {
         const credential = EmailAuthProvider.credential(currentUser.email!, currentPassword);
         await reauthenticateWithCredential(currentUser, credential);
@@ -276,7 +276,7 @@ export default function AccountPage() {
       setIsUpdatingPassword(false);
     }
   };
-  
+
   const triggerDeleteConfirmation = () => {
     setShowDeleteConfirm(true);
   };
@@ -295,10 +295,10 @@ export default function AccountPage() {
         const credential = EmailAuthProvider.credential(currentUser.email!, reAuthPassword);
         await reauthenticateWithCredential(currentUser, credential);
       }
-      
+
       await deleteUser(currentUser);
       toast({ title: "Account Deleted", description: "Your account has been permanently deleted." });
-      router.push('/login'); 
+      router.push('/login');
     } catch (error: any) {
       console.error("Error deleting account:", error);
       let description = "Could not delete account. Please try again.";
@@ -309,9 +309,9 @@ export default function AccountPage() {
       }
       toast({ title: "Error Deleting Account", description, variant: "destructive" });
       setIsDeletingAccount(false);
-      setShowDeleteConfirm(false); 
+      setShowDeleteConfirm(false);
       setReAuthPassword('');
-    } 
+    }
   };
 
   const handleSubscription = async (tierPlanId: string) => {
@@ -321,18 +321,18 @@ export default function AccountPage() {
         description: 'Please log in or sign up to subscribe.',
         variant: 'destructive',
       });
-      router.push('/login?redirect=/dashboard/account'); 
+      router.push('/login?redirect=/dashboard/account');
       return;
     }
-    
+
     setLoadingPlanId(tierPlanId);
 
     try {
       const createSubscriptionFunction = httpsCallable(functions, 'createPaystackSubscription');
-      
-      const result: any = await createSubscriptionFunction({ 
-        email: currentUser.email, 
-        planId: tierPlanId, 
+
+      const result: any = await createSubscriptionFunction({
+        email: currentUser.email,
+        planId: tierPlanId,
       });
 
       if (result.data && result.data.authorization_url) {
@@ -361,7 +361,7 @@ export default function AccountPage() {
       </div>
     );
   }
-  
+
   const isEmailPasswordUser = currentUser.providerData.some(p => p.providerId === EmailAuthProvider.PROVIDER_ID);
 
   return (
@@ -378,7 +378,7 @@ export default function AccountPage() {
             </Button>
           </div>
           <h1 className="font-headline text-3xl font-bold text-foreground mb-8">Account Management</h1>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-1">
               <GlassCard>
@@ -414,10 +414,10 @@ export default function AccountPage() {
                     </div>
                     <div>
                       <Label htmlFor="name">Full Name</Label>
-                      <Input 
-                        id="name" 
-                        value={newDisplayName} 
-                        onChange={(e) => setNewDisplayName(e.target.value)} 
+                      <Input
+                        id="name"
+                        value={newDisplayName}
+                        onChange={(e) => setNewDisplayName(e.target.value)}
                         className="mt-1"
                         disabled={isSavingProfile}
                         aria-label="Full Name"
@@ -527,7 +527,7 @@ export default function AccountPage() {
                 </GlassCardHeader>
                 <GlassCardContent>
                   <p className="text-sm">Current Plan: <span className="font-semibold text-primary">Basic Plan</span> (Feature to dynamically show current plan coming soon!)</p>
-                  
+
                   <div className="mt-4 flex gap-2">
                     <Dialog open={isChangePlanModalOpen} onOpenChange={setIsChangePlanModalOpen}>
                       <DialogTrigger asChild>
@@ -562,7 +562,7 @@ export default function AccountPage() {
                                 <span className="text-sm text-muted-foreground">{tier.frequency}</span>
                               </p>
                               <p className="mt-2 text-sm text-muted-foreground h-10">{tier.description}</p>
-                              
+
                               <ul className="mt-4 space-y-2 text-sm flex-grow">
                                 {tier.features.map((feature) => (
                                   <li key={feature} className="flex items-start">
@@ -623,10 +623,10 @@ export default function AccountPage() {
                       {isEmailPasswordUser && (
                         <div className="space-y-2 py-2">
                           <Label htmlFor="reAuthPasswordForDelete" className="sr-only">Password</Label>
-                          <Input 
-                            id="reAuthPasswordForDelete" 
+                          <Input
+                            id="reAuthPasswordForDelete"
                             type="password"
-                            placeholder="Enter your password" 
+                            placeholder="Enter your password"
                             value={reAuthPassword}
                             onChange={(e) => setReAuthPassword(e.target.value)}
                             aria-label="Password for delete confirmation"
@@ -635,8 +635,8 @@ export default function AccountPage() {
                       )}
                       <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => {setShowDeleteConfirm(false); setReAuthPassword('');}} disabled={isDeletingAccount}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={handleDeleteAccount} 
+                        <AlertDialogAction
+                          onClick={handleDeleteAccount}
                           disabled={isDeletingAccount || (isEmailPasswordUser && !reAuthPassword)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
@@ -661,4 +661,3 @@ export default function AccountPage() {
     </div>
   );
 }
-    
