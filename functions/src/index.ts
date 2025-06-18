@@ -9,7 +9,7 @@ import cors from "cors";
 const corsHandler = cors({
   origin: [
     "http://localhost:9002", // For local testing
-    "https://brieflyai.xyz",
+    "https://brieflyai.xyz", // For production
     // Add your production domain here if different
     "https://6000-firebase-studio-1749655004240.cluster-axf5tvtfjjfekvhwxwkkkzsk2y.cloudworkstations.dev/",
   ],
@@ -25,9 +25,15 @@ const ENV_PAYSTACK_WEBHOOK_SECRET = process.env.PAYSTACK_WEBHOOK_SECRET;
 const ENV_APP_CALLBACK_URL = process.env.APP_CALLBACK_URL;
 
 logger.info("Function Cold Start: Reading environment variables.");
-logger.info(`PAYSTACK_SECRET_KEY: ${ENV_PAYSTACK_SECRET_KEY ? "Loaded" : "MISSING!"}`);
-logger.info(`PAYSTACK_WEBHOOK_SECRET: ${ENV_PAYSTACK_WEBHOOK_SECRET ? "Loaded" : "MISSING!"}`);
-logger.info(`APP_CALLBACK_URL: ${ENV_APP_CALLBACK_URL ? "Loaded" : "MISSING!"}`);
+logger.info(
+  `PAYSTACK_SECRET_KEY: ${ENV_PAYSTACK_SECRET_KEY ? "Loaded" : "MISSING!"}`
+);
+logger.info(
+  `PAYSTACK_WEBHOOK_SECRET: ${ENV_PAYSTACK_WEBHOOK_SECRET ? "Loaded" : "MISSING!"}`
+);
+logger.info(
+  `APP_CALLBACK_URL: ${ENV_APP_CALLBACK_URL ? "Loaded" : "MISSING!"}`
+);
 
 let globalPaystackInstance: Paystack | null = null;
 if (ENV_PAYSTACK_SECRET_KEY) {
@@ -82,44 +88,86 @@ export const createPaystackSubscription = onCall(
     const currentAppCallbackUrl = process.env.APP_CALLBACK_URL;
 
     logger.info(
-      `createPaystackSubscription: PAYSTACK_SECRET_KEY (runtime). Found: ${!!currentPaystackSecretKey}. Value: ${currentPaystackSecretKey ? "********" : "UNDEFINED"}`
+      "createPaystackSubscription: PAYSTACK_SECRET_KEY (runtime). Found: " +
+      `${!!currentPaystackSecretKey}. Value: ${currentPaystackSecretKey ? "********" : "UNDEFINED"}`
     );
     logger.info(
-      `createPaystackSubscription: APP_CALLBACK_URL (runtime). Found: ${!!currentAppCallbackUrl}. Value: ${currentAppCallbackUrl || "UNDEFINED/EMPTY"}`
+      "createPaystackSubscription: APP_CALLBACK_URL (runtime). Found: " +
+      `${!!currentAppCallbackUrl}. Value: ${currentAppCallbackUrl || "UNDEFINED/EMPTY"}`
     );
 
     if (!currentPaystackSecretKey) {
-      logger.error("createPaystackSubscription: CRITICAL: PAYSTACK_SECRET_KEY is MISSING from environment variables. Cannot proceed.");
-      throw new HttpsError("internal", "Payment system configuration error (PSK_MISSING_ENV). [Code: CFG_ERR_PSK]");
+      logger.error(
+        "createPaystackSubscription: CRITICAL: PAYSTACK_SECRET_KEY is " +
+        "MISSING from environment variables. Cannot proceed."
+      );
+      throw new HttpsError(
+        "internal",
+        "Payment system configuration error (PSK_MISSING_ENV). " +
+        "[Code: CFG_ERR_PSK]"
+      );
     }
     if (!currentAppCallbackUrl) {
-      logger.error("createPaystackSubscription: CRITICAL: APP_CALLBACK_URL is MISSING from environment variables. Cannot proceed.");
-      throw new HttpsError("internal", "Application configuration error (CB_URL_MISSING_ENV). [Code: CFG_ERR_CB_URL]");
+      logger.error(
+        "createPaystackSubscription: CRITICAL: APP_CALLBACK_URL is " +
+        "MISSING from environment variables. Cannot proceed."
+      );
+      throw new HttpsError(
+        "internal",
+        "Application configuration error (CB_URL_MISSING_ENV). " +
+        "[Code: CFG_ERR_CB_URL]"
+      );
     }
 
     let paystackSdkInstance: Paystack | null = null;
     try {
-      logger.info("createPaystackSubscription: Initializing Paystack SDK instance...");
+      logger.info(
+        "createPaystackSubscription: Initializing Paystack SDK instance..."
+      );
       paystackSdkInstance = new Paystack(currentPaystackSecretKey);
-      logger.info("createPaystackSubscription: Paystack SDK instance created successfully.");
+      logger.info(
+        "createPaystackSubscription: Paystack SDK instance created successfully."
+      );
     } catch (sdkError: unknown) {
-      logger.error("createPaystackSubscription: Error initializing Paystack SDK:", sdkError);
+      logger.error(
+        "createPaystackSubscription: Error initializing Paystack SDK:", sdkError
+      );
       if (sdkError instanceof Error) {
-          logger.error("createPaystackSubscription: Paystack SDK Init Error name:", sdkError.name);
-          logger.error("createPaystackSubscription: Paystack SDK Init Error message:", sdkError.message);
+        logger.error(
+          "createPaystackSubscription: Paystack SDK Init Error name:",
+          sdkError.name
+        );
+        logger.error(
+          "createPaystackSubscription: Paystack SDK Init Error message:",
+          sdkError.message
+        );
       }
-      throw new HttpsError("internal", "Failed to initialize payment service SDK. [Code: SDK_INIT_FAIL_HANDLER]");
+      throw new HttpsError(
+        "internal",
+        "Failed to initialize payment service SDK. " +
+        "[Code: SDK_INIT_FAIL_HANDLER]"
+      );
     }
 
     const data = request.data as CreateSubscriptionData;
     const auth = request.auth;
-    logger.info("createPaystackSubscription: Request data received:", JSON.stringify(data));
-    logger.info("createPaystackSubscription: Auth context received:", JSON.stringify(auth ? {uid: auth.uid, email: auth.token?.email} : {auth_missing: true}));
+    logger.info(
+      "createPaystackSubscription: Request data received:", JSON.stringify(data)
+    );
+    logger.info(
+      "createPaystackSubscription: Auth context received:",
+      JSON.stringify(
+        auth ? {uid: auth.uid, email: auth.token?.email} : {auth_missing: true}
+      )
+    );
 
 
     if (!auth) {
       logger.warn("createPaystackSubscription: Unauthenticated user attempt.");
-      throw new HttpsError("unauthenticated", "User must be authenticated. [Code: AUTH_REQ]");
+      throw new HttpsError(
+        "unauthenticated",
+        "User must be authenticated. [Code: AUTH_REQ]"
+      );
     }
 
     const userId = auth.uid;
@@ -128,7 +176,11 @@ export const createPaystackSubscription = onCall(
     const emailToUse = clientProvidedEmail || authenticatedUserEmail;
     const planId = data.planId;
 
-    logger.info(`createPaystackSubscription: User ID: ${userId}, Email for Paystack: ${emailToUse ? "********" : "MISSING"}, Plan ID: ${planId}`);
+    logger.info(
+      `createPaystackSubscription: User ID: ${userId}, ` +
+      `Email for Paystack: ${emailToUse ? "********" : "MISSING"}, ` +
+      `Plan ID: ${planId}`
+    );
 
     if (
       !emailToUse ||
@@ -154,7 +206,9 @@ export const createPaystackSubscription = onCall(
 
     const plan = planDetails[planId];
     const reference = `briefly-${userId}-${planId}-${Date.now()}`;
-    logger.info(`createPaystackSubscription: Generated Paystack reference: ${reference}`);
+    logger.info(
+      `createPaystackSubscription: Generated Paystack reference: ${reference}`
+    );
 
     try {
       const transactionArgs = {
@@ -165,15 +219,24 @@ export const createPaystackSubscription = onCall(
           `${currentAppCallbackUrl}?ref=${reference}&planId=${planId}`,
         metadata: {userId, planId, service: "BrieflyAI Subscription"},
       };
-      logger.info("createPaystackSubscription: Initializing Paystack transaction with args:", JSON.stringify(transactionArgs));
+      logger.info(
+        "createPaystackSubscription: Initializing Paystack transaction " +
+        "with args:", JSON.stringify(transactionArgs)
+      );
 
       const response =
         await paystackSdkInstance.transaction.initialize(transactionArgs);
-      logger.info("createPaystackSubscription: Paystack transaction.initialize RAW response:", JSON.stringify(response));
+      logger.info(
+        "createPaystackSubscription: Paystack transaction.initialize RAW response:",
+        JSON.stringify(response)
+      );
 
 
       if (response.status && response.data && response.data.authorization_url) {
-        logger.info("createPaystackSubscription: Paystack initialization successful. Proceeding to write to Firestore...");
+        logger.info(
+          "createPaystackSubscription: Paystack initialization successful. " +
+          "Proceeding to write to Firestore..."
+        );
         await db.collection("transactions").doc(reference).set({
           userId,
           planId,
@@ -184,7 +247,10 @@ export const createPaystackSubscription = onCall(
           paystackReference: response.data.reference,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
-        logger.info(`createPaystackSubscription: Transaction ${reference} successfully saved to Firestore. Returning authorization URL.`);
+        logger.info(
+          `createPaystackSubscription: Transaction ${reference} ` +
+          "successfully saved to Firestore. Returning authorization URL."
+        );
         return {
           authorization_url: response.data.authorization_url,
           access_code: response.data.access_code,
@@ -192,7 +258,8 @@ export const createPaystackSubscription = onCall(
         };
       } else {
         logger.error(
-          "createPaystackSubscription: Paystack transaction.initialize FAILED or missing authorization_url in response.data:",
+          "createPaystackSubscription: Paystack transaction.initialize FAILED " +
+          "or missing authorization_url in response.data:",
           {
             message: response.message,
             status: response.status,
@@ -209,17 +276,27 @@ export const createPaystackSubscription = onCall(
       }
     } catch (error: unknown) {
       logger.error(
-        "createPaystackSubscription: Error during Paystack transaction initialization or Firestore DB write:",
+        "createPaystackSubscription: Error during Paystack transaction " +
+        "initialization or Firestore DB write:",
         error
       );
       if (error instanceof Error) {
-        logger.error("createPaystackSubscription: Caught Error Name:", error.name);
-        logger.error("createPaystackSubscription: Caught Error Message:", error.message);
+        logger.error(
+          "createPaystackSubscription: Caught Error Name:", error.name
+        );
+        logger.error(
+          "createPaystackSubscription: Caught Error Message:", error.message
+        );
         if (error.stack) {
-          logger.error("createPaystackSubscription: Caught Error Stack:", error.stack);
+          logger.error(
+            "createPaystackSubscription: Caught Error Stack:", error.stack
+          );
         }
       } else {
-        logger.error("createPaystackSubscription: Caught non-Error object during transaction/DB write:", String(error));
+        logger.error(
+          "createPaystackSubscription: Caught non-Error object during " +
+          "transaction/DB write:", String(error)
+        );
       }
       const errorMessage =
         (error instanceof Error ? error.message : String(error)) ||
@@ -267,11 +344,20 @@ async function processChargeSuccessEvent(
     const secretKey = process.env.PAYSTACK_SECRET_KEY;
     if (secretKey) {
       try {
-        logger.info("processChargeSuccessEvent: Global Paystack SDK was null, attempting to re-initialize for verification.");
+        logger.info(
+          "processChargeSuccessEvent: Global Paystack SDK was null, " +
+          "attempting to re-initialize for verification."
+        );
         paystackInstanceForVerify = new Paystack(secretKey);
-        logger.info("processChargeSuccessEvent: Local Paystack SDK for verification created successfully.");
+        logger.info(
+          "processChargeSuccessEvent: Local Paystack SDK for " +
+          "verification created successfully."
+        );
       } catch (sdkError) {
-        logger.error("processChargeSuccessEvent: Error re-initializing local Paystack SDK for verification:", sdkError);
+        logger.error(
+          "processChargeSuccessEvent: Error re-initializing local " +
+          "Paystack SDK for verification:", sdkError
+        );
         paystackInstanceForVerify = null;
       }
     }
@@ -351,8 +437,14 @@ async function processChargeSuccessEvent(
       verifyError
     );
     if (verifyError instanceof Error) {
-        logger.error("processChargeSuccessEvent: Verification Error Name:", verifyError.name);
-        logger.error("processChargeSuccessEvent: Verification Error Message:", verifyError.message);
+      logger.error(
+        "processChargeSuccessEvent: Verification Error Name:",
+        verifyError.name
+      );
+      logger.error(
+        "processChargeSuccessEvent: Verification Error Message:",
+        verifyError.message
+      );
     }
     return;
   }
@@ -375,7 +467,10 @@ async function processChargeSuccessEvent(
   };
 
   try {
-    logger.info("processChargeSuccessEvent: Updating Firestore for user subscription:", {userId, reference});
+    logger.info(
+      "processChargeSuccessEvent: Updating Firestore for user subscription:",
+      {userId, reference}
+    );
     await db.collection("userSubscriptions").doc(userId).set(
       subscriptionData,
       {merge: true}
@@ -398,9 +493,15 @@ async function processChargeSuccessEvent(
         error: dbError,
       }
     );
-     if (dbError instanceof Error) {
-        logger.error("processChargeSuccessEvent: Firestore Update Error Name:", dbError.name);
-        logger.error("processChargeSuccessEvent: Firestore Update Error Message:", dbError.message);
+    if (dbError instanceof Error) {
+      logger.error(
+        "processChargeSuccessEvent: Firestore Update Error Name:",
+        dbError.name
+      );
+      logger.error(
+        "processChargeSuccessEvent: Firestore Update Error Message:",
+        dbError.message
+      );
     }
   }
 }
@@ -408,27 +509,41 @@ async function processChargeSuccessEvent(
 export const paystackWebhookHandler = onRequest(
   {region: "us-central1", timeoutSeconds: 60, memory: "256MiB"},
   async (req, res) => {
-    logger.info("paystackWebhookHandler: Invoked.", {headers: req.headers});
+    logger.info(
+      "paystackWebhookHandler: Invoked.", {headers: req.headers}
+    );
 
     const currentWebhookSecret = process.env.PAYSTACK_WEBHOOK_SECRET;
-    const currentPaystackSecretKey = process.env.PAYSTACK_SECRET_KEY; // For SDK in processChargeSuccessEvent
+    const currentPaystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
 
     logger.info(
-      `paystackWebhookHandler: PAYSTACK_WEBHOOK_SECRET (runtime). Found: ${!!currentWebhookSecret}. Value: ${currentWebhookSecret ? "********" : "UNDEFINED"}`
+      "paystackWebhookHandler: PAYSTACK_WEBHOOK_SECRET (runtime). Found: " +
+      `${!!currentWebhookSecret}. Value: ` +
+      `${currentWebhookSecret ? "********" : "UNDEFINED"}`
     );
     logger.info(
-      `paystackWebhookHandler: PAYSTACK_SECRET_KEY (runtime, for verification). Found: ${!!currentPaystackSecretKey}. Value: ${currentPaystackSecretKey ? "********" : "UNDEFINED"}`
+      "paystackWebhookHandler: PAYSTACK_SECRET_KEY (runtime, for verify). " +
+      `Found: ${!!currentPaystackSecretKey}. Value: ` +
+      `${currentPaystackSecretKey ? "********" : "UNDEFINED"}`
     );
 
     if (!currentWebhookSecret) {
-      logger.error("paystackWebhookHandler: CRITICAL: PAYSTACK_WEBHOOK_SECRET is MISSING from environment. Cannot verify signature.");
-      res.status(500).send("Server configuration error (WHS_MISSING_ENV).");
+      logger.error(
+        "paystackWebhookHandler: CRITICAL: PAYSTACK_WEBHOOK_SECRET is " +
+        "MISSING from environment. Cannot verify signature."
+      );
+      res.status(500).send(
+        "Server configuration error (WHS_MISSING_ENV)."
+      );
       return;
     }
-    // SDK key (currentPaystackSecretKey) is checked within processChargeSuccessEvent
+    // SDK key (currentPaystackSecretKey) is checked within
+    // processChargeSuccessEvent for Paystack verification
 
     corsHandler(req, res, async () => {
-      logger.info("paystackWebhookHandler (cors): Request received for path:", req.path);
+      logger.info(
+        "paystackWebhookHandler (cors): Request received for path:", req.path
+      );
 
       const requestBodyString = req.rawBody?.toString();
       if (!requestBodyString) {
@@ -448,7 +563,8 @@ export const paystackWebhookHandler = onRequest(
 
       if (hash !== req.headers["x-paystack-signature"]) {
         const sigErrorMsg = "Invalid Paystack webhook signature. " +
-          `Expected: ${hash}, Got: ${req.headers["x-paystack-signature"] || "Not present"}`;
+          `Expected: ${hash}, Got: ` +
+          `${req.headers["x-paystack-signature"] || "Not present"}`;
         logger.warn("paystackWebhookHandler: " + sigErrorMsg);
         res.status(401).send("Invalid signature.");
         return;
@@ -465,7 +581,8 @@ export const paystackWebhookHandler = onRequest(
 
       if (event.event === "charge.success") {
         res.status(200).send(
-          "Webhook for charge.success acknowledged. Processing in background."
+          "Webhook for charge.success acknowledged. " +
+          "Processing in background."
         );
         try {
           await processChargeSuccessEvent(
@@ -496,3 +613,5 @@ export const paystackWebhookHandler = onRequest(
   }
 );
 // Ensure file ends with a newline character
+
+      
