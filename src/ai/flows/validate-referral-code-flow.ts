@@ -13,23 +13,30 @@ import { z } from 'genkit';
 import * as admin from 'firebase-admin';
 
 // Initialize Firebase Admin SDK if not already initialized
-// This is necessary for server-side Firestore access in Genkit flows.
 if (!admin.apps.length) {
-  // In a deployed Firebase environment (e.g., Cloud Functions, App Engine),
-  // initializeApp() without arguments often works by picking up default credentials.
-  // For local development outside Firebase emulators, you might need to set
-  // GOOGLE_APPLICATION_CREDENTIALS environment variable to point to your service account key.
+  console.log("[validate-referral-code-flow]: Attempting Firebase Admin SDK initialization...");
+  console.log(`[validate-referral-code-flow]: GOOGLE_APPLICATION_CREDENTIALS env var: ${process.env.GOOGLE_APPLICATION_CREDENTIALS || "NOT SET"}`);
+  console.log(`[validate-referral-code-flow]: FIREBASE_CONFIG env var: ${process.env.FIREBASE_CONFIG || "NOT SET"}`); // Useful if using FIREBASE_CONFIG
+  console.log(`[validate-referral-code-flow]: GCLOUD_PROJECT env var: ${process.env.GCLOUD_PROJECT || "NOT SET"}`); // Useful if in GCP env
+
   try {
-    admin.initializeApp();
-    console.log("Firebase Admin SDK initialized by validate-referral-code-flow.");
+    admin.initializeApp(); // In many server environments (like local dev with GOOGLE_APPLICATION_CREDENTIALS set, or deployed GCP), this auto-detects.
+    console.log("[validate-referral-code-flow]: Firebase Admin SDK initialized successfully.");
   } catch (e: any) {
     if (e.code === 'app/duplicate-app') {
-      console.log("Firebase Admin SDK already initialized elsewhere.");
+      console.warn("[validate-referral-code-flow]: Firebase Admin SDK already initialized by another module.");
     } else {
-      console.error("Error initializing Firebase Admin SDK in validate-referral-code-flow:", e);
-      // Depending on your error handling strategy, you might want to re-throw or handle differently.
+      console.error("--------------------------------------------------------------------------------");
+      console.error("[validate-referral-code-flow]: CRITICAL ERROR initializing Firebase Admin SDK:", e.message);
+      console.error("This usually means GOOGLE_APPLICATION_CREDENTIALS environment variable is NOT SET correctly for the server environment (e.g., in your .env file for local 'genkit dev'), or the service account key file is invalid, or the service account lacks permissions.");
+      console.error("Please ensure GOOGLE_APPLICATION_CREDENTIALS points to a valid service account JSON key file.");
+      console.error("--------------------------------------------------------------------------------");
+      // Depending on your error handling strategy, you might re-throw or handle differently.
+      // For now, db access will fail later, making the issue apparent.
     }
   }
+} else {
+  console.log("[validate-referral-code-flow]: Firebase Admin SDK already has an initialized app.");
 }
 
 const db = admin.firestore();
@@ -58,6 +65,12 @@ const validateReferralCodeFlow = ai.defineFlow(
     outputSchema: ValidateReferralCodeOutputSchema,
   },
   async ({ referralCode }) => {
+    // Ensure db is available; if initialization failed, this part might not execute or db interaction will fail.
+    if (!admin.apps.length) {
+        console.error("[validateReferralCodeFlow]: Firebase Admin not initialized. Cannot proceed.");
+        return { isValid: false, message: "Server configuration error. Cannot validate code.", referrerName: undefined, referrerId: undefined };
+    }
+    
     const upperCaseCode = referralCode.trim().toUpperCase();
 
     if (!upperCaseCode) {
@@ -109,8 +122,14 @@ const validateReferralCodeFlow = ai.defineFlow(
       return { isValid: true, message: "Referral code is valid!", referrerName: undefined, referrerId: undefined };
 
     } catch (error) {
-      console.error("Error in validateReferralCodeFlow:", error);
+      console.error("[validateReferralCodeFlow]: Error during Firestore query:", error);
+      // Check if the error is due to missing indexes
+      if (error instanceof Error && (error.message.includes("INVALID_ARGUMENT") || error.message.includes("requires an index"))) {
+          console.error("[validateReferralCodeFlow]: Firestore query failed. This might be due to a MISSING INDEX. Please check your Firestore console for index creation suggestions for the 'referralCodes' collection querying 'code' and 'isActive'.");
+           return { isValid: false, message: "Error validating code. Index might be missing.", referrerName: undefined, referrerId: undefined };
+      }
       return { isValid: false, message: "Error validating code. Please try again.", referrerName: undefined, referrerId: undefined };
     }
   }
 );
+
