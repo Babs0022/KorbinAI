@@ -24,12 +24,12 @@ declare module "paystack-node" {
     status: boolean; // Typically true for success
     message: string;
     data?: {
-        authorization_url?: string;
-        access_code?: string;
-        reference?: string;
-        status?: string; // For verification status, e.g., "success"
-        // other known data properties
-        [key: string]: unknown; // Allow other properties within data
+      authorization_url?: string;
+      access_code?: string;
+      reference?: string;
+      status?: string; // For verification status, e.g., "success"
+      // other known data properties
+      [key: string]: unknown; // Allow other properties within data
     };
     [key: string]: unknown; // Allow other top-level properties
   }

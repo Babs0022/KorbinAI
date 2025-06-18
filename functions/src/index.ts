@@ -6,7 +6,7 @@ import Paystack from "paystack-node";
 import * as crypto from "crypto";
 import cors from "cors";
 
-// Log environment variable access at the module level (cold start)
+// --- Environment Variable Logging (Cold Start) ---
 logger.info(
   "Function Cold Start: Attempting to read environment variables."
 );
@@ -25,6 +25,7 @@ logger.info(
     process.env.APP_CALLBACK_URL || "MISSING!"
   }`
 );
+// --- End Environment Variable Logging ---
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -33,7 +34,7 @@ const corsHandler = cors({
   origin: [
     "http://localhost:9002", // For local testing
     "https://brieflyai.xyz", // For production
-    // Add your production domain here if different
+    // Add your production domain here if different or from Firebase Hosting
     "https://6000-firebase-studio-1749655004240.cluster-axf5tvtfjjfekvhwxwkkkzsk2y.cloudworkstations.dev/",
   ],
 });
@@ -69,12 +70,12 @@ const planDetails: Record<
   premium: {
     amount: 16000 * 100, // NGN 16,000 in Kobo
     name: "BrieflyAI Premium",
-    plan_code: "PLN_c7d9pwc77ezn3a8",
+    plan_code: "PLN_c7d9pwc77ezn3a8", // Replace with your actual plan code
   },
   unlimited: {
     amount: 56000 * 100, // NGN 56,000 in Kobo
     name: "BrieflyAI Unlimited",
-    plan_code: "PLN_kb83pnnocije9fz",
+    plan_code: "PLN_kb83pnnocije9fz", // Replace with your actual plan code
   },
 };
 
@@ -83,6 +84,12 @@ interface CreateSubscriptionData {
   planId: string;
 }
 
+/**
+ * Creates a Paystack subscription initialization.
+ * @param {onCall.CallableRequest<CreateSubscriptionData>} request The request.
+ * @return {Promise<{authorization_url: string, access_code: string,
+ * reference: string}>} The response.
+ */
 export const createPaystackSubscription = onCall(
   {region: "us-central1", timeoutSeconds: 60, memory: "256MiB"},
   async (request) => {
@@ -533,6 +540,12 @@ async function processChargeSuccessEvent(
   }
 }
 
+/**
+ * Handles incoming webhooks from Paystack.
+ * @param {onRequest.Request} req The request object.
+ * @param {onRequest.Response} res The response object.
+ * @return {Promise<void>} A promise that resolves when processing is complete.
+ */
 export const paystackWebhookHandler = onRequest(
   {region: "us-central1", timeoutSeconds: 60, memory: "256MiB"},
   async (req, res) => {
@@ -570,6 +583,8 @@ export const paystackWebhookHandler = onRequest(
         "paystackWebhookHandler: CRITICAL - PAYSTACK_SECRET_KEY is MISSING. " +
         "Cannot verify charge.success events."
       );
+      // Allow to proceed for signature verification, but charge.success
+      // will fail later if SDK cannot be initialized.
     }
 
     corsHandler(req, res, async () => {
@@ -612,6 +627,7 @@ export const paystackWebhookHandler = onRequest(
       );
 
       if (event.event === "charge.success") {
+        // Acknowledge immediately to Paystack
         res.status(200).send(
           "Webhook for charge.success acknowledged. " +
           "Processing in background."
@@ -632,6 +648,7 @@ export const paystackWebhookHandler = onRequest(
             "paystackWebhookHandler: " + errorMsg,
             processingError
           );
+          // Note: Already sent 200 OK. Errors are logged for investigation.
         }
       } else {
         logger.info(

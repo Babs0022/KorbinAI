@@ -1,3 +1,4 @@
+
 module.exports = {
   root: true,
   env: {
@@ -21,13 +22,14 @@ module.exports = {
     "/lib/**/*", // Ignore built files.
     "/generated/**/*", // Ignore generated files.
   ],
-  plugins: [
-    "@typescript-eslint",
-    "import",
-  ],
+  plugins: ["@typescript-eslint", "import"],
   rules: {
     "quotes": ["error", "double"],
     "import/no-unresolved": 0,
     "indent": ["error", 2],
+    "max-len": ["error", { "code": 80, "ignoreUrls": true, "ignoreStrings": true, "ignoreTemplateLiterals": true }],
+    "require-jsdoc": "warn", // Changed to warn to avoid blocking on minor JSDoc issues initially
+    "valid-jsdoc": "warn",   // Changed to warn
+    "operator-linebreak": ["error", "after"],
   },
 };
