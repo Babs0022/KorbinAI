@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon, ArrowLeft, CheckCircle2, Star, Gift, Copy as CopyIcon, PackagePause } from 'lucide-react'; // Added PackagePause
+import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon, ArrowLeft, CheckCircle2, Star, Gift, Copy as CopyIcon } from 'lucide-react'; // Removed PackagePause
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -73,7 +73,7 @@ const pricingTiers: Tier[] = [
       'Contextual Prompting & Analysis',
       'Prompt Academy Access',
     ],
-    cta: 'Upgrade to Premium',
+    cta: 'Subscriptions Paused (Beta)',
     emphasized: true,
     isBetaPaused: true, 
   },
@@ -90,7 +90,7 @@ const pricingTiers: Tier[] = [
       'Unlimited Reverse Prompting',
       'Early access to new features',
     ],
-    cta: 'Go Unlimited',
+    cta: 'Subscriptions Paused (Beta)',
     emphasized: false,
     isBetaPaused: true, 
   },
@@ -553,7 +553,7 @@ export default function AccountPage() {
                 <GlassCardContent>
                   <p className="text-sm mb-3">Current Plan: <span className="font-semibold text-primary">Basic Plan</span> (Feature to dynamically show current plan coming soon!)</p>
                   <div className="flex items-start space-x-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-300">
-                      <PackagePause className="h-4 w-4 mt-0.5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
+                      <Info className="h-4 w-4 mt-0.5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
                       <p>Paid subscriptions are temporarily paused during our Beta phase. Thank you for your understanding!</p>
                   </div>
                   <div className="mt-4 flex gap-2">
@@ -693,3 +693,5 @@ export default function AccountPage() {
     </div>
   );
 }
+
+    
