@@ -7,10 +7,25 @@ import * as crypto from "crypto";
 import cors from "cors";
 
 // Log environment variable access at the module level (cold start)
-logger.info("Function Cold Start: Attempting to read environment variables from process.env.");
-logger.info(`Cold Start - PAYSTACK_SECRET_KEY: ${process.env.PAYSTACK_SECRET_KEY ? "Exists (value hidden)" : "MISSING or EMPTY"}`);
-logger.info(`Cold Start - PAYSTACK_WEBHOOK_SECRET: ${process.env.PAYSTACK_WEBHOOK_SECRET ? "Exists (value hidden)" : "MISSING or EMPTY"}`);
-logger.info(`Cold Start - APP_CALLBACK_URL: ${process.env.APP_CALLBACK_URL || "MISSING or EMPTY"}`);
+logger.info(
+  "Function Cold Start: Attempting to read environment variables " +
+  "from process.env."
+);
+logger.info(
+  `Cold Start - PAYSTACK_SECRET_KEY: ${
+    process.env.PAYSTACK_SECRET_KEY ? "Exists (value hidden)"
+      : "MISSING or EMPTY"}`
+);
+logger.info(
+  `Cold Start - PAYSTACK_WEBHOOK_SECRET: ${
+    process.env.PAYSTACK_WEBHOOK_SECRET ? "Exists (value hidden)"
+      : "MISSING or EMPTY"}`
+);
+logger.info(
+  `Cold Start - APP_CALLBACK_URL: ${
+     process.env.APP_CALLBACK_URL || "MISSING or EMPTY"}`
+);
+
 
 admin.initializeApp();
 const db = admin.firestore();
