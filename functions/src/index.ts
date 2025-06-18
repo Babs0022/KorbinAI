@@ -6,24 +6,33 @@ import Paystack from "paystack-node";
 import * as crypto from "crypto";
 import cors from "cors";
 
-// Initial Log: Attempt to read environment variables at module load
+// --- Environment Variable Based Configuration ---
+// These must be set in your Firebase Function's environment
+// For 2nd Gen functions, use `process.env.YOUR_VARIABLE_NAME`
 logger.info(
   "Function Cold Start: Attempting to read environment variables " +
   "from process.env."
 );
+const MODULE_LOAD_PAYSTACK_SECRET_KEY =
+  process.env.PAYSTACK_SECRET_KEY;
+const MODULE_LOAD_PAYSTACK_WEBHOOK_SECRET =
+  process.env.PAYSTACK_WEBHOOK_SECRET;
+const MODULE_LOAD_APP_CALLBACK_URL =
+  process.env.APP_CALLBACK_URL;
+
 logger.info(
   `Cold Start - PAYSTACK_SECRET_KEY: ${
-    process.env.PAYSTACK_SECRET_KEY ? "Exists (value hidden)"
+    MODULE_LOAD_PAYSTACK_SECRET_KEY ? "Exists (value hidden)"
       : "MISSING or EMPTY"}`
 );
 logger.info(
   `Cold Start - PAYSTACK_WEBHOOK_SECRET: ${
-    process.env.PAYSTACK_WEBHOOK_SECRET ? "Exists (value hidden)"
+    MODULE_LOAD_PAYSTACK_WEBHOOK_SECRET ? "Exists (value hidden)"
       : "MISSING or EMPTY"}`
 );
 logger.info(
   `Cold Start - APP_CALLBACK_URL: ${
-     process.env.APP_CALLBACK_URL || "MISSING or EMPTY"}`
+     MODULE_LOAD_APP_CALLBACK_URL || "MISSING or EMPTY"}`
 );
 
 
@@ -42,11 +51,10 @@ const corsHandler = cors({
 
 // Attempt to initialize Paystack globally, but don't let it crash the module
 let globalPaystackInstance: Paystack | null = null;
-const initialPaystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
 
-if (initialPaystackSecretKey) {
+if (MODULE_LOAD_PAYSTACK_SECRET_KEY) {
   try {
-    globalPaystackInstance = new Paystack(initialPaystackSecretKey);
+    globalPaystackInstance = new Paystack(MODULE_LOAD_PAYSTACK_SECRET_KEY);
     logger.info(
       "Global Paystack SDK instance initialized successfully at module load."
     );
@@ -601,9 +609,10 @@ export const paystackWebhookHandler = onRequest(
         "paystackWebhookHandler: CRITICAL - PAYSTACK_SECRET_KEY is MISSING. " +
         "Cannot verify charge.success events."
       );
-      // We might still process other event types if they don't need verification,
-      // but charge.success is crucial. For now, let corsHandler proceed.
-      // If strictly needed, we could return 500 here too for charge.success.
+      // We might still process other event types if they don't need
+      // verification, but charge.success is crucial. For now, let
+      // corsHandler proceed. If strictly needed, we could return 500 here too
+      // for charge.success.
     }
 
     corsHandler(req, res, async () => {
@@ -611,7 +620,8 @@ export const paystackWebhookHandler = onRequest(
         "paystackWebhookHandler (cors): Request received for path:", req.path
       );
 
-      // Paystack recommends using the raw request body for signature verification
+      // Paystack recommends using the raw request body
+      // for signature verification
       const requestBodyString = req.rawBody?.toString();
       if (!requestBodyString) {
         logger.error(
@@ -670,7 +680,8 @@ export const paystackWebhookHandler = onRequest(
             "paystackWebhookHandler: " + errorMsg,
             processingError
           );
-          // Note: We've already sent 200 OK, so can't send error response here.
+          // Note: We've already sent 200 OK,
+          // so can't send error response here.
           // Errors here are logged for investigation.
         }
       } else {
@@ -686,3 +697,5 @@ export const paystackWebhookHandler = onRequest(
   }
 );
 // Ensure file ends with a newline character
+
+    
