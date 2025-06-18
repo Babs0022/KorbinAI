@@ -19,29 +19,35 @@ const APP_CALLBACK_URL_AT_LOAD = process.env.APP_CALLBACK_URL;
 
 if (!PAYSTACK_SECRET_KEY_AT_LOAD) {
   logger.warn(
-    "Cold Start: PAYSTACK_SECRET_KEY env var is MISSING or empty!",
+    "Cold Start: PAYSTACK_SECRET_KEY env var is" +
+    " MISSING or empty!",
   );
 } else {
   logger.info(
-    "Cold Start: PAYSTACK_SECRET_KEY env var FOUND (length > 0).",
+    "Cold Start: PAYSTACK_SECRET_KEY env var" +
+    " FOUND (length > 0).",
   );
 }
 if (!PAYSTACK_WEBHOOK_SECRET_AT_LOAD) {
   logger.warn(
-    "Cold Start: PAYSTACK_WEBHOOK_SECRET env var is MISSING or empty!",
+    "Cold Start: PAYSTACK_WEBHOOK_SECRET env var is" +
+    " MISSING or empty!",
   );
 } else {
   logger.info(
-    "Cold Start: PAYSTACK_WEBHOOK_SECRET env var FOUND (length > 0).",
+    "Cold Start: PAYSTACK_WEBHOOK_SECRET env var" +
+    " FOUND (length > 0).",
   );
 }
 if (!APP_CALLBACK_URL_AT_LOAD) {
   logger.warn(
-    "Cold Start: APP_CALLBACK_URL env var is MISSING or empty!",
+    "Cold Start: APP_CALLBACK_URL env var is" +
+    " MISSING or empty!",
   );
 } else {
   logger.info(
-    "Cold Start: APP_CALLBACK_URL env var FOUND (length > 0).",
+    "Cold Start: APP_CALLBACK_URL env var" +
+    " FOUND (length > 0).",
   );
 }
 
@@ -51,7 +57,7 @@ const corsHandler = cors({
     "http://localhost:9002", // Your local dev Next.js app
     "https://brieflyai.xyz", // Your production domain
     // Add any other specific domains you need to allow
-    "https://6000-firebase-studio-1749655004240.cluster-axf5tvtfjjfekvhwxwkkkzsk2y.cloudworkstations.dev/",
+    "https:/localhost:5000",
   ],
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
@@ -124,7 +130,8 @@ export const createPaystackSubscription = onCall(
       );
     }
     logger.info(
-      "Invocation: PAYSTACK_SECRET_KEY and APP_CALLBACK_URL check passed.",
+      "Invocation: PAYSTACK_SECRET_KEY and" +
+      " APP_CALLBACK_URL check passed.",
     );
 
     let paystackSdkInstance: Paystack;
@@ -303,7 +310,7 @@ async function processChargeSuccessEvent(
   let paystackSdkInstance: Paystack;
   try {
     paystackSdkInstance = new Paystack(paystackSecretKey);
-  } catch (e) {
+  } catch (e: unknown) {
     logger.error(
       "processChargeSuccessEvent: Failed to init Paystack SDK.", e,
     );
@@ -490,7 +497,7 @@ export const paystackWebhookHandler = onRequest(
             "Background processing for charge.success completed for " +
             `event reference: ${event.data?.reference || "N/A"}`,
           );
-        } catch (processingError) {
+        } catch (processingError: unknown) {
           logger.error(
             "Error during background processing of charge.success for " +
             `event reference: ${event.data?.reference || "N/A"}`,

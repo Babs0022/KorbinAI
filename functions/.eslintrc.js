@@ -23,7 +23,7 @@ module.exports = {
     "/lib/**/*", // Ignore built files.
     "/coverage/**/*", // Ignore coverage reports
   ],
-  plugins: ["@typescript-eslint", "import"],
+  plugins: ["@typescript-eslint", "import", "require-jsdoc"],
   rules: {
     "quotes": ["error", "double"],
     "import/no-unresolved": 0,
@@ -47,13 +47,21 @@ module.exports = {
       {argsIgnorePattern: "^_"},
     ],
     "@typescript-eslint/no-explicit-any": "warn",
-    "require-jsdoc": "off", // Temporarily turn off to pass lint, can be re-enabled
+    "require-jsdoc": [
+      "warn", {
+        require: {
+          FunctionDeclaration: true,
+          MethodDefinition: true,
+          ClassDeclaration: true,
+          ArrowFunctionExpression: false, // Typically not for simple arrow funcs
+          FunctionExpression: true,
+        },
+      },
+    ],
   },
   settings: {
     "import/resolver": {
-      node: {
-        extensions: [".js", ".jsx", ".ts", ".tsx"],
-      },
+      node: { extensions: [".js", ".jsx", ".ts", ".tsx"] },
     },
   },
 };
