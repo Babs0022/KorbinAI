@@ -19,35 +19,35 @@ const APP_CALLBACK_URL_AT_LOAD = process.env.APP_CALLBACK_URL;
 
 if (!PAYSTACK_SECRET_KEY_AT_LOAD) {
   logger.warn(
-    "Cold Start: PAYSTACK_SECRET_KEY env var is" +
-    " MISSING or empty!",
+    "Cold Start: PAYSTACK_SECRET_KEY env var is"
+    + " MISSING or empty!",
   );
 } else {
   logger.info(
-    "Cold Start: PAYSTACK_SECRET_KEY env var" +
-    " FOUND (length > 0).",
+    "Cold Start: PAYSTACK_SECRET_KEY env var"
+    + " FOUND (length > 0).",
   );
 }
 if (!PAYSTACK_WEBHOOK_SECRET_AT_LOAD) {
   logger.warn(
-    "Cold Start: PAYSTACK_WEBHOOK_SECRET env var is" +
-    " MISSING or empty!",
+    "Cold Start: PAYSTACK_WEBHOOK_SECRET env var is"
+    + " MISSING or empty!",
   );
 } else {
   logger.info(
-    "Cold Start: PAYSTACK_WEBHOOK_SECRET env var" +
-    " FOUND (length > 0).",
+    "Cold Start: PAYSTACK_WEBHOOK_SECRET env var"
+    + " FOUND (length > 0).",
   );
 }
 if (!APP_CALLBACK_URL_AT_LOAD) {
   logger.warn(
-    "Cold Start: APP_CALLBACK_URL env var is" +
-    " MISSING or empty!",
+    "Cold Start: APP_CALLBACK_URL env var is"
+    + " MISSING or empty!",
   );
 } else {
   logger.info(
-    "Cold Start: APP_CALLBACK_URL env var" +
-    " FOUND (length > 0).",
+    "Cold Start: APP_CALLBACK_URL env var"
+    + " FOUND (length > 0).",
   );
 }
 
@@ -97,7 +97,7 @@ interface CreateSubscriptionData {
 /**
  * Creates a Paystack subscription initialization.
  * @param {CallableRequest<CreateSubscriptionData>} request The request.
- * @returns {Promise<{authorization_url: string, access_code: string, reference: string}>}
+ * @return {Promise<{authorization_url: string, access_code: string, reference: string}>}
  *  The Paystack authorization details.
  * @throws {HttpsError} If authentication or arguments are invalid.
  */
@@ -112,12 +112,13 @@ export const createPaystackSubscription = onCall(
 
     if (!paystackSecretKey) {
       logger.error(
-        "Invocation: CRITICAL: PAYSTACK_SECRET_KEY process.env var " +
-        "is MISSING.",
+        "Invocation: CRITICAL: PAYSTACK_SECRET_KEY process.env var "
+        + "is MISSING.",
       );
       throw new HttpsError(
         "internal",
-        "Payment system configuration error. [Code: PSK_ENV_MISSING]",
+        "Payment system configuration error. "
+        + "[Code: PSK_ENV_MISSING]",
       );
     }
     if (!appCallbackUrl) {
@@ -126,12 +127,13 @@ export const createPaystackSubscription = onCall(
       );
       throw new HttpsError(
         "internal",
-        "Application callback URL configuration error. [Code: CB_ENV_MISSING]",
+        "Application callback URL configuration error. "
+        + "[Code: CB_ENV_MISSING]",
       );
     }
     logger.info(
-      "Invocation: PAYSTACK_SECRET_KEY and" +
-      " APP_CALLBACK_URL check passed.",
+      "Invocation: PAYSTACK_SECRET_KEY and"
+      + " APP_CALLBACK_URL check passed.",
     );
 
     let paystackSdkInstance: Paystack;
@@ -172,10 +174,10 @@ export const createPaystackSubscription = onCall(
     const planId = data.planId;
 
     if (
-      !emailToUse ||
-      !planId ||
-      !planDetails[planId] ||
-      !planDetails[planId].plan_code
+      !emailToUse
+      || !planId
+      || !planDetails[planId]
+      || !planDetails[planId].plan_code
     ) {
       logger.error(
         "createPaystackSubscription: Invalid data for subscription:",
@@ -188,12 +190,14 @@ export const createPaystackSubscription = onCall(
       );
       throw new HttpsError(
         "invalid-argument",
-        "Valid email and planId are required. [Code: INVALID_ARGS]",
+        "Valid email and planId are required. "
+        + "[Code: INVALID_ARGS]",
       );
     }
 
     const plan = planDetails[planId];
-    const reference = `briefly-${userId}-${planId}-${Date.now()}`;
+    const reference
+      = `briefly-${userId}-${planId}-${Date.now()}`;
 
     try {
       const transactionArgs = {
@@ -239,7 +243,8 @@ export const createPaystackSubscription = onCall(
           {message: response.message, data: response.data},
         );
         const errorMessage =
-          response.message || "Paystack initialization indicated failure.";
+          response.message
+          || "Paystack initialization indicated failure.";
         throw new HttpsError(
           "internal", errorMessage + " [Code: PSTK_INIT_FAIL]",
         );
@@ -250,8 +255,8 @@ export const createPaystackSubscription = onCall(
         error,
       );
       const errorMessage =
-        (error instanceof Error ? error.message : String(error)) ||
-        "Unknown error during payment initiation.";
+        (error instanceof Error ? error.message : String(error))
+        || "Unknown error during payment initiation.";
       throw new HttpsError(
         "internal", errorMessage + " [Code: UNKNOWN_INIT_ERR]",
       );
@@ -289,7 +294,7 @@ interface PaystackChargeSuccessData {
  * Processes a successful charge event from Paystack.
  * Verifies the transaction and updates Firestore.
  * @param {PaystackChargeSuccessData} eventData The data from Paystack.
- * @returns {Promise<void>}
+ * @return {Promise<void>}
  */
 async function processChargeSuccessEvent(
   eventData: PaystackChargeSuccessData,
@@ -301,8 +306,8 @@ async function processChargeSuccessEvent(
   const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
   if (!paystackSecretKey) {
     logger.error(
-      "processChargeSuccessEvent: PAYSTACK_SECRET_KEY env var is MISSING. " +
-      "Cannot verify transaction.",
+      "processChargeSuccessEvent: PAYSTACK_SECRET_KEY env var is MISSING. "
+      + "Cannot verify transaction.",
     );
     return; // Cannot proceed without SDK for verification
   }
@@ -328,7 +333,8 @@ async function processChargeSuccessEvent(
   } = eventData;
 
   // Prioritize direct metadata, then plan_object metadata.
-  const effectiveMetadata = metadata || planObject?.metadata || {};
+  const effectiveMetadata
+    = metadata || planObject?.metadata || {};
   const userId = effectiveMetadata?.userId;
   const planId = effectiveMetadata?.planId;
 
@@ -344,20 +350,20 @@ async function processChargeSuccessEvent(
 
   try {
     logger.info(
-      "processChargeSuccessEvent: Verifying transaction with Paystack " +
-      "for reference:", reference,
+      "processChargeSuccessEvent: Verifying transaction with Paystack "
+      + "for reference:", reference,
     );
     const verification =
       await paystackSdkInstance.transaction.verify({reference});
     logger.info(
-      "processChargeSuccessEvent: Paystack verification response for " +
-      `reference ${reference}:`, verification,
+      "processChargeSuccessEvent: Paystack verification response for "
+      + `reference ${reference}:`, verification,
     );
 
     if (!verification.status || verification.data.status !== "success") {
       logger.error(
-        "processChargeSuccessEvent: Paystack transaction re-verification " +
-        `failed for reference ${reference}:`,
+        "processChargeSuccessEvent: Paystack transaction re-verification "
+        + `failed for reference ${reference}:`,
         {
           verificationStatus: verification.data?.status,
           verificationMessage: verification.message,
@@ -366,24 +372,26 @@ async function processChargeSuccessEvent(
       return;
     }
     logger.info(
-      "processChargeSuccessEvent: Transaction re-verified " +
-      "with Paystack for reference:", reference,
+      "processChargeSuccessEvent: Transaction re-verified "
+      + "with Paystack for reference:", reference,
     );
   } catch (verifyError: unknown) {
     logger.error(
-      "processChargeSuccessEvent: Error re-verifying transaction " +
-      `with Paystack for reference ${reference}:`,
-      (verifyError instanceof Error ?
-        verifyError.message :
-        String(verifyError)),
+      "processChargeSuccessEvent: Error re-verifying transaction "
+      + `with Paystack for reference ${reference}:`,
+      (verifyError instanceof Error
+        ? verifyError.message
+        : String(verifyError)),
     );
     return;
   }
 
   const actualPaidAt = paidAt || Date.now();
-  const paidAtDate = new Date(actualPaidAt);
+  const paidAtDate
+    = new Date(actualPaidAt);
   // Ensure currentPeriodEnd is distinctly after currentPeriodStart
-  const currentPeriodEndDate = new Date(paidAtDate.getTime());
+  const currentPeriodEndDate
+    = new Date(paidAtDate.getTime());
   currentPeriodEndDate.setDate(currentPeriodEndDate.getDate() + 30);
 
 
@@ -411,16 +419,16 @@ async function processChargeSuccessEvent(
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     logger.info(
-      `processChargeSuccessEvent: Subscription for ${userId} ` +
-      `(plan:${planId}, ref:${reference}) updated in Firestore.`,
+      `processChargeSuccessEvent: Subscription for ${userId} `
+      + `(plan:${planId}, ref:${reference}) updated in Firestore.`,
     );
   } catch (dbError: unknown) {
     logger.error(
-      "processChargeSuccessEvent: Error updating Firestore for " +
-      `reference ${reference}, userId ${userId}:`,
-      (dbError instanceof Error ?
-        dbError.message :
-        String(dbError)),
+      "processChargeSuccessEvent: Error updating Firestore for "
+      + `reference ${reference}, userId ${userId}:`,
+      (dbError instanceof Error
+        ? dbError.message
+        : String(dbError)),
     );
   }
 }
@@ -430,7 +438,7 @@ async function processChargeSuccessEvent(
  * Handles Paystack webhook events.
  * @param {onRequest.Request} req The Express request object.
  * @param {onRequest.Response} res The Express response object.
- * @returns {Promise<void>}
+ * @return {Promise<void>}
  */
 export const paystackWebhookHandler = onRequest(
   {region: "us-central1"},
@@ -441,11 +449,12 @@ export const paystackWebhookHandler = onRequest(
 
       if (!paystackWebhookSecret) {
         logger.error(
-          "Invocation: CRITICAL: PAYSTACK_WEBHOOK_SECRET process.env " +
-          "var is MISSING.",
+          "Invocation: CRITICAL: PAYSTACK_WEBHOOK_SECRET process.env "
+          + "var is MISSING.",
         );
         res.status(500).send(
-          "Webhook secret configuration error. [Code: WHS_ENV_MISSING]",
+          "Webhook secret configuration error. "
+          + "[Code: WHS_ENV_MISSING]",
         );
         return;
       }
@@ -468,8 +477,8 @@ export const paystackWebhookHandler = onRequest(
 
       if (hash !== req.headers["x-paystack-signature"]) {
         logger.warn(
-          "Invalid Paystack webhook signature. " +
-          `Expected: ${hash}, Got: ${req.headers["x-paystack-signature"]}`,
+          "Invalid Paystack webhook signature. "
+          + `Expected: ${hash}, Got: ${req.headers["x-paystack-signature"]}`,
         );
         res.status(401).send("Invalid signature.");
         return;
@@ -494,13 +503,13 @@ export const paystackWebhookHandler = onRequest(
             event.data as PaystackChargeSuccessData,
           );
           logger.info(
-            "Background processing for charge.success completed for " +
-            `event reference: ${event.data?.reference || "N/A"}`,
+            "Background processing for charge.success completed for "
+            + `event reference: ${event.data?.reference || "N/A"}`,
           );
         } catch (processingError: unknown) {
           logger.error(
-            "Error during background processing of charge.success for " +
-            `event reference: ${event.data?.reference || "N/A"}`,
+            "Error during background processing of charge.success for "
+            + `event reference: ${event.data?.reference || "N/A"}`,
             processingError,
           );
           // Already sent 200 OK, cannot send error response here.
@@ -511,7 +520,8 @@ export const paystackWebhookHandler = onRequest(
           event.event,
         );
         res.status(200).send({
-          message: "Event received and acknowledged (unhandled type).",
+          message: "Event received and acknowledged "
+          + "(unhandled type).",
         });
       }
     });
