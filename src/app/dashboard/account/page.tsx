@@ -36,13 +36,13 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-  DialogTrigger, // Added DialogTrigger here
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import NextImage from 'next/image';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { app } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
-import { collection, query, where, getDocs, limit, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, limit, doc, setDoc, serverTimestamp, orderBy } from "firebase/firestore";
 
 const predefinedIcons = Array.from({ length: 10 }, (_, i) => `https://avatar.iran.liara.run/public/${i + 1}`);
 const defaultPlaceholderUrl = "https://placehold.co/40x40.png";
@@ -98,8 +98,8 @@ interface ReferralCode {
   code: string;
   userId: string;
   isActive: boolean;
-  usesLeft?: number; // Optional, for "unlimited" codes this might not exist
-  createdAt: any; // Firestore Timestamp
+  usesLeft?: number; 
+  createdAt: any; 
 }
 
 export default function AccountPage() {
@@ -136,7 +136,14 @@ export default function AccountPage() {
     }
     setIsLoadingReferralCode(true);
     try {
-      const q = query(collection(db, "referralCodes"), where("userId", "==", currentUser.uid), limit(1));
+      // Fetch the latest active referral code for the user
+      const q = query(
+        collection(db, "referralCodes"), 
+        where("userId", "==", currentUser.uid),
+        where("isActive", "==", true), // Assuming you only want active codes
+        orderBy("createdAt", "desc"), 
+        limit(1)
+      );
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
         const docData = querySnapshot.docs[0].data() as Omit<ReferralCode, 'id'>;
@@ -166,18 +173,18 @@ export default function AccountPage() {
     if (!currentUser) return;
     setIsGeneratingCode(true);
     try {
-      // Simple code generation logic (consider a more robust one for production)
       const code = `BRIEFLY${currentUser.uid.substring(0, 4)}${Math.random().toString(36).substring(2, 7)}`.toUpperCase();
       const newCodeRef = doc(collection(db, "referralCodes"));
       const newCodeData: Omit<ReferralCode, 'id'> = {
         code,
         userId: currentUser.uid,
         isActive: true,
-        usesLeft: 5, // Default uses for a new code
+        usesLeft: 5, 
         createdAt: serverTimestamp(),
       };
       await setDoc(newCodeRef, newCodeData);
-      setUserReferralCode({ id: newCodeRef.id, ...newCodeData });
+      // Set the newly generated code to the state immediately
+      setUserReferralCode({ id: newCodeRef.id, ...newCodeData, createdAt: new Date() }); // Use current date for local state
       toast({ title: "Referral Code Generated!", description: "Your new referral code is ready." });
     } catch (error) {
       console.error("Error generating new referral code:", error);
@@ -337,7 +344,7 @@ export default function AccountPage() {
       });
 
       if (result.data && result.data.authorization_url) {
-        window.location.href = result.data.authorization_url; // Redirect to Paystack
+        window.location.href = result.data.authorization_url; 
       } else {
         throw new Error(result.data?.error || 'Could not initiate payment. Please try again.');
       }
@@ -663,3 +670,4 @@ export default function AccountPage() {
   );
 }
 
+    
