@@ -23,8 +23,8 @@ module.exports = {
     "/lib/**/*", // Ignore built files.
     "/coverage/**/*", // Ignore coverage reports
   ],
+  // Removed "eslint-plugin-require-jsdoc" from plugins
   plugins: ["@typescript-eslint", "import"],
-  // Removed "eslint-plugin-require-jsdoc"
   rules: {
     "quotes": ["error", "double"],
     "import/no-unresolved": 0,
@@ -37,6 +37,8 @@ module.exports = {
       {argsIgnorePattern: "^_"},
     ],
     "@typescript-eslint/no-explicit-any": "warn",
+    // "require-jsdoc": "off", // Rule itself is also removed
+    // "valid-jsdoc": "off" // Rule itself is also removed
   },
   settings: {
     "import/resolver": {

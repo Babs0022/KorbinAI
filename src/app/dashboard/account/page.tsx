@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon, ArrowLeft, CheckCircle2, Star, Gift, Copy as CopyIcon } from 'lucide-react';
+import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon, ArrowLeft, CheckCircle2, Star, Gift, Copy as CopyIcon, PackagePause } from 'lucide-react'; // Added PackagePause
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -56,6 +56,7 @@ interface Tier {
   features: string[];
   cta: string;
   emphasized: boolean;
+  isBetaPaused?: boolean;
 }
 
 const pricingTiers: Tier[] = [
@@ -74,6 +75,7 @@ const pricingTiers: Tier[] = [
     ],
     cta: 'Upgrade to Premium',
     emphasized: true,
+    isBetaPaused: true, 
   },
   {
     name: 'Unlimited',
@@ -90,6 +92,7 @@ const pricingTiers: Tier[] = [
     ],
     cta: 'Go Unlimited',
     emphasized: false,
+    isBetaPaused: true, 
   },
 ];
 
@@ -136,25 +139,23 @@ export default function AccountPage() {
     }
     setIsLoadingReferralCode(true);
     try {
-      // Fetch the latest ACTIVE referral code for the user
       const q = query(
         collection(db, "referralCodes"), 
         where("userId", "==", currentUser.uid),
-        where("isActive", "==", true), // Ensure we only fetch active codes
+        where("isActive", "==", true),
         orderBy("createdAt", "desc"), 
         limit(1)
       );
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
         const docData = querySnapshot.docs[0].data() as Omit<ReferralCode, 'id'>;
-        // Ensure createdAt is a Date object or string for local state if needed, Firestore Timestamps are handled
         let createdAtValue = docData.createdAt;
         if (createdAtValue instanceof Timestamp) {
           createdAtValue = createdAtValue.toDate();
         }
         setUserReferralCode({ id: querySnapshot.docs[0].id, ...docData, createdAt: createdAtValue });
       } else {
-        setUserReferralCode(null); // No active code found
+        setUserReferralCode(null); 
       }
     } catch (error) {
       console.error("Error fetching referral code:", error);
@@ -178,21 +179,17 @@ export default function AccountPage() {
     if (!currentUser) return;
     setIsGeneratingCode(true);
     try {
-      // Ideally, check if an active code already exists and prompt user or deactivate old one.
-      // For simplicity now, we'll just create a new one.
       const code = `BRIEFLY${currentUser.uid.substring(0, 4)}${Math.random().toString(36).substring(2, 7)}`.toUpperCase();
       const newCodeRef = doc(collection(db, "referralCodes"));
-      const newCodeData: Omit<ReferralCode, 'id' | 'createdAt'> & { createdAt: any } = { // Explicitly type createdAt for serverTimestamp
+      const newCodeData: Omit<ReferralCode, 'id' | 'createdAt'> & { createdAt: any } = { 
         code,
         userId: currentUser.uid,
         isActive: true,
-        usesLeft: 5, // Default uses for a new code
+        usesLeft: 5, 
         createdAt: serverTimestamp(),
       };
       await setDoc(newCodeRef, newCodeData);
-      // Set the newly generated code to the state immediately
-      // For local display, convert serverTimestamp to a Date object or keep as is if ReferralCode type allows 'any' for createdAt
-      setUserReferralCode({ id: newCodeRef.id, ...newCodeData, createdAt: new Date() } as ReferralCode); // Cast for immediate display
+      setUserReferralCode({ id: newCodeRef.id, ...newCodeData, createdAt: new Date() } as ReferralCode); 
       toast({ title: "Referral Code Generated!", description: "Your new referral code is ready." });
     } catch (error) {
       console.error("Error generating new referral code:", error);
@@ -236,11 +233,7 @@ export default function AccountPage() {
         if (authContext.currentUser?.reload) {
             await authContext.currentUser.reload();
         }
-        // Manually trigger a state update in AuthContext if needed, or rely on onAuthStateChanged
-        // This part is tricky as updateProfile doesn't trigger onAuthStateChanged by itself for display name/photo
-        // A full reload of user from auth might be needed or a custom context update function
-        authContext.currentUser?.reload().then(() => { // Force reload of user profile
-            // Optionally, update local context state if it doesn't auto-reflect
+        authContext.currentUser?.reload().then(() => { 
         });
 
         toast({ title: "Profile Updated", description: "Your profile has been successfully updated." });
@@ -321,7 +314,7 @@ export default function AccountPage() {
 
       await deleteUser(currentUser);
       toast({ title: "Account Deleted", description: "Your account has been permanently deleted." });
-      router.push('/login'); // Redirect to login or home
+      router.push('/login'); 
     } catch (error: any) {
       console.error("Error deleting account:", error);
       let description = "Could not delete account. Please try again.";
@@ -332,20 +325,29 @@ export default function AccountPage() {
       }
       toast({ title: "Error Deleting Account", description, variant: "destructive" });
       setIsDeletingAccount(false);
-      setShowDeleteConfirm(false); // Ensure dialog closes on error too
+      setShowDeleteConfirm(false); 
       setReAuthPassword('');
     }
-    // No finally block for setIsDeletingAccount(false) here, as successful deletion navigates away.
   };
 
   const handleSubscription = async (tierPlanId: string) => {
+    const selectedTier = pricingTiers.find(t => t.planId === tierPlanId);
+    if (selectedTier?.isBetaPaused) {
+      toast({
+        title: 'Subscriptions Paused',
+        description: 'Paid subscriptions are temporarily paused during our beta phase. Please check back later!',
+        variant: 'default',
+      });
+      return;
+    }
+
     if (!currentUser) {
       toast({
         title: 'Login Required',
         description: 'Please log in or sign up to subscribe.',
         variant: 'destructive',
       });
-      router.push('/login?redirect=/dashboard/account'); // Or current page
+      router.push('/login?redirect=/dashboard/account'); 
       return;
     }
 
@@ -355,14 +357,13 @@ export default function AccountPage() {
       const createSubscriptionFunction = httpsCallable(functions, 'createPaystackSubscription');
 
       const result: any = await createSubscriptionFunction({
-        email: currentUser.email, // Pass user's email
-        planId: tierPlanId, // Pass selected plan ID
+        email: currentUser.email, 
+        planId: tierPlanId, 
       });
 
       if (result.data && result.data.authorization_url) {
-        window.location.href = result.data.authorization_url; // Redirect to Paystack
+        window.location.href = result.data.authorization_url; 
       } else {
-        // If error details are in result.data.error (common for HttpsError from callable)
         throw new Error(result.data?.error || 'Could not initiate payment. Please try again.');
       }
     } catch (error: any) {
@@ -378,7 +379,7 @@ export default function AccountPage() {
   };
 
 
-  if (loading || !currentUser) { // Show loader if auth state is loading OR if not loading but no current user (means redirecting or needs login)
+  if (loading || !currentUser) { 
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -387,7 +388,6 @@ export default function AccountPage() {
     );
   }
 
-  // Determine if user signed up with Email/Password
   const isEmailPasswordUser = currentUser.providerData.some(p => p.providerId === EmailAuthProvider.PROVIDER_ID);
 
   return (
@@ -406,7 +406,6 @@ export default function AccountPage() {
           <h1 className="font-headline text-3xl font-bold text-foreground mb-8">Account Management</h1>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Profile Information Column */}
             <div className="md:col-span-1">
               <GlassCard>
                 <GlassCardHeader>
@@ -414,7 +413,6 @@ export default function AccountPage() {
                 </GlassCardHeader>
                 <GlassCardContent>
                   <form onSubmit={handleSaveProfile} className="space-y-6">
-                    {/* Avatar Selection */}
                     <div className="flex flex-col items-center space-y-4">
                       <Avatar className="h-24 w-24">
                         <AvatarImage src={selectedIconUrl} alt={newDisplayName || authContext.displayName || 'User Avatar'} data-ai-hint="user profile large"/>
@@ -427,7 +425,7 @@ export default function AccountPage() {
                         <div className="grid grid-cols-5 gap-2">
                           {predefinedIcons.map(iconSrc => (
                             <button
-                              type="button" // Important: prevent form submission
+                              type="button" 
                               key={iconSrc}
                               onClick={() => setSelectedIconUrl(iconSrc)}
                               className={`rounded-full aspect-square relative overflow-hidden border-2 transition-all duration-150 ease-in-out
@@ -440,7 +438,6 @@ export default function AccountPage() {
                         </div>
                       </div>
                     </div>
-                    {/* Name and Email Fields */}
                     <div>
                       <Label htmlFor="name">Full Name</Label>
                       <Input
@@ -465,9 +462,7 @@ export default function AccountPage() {
               </GlassCard>
             </div>
 
-            {/* Settings and Actions Column */}
             <div className="md:col-span-2 space-y-8">
-              {/* Change Password Card */}
               {isEmailPasswordUser ? (
                 <GlassCard>
                   <GlassCardHeader>
@@ -507,7 +502,6 @@ export default function AccountPage() {
                 </GlassCard>
               )}
 
-              {/* Referral Program Card */}
               <GlassCard>
                 <GlassCardHeader>
                   <GlassCardTitle className="flex items-center"><Gift className="mr-2 h-5 w-5"/> Referral Program</GlassCardTitle>
@@ -551,39 +545,41 @@ export default function AccountPage() {
                 </GlassCardContent>
               </GlassCard>
 
-
-              {/* Subscription Management Card */}
               <GlassCard>
                 <GlassCardHeader>
                   <GlassCardTitle className="flex items-center"><CreditCard className="mr-2 h-5 w-5"/> Subscription</GlassCardTitle>
                   <GlassCardDescription>Manage your BrieflyAI plan.</GlassCardDescription>
                 </GlassCardHeader>
                 <GlassCardContent>
-                  {/* TODO: Dynamically display current plan based on Firestore subscription data */}
-                  <p className="text-sm">Current Plan: <span className="font-semibold text-primary">Basic Plan</span> (Feature to dynamically show current plan coming soon!)</p>
-
+                  <p className="text-sm mb-3">Current Plan: <span className="font-semibold text-primary">Basic Plan</span> (Feature to dynamically show current plan coming soon!)</p>
+                  <div className="flex items-start space-x-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-300">
+                      <PackagePause className="h-4 w-4 mt-0.5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
+                      <p>Paid subscriptions are temporarily paused during our Beta phase. Thank you for your understanding!</p>
+                  </div>
                   <div className="mt-4 flex gap-2">
                     <Dialog open={isChangePlanModalOpen} onOpenChange={setIsChangePlanModalOpen}>
                       <DialogTrigger asChild>
-                        <Button variant="outline">Change Plan</Button>
+                        <Button variant="outline" disabled={true}>Change Plan</Button>
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col"> {/* Adjusted max width and height */}
+                      <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
                         <DialogHeader>
                           <DialogTitle className="font-headline text-2xl">Choose Your BrieflyAI Plan</DialogTitle>
                           <DialogDescription>
                             Select a plan that best suits your prompting needs. All prices in Nigerian Naira (NGN).
+                            <br/> <span className="font-semibold text-yellow-600 dark:text-yellow-400">(Subscriptions are currently paused for Beta)</span>
                           </DialogDescription>
                         </DialogHeader>
-                        <div className="py-4 grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto"> {/* Scrollable content area */}
+                        <div className="py-4 grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto">
                           {pricingTiers.map((tier) => (
                             <div
                               key={tier.name}
                               className={cn(
-                                "flex flex-col rounded-lg border p-6 shadow-sm transition-all hover:shadow-lg",
-                                tier.emphasized ? "border-2 border-primary bg-primary/5" : "bg-card" // Emphasized style
+                                "flex flex-col rounded-lg border p-6 shadow-sm transition-all",
+                                tier.emphasized && !tier.isBetaPaused ? "border-2 border-primary bg-primary/5" : "bg-card",
+                                tier.isBetaPaused ? "opacity-60" : "hover:shadow-lg"
                               )}
                             >
-                              {tier.emphasized && ( // Star for emphasized tier
+                              {tier.emphasized && !tier.isBetaPaused && (
                                 <div className="absolute top-0 right-0 -mt-3 -mr-3">
                                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl">
                                     <Star className="h-5 w-5" />
@@ -595,9 +591,9 @@ export default function AccountPage() {
                                 <span className="text-3xl font-bold text-foreground">{tier.price}</span>
                                 <span className="text-sm text-muted-foreground">{tier.frequency}</span>
                               </p>
-                              <p className="mt-2 text-sm text-muted-foreground h-10">{tier.description}</p> {/* Fixed height for description */}
+                              <p className="mt-2 text-sm text-muted-foreground h-10">{tier.description}</p> 
 
-                              <ul className="mt-4 space-y-2 text-sm flex-grow"> {/* flex-grow for features list */}
+                              <ul className="mt-4 space-y-2 text-sm flex-grow"> 
                                 {tier.features.map((feature) => (
                                   <li key={feature} className="flex items-start">
                                     <CheckCircle2 className="mr-2 h-4 w-4 text-accent flex-shrink-0 mt-0.5" />
@@ -608,18 +604,20 @@ export default function AccountPage() {
                               <Button
                                 size="lg"
                                 onClick={() => handleSubscription(tier.planId)}
-                                disabled={loadingPlanId === tier.planId}
+                                disabled={loadingPlanId === tier.planId || tier.isBetaPaused}
                                 className={cn(
                                   "mt-6 w-full",
-                                  tier.emphasized ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-accent hover:bg-accent/90 text-accent-foreground"
+                                  tier.emphasized && !tier.isBetaPaused ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
+                                    : tier.isBetaPaused ? "bg-muted hover:bg-muted text-muted-foreground cursor-not-allowed" 
+                                    : "bg-accent hover:bg-accent/90 text-accent-foreground"
                                 )}
                               >
-                                {loadingPlanId === tier.planId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : tier.cta}
+                                {loadingPlanId === tier.planId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (tier.isBetaPaused ? 'Paused (Beta)' : tier.cta)}
                               </Button>
                             </div>
                           ))}
                         </div>
-                        <DialogFooter className="mt-auto pt-4 border-t"> {/* Footer sticks to bottom */}
+                        <DialogFooter className="mt-auto pt-4 border-t"> 
                            <p className="text-xs text-muted-foreground mr-auto">Payments are securely processed via Paystack.</p>
                           <DialogClose asChild>
                             <Button variant="outline">Cancel</Button>
@@ -627,12 +625,11 @@ export default function AccountPage() {
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
-                    <Button variant="ghost" disabled>Cancel Subscription</Button> {/* Placeholder */}
+                    <Button variant="ghost" disabled={true}>Cancel Subscription</Button> 
                   </div>
                 </GlassCardContent>
               </GlassCard>
 
-              {/* Delete Account Card */}
               <GlassCard className="border-destructive/50">
                 <GlassCardHeader>
                   <GlassCardTitle className="flex items-center text-destructive"><Trash2 className="mr-2 h-5 w-5"/> Delete Account</GlassCardTitle>
@@ -680,7 +677,7 @@ export default function AccountPage() {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-                  {!isEmailPasswordUser && ( // Show this note if user is logged in via social provider
+                  {!isEmailPasswordUser && ( 
                     <div className="mt-3 flex items-start space-x-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
                         <ShieldAlert className="h-4 w-4 mt-0.5 flex-shrink-0" />
                         <p>If you signed up using a social provider, you may need to re-authenticate with them to complete this action.</p>
@@ -696,7 +693,3 @@ export default function AccountPage() {
     </div>
   );
 }
-
-    
-
-    

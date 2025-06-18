@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { GlassCard, GlassCardContent, GlassCardDescription, GlassCardFooter, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 import Container from '@/components/layout/Container';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, ShieldAlert } from 'lucide-react'; // Added ShieldAlert
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -23,6 +23,7 @@ interface Tier {
   cta: string;
   href?: string; 
   emphasized: boolean;
+  isBetaPaused?: boolean; // New flag
 }
 
 const pricingTiers: Tier[] = [
@@ -39,7 +40,7 @@ const pricingTiers: Tier[] = [
       'Community support',
     ],
     cta: 'Start for Free',
-    href: '/signup', // This will be overridden if user is logged in
+    href: '/signup', 
     emphasized: false,
   },
   {
@@ -61,8 +62,9 @@ const pricingTiers: Tier[] = [
       'AI Model Compatibility Checker',
       'Priority email support',
     ],
-    cta: 'Go Premium',
+    cta: 'Subscriptions Paused (Beta)',
     emphasized: true,
+    isBetaPaused: true,
   },
   {
     name: 'Unlimited',
@@ -78,8 +80,9 @@ const pricingTiers: Tier[] = [
       'Early access to new features',
       'Dedicated support channel (Coming Soon)',
     ],
-    cta: 'Go Unlimited',
+    cta: 'Subscriptions Paused (Beta)',
     emphasized: false,
+    isBetaPaused: true,
   },
 ];
 
@@ -91,6 +94,15 @@ export function PricingSection() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
   const handleSubscription = async (tier: Tier) => {
+    if (tier.isBetaPaused) {
+      toast({
+        title: 'Subscriptions Paused',
+        description: 'Paid subscriptions are temporarily paused during our beta phase. Please check back later!',
+        variant: 'default',
+      });
+      return;
+    }
+
     if (!currentUser) {
       toast({
         title: 'Login Required',
@@ -143,12 +155,16 @@ export function PricingSection() {
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
             Choose the plan that’s right for you. All prices in Nigerian Naira (NGN). No hidden fees, cancel anytime.
           </p>
+           <div className="mt-4 inline-flex items-center rounded-md bg-yellow-100 dark:bg-yellow-700/30 p-2 text-sm text-yellow-700 dark:text-yellow-300 border border-yellow-300 dark:border-yellow-600">
+            <ShieldAlert className="mr-2 h-5 w-5" />
+            BrieflyAI is currently in Beta. Paid subscriptions are temporarily paused.
+          </div>
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
           {pricingTiers.map((tier) => {
             const ctaHref = tier.planId === 'free' 
               ? (authLoading ? "#" : (currentUser ? "/dashboard" : (tier.href || "/signup")))
-              : "#"; // Paid plans use onClick handler
+              : "#"; 
 
             return (
               <GlassCard
@@ -184,8 +200,8 @@ export function PricingSection() {
                     <Button
                       size="lg"
                       onClick={() => handleSubscription(tier)}
-                      disabled={loadingPlan === tier.planId || authLoading}
-                      className={`w-full ${tier.emphasized ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-accent hover:bg-accent/90 text-accent-foreground'}`}
+                      disabled={loadingPlan === tier.planId || authLoading || tier.isBetaPaused}
+                      className={`w-full ${tier.emphasized && !tier.isBetaPaused ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : tier.isBetaPaused ? 'bg-muted hover:bg-muted text-muted-foreground cursor-not-allowed' : 'bg-accent hover:bg-accent/90 text-accent-foreground'}`}
                     >
                       {authLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (loadingPlan === tier.planId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : tier.cta)}
                     </Button>
