@@ -11,6 +11,8 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import * as admin from 'firebase-admin';
+import fs from 'fs'; // For reading the service account file
+import path from 'path'; // For path manipulation
 
 // Declare db variable, initialize to undefined. It will be set if admin init succeeds.
 let db: admin.firestore.Firestore | undefined;
@@ -19,35 +21,59 @@ let db: admin.firestore.Firestore | undefined;
 // This block runs when the module is first loaded.
 if (!admin.apps.length) {
   console.log("[validate-referral-code-flow]: Attempting Firebase Admin SDK initialization (module load)...");
-  console.log(`[validate-referral-code-flow]: GOOGLE_APPLICATION_CREDENTIALS env var: ${process.env.GOOGLE_APPLICATION_CREDENTIALS || "NOT SET"}`);
-  console.log(`[validate-referral-code-flow]: FIREBASE_CONFIG env var: ${process.env.FIREBASE_CONFIG || "NOT SET"}`); // Less common for Admin SDK, but good to check
-  console.log(`[validate-referral-code-flow]: GCLOUD_PROJECT env var: ${process.env.GCLOUD_PROJECT || "NOT SET"}`);   // Also less common for Admin SDK default init
+  const credsEnvVar = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  console.log(`[validate-referral-code-flow]: GOOGLE_APPLICATION_CREDENTIALS env var: ${credsEnvVar || "NOT SET"}`);
+  console.log(`[validate-referral-code-flow]: FIREBASE_CONFIG env var: ${process.env.FIREBASE_CONFIG || "NOT SET"}`);
+  console.log(`[validate-referral-code-flow]: GCLOUD_PROJECT env var: ${process.env.GCLOUD_PROJECT || "NOT SET"}`);
 
   try {
-    admin.initializeApp(); // For server environments, this typically relies on GOOGLE_APPLICATION_CREDENTIALS
-    console.log("[validate-referral-code-flow]: Firebase Admin SDK initialized successfully via admin.initializeApp().");
+    if (credsEnvVar) {
+      console.log(`[validate-referral-code-flow]: Attempting to load service account from: ${credsEnvVar}`);
+      // Resolve path: If it's an absolute path, it will be used. If relative, it's relative to process.cwd().
+      // For consistent behavior, especially if running from different directories (e.g. genkit dev vs next dev),
+      // it's often better to ensure GOOGLE_APPLICATION_CREDENTIALS is an absolute path or relative to a fixed point.
+      const serviceAccountPath = path.resolve(credsEnvVar); 
+      console.log(`[validate-referral-code-flow]: Resolved service account path to: ${serviceAccountPath}`);
+
+      if (fs.existsSync(serviceAccountPath)) {
+        const serviceAccountFileContent = fs.readFileSync(serviceAccountPath, 'utf8');
+        const serviceAccount = JSON.parse(serviceAccountFileContent);
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount)
+        });
+        console.log("[validate-referral-code-flow]: Firebase Admin SDK initialized successfully using explicit credential from GOOGLE_APPLICATION_CREDENTIALS.");
+      } else {
+        console.error(`[validate-referral-code-flow]: Service account file NOT FOUND at resolved path: ${serviceAccountPath}. Falling back to default initialization which will likely fail if explicit path was intended.`);
+        admin.initializeApp(); // Fallback to default discovery
+        console.log("[validate-referral-code-flow]: Attempted Firebase Admin SDK initialization with default discovery (fallback after file not found). This may not work if credentials aren't available through other means.");
+      }
+    } else {
+      console.warn("[validate-referral-code-flow]: GOOGLE_APPLICATION_CREDENTIALS not set. Attempting default Firebase Admin SDK initialization (likely to fail without other config).");
+      admin.initializeApp(); // Default initialization
+      console.log("[validate-referral-code-flow]: Firebase Admin SDK initialized with default discovery (no explicit creds path).");
+    }
 
     // Now that an app should exist, try to get Firestore instance.
-    if (admin.apps.length > 0 && admin.app().name) { // Check if a default app exists and is named
+    if (admin.apps.length > 0 && admin.app().name) { 
         db = admin.firestore();
-        console.log("[validate-referral-code-flow]: Firestore instance obtained successfully using default app.");
+        console.log("[validate-referral-code-flow]: Firestore instance obtained successfully.");
     } else {
         console.error("[validate-referral-code-flow]: CRITICAL: Firebase Admin SDK initializeApp() called, but no usable app found. Firestore unavailable.");
         db = undefined;
     }
   } catch (e: any) {
     console.error("--------------------------------------------------------------------------------");
-    console.error("[validate-referral-code-flow]: CRITICAL ERROR during Firebase Admin SDK initializeApp():", e.message);
+    console.error("[validate-referral-code-flow]: CRITICAL ERROR during Firebase Admin SDK initializeApp() or credential loading:", e.message);
     console.error("Stack:", e.stack);
-    console.error("This usually means GOOGLE_APPLICATION_CREDENTIALS environment variable is NOT SET correctly for the server environment (e.g., in your .env.local for Next.js), or the service account key file is invalid/unreadable, or the service account lacks necessary permissions.");
-    console.error("Please ensure GOOGLE_APPLICATION_CREDENTIALS points to a valid service account JSON key file with correct permissions in your .env.local file and RESTART your development server.");
+    console.error("This usually means GOOGLE_APPLICATION_CREDENTIALS environment variable is NOT SET correctly, the service account key file is invalid/unreadable/malformed JSON, or the service account lacks necessary permissions.");
+    console.error("Please ensure GOOGLE_APPLICATION_CREDENTIALS points to a valid, readable service account JSON key file with correct permissions in your .env.local file and RESTART your development server.");
     console.error("--------------------------------------------------------------------------------");
     db = undefined; // Ensure db is undefined if init fails
   }
 } else {
   console.log("[validate-referral-code-flow]: Firebase Admin SDK already has an initialized app (module load). Attempting to get Firestore.");
   try {
-    if (admin.app().name) { // Ensure the existing app is usable
+    if (admin.app().name) { 
         db = admin.firestore();
         console.log("[validate-referral-code-flow]: Firestore instance obtained from existing app.");
     } else {
@@ -85,7 +111,7 @@ const validateReferralCodeFlow = ai.defineFlow(
     outputSchema: ValidateReferralCodeOutputSchema,
   },
   async ({ referralCode }) => {
-    if (!db) { // Check if db was successfully initialized at the module level
+    if (!db) { 
         console.error("[validateReferralCodeFlow - IN FLOW]: Firestore service is unavailable (db instance is undefined). Aborting validation.");
         console.error("[validateReferralCodeFlow - IN FLOW]: This indicates a problem with Firebase Admin SDK initialization. CHECK SERVER LOGS for details on GOOGLE_APPLICATION_CREDENTIALS and initialization errors.");
         return {
@@ -119,7 +145,7 @@ const validateReferralCodeFlow = ai.defineFlow(
 
       const referralDoc = snapshot.docs[0];
       const referralData = referralDoc.data();
-      console.log(`[validateReferralCodeFlow - IN FLOW]: Found code ${upperCaseCode}, data:`, referralData);
+      console.log(`[validateReferralCodeFlow - IN FLOW]: Found code ${upperCaseCode}, data:`, JSON.stringify(referralData));
 
 
       if (referralData.usesLeft !== undefined && referralData.usesLeft <= 0) {
@@ -135,6 +161,7 @@ const validateReferralCodeFlow = ai.defineFlow(
           const userData = userDoc.data();
           const displayName = userData?.displayName || "BrieflyAI User";
           const nameParts = displayName.split(" ");
+          // If name has more than one word, take the last word. Otherwise, take the full name.
           const parsedReferrerName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : displayName;
           console.log(`[validateReferralCodeFlow - IN FLOW]: Code ${upperCaseCode} is valid. Referrer: ${parsedReferrerName}`);
           return {
@@ -154,6 +181,7 @@ const validateReferralCodeFlow = ai.defineFlow(
 
     } catch (error) {
       console.error("[validateReferralCodeFlow - IN FLOW]: Error during Firestore query:", error);
+      // Check for Firestore index missing error specifically
       if (error instanceof Error && (error.message.includes("INVALID_ARGUMENT") || error.message.includes("requires an index"))) {
           console.error("[validateReferralCodeFlow - IN FLOW]: Firestore query failed. This might be due to a MISSING INDEX. Please check your Firebase console for index creation suggestions for the 'referralCodes' collection querying 'code' (ASC) and 'isActive' (ASC).");
            return { isValid: false, message: "Error validating code. Index might be missing.", referrerName: undefined, referrerId: undefined };
@@ -163,3 +191,4 @@ const validateReferralCodeFlow = ai.defineFlow(
   }
 );
 
+    
