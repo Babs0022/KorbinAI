@@ -28,7 +28,7 @@
     "eslint": "^8.57.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-import": "^2.29.0",
-    "eslint-plugin-require-jsdoc": "^48.2.0",
+    "eslint-plugin-require-jsdoc": "^46.10.1",
     "firebase-functions-test": "^3.1.0",
     "typescript": "^5.4.2"
   },
