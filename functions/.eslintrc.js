@@ -35,7 +35,7 @@ module.exports = {
           FunctionDeclaration: true,
           MethodDefinition: true,
           ClassDeclaration: true,
-          ArrowFunctionExpression: false, // Typically don't require for simple arrows
+          ArrowFunctionExpression: false, 
           FunctionExpression: true,
         },
       },
@@ -46,9 +46,9 @@ module.exports = {
         prefer: {
           return: "returns",
         },
-        requireReturn: false, // Be lenient if return type is obvious or void
-        requireParamDescription: false, // Be lenient
-        requireReturnDescription: false, // Be lenient
+        requireReturn: false, 
+        requireParamDescription: false, 
+        requireReturnDescription: false, 
       },
     ],
     "object-curly-spacing": ["error", "never"],
@@ -57,7 +57,7 @@ module.exports = {
       "warn",
       {argsIgnorePattern: "^_"},
     ],
-    "@typescript-eslint/no-explicit-any": "warn", // Downgrade to warn
+    "@typescript-eslint/no-explicit-any": "warn", 
   },
   settings: {
     "import/resolver": {
