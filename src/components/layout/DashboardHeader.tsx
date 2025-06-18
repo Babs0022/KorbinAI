@@ -22,6 +22,7 @@ import { signOut } from 'firebase/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardSidebar } from './DashboardSidebar'; // Sidebar for mobile
 import { useState } from 'react';
+import { SupportAssistant } from '@/components/assistant/SupportAssistant'; // Added SupportAssistant
 
 export function DashboardHeader() {
   const router = useRouter();
@@ -54,87 +55,90 @@ export function DashboardHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        <div className="flex items-center">
-          {/* Mobile Sidebar Toggle */}
-          <div className="md:hidden mr-2">
-            <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Open navigation</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-72">
-                <SheetHeader className="p-4 border-b border-border/50 sr-only"> {/* Visually hide if not desired, but keep for ARIA */}
-                  <SheetTitle>Main Menu</SheetTitle>
-                </SheetHeader>
-                {/* Pass onLinkClick to close sidebar on navigation */}
-                <DashboardSidebar onLinkClick={() => setIsMobileSidebarOpen(false)} />
-              </SheetContent>
-            </Sheet>
+    <>
+      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
+          <div className="flex items-center">
+            {/* Mobile Sidebar Toggle */}
+            <div className="md:hidden mr-2">
+              <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Open navigation</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-72">
+                  <SheetHeader className="p-4 border-b border-border/50 sr-only"> {/* Visually hide if not desired, but keep for ARIA */}
+                    <SheetTitle>Main Menu</SheetTitle>
+                  </SheetHeader>
+                  {/* Pass onLinkClick to close sidebar on navigation */}
+                  <DashboardSidebar onLinkClick={() => setIsMobileSidebarOpen(false)} />
+                </SheetContent>
+              </Sheet>
+            </div>
+            {/* Desktop Logo */}
+            <div className="hidden md:block">
+              <Logo />
+            </div>
           </div>
-          {/* Desktop Logo */}
-          <div className="hidden md:block">
-            <Logo />
-          </div>
-        </div>
-        
-        <nav className="flex items-center space-x-2 sm:space-x-4">
-          <Button variant="default" size="sm" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Link href="/create-prompt">
-              <PlusCircle className="mr-2 h-4 w-4" /> Create Prompt
-            </Link>
-          </Button>
           
-          {currentUser ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src={avatarUrl} alt={displayName} data-ai-hint="user avatar"/>
-                    <AvatarFallback>{userInitials}</AvatarFallback>
-                  </Avatar>
+          <nav className="flex items-center space-x-2 sm:space-x-4">
+            <Button variant="default" size="sm" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Link href="/create-prompt">
+                <PlusCircle className="mr-2 h-4 w-4" /> Create Prompt
+              </Link>
+            </Button>
+            
+            {currentUser ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={avatarUrl} alt={displayName} data-ai-hint="user avatar"/>
+                      <AvatarFallback>{userInitials}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{displayName}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {displayEmail}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                   <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                    <LayoutGrid className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/dashboard/account')}>
+                    <UserCircle className="mr-2 h-4 w-4" />
+                    Account
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+               <Button variant="outline" size="sm" asChild>
+                  <Link href="/login">Login</Link>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{displayName}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {displayEmail}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                 <DropdownMenuItem onClick={() => router.push('/dashboard')}>
-                  <LayoutGrid className="mr-2 h-4 w-4" />
-                  Dashboard
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/dashboard/account')}>
-                  <UserCircle className="mr-2 h-4 w-4" />
-                  Account
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-             <Button variant="outline" size="sm" asChild>
-                <Link href="/login">Login</Link>
-              </Button>
-          )}
-        </nav>
-      </div>
-    </header>
+            )}
+          </nav>
+        </div>
+      </header>
+      {currentUser && <SupportAssistant />} {/* Conditionally render SupportAssistant */}
+    </>
   );
 }
     
