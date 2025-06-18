@@ -74,12 +74,12 @@ const planDetails: Record<string, {
   premium: {
     amount: 16000 * 100, // NGN 16,000 in Kobo
     name: "BrieflyAI Premium",
-    plan_code: "PLN_c7d9pwc77ezn3a8", // Replace with your actual plan code
+    plan_code: "PLN_c7d9pwc77ezn3a8", // Replace with actual plan code
   },
   unlimited: {
     amount: 56000 * 100, // NGN 56,000 in Kobo
     name: "BrieflyAI Unlimited",
-    plan_code: "PLN_kb83pnnocije9fz", // Replace with your actual plan code
+    plan_code: "PLN_kb83pnnocije9fz", // Replace with actual plan code
   },
 };
 
@@ -329,8 +329,8 @@ async function processChargeSuccessEvent(
     const directMeta = JSON.stringify(metadata);
     const planObjMeta = JSON.stringify(planObject?.metadata);
     logger.error(
-      `processChargeSuccessEvent: Missing userId/planId for ref ${reference}. ` +
-      `Direct metadata: ${directMeta}, Plan object: ${planObjMeta}`,
+      `processChargeSuccessEvent: Missing userId/planId for ref ${reference}. `
+      + `Direct metadata: ${directMeta}, Plan object: ${planObjMeta}`,
     );
     return;
   }

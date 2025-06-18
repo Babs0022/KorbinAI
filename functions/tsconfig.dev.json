@@ -1,0 +1,10 @@
+
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    ".eslintrc.js"
+  ],
+  "compilerOptions": {
+    "noEmit": true // Typically, dev tsconfig doesn't need to emit files
+  }
+}
