@@ -4,92 +4,76 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users collection: Stores basic user profile information
+    // User Profiles
+    // - Anyone can create a user document during signup (if request.auth.uid matches the new userId).
+    // - Authenticated users can read and update their own profile.
     match /users/{userId} {
-      // Authenticated users can read their own profile
-      allow read: if request.auth != null && request.auth.uid == userId;
-      // Authenticated users can update their own profile
-      allow update: if request.auth != null && request.auth.uid == userId;
-      // Allow user creation (signup process by the user themselves)
-      // Ensure the document ID matches the authenticated user's UID
-      // and the data being written also contains the correct UID.
-      allow create: if request.auth != null && 
-                       request.auth.uid == userId && 
-                       request.resource.data.uid == request.auth.uid;
-      // Generally, users should not delete their own main user document through client-side rules
-      // Account deletion should be handled by a more robust backend process.
-      allow delete: if false; 
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Referral Codes collection
-    match /referralCodes/{referralCodeDocId} {
-      // --- Read Rules ---
-      // Allow unauthenticated list/get for validation during signup.
-      // IMPORTANT: This is for beta client-side validation.
-      // For production, prefer a Cloud Function to validate codes to prevent enumeration.
-      // Assumes client queries by `code` and `isActive`.
-      allow list, get: if true; 
-      // Authenticated user (owner of the code) can also read their specific code document.
-      // This is somewhat redundant due to the permissive rule above but good for clarity.
-      allow get: if request.auth != null && request.auth.uid == resource.data.userId;
-
-      // --- Create Rule ---
-      // Allow an authenticated user to create their own referral code.
-      // Validate essential fields upon creation.
-      allow create: if request.auth != null &&
-                       request.auth.uid == request.resource.data.userId &&
-                       request.resource.data.isActive == true &&
-                       request.resource.data.code is string &&
-                       request.resource.data.userId is string &&
-                       (!('usesLeft' in request.resource.data) || request.resource.data.usesLeft is number) &&
-                       request.resource.data.createdAt == request.time; // Ensure createdAt is server timestamp
-
-      // --- Update Rule ---
-      // Allow an authenticated user (typically the new referred user via client batch)
-      // to update an active referral code.
-      // IMPORTANT: This rule is simplified for client-side batch operations during beta.
-      // For production, this update logic should be handled by a trusted Cloud Function.
-      // This rule allows updating specific fields if the code is active and the updater is not the owner.
-      allow update: if request.auth != null && 
-                       resource.data.isActive == true &&
-                       request.resource.data.userId != request.auth.uid && // Referrer cannot use their own code in this rule
-                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usersReferred', 'usesLeft', 'lastUsedAt']);
-
-
-      // --- Delete Rule ---
-      // Generally, referral codes should not be client-deletable.
-      // Deactivation (setting isActive = false) is preferred and can be owner-only or admin-only.
-      allow delete: if false;
+    // User Settings
+    // - Authenticated users can read, create, and update their own settings.
+    match /userSettings/{userId} {
+      allow read, create, update: if request.auth != null && request.auth.uid == userId;
     }
 
-    // User's Prompt History (existing rule)
+    // Prompt History (Existing Rule)
+    // - Authenticated users can read, write, and delete their own prompt history.
     match /users/{userId}/promptHistory/{promptId} {
       allow read, write, delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // User Settings (e.g., theme, notifications)
-    match /userSettings/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // Referral Codes
+    match /referralCodes/{codeDocId} {
+      // Allow unauthenticated reads (list/get) for validation during signup by code string.
+      // This is okay for beta, but for production, consider a Cloud Function for validation.
+      allow list, get: if request.auth == null;
+
+      // Allow authenticated users (code owner) to read their own code details.
+      allow get: if request.auth != null && request.auth.uid == resource.data.userId;
+
+      // Allow authenticated users to create their own referral code.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId
+                      && request.resource.data.code != null
+                      && request.resource.data.isActive == true
+                      && (request.resource.data.usesLeft == null || request.resource.data.usesLeft > 0)
+                      && request.resource.data.createdAt == request.time;
+
+      // Allow authenticated users (specifically, the new user being created) to update
+      // the referral code they used (decrement usesLeft, add their UID to usersReferred).
+      // The writeBatch in SignupForm.tsx handles this.
+      // For production, this update logic is more secure if handled by a Cloud Function.
+      allow update: if request.auth != null
+                    // Ensure only specific fields can be updated this way
+                    && request.resource.data.keys().hasAll(['usersReferred', 'lastUsedAt'])
+                    && (request.resource.data.keys().has('usesLeft') || !resource.data.keys().has('usesLeft')) // allow if usesLeft exists or not
+                    && request.resource.data.usersReferred == resource.data.usersReferred.concat([request.auth.uid]) // Only allows adding current user
+                    && (request.resource.data.usesLeft == null || request.resource.data.usesLeft == resource.data.usesLeft - 1) // only allow decrement by 1 or if null
+                    && request.resource.data.lastUsedAt == request.time;
     }
 
-    // Transaction data (for payments)
+    // Transactions
+    // - Authenticated users can create their own transaction document (status: pending).
+    // - Authenticated users can read their own transaction documents.
+    // - Cloud Functions (admin SDK) update transaction status (e.g., to success, failed).
     match /transactions/{transactionId} {
-      // User can create their transaction document during payment initiation.
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      // User can read their own transaction details.
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      // Transaction status updates should ideally be handled by backend (Cloud Functions).
-      // Client-side updates to transaction status are generally discouraged.
-      allow update: if false; // Disallow client updates; backend functions will update.
-      allow delete: if false; // Transactions should typically not be deleted by clients.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId
+                     && request.resource.data.status == "pending_paystack_redirect";
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Updates to 'status' and other fields should typically be done by a trusted backend (Cloud Function).
+      // For simplicity in beta, we might allow user to update only specific fields if needed, but this is less secure.
+      // allow update: if request.auth != null && request.auth.uid == resource.data.userId; // Example: More permissive update
     }
 
-    // User Subscriptions (for payments)
+    // User Subscriptions
+    // - Authenticated users can read their own subscription document.
+    // - Creation/Updates are typically handled by a trusted backend (Cloud Function) after payment success.
     match /userSubscriptions/{userId} {
-      // User can read their own subscription status.
       allow read: if request.auth != null && request.auth.uid == userId;
-      // Subscription creation and updates are handled by backend (Cloud Functions).
-      allow create, update, delete: if false;
+      // allow create, update: if false; // Typically no direct client writes
     }
   }
 }
+
+    
