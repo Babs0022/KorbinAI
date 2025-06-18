@@ -1,9 +1,0 @@
-
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "noUnusedLocals": false, // Can be helpful during development
-    "noUnusedParameters": false // Can be helpful during development
-  },
-  "include": ["src", ".eslintrc.js"]
-}
