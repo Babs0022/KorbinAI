@@ -1,5 +1,4 @@
 
-import * as functions from "firebase-functions";
 import {onCall, HttpsError, onRequest} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
@@ -77,7 +76,7 @@ interface CreateSubscriptionData {
 export const createPaystackSubscription = onCall(
   {region: "us-central1", timeoutSeconds: 60, memory: "256MiB"},
   async (request) => {
-    logger.info("createPaystackSubscription: Invoked.", {structuredData: true, requestId: request.id});
+    logger.info("createPaystackSubscription: Invoked.", {structuredData: true});
 
     const currentPaystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
     const currentAppCallbackUrl = process.env.APP_CALLBACK_URL;
