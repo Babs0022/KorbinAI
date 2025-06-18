@@ -6,7 +6,7 @@ import Paystack from "paystack-node";
 import * as crypto from "crypto";
 import cors from "cors";
 
-// Log environment variable access at the module level (cold start)
+// Initial Log: Attempt to read environment variables at module load
 logger.info(
   "Function Cold Start: Attempting to read environment variables " +
   "from process.env."
@@ -38,6 +38,7 @@ const corsHandler = cors({
     "https://6000-firebase-studio-1749655004240.cluster-axf5tvtfjjfekvhwxwkkkzsk2y.cloudworkstations.dev/",
   ],
 });
+
 
 // Attempt to initialize Paystack globally, but don't let it crash the module
 let globalPaystackInstance: Paystack | null = null;
@@ -90,6 +91,7 @@ export const createPaystackSubscription = onCall(
   async (request) => {
     logger.info("createPaystackSubscription: Invoked.", {structuredData: true});
 
+    // Log environment variables available at runtime within the handler
     const currentPaystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
     const currentAppCallbackUrl = process.env.APP_CALLBACK_URL;
 
@@ -127,6 +129,9 @@ export const createPaystackSubscription = onCall(
       );
     }
 
+    // Initialize Paystack SDK instance for this call
+    // This ensures that even if global init failed,
+    // we attempt with current env vars
     let paystackSdkInstance: Paystack | null = null;
     try {
       logger.info(
@@ -236,6 +241,18 @@ export const createPaystackSubscription = onCall(
         "with args:",
         JSON.stringify(transactionArgs)
       );
+
+      // Ensure paystackSdkInstance is not null before using it
+      if (!paystackSdkInstance) {
+        logger.error(
+          "createPaystackSubscription: CRITICAL - Paystack SDK " +
+          "instance is null before calling initialize. This should not happen."
+        );
+        throw new HttpsError(
+          "internal",
+          "Payment SDK error. [Code: SDK_NULL_PRE_INIT]"
+        );
+      }
 
       const response =
         await paystackSdkInstance.transaction.initialize(transactionArgs);
@@ -363,6 +380,8 @@ async function processChargeSuccessEvent(
   let paystackInstanceForVerify = globalPaystackInstance;
   const runtimePaystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
 
+  // Attempt to re-initialize SDK for verification if global one is null
+  // AND a runtime key is available.
   if (!paystackInstanceForVerify && runtimePaystackSecretKey) {
     logger.info(
       "processChargeSuccessEvent: Global Paystack SDK was null, " +
@@ -379,9 +398,10 @@ async function processChargeSuccessEvent(
         "processChargeSuccessEvent: Error re-initializing local " +
         "Paystack SDK for verification:", sdkError
       );
-      paystackInstanceForVerify = null;
+      paystackInstanceForVerify = null; // Ensure it's null if re-init fails
     }
   } else if (!paystackInstanceForVerify && !runtimePaystackSecretKey) {
+    // This case means global was null AND no runtime key was found.
     logger.warn(
         "processChargeSuccessEvent: PAYSTACK_SECRET_KEY MISSING at runtime. " +
         "Cannot initialize Paystack SDK for verification."
@@ -395,7 +415,7 @@ async function processChargeSuccessEvent(
       "This usually means PAYSTACK_SECRET_KEY was missing or failed to init. " +
       "Cannot verify transaction for reference: " + eventData.reference;
     logger.error("processChargeSuccessEvent: " + logMsg);
-    return;
+    return; // Critical: Cannot proceed without SDK
   }
 
   const {
@@ -408,6 +428,7 @@ async function processChargeSuccessEvent(
     paid_at: paidAt,
   } = eventData;
 
+  // Prioritize direct metadata, then plan_object metadata.
   const effectiveMetadata = metadata || planObject?.metadata || {};
   const userId = effectiveMetadata?.userId;
   const planId = effectiveMetadata?.planId;
@@ -477,10 +498,10 @@ async function processChargeSuccessEvent(
         verifyError.message
       );
     }
-    return;
+    return; // Stop processing if verification fails
   }
 
-  const actualPaidAt = paidAt || Date.now();
+  const actualPaidAt = paidAt || Date.now(); // Fallback if paid_at is missing
   const subscriptionData = {
     userId,
     planId,
@@ -489,10 +510,11 @@ async function processChargeSuccessEvent(
     currentPeriodStart:
       admin.firestore.Timestamp.fromDate(new Date(actualPaidAt)),
     currentPeriodEnd: admin.firestore.Timestamp.fromDate(
+      // Approx 30 days for monthly
       new Date(new Date(actualPaidAt).getTime() + 30 * 24 * 60 * 60 * 1000)
     ),
     paystackReference: reference,
-    amountPaid: amount,
+    amountPaid: amount, // Amount in kobo/cents
     currency: currency,
     lastEventTimestamp: admin.firestore.FieldValue.serverTimestamp(),
   };
@@ -504,7 +526,7 @@ async function processChargeSuccessEvent(
     );
     await db.collection("userSubscriptions").doc(userId).set(
       subscriptionData,
-      {merge: true}
+      {merge: true} // Merge to avoid overwriting other potential fields
     );
     await db.collection("transactions").doc(reference).update({
       status: "success",
@@ -513,7 +535,8 @@ async function processChargeSuccessEvent(
     });
     logger.info(
       `processChargeSuccessEvent: Subscription for ${userId} ` +
-      `(plan:${planId}, ref:${reference}) data updated in Firestore.`
+      `(plan:${planId}, ref:${reference}) data successfully updated` +
+      "in Firestore."
     );
   } catch (dbError: unknown) {
     const dbErrorDetails = {
@@ -571,15 +594,24 @@ export const paystackWebhookHandler = onRequest(
       return;
     }
 
-    // It's crucial globalPaystackInstance is available or can be re-init
-    // for processChargeSuccessEvent to work.
-    // The actual check for this is inside processChargeSuccessEvent.
+    // Ensure Paystack SDK (global or re-initialized) is available
+    // for processChargeSuccessEvent
+    if (!globalPaystackInstance && !currentPaystackSecretKey) {
+      logger.error(
+        "paystackWebhookHandler: CRITICAL - PAYSTACK_SECRET_KEY is MISSING. " +
+        "Cannot verify charge.success events."
+      );
+      // We might still process other event types if they don't need verification,
+      // but charge.success is crucial. For now, let corsHandler proceed.
+      // If strictly needed, we could return 500 here too for charge.success.
+    }
 
     corsHandler(req, res, async () => {
       logger.info(
         "paystackWebhookHandler (cors): Request received for path:", req.path
       );
 
+      // Paystack recommends using the raw request body for signature verification
       const requestBodyString = req.rawBody?.toString();
       if (!requestBodyString) {
         logger.error(
@@ -593,7 +625,7 @@ export const paystackWebhookHandler = onRequest(
       }
 
       const hash = crypto.createHmac("sha512", currentWebhookSecret)
-        .update(requestBodyString)
+        .update(requestBodyString) // Use the raw body
         .digest("hex");
 
       if (hash !== req.headers["x-paystack-signature"]) {
@@ -606,7 +638,7 @@ export const paystackWebhookHandler = onRequest(
       }
 
       logger.info("paystackWebhookHandler: Webhook signature VERIFIED.");
-      const event = req.body;
+      const event = req.body; // req.body should be parsed JSON by this point
       logger.info(
         "paystackWebhookHandler: Received Paystack event type:",
         event.event,
@@ -615,10 +647,13 @@ export const paystackWebhookHandler = onRequest(
       );
 
       if (event.event === "charge.success") {
+        // Acknowledge immediately to Paystack
         res.status(200).send(
           "Webhook for charge.success acknowledged. " +
           "Processing in background."
         );
+
+        // Perform the actual processing asynchronously
         try {
           await processChargeSuccessEvent(
             event.data as PaystackChargeSuccessData
@@ -635,6 +670,8 @@ export const paystackWebhookHandler = onRequest(
             "paystackWebhookHandler: " + errorMsg,
             processingError
           );
+          // Note: We've already sent 200 OK, so can't send error response here.
+          // Errors here are logged for investigation.
         }
       } else {
         logger.info(
