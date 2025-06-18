@@ -1,3 +1,4 @@
+
 module.exports = {
   root: true,
   env: {
@@ -22,33 +23,21 @@ module.exports = {
     "/lib/**/*", // Ignore built files.
     "/coverage/**/*", // Ignore coverage reports
   ],
-  plugins: ["@typescript-eslint", "import", "require-jsdoc"],
+  plugins: ["@typescript-eslint", "import"],
   rules: {
     "quotes": ["error", "double"],
     "import/no-unresolved": 0,
     "indent": ["error", 2],
     "max-len": ["error", {"code": 80}],
-    "require-jsdoc": [
-      "warn",
-      {
-        require: {
-          FunctionDeclaration: true,
-          MethodDefinition: true,
-          ClassDeclaration: true,
-          ArrowFunctionExpression: false, 
-          FunctionExpression: true,
-        },
-      },
-    ],
     "valid-jsdoc": [
       "warn",
       {
         prefer: {
           return: "returns",
         },
-        requireReturn: false, 
-        requireParamDescription: false, 
-        requireReturnDescription: false, 
+        requireReturn: false,
+        requireParamDescription: false,
+        requireReturnDescription: false,
       },
     ],
     "object-curly-spacing": ["error", "never"],
@@ -57,7 +46,7 @@ module.exports = {
       "warn",
       {argsIgnorePattern: "^_"},
     ],
-    "@typescript-eslint/no-explicit-any": "warn", 
+    "@typescript-eslint/no-explicit-any": "warn",
   },
   settings: {
     "import/resolver": {
