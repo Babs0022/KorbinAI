@@ -3,71 +3,51 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Default deny all reads and writes unless explicitly allowed
+    match /{document=**} {
+      allow read, write: if false;
+    }
 
-    // Users Collection
+    // Users can manage their own user document
     match /users/{userId} {
       allow read: if request.auth.uid != null && request.auth.uid == userId;
-      allow create: if request.auth.uid != null &&
-                       request.auth.uid == request.resource.data.uid &&
-                       request.resource.data.email == request.auth.token.email &&
-                       request.resource.data.displayName is string &&
-                       request.resource.data.createdAt == request.time;
-      allow update: if request.auth.uid != null && request.auth.uid == userId &&
-                       // Allow only specific fields to be updated by user
-                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt']);
+      // User can create their own document if their auth.uid matches the documentId (userId)
+      // AND the 'uid' field in the document data also matches their auth.uid.
+      allow create: if request.auth.uid != null
+                    && request.auth.uid == userId
+                    && request.resource.data.uid == request.auth.uid;
+      // User can update their own document if their auth.uid matches the documentId.
+      // Consider restricting which fields can be updated using request.resource.data.diff().affectedKeys().hasOnly([...])
+      allow update: if request.auth.uid != null && request.auth.uid == userId;
+      // User can delete their own document.
       allow delete: if request.auth.uid != null && request.auth.uid == userId;
-
-      // User Subcollections (e.g., promptHistory)
-      match /promptHistory/{promptId} {
-        allow read, write, delete: if request.auth.uid != null && request.auth.uid == userId;
-      }
     }
 
-    // User Settings Collection
+    // Transactions: User can create and read their own transactions.
+    // Update/delete might need more specific rules (e.g., based on status).
+    match /transactions/{transactionId} {
+      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth.uid != null && resource.data.userId == request.auth.uid;
+      allow update: if request.auth.uid != null && resource.data.userId == request.auth.uid; // Example: only allow update if status is 'pending'
+      // allow delete: if false; // Generally, transactions are not deleted.
+    }
+
+    // User Subscriptions: User can read their own subscription document.
+    // Writes to subscriptions are typically handled by backend/webhook functions.
+    match /userSubscriptions/{userId} {
+      allow read: if request.auth.uid != null && request.auth.uid == userId;
+      // Writes should be server-side/admin only
+      allow create, update, delete: if false;
+    }
+
+    // User Settings: User can manage their own settings document
     match /userSettings/{userId} {
       allow read, write: if request.auth.uid != null && request.auth.uid == userId;
-      // Write: allow if user is creating their own settings or updating existing ones.
-      // Ensure only expected fields are written.
-      allow create: if request.auth.uid == userId &&
-                       request.resource.data.keys().hasOnly(['emailNotifications', 'promotionalEmails', 'theme']);
-      allow update: if request.auth.uid == userId &&
-                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['emailNotifications', 'promotionalEmails', 'theme']);
-
     }
 
-    // Transactions Collection (for Paystack integration)
-    match /transactions/{transactionId} {
-      // Users can create their own pending transaction document
-      allow create: if request.auth.uid != null &&
-                       request.resource.data.userId == request.auth.uid &&
-                       request.resource.data.status == "pending_paystack_redirect";
-      // Server (backend function) can update transaction status to success/failure
-      // Users should not be able to directly update the status of a transaction.
-      // This is typically handled by a backend function after webhook verification.
-      // For simplicity in this example, read access is given to the user for their transactions.
-      // In a production app, you might restrict updates to backend processes only.
-      allow read: if request.auth.uid != null && request.auth.uid == resource.data.userId;
-      // Updates should be handled by backend functions.
-      allow update: if false; // Or more specific rules for backend updates if necessary
-      allow delete: if false; // Transactions generally shouldn't be deleted by users
-    }
-
-    // User Subscriptions Collection
-    match /userSubscriptions/{userId} {
-      // Only the user can read their own subscription details.
-      allow read: if request.auth.uid != null && request.auth.uid == userId;
-      // Subscriptions are created/updated by backend functions after payment verification.
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    // Referral Codes Collection - REMOVED/DEPRECATED
-    // No rules needed as the system is removed. If collection still exists,
-    // it should be secured or deleted if not used by any other process.
-    // For safety, explicitly deny all access if the collection might still exist.
-    match /referralCodes/{codeDocId} {
-       allow read, write, create, update, delete: if false;
+    // Prompt History (subcollection of users): User can manage their own prompt history
+    match /users/{userId}/promptHistory/{promptId} {
+      allow read, create, update, delete: if request.auth.uid != null && request.auth.uid == userId;
     }
   }
 }

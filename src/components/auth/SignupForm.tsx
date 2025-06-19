@@ -33,28 +33,39 @@ export function SignupForm() {
       if (newUser) {
         await updateProfile(newUser, {
           displayName: name,
-          // photoURL: can be set later or if you have a default
+          photoURL: null, 
         });
 
-        // Create user document in Firestore
         const userDocRef = doc(db, "users", newUser.uid);
-        await setDoc(userDocRef, {
+        const userData = {
             uid: newUser.uid,
             email: newUser.email,
             displayName: name,
-            photoURL: newUser.photoURL || null,
+            photoURL: newUser.photoURL || null, 
             createdAt: Timestamp.now(),
-        }, { merge: true }); // Use merge true to be safe if doc somehow exists
+        };
+        
+        console.log("[SignupForm] Attempting to write user document to Firestore.");
+        console.log("[SignupForm] Path:", userDocRef.path);
+        console.log("[SignupForm] Data being sent:", JSON.stringify(userData, null, 2));
+        console.log("[SignupForm] Current auth state (client-side):", auth.currentUser ? `UID: ${auth.currentUser.uid}` : "No current user on client");
+
+
+        await setDoc(userDocRef, userData, { merge: true });
+        
+        console.log("[SignupForm] User document successfully written to Firestore.");
+
+        toast({
+          title: "Account Created!",
+          description: "Welcome to BrieflyAI. Let's get you started.",
+        });
+        router.push("/onboarding");
+      } else {
+        throw new Error("User creation failed, no user object returned.");
       }
 
-      toast({
-        title: "Account Created!",
-        description: "Welcome to BrieflyAI. Let's get you started.",
-      });
-      router.push("/onboarding"); // Redirect to onboarding after successful signup
-
     } catch (error: any) {
-      console.error("Signup process error:", error);
+      console.error("[SignupForm] Error during signup process:", error);
       let title = "Signup Failed";
       let description = "An unexpected error occurred. Please try again.";
 
@@ -70,12 +81,16 @@ export function SignupForm() {
           case "auth/invalid-email":
             description = "The email address is not valid.";
             break;
+          case "permission-denied": // Firestore specific error
+            description = "Could not save user data due to a permissions issue. Please contact support if this persists.";
+            console.error("[SignupForm] Firestore Permission Denied during signup:", error.message);
+            break;
           default:
             description = `An error occurred (${error.code}). Please try again.`;
-            console.error(`Firebase error during signup: ${error.code} - ${error.message}`);
+            console.error(`[SignupForm] Firebase error during signup: ${error.code} - ${error.message}`);
         }
       } else {
-         console.error("Non-Firebase error during signup:", error.message);
+         console.error("[SignupForm] Non-Firebase error during signup:", error.message);
       }
 
       toast({
