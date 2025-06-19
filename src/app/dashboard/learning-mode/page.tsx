@@ -38,13 +38,13 @@ export default function LearningModePage() {
               <div>
                 <h3 className="font-headline text-xl font-semibold text-foreground mb-2 flex items-center">
                   <TrendingUp className="mr-2 h-5 w-5 text-accent" />
-                  Our Goal: Personalized Prompting
+                  Our Goal: Personalized Prompting Excellence
                 </h3>
                 <p className="text-muted-foreground">
-                  The "Prompt Learning Mode" is our commitment to making BrieflyAI adapt to your unique style and needs. 
-                  Over time, the system aims to learn from the types of prompts you generate, the refinements you make, 
-                  and the features you use most. This helps us tailor survey questions, refine prompt suggestions, 
-                  and ultimately make your prompt creation process faster and more effective.
+                  The "Prompt Learning Mode" reflects our commitment to making BrieflyAI adapt to your unique style and needs.
+                  It's about continuously refining BrieflyAI's internal strategies and system prompts that guide the underlying AI model (like Gemini).
+                  This is different from training a foundational LLM like GPT-4 or Claude from scratch.
+                  Instead, we focus on making BrieflyAI smarter by improving how it *uses* powerful existing AI models.
                 </p>
               </div>
 
@@ -57,27 +57,28 @@ export default function LearningModePage() {
                   Currently, BrieflyAI uses the immediate context you provide—your goal and survey answers—to generate and optimize prompts.
                 </p>
                 <p className="text-muted-foreground">
-                  <strong>Our Vision for Enhancement:</strong> As you continue to use BrieflyAI, especially features like the Prompt Vault and Refinement Hub, 
-                  we plan to develop capabilities that analyze broader patterns in your activity (e.g., common topics, preferred output styles, frequently used models). 
+                  <strong>Our Vision for Enhancement:</strong> As you continue to use BrieflyAI, especially features like the Prompt Vault and Refinement Hub,
+                  we plan to develop capabilities that analyze broader patterns in your activity (e.g., common topics, preferred output styles, frequently used models).
                   This information will be used to:
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground mt-2 pl-4 space-y-1">
                   <li>Offer more relevant initial survey questions.</li>
                   <li>Provide more insightful real-time suggestions.</li>
                   <li>Suggest refinements that align better with your past successes.</li>
+                  <li>Further tune the system prompts BrieflyAI uses internally for even better results.</li>
                 </ul>
                  <p className="text-muted-foreground mt-3">
-                  This is an evolving aspect of BrieflyAI. The more you interact with the platform and its features, 
+                  This is an evolving aspect of BrieflyAI. The more you interact with the platform and its features,
                   the better the foundation we have for building these intelligent personalization layers.
                 </p>
               </div>
               
               <div>
                 <h3 className="font-headline text-xl font-semibold text-foreground mb-2">
-                  Your Role in Enhancing Learning
+                  Your Role in Enhancing BrieflyAI's "Learning"
                 </h3>
                 <p className="text-muted-foreground">
-                  For now, the best way to "teach" BrieflyAI is by actively using it:
+                  For now, the best way to help BrieflyAI "learn" and improve is by actively using its features:
                 </p>
                  <ul className="list-disc list-inside text-muted-foreground mt-2 pl-4 space-y-1">
                   <li>Consistently use the <strong>Prompt Generator</strong> for various tasks.</li>
@@ -102,3 +103,4 @@ export default function LearningModePage() {
     </div>
   );
 }
+
