@@ -6,14 +6,17 @@ import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BarChart3, Star, Cpu, TrendingUp, AlertTriangle, Info } from 'lucide-react';
+import { ArrowLeft, BarChart3, Star, Cpu, TrendingUp, AlertTriangle, Info, Archive } from 'lucide-react';
 import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Line, LineChart, TooltipProps } from 'recharts';
+import { Line, LineChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { collection, query, getCountFromServer } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 // Sample data for charts - replace with actual data when available
 const chartDataMonthly = [
@@ -47,13 +50,49 @@ const topPromptsData = [
 export default function AnalyticsPage() {
   const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
+  const [totalUserPrompts, setTotalUserPrompts] = useState<number | null>(null);
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
 
   useEffect(() => {
-    setIsClient(true); // Ensures charts render only on client
+    setIsClient(true); 
   }, []);
 
-  if (authLoading) {
+  useEffect(() => {
+    if (authLoading) return; 
+
+    if (!currentUser) {
+      router.push('/login');
+      return;
+    }
+
+    const fetchMetrics = async () => {
+      if (!currentUser) {
+        setIsLoadingMetrics(false);
+        setTotalUserPrompts(0);
+        return;
+      }
+      setIsLoadingMetrics(true);
+      try {
+        const userPromptsQuery = query(collection(db, `users/${currentUser.uid}/promptHistory`));
+        const countSnapshot = await getCountFromServer(userPromptsQuery);
+        setTotalUserPrompts(countSnapshot.data().count);
+      } catch (error) {
+        console.error("Error loading total prompts count:", error);
+        toast({ title: "Error Loading Metrics", description: "Could not load total prompts count.", variant: "destructive"});
+        setTotalUserPrompts(0);
+      } finally {
+        setIsLoadingMetrics(false);
+      }
+    };
+
+    fetchMetrics();
+
+  }, [currentUser, authLoading, router, toast]);
+
+
+  if (authLoading || (!currentUser && !authLoading) || (currentUser && isLoadingMetrics && totalUserPrompts === null)) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -61,10 +100,9 @@ export default function AnalyticsPage() {
       </div>
     );
   }
-
+  
   if (!currentUser && !authLoading) {
-    router.push('/login');
-    return (
+     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
          <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
         <p className="mt-4 text-muted-foreground">Please log in to view analytics.</p>
@@ -88,21 +126,25 @@ export default function AnalyticsPage() {
           </div>
           <h1 className="font-headline text-3xl font-bold text-foreground mb-2">Prompt Analytics Dashboard</h1>
           <p className="text-muted-foreground mb-8">
-            Insights into your prompt creation and performance. (Illustrative data)
+            Insights into your prompt creation and performance.
           </p>
 
           {/* Key Metrics Section */}
           <section className="mb-8">
-            <h2 className="font-headline text-xl font-semibold text-foreground mb-4">Key Metrics Overview</h2>
+            <h2 className="font-headline text-xl font-semibold text-foreground mb-4">Your Key Metrics</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <GlassCard>
                 <GlassCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <GlassCardTitle className="text-sm font-medium text-muted-foreground">Total Prompts Generated</GlassCardTitle>
-                  <BarChart3 className="h-5 w-5 text-primary" />
+                  <GlassCardTitle className="text-sm font-medium text-muted-foreground">Total Prompts Created</GlassCardTitle>
+                  <Archive className="h-5 w-5 text-primary" />
                 </GlassCardHeader>
                 <GlassCardContent>
-                  <div className="text-2xl font-bold text-foreground">128</div> {/* Placeholder */}
-                  <p className="text-xs text-muted-foreground">+15 from last month</p>
+                  {isLoadingMetrics && totalUserPrompts === null ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  ) : (
+                    <div className="text-2xl font-bold text-foreground">{totalUserPrompts ?? 0}</div>
+                  )}
+                  <p className="text-xs text-muted-foreground">Prompts saved to your vault.</p>
                 </GlassCardContent>
               </GlassCard>
               <GlassCard>
@@ -111,8 +153,8 @@ export default function AnalyticsPage() {
                   <Star className="h-5 w-5 text-primary" />
                 </GlassCardHeader>
                 <GlassCardContent>
-                  <div className="text-2xl font-bold text-foreground">8.2 / 10</div> {/* Placeholder */}
-                  <p className="text-xs text-muted-foreground">Based on AI analysis</p>
+                  <div className="text-2xl font-bold text-foreground">N/A</div> {/* Illustrative */}
+                  <p className="text-xs text-muted-foreground">Analysis feature active (illustrative avg.)</p>
                 </GlassCardContent>
               </GlassCard>
               <GlassCard>
@@ -121,8 +163,8 @@ export default function AnalyticsPage() {
                   <Cpu className="h-5 w-5 text-primary" />
                 </GlassCardHeader>
                 <GlassCardContent>
-                  <div className="text-2xl font-bold text-foreground">GPT-4</div> {/* Placeholder */}
-                  <p className="text-xs text-muted-foreground">35% of analyzed prompts</p>
+                  <div className="text-2xl font-bold text-foreground">GPT-4</div> {/* Illustrative */}
+                  <p className="text-xs text-muted-foreground">35% of analyzed prompts (illustrative)</p>
                 </GlassCardContent>
               </GlassCard>
             </div>
@@ -164,7 +206,7 @@ export default function AnalyticsPage() {
                             yAxisId="right" 
                             orientation="right" 
                             stroke="hsl(var(--accent))"
-                            domain={[0, 10]} // Adjusted domain
+                            domain={[0, 10]} 
                             tickLine={false}
                             axisLine={false}
                             tickMargin={8}
@@ -230,7 +272,7 @@ export default function AnalyticsPage() {
           
           <div className="mt-6 flex items-center space-x-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-300">
             <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <p><strong>Note:</strong> The data shown on this dashboard is for illustrative purposes only. Full dynamic analytics tracking is currently under development.</p>
+            <p><strong>Note:</strong> Some data on this dashboard (charts, top prompts) is for illustrative purposes. Full dynamic analytics tracking for these sections is under development.</p>
           </div>
 
         </Container>
