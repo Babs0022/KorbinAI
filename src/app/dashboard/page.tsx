@@ -41,7 +41,7 @@ import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCar
 import Container from '@/components/layout/Container';
 import { Badge } from '@/components/ui/badge';
 
-const features: Omit<FeatureInfo, 'isPremium' | 'isUnlimitedFeature'>[] = [ // Omit removed properties
+const features: Omit<FeatureInfo, 'isPremium' | 'isUnlimitedFeature'>[] = [ 
   {
     title: "Prompt Generator",
     description: "Input goals, answer surveys, and get optimized AI prompts.",
@@ -162,11 +162,13 @@ export default function DashboardPage() {
 
         return {
           id: docSnap.id,
-          name: data.name || data.goal,
-          goal: data.goal,
-          optimizedPrompt: data.optimizedPrompt,
+          name: data.name || data.goal || 'Untitled Prompt',
+          goal: data.goal || '',
+          optimizedPrompt: data.optimizedPrompt || '',
           timestamp: timestampStr,
           tags: data.tags || [],
+          qualityScore: data.qualityScore, // Include even if undefined
+          targetModel: data.targetModel,   // Include even if undefined
         } as PromptHistory;
       });
       setRecentPrompts(firestoreRecentPrompts);
@@ -217,12 +219,19 @@ export default function DashboardPage() {
       optimizedPrompt: prompt.optimizedPrompt,
       tags: prompt.tags?.join(',') || ''
     });
+    // Potentially pass score and model if the create page can handle them
+    if (prompt.qualityScore) queryParams.set('qualityScore', prompt.qualityScore.toString());
+    if (prompt.targetModel) queryParams.set('targetModel', prompt.targetModel);
     router.push(`/create-prompt?${queryParams.toString()}`);
     toast({ title: "Loading Prompt", description: `Loading "${prompt.name}" for a new session.`});
   };
 
   const handleExportPrompt = (prompt: PromptHistory) => {
-    const content = `Name: ${prompt.name}\nGoal: ${prompt.goal}\nTags: ${prompt.tags?.join(', ') || 'N/A'}\n\nOptimized Prompt:\n${prompt.optimizedPrompt}`;
+    let content = `Name: ${prompt.name}\nGoal: ${prompt.goal}\nTags: ${prompt.tags?.join(', ') || 'N/A'}\n`;
+    if (prompt.qualityScore) content += `Quality Score: ${prompt.qualityScore}/10\n`;
+    if (prompt.targetModel) content += `Target Model: ${prompt.targetModel}\n`;
+    content += `\nOptimized Prompt:\n${prompt.optimizedPrompt}`;
+
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -259,7 +268,8 @@ export default function DashboardPage() {
       prompt.name.toLowerCase().includes(lowerSearchTerm) ||
       prompt.goal.toLowerCase().includes(lowerSearchTerm) ||
       (prompt.optimizedPrompt && prompt.optimizedPrompt.toLowerCase().includes(lowerSearchTerm)) ||
-      (prompt.tags && prompt.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm)))
+      (prompt.tags && prompt.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm))) ||
+      (prompt.targetModel && prompt.targetModel.toLowerCase().includes(lowerSearchTerm))
     );
   });
 
@@ -296,7 +306,7 @@ export default function DashboardPage() {
               <h2 className="font-headline text-xl font-semibold text-foreground mb-4">Your Prompting Snapshot</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <AnalyticsSummaryCard title="Total Prompts in Vault" value={String(totalPromptsCount)} icon={Archive} description="Your saved prompts" />
-                <AnalyticsSummaryCard title="Average Prompt Score" value="N/A" icon={TrendingUp} description="Feedback feature active" />
+                <AnalyticsSummaryCard title="Average Prompt Score" value="N/A" icon={TrendingUp} description="Analytics Page for Details" />
                 <AnalyticsSummaryCard title="Most Used Category" value="N/A" icon={Eye} description="Categorization coming soon!" />
               </div>
           </section>
@@ -416,7 +426,7 @@ export default function DashboardPage() {
           <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col">
             <DialogHeader>
               <DialogTitle className="text-2xl font-headline">{viewingPrompt.name}</DialogTitle>
-              <DialogDescription>Review your original goal, optimized prompt, and tags.</DialogDescription>
+              <DialogDescription>Review your prompt details.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4 overflow-y-auto px-1 flex-grow">
               <div>
@@ -442,8 +452,20 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
+              {typeof viewingPrompt.qualityScore === 'number' && (
+                 <div>
+                  <Label className="text-sm font-semibold text-foreground">Quality Score</Label>
+                  <p className="mt-1 text-sm text-muted-foreground">{viewingPrompt.qualityScore}/10</p>
+                </div>
+              )}
+              {viewingPrompt.targetModel && (
+                <div>
+                  <Label className="text-sm font-semibold text-foreground">Target Model</Label>
+                  <p className="mt-1 text-sm text-muted-foreground">{viewingPrompt.targetModel}</p>
+                </div>
+              )}
               <div>
-                <Label className="text-sm font-semibold text-foreground">Created</Label>
+                <Label className="text-sm font-semibold text-foreground">Created/Updated</Label>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {new Date(viewingPrompt.timestamp).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
                 </p>

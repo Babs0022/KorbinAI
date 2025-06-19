@@ -62,7 +62,6 @@ export default function PromptVaultPage() {
     }
     setIsLoadingPrompts(true);
     try {
-      // Initial fetch is always ordered by timestamp desc for consistency before client-side sort/filter
       const q = query(collection(db, `users/${currentUser.uid}/promptHistory`), orderBy("timestamp", "desc"));
       const querySnapshot = await getDocs(q);
       const firestorePrompts = querySnapshot.docs.map(docSnap => {
@@ -75,11 +74,13 @@ export default function PromptVaultPage() {
         }
         return {
           id: docSnap.id,
-          name: data.name || data.goal, 
-          goal: data.goal,
-          optimizedPrompt: data.optimizedPrompt,
+          name: data.name || data.goal || 'Untitled Prompt', 
+          goal: data.goal || '',
+          optimizedPrompt: data.optimizedPrompt || '',
           timestamp: timestampStr,
           tags: data.tags || [],
+          qualityScore: data.qualityScore, // Keep even if undefined
+          targetModel: data.targetModel,   // Keep even if undefined
         } as PromptHistory;
       });
       setPrompts(firestorePrompts);
@@ -120,12 +121,20 @@ export default function PromptVaultPage() {
         optimizedPrompt: prompt.optimizedPrompt,
         tags: prompt.tags?.join(',') || ''
     });
+    // Potentially pass score and model if the create page can handle them
+    if (prompt.qualityScore) queryParams.set('qualityScore', prompt.qualityScore.toString());
+    if (prompt.targetModel) queryParams.set('targetModel', prompt.targetModel);
+
     router.push(`/create-prompt?${queryParams.toString()}`);
     toast({ title: "Loading Prompt", description: `Loading "${prompt.name}" for a new session.`});
   };
 
   const handleExportPrompt = (prompt: PromptHistory) => {
-    const content = `Name: ${prompt.name}\nGoal: ${prompt.goal}\nTags: ${prompt.tags?.join(', ') || 'N/A'}\n\nOptimized Prompt:\n${prompt.optimizedPrompt}`;
+    let content = `Name: ${prompt.name}\nGoal: ${prompt.goal}\nTags: ${prompt.tags?.join(', ') || 'N/A'}\n`;
+    if (prompt.qualityScore) content += `Quality Score: ${prompt.qualityScore}/10\n`;
+    if (prompt.targetModel) content += `Target Model: ${prompt.targetModel}\n`;
+    content += `\nOptimized Prompt:\n${prompt.optimizedPrompt}`;
+    
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -162,7 +171,8 @@ export default function PromptVaultPage() {
         prompt.name.toLowerCase().includes(lowerSearchTerm) ||
         prompt.goal.toLowerCase().includes(lowerSearchTerm) ||
         (prompt.optimizedPrompt && prompt.optimizedPrompt.toLowerCase().includes(lowerSearchTerm)) ||
-        (prompt.tags && prompt.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm)))
+        (prompt.tags && prompt.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm))) ||
+        (prompt.targetModel && prompt.targetModel.toLowerCase().includes(lowerSearchTerm))
       );
     });
 
@@ -227,7 +237,7 @@ export default function PromptVaultPage() {
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="search"
-                    placeholder="Search by name, goal, content, or tags..."
+                    placeholder="Search by name, goal, content, tags, or model..."
                     className="pl-10"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -311,7 +321,7 @@ export default function PromptVaultPage() {
           <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col">
             <DialogHeader>
               <DialogTitle className="text-2xl font-headline">{viewingPrompt.name}</DialogTitle>
-              <DialogDescription>Review your original goal, optimized prompt, and tags.</DialogDescription>
+              <DialogDescription>Review your prompt details.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4 overflow-y-auto px-1 flex-grow">
               <div>
@@ -335,6 +345,18 @@ export default function PromptVaultPage() {
                   <div className="mt-1 flex flex-wrap gap-2">
                     {viewingPrompt.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
                   </div>
+                </div>
+              )}
+              {typeof viewingPrompt.qualityScore === 'number' && (
+                 <div>
+                  <Label className="text-sm font-semibold text-foreground">Quality Score</Label>
+                  <p className="mt-1 text-sm text-muted-foreground">{viewingPrompt.qualityScore}/10</p>
+                </div>
+              )}
+              {viewingPrompt.targetModel && (
+                <div>
+                  <Label className="text-sm font-semibold text-foreground">Target Model</Label>
+                  <p className="mt-1 text-sm text-muted-foreground">{viewingPrompt.targetModel}</p>
                 </div>
               )}
               <div>

@@ -37,6 +37,10 @@ export default function RefinementHubPage() {
   const [editableGoal, setEditableGoal] = useState('');
   const [editableOptimizedPrompt, setEditableOptimizedPrompt] = useState('');
   const [editableTags, setEditableTags] = useState('');
+  // State for quality score and target model, if they exist on the selected prompt
+  const [editableQualityScore, setEditableQualityScore] = useState<number | undefined>(undefined);
+  const [editableTargetModel, setEditableTargetModel] = useState<string | undefined>(undefined);
+  
   const [isSaving, setIsSaving] = useState(false);
 
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
@@ -50,7 +54,6 @@ export default function RefinementHubPage() {
     }
     setIsLoadingPrompts(true);
     try {
-      // Initial fetch is always ordered by timestamp desc for consistency before client-side sort
       const q = query(collection(db, `users/${currentUser.uid}/promptHistory`), orderBy("timestamp", "desc"));
       const querySnapshot = await getDocs(q);
       const firestorePrompts = querySnapshot.docs.map(docSnap => {
@@ -63,11 +66,13 @@ export default function RefinementHubPage() {
         }
         return {
           id: docSnap.id,
-          name: data.name || data.goal, 
-          goal: data.goal,
-          optimizedPrompt: data.optimizedPrompt,
+          name: data.name || data.goal || 'Untitled Prompt', 
+          goal: data.goal || '',
+          optimizedPrompt: data.optimizedPrompt || '',
           timestamp: timestampStr,
           tags: data.tags || [],
+          qualityScore: data.qualityScore, // Include even if undefined
+          targetModel: data.targetModel,   // Include even if undefined
         } as PromptHistory;
       });
       setAllPrompts(firestorePrompts);
@@ -109,6 +114,8 @@ export default function RefinementHubPage() {
     setEditableGoal(prompt.goal);
     setEditableOptimizedPrompt(prompt.optimizedPrompt);
     setEditableTags(prompt.tags?.join(', ') || '');
+    setEditableQualityScore(prompt.qualityScore);
+    setEditableTargetModel(prompt.targetModel);
     setAiSuggestions([]); 
   };
 
@@ -128,25 +135,35 @@ export default function RefinementHubPage() {
       const tagsArray = editableTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
       const promptRef = doc(db, `users/${currentUser.uid}/promptHistory`, selectedPrompt.id);
       
-      await updateDoc(promptRef, {
+      const dataToUpdate: any = {
         name: editableName,
         goal: editableGoal,
         optimizedPrompt: editableOptimizedPrompt,
         tags: tagsArray,
         timestamp: serverTimestamp() 
-      });
+      };
+
+      // Only include qualityScore and targetModel if they have defined values
+      if (typeof editableQualityScore === 'number') {
+        dataToUpdate.qualityScore = editableQualityScore;
+      }
+      if (typeof editableTargetModel === 'string' && editableTargetModel.trim() !== '') {
+        dataToUpdate.targetModel = editableTargetModel;
+      }
+      
+      await updateDoc(promptRef, dataToUpdate);
       
       toast({ title: "Prompt Refined!", description: "Your changes have been saved." });
-      // Refresh prompt list to reflect update time for sorting
       fetchPrompts(); 
-      // Update selected prompt in state to reflect changes immediately in editor
       setSelectedPrompt(prev => prev ? {
         ...prev, 
         name: editableName, 
         goal: editableGoal, 
         optimizedPrompt: editableOptimizedPrompt, 
         tags: tagsArray,
-        timestamp: new Date().toISOString() // Reflect immediate update for display
+        qualityScore: editableQualityScore,
+        targetModel: editableTargetModel,
+        timestamp: new Date().toISOString() 
       } : null);
     } catch (error) {
       console.error("Error saving refined prompt:", error);
@@ -315,6 +332,19 @@ export default function RefinementHubPage() {
                           placeholder="Your AI-ready prompt text goes here..."
                         />
                       </div>
+                       {/* Optional fields for score and model - mainly for display/awareness if present */}
+                        {typeof editableQualityScore === 'number' && (
+                            <div>
+                                <Label htmlFor="editableQualityScore" className="text-sm font-medium">Quality Score (read-only for now)</Label>
+                                <Input id="editableQualityScore" value={`${editableQualityScore}/10`} readOnly className="mt-1 text-xs bg-muted/50" />
+                            </div>
+                        )}
+                        {editableTargetModel && (
+                             <div>
+                                <Label htmlFor="editableTargetModel" className="text-sm font-medium">Target Model (read-only for now)</Label>
+                                <Input id="editableTargetModel" value={editableTargetModel} readOnly className="mt-1 text-xs bg-muted/50" />
+                            </div>
+                        )}
                       <div>
                         <Label htmlFor="editableTags" className="text-base font-semibold flex items-center">
                            <Tag className="mr-2 h-4 w-4 text-muted-foreground"/> Tags (comma-separated)
