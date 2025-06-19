@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SocialLogins } from "./SocialLogins";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Loader2 } from "lucide-react"; // Added Loader2
 import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 
 export function LoginForm() {
   const router = useRouter();
@@ -25,25 +25,55 @@ export function LoginForm() {
     setIsLoading(true);
     
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      toast({
-        title: "Login Successful",
-        description: "Welcome back!",
-      });
-      router.push("/dashboard");
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      if (user) {
+        if (!user.emailVerified && user.providerData.some(p => p.providerId === 'password')) {
+          // User signed up with email/password but email is not verified
+          await sendEmailVerification(user); // Resend verification email
+          toast({
+            title: "Email Not Verified",
+            description: `A new verification link has been sent to ${user.email}. Please check your inbox to verify your account before logging in.`,
+            variant: "destructive",
+            duration: 10000,
+          });
+          setIsLoading(false);
+          return; // Prevent further action
+        }
+
+        // Email is verified or it's a social login (where Firebase handles verification status)
+        toast({
+          title: "Login Successful",
+          description: "Welcome back!",
+        });
+        router.push("/dashboard");
+      } else {
+         // Should not happen if signInWithEmailAndPassword resolves, but as a safeguard
+        throw new Error("User object not found after login.");
+      }
+
     } catch (error: any) {
       console.error("Login error:", error);
-      let errorMessage = "Invalid email or password. Please try again.";
+      let errorMessage = "An unexpected error occurred. Please try again.";
       if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password" || error.code === "auth/invalid-credential") {
         errorMessage = "Invalid email or password. Please check your credentials.";
+      } else if (error.code === "auth/too-many-requests") {
+        errorMessage = "Too many login attempts. Please try again later or reset your password.";
       }
+      // Other specific Firebase error codes can be handled here
+      
       toast({
         title: "Login Failed",
         description: errorMessage,
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      // Only set isLoading to false if not already handled (e.g., for email verification failure)
+      // The check `if (user && !user.emailVerified)` will set isLoading to false itself.
+      if (isLoading) { // Check if still loading, otherwise it might have been set to false already
+          setIsLoading(false);
+      }
     }
   };
 
@@ -85,7 +115,7 @@ export function LoginForm() {
         </div>
       </div>
       <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isLoading}>
-        {isLoading ? "Logging in..." : "Login"}
+        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging in...</> : "Login"}
       </Button>
       <SocialLogins type="login" />
       <p className="text-center text-sm text-muted-foreground">

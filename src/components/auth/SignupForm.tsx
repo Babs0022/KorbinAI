@@ -11,7 +11,7 @@ import { SocialLogins } from "./SocialLogins";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, User, Loader2 } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, Timestamp } from "firebase/firestore";
 
 export function SignupForm() {
@@ -36,6 +36,9 @@ export function SignupForm() {
           photoURL: null, 
         });
 
+        // Send email verification
+        await sendEmailVerification(newUser);
+
         const userDocRef = doc(db, "users", newUser.uid);
         const userData = {
             uid: newUser.uid,
@@ -56,8 +59,9 @@ export function SignupForm() {
         console.log("[SignupForm] User document successfully written to Firestore.");
 
         toast({
-          title: "Account Created!",
-          description: "Welcome to BrieflyAI. Let's get you started.",
+          title: "Account Created! Please Verify Your Email",
+          description: `A verification link has been sent to ${newUser.email}. Please check your inbox (and spam folder) to verify your account before logging in.`,
+          duration: 10000, // Longer duration for this important message
         });
         router.push("/onboarding");
       } else {
@@ -81,7 +85,7 @@ export function SignupForm() {
           case "auth/invalid-email":
             description = "The email address is not valid.";
             break;
-          case "permission-denied": // Firestore specific error
+          case "permission-denied": 
             description = "Could not save user data due to a permissions issue. Please contact support if this persists.";
             console.error("[SignupForm] Firestore Permission Denied during signup:", error.message);
             break;
