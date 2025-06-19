@@ -10,7 +10,7 @@ import { ArrowLeft, BarChart3, Star, Cpu, TrendingUp, AlertTriangle, Info, Archi
 import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
-import { Line, LineChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 'recharts'; // Added ResponsiveContainer import
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
@@ -135,7 +135,7 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <GlassCard>
                 <GlassCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <GlassCardTitle className="text-sm font-medium text-muted-foreground">Total Prompts Created</GlassCardTitle>
+                  <GlassCardTitle className="text-sm font-medium text-muted-foreground">Total Prompts Generated</GlassCardTitle>
                   <Archive className="h-5 w-5 text-primary" />
                 </GlassCardHeader>
                 <GlassCardContent>
@@ -144,7 +144,7 @@ export default function AnalyticsPage() {
                   ) : (
                     <div className="text-2xl font-bold text-foreground">{totalUserPrompts ?? 0}</div>
                   )}
-                  <p className="text-xs text-muted-foreground">Prompts saved to your vault.</p>
+                  <p className="text-xs text-muted-foreground">Prompts saved to your vault by you.</p>
                 </GlassCardContent>
               </GlassCard>
               <GlassCard>
