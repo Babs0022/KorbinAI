@@ -1,0 +1,11 @@
+<svg width="32" height="32" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="faviconClipPathRounded">
+      <rect width="20" height="20" rx="3.5" />
+    </clipPath>
+  </defs>
+  <g clipPath="url(#faviconClipPathRounded)">
+    <rect x="0" y="0" width="10" height="20" fill="#4B0082"/> <!-- Primary: Indigo -->
+    <rect x="10" y="0" width="10" height="20" fill="#00FFBF"/> <!-- Accent: Mint -->
+  </g>
+</svg>
