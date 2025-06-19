@@ -1,13 +1,13 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import { PromptHistoryItem, type PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, CheckCheck, Maximize, AlertTriangle, Tag } from 'lucide-react';
+import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, CheckCheck, Maximize, AlertTriangle, Tag, Star } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import {
@@ -35,7 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp, limit, getCountFromServer } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCard';
 import Container from '@/components/layout/Container';
@@ -132,26 +132,27 @@ const features: Omit<FeatureInfo, 'isPremium' | 'isUnlimitedFeature'>[] = [
 export default function DashboardPage() {
   const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [recentPrompts, setRecentPrompts] = useState<PromptHistory[]>([]);
-  const [totalPromptsCount, setTotalPromptsCount] = useState(0);
+  const [allUserPrompts, setAllUserPrompts] = useState<PromptHistory[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [promptToDelete, setPromptToDelete] = useState<PromptHistory | null>(null);
   const [viewingPrompt, setViewingPrompt] = useState<PromptHistory | null>(null);
   const { toast } = useToast();
 
+  const [averagePromptScore, setAveragePromptScore] = useState<number | null>(null);
+
   const fetchDashboardData = useCallback(async () => {
     if (!currentUser) {
       setIsLoadingData(false);
-      setRecentPrompts([]);
-      setTotalPromptsCount(0);
+      setAllUserPrompts([]);
+      setAveragePromptScore(null);
       return;
     }
     setIsLoadingData(true);
     try {
-      const recentPromptsQuery = query(collection(db, `users/${currentUser.uid}/promptHistory`), orderBy("timestamp", "desc"), limit(3));
-      const recentQuerySnapshot = await getDocs(recentPromptsQuery);
-      const firestoreRecentPrompts = recentQuerySnapshot.docs.map(docSnap => {
+      const allPromptsQuery = query(collection(db, `users/${currentUser.uid}/promptHistory`), orderBy("timestamp", "desc"));
+      const querySnapshot = await getDocs(allPromptsQuery);
+      const firestorePrompts = querySnapshot.docs.map(docSnap => {
         const data = docSnap.data();
         let timestampStr = data.timestamp;
         if (data.timestamp instanceof Timestamp) {
@@ -167,21 +168,26 @@ export default function DashboardPage() {
           optimizedPrompt: data.optimizedPrompt || '',
           timestamp: timestampStr,
           tags: data.tags || [],
-          qualityScore: data.qualityScore, // Include even if undefined
-          targetModel: data.targetModel,   // Include even if undefined
+          qualityScore: data.qualityScore,
+          targetModel: data.targetModel,
         } as PromptHistory;
       });
-      setRecentPrompts(firestoreRecentPrompts);
+      setAllUserPrompts(firestorePrompts);
 
-      const allPromptsQuery = query(collection(db, `users/${currentUser.uid}/promptHistory`));
-      const countSnapshot = await getCountFromServer(allPromptsQuery);
-      setTotalPromptsCount(countSnapshot.data().count);
+      // Calculate average prompt score
+      const scoredPrompts = firestorePrompts.filter(p => typeof p.qualityScore === 'number' && p.qualityScore !== undefined);
+      if (scoredPrompts.length > 0) {
+        const sum = scoredPrompts.reduce((acc, p) => acc + (p.qualityScore || 0), 0);
+        setAveragePromptScore(parseFloat((sum / scoredPrompts.length).toFixed(1)));
+      } else {
+        setAveragePromptScore(null);
+      }
 
     } catch (error) {
       console.error("Error loading dashboard data from Firestore:", error);
       toast({ title: "Error Loading Data", description: "Could not load dashboard data.", variant: "destructive"});
-      setRecentPrompts([]);
-      setTotalPromptsCount(0);
+      setAllUserPrompts([]);
+      setAveragePromptScore(null);
     } finally {
       setIsLoadingData(false);
     }
@@ -194,10 +200,14 @@ export default function DashboardPage() {
       fetchDashboardData();
     } else if (!authLoading && !currentUser) {
       setIsLoadingData(false);
-      setRecentPrompts([]);
-      setTotalPromptsCount(0);
+      setAllUserPrompts([]);
+      setAveragePromptScore(null);
     }
   }, [currentUser, authLoading, router, fetchDashboardData]);
+  
+  const recentPrompts = useMemo(() => allUserPrompts.slice(0, 3), [allUserPrompts]);
+  const totalPromptsCount = useMemo(() => allUserPrompts.length, [allUserPrompts]);
+
 
   const handleViewPrompt = (prompt: PromptHistory) => {
     setViewingPrompt(prompt);
@@ -219,7 +229,6 @@ export default function DashboardPage() {
       optimizedPrompt: prompt.optimizedPrompt,
       tags: prompt.tags?.join(',') || ''
     });
-    // Potentially pass score and model if the create page can handle them
     if (prompt.qualityScore) queryParams.set('qualityScore', prompt.qualityScore.toString());
     if (prompt.targetModel) queryParams.set('targetModel', prompt.targetModel);
     router.push(`/create-prompt?${queryParams.toString()}`);
@@ -251,8 +260,16 @@ export default function DashboardPage() {
     if (!promptToDelete || !currentUser) return;
     try {
       await deleteDoc(doc(db, `users/${currentUser.uid}/promptHistory`, promptToDelete.id));
-      setRecentPrompts(prevPrompts => prevPrompts.filter(p => p.id !== promptToDelete.id));
-      setTotalPromptsCount(prevCount => prevCount - 1);
+      setAllUserPrompts(prevPrompts => prevPrompts.filter(p => p.id !== promptToDelete.id));
+      // Recalculate average score after deletion
+      const updatedPrompts = allUserPrompts.filter(p => p.id !== promptToDelete.id);
+      const scoredPrompts = updatedPrompts.filter(p => typeof p.qualityScore === 'number' && p.qualityScore !== undefined);
+      if (scoredPrompts.length > 0) {
+        const sum = scoredPrompts.reduce((acc, p) => acc + (p.qualityScore || 0), 0);
+        setAveragePromptScore(parseFloat((sum / scoredPrompts.length).toFixed(1)));
+      } else {
+        setAveragePromptScore(null);
+      }
       toast({ title: "Prompt Deleted", description: `Prompt "${promptToDelete.name}" has been deleted.`});
     } catch (error) {
       console.error("Error deleting prompt from Firestore:", error);
@@ -273,7 +290,7 @@ export default function DashboardPage() {
     );
   });
 
-  if (authLoading || isLoadingData) {
+  if (authLoading || (isLoadingData && !currentUser)) { // Show loader if auth is loading OR if data is loading and no user yet
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -281,7 +298,7 @@ export default function DashboardPage() {
       </div>
     );
   }
-
+  
   if (!currentUser && !authLoading) {
      return (
       <div className="flex min-h-screen flex-col items-center justify-center">
@@ -305,9 +322,24 @@ export default function DashboardPage() {
           <section className="mb-8">
               <h2 className="font-headline text-xl font-semibold text-foreground mb-4">Your Prompting Snapshot</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <AnalyticsSummaryCard title="Total Prompts in Vault" value={String(totalPromptsCount)} icon={Archive} description="Your saved prompts" />
-                <AnalyticsSummaryCard title="Average Prompt Score" value="N/A" icon={TrendingUp} description="Analytics Page for Details" />
-                <AnalyticsSummaryCard title="Most Used Category" value="N/A" icon={Eye} description="Categorization coming soon!" />
+                <AnalyticsSummaryCard 
+                  title="Total Prompts in Vault" 
+                  value={isLoadingData ? "..." : String(totalPromptsCount)} 
+                  icon={Archive} 
+                  description="Your saved prompts" 
+                />
+                <AnalyticsSummaryCard 
+                  title="Average Prompt Score" 
+                  value={isLoadingData ? "..." : (averagePromptScore !== null ? `${averagePromptScore}/10` : "N/A")} 
+                  icon={Star} 
+                  description="Average of your scored prompts" 
+                />
+                <AnalyticsSummaryCard 
+                    title="Most Used Category" 
+                    value="N/A" 
+                    icon={Eye} 
+                    description="Categorization coming soon!" 
+                />
               </div>
           </section>
 
@@ -480,3 +512,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
