@@ -11,4 +11,4 @@ import '@/ai/flows/reverse-prompt-flow.ts';
 import '@/ai/flows/refine-prompt-suggestions-flow.ts';
 import '@/ai/flows/generate-prompt-metadata-flow.ts';
 import '@/ai/flows/support-assistant-flow.ts';
-import '@/ai/flows/validate-referral-code-flow.ts'; // Added new flow
+// import '@/ai/flows/validate-referral-code-flow.ts'; // Referral system removed

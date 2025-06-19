@@ -1,5 +1,5 @@
 
-"use client"; 
+"use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
@@ -41,30 +41,27 @@ import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCar
 import Container from '@/components/layout/Container';
 import { Badge } from '@/components/ui/badge';
 
-const features: FeatureInfo[] = [
+const features: Omit<FeatureInfo, 'isPremium' | 'isUnlimitedFeature'>[] = [ // Omit removed properties
   {
     title: "Prompt Generator",
     description: "Input goals, answer surveys, and get optimized AI prompts.",
     href: "/create-prompt",
     icon: Lightbulb,
     enabled: true,
-    isPremium: false,
   },
   {
     title: "Prompt Vault",
     description: "Store, organize, and categorize your most effective prompts.",
     href: "/dashboard/prompt-vault",
     icon: Archive,
-    enabled: true, 
-    isPremium: true,
+    enabled: true,
   },
   {
     title: "Prompt Refinement Hub",
     description: "Modify previously generated prompts with suggested refinements.",
     href: "/dashboard/refinement-hub",
     icon: Settings2,
-    enabled: true, 
-    isPremium: true,
+    enabled: true,
   },
   {
     title: "Model-Specific Prompts",
@@ -72,7 +69,6 @@ const features: FeatureInfo[] = [
     href: "/dashboard/model-specific-prompts",
     icon: Puzzle,
     enabled: true,
-    isPremium: true,
   },
   {
     title: "Contextual Prompting",
@@ -80,15 +76,13 @@ const features: FeatureInfo[] = [
     href: "/dashboard/contextual-prompting",
     icon: FileText,
     enabled: true,
-    isPremium: true,
   },
   {
     title: "Prompt Academy",
     description: "Learn advanced prompting techniques with tutorials and best practices.",
     href: "/dashboard/academy",
     icon: School,
-    enabled: true, 
-    isPremium: true,
+    enabled: true,
   },
   {
     title: "Real-Time AI Prompt Suggestions",
@@ -96,8 +90,6 @@ const features: FeatureInfo[] = [
     href: "/dashboard/real-time-suggestions",
     icon: Wand2,
     enabled: true,
-    isPremium: true,
-    isUnlimitedFeature: true,
   },
   {
     title: "Prompt Feedback & Analysis",
@@ -105,16 +97,13 @@ const features: FeatureInfo[] = [
     href: "/dashboard/feedback-analysis",
     icon: BarChart3,
     enabled: true,
-    isPremium: true,
   },
   {
     title: "Reverse Prompting",
     description: "Reverse-engineer AI output back into a potential prompt.",
     href: "/dashboard/reverse-prompting",
     icon: Undo2,
-    enabled: true, 
-    isPremium: true,
-    isUnlimitedFeature: true,
+    enabled: true,
   },
   {
     title: "Prompt Analytics Dashboard",
@@ -122,7 +111,6 @@ const features: FeatureInfo[] = [
     href: "/dashboard/analytics",
     icon: TrendingUp,
     enabled: true,
-    isPremium: false,
   },
   {
     title: "Prompt Learning Mode",
@@ -130,7 +118,6 @@ const features: FeatureInfo[] = [
     href: "/dashboard/learning-mode",
     icon: Brain,
     enabled: true,
-    isPremium: true,
   },
   {
     title: "AI Model Compatibility Checker",
@@ -138,7 +125,6 @@ const features: FeatureInfo[] = [
     href: "/dashboard/compatibility-checker",
     icon: CheckCheck,
     enabled: true,
-    isPremium: true,
   },
 ];
 
@@ -146,7 +132,7 @@ const features: FeatureInfo[] = [
 export default function DashboardPage() {
   const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [recentPrompts, setRecentPrompts] = useState<PromptHistory[]>([]); 
+  const [recentPrompts, setRecentPrompts] = useState<PromptHistory[]>([]);
   const [totalPromptsCount, setTotalPromptsCount] = useState(0);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -154,16 +140,15 @@ export default function DashboardPage() {
   const [viewingPrompt, setViewingPrompt] = useState<PromptHistory | null>(null);
   const { toast } = useToast();
 
-  const fetchDashboardData = useCallback(async () => { 
+  const fetchDashboardData = useCallback(async () => {
     if (!currentUser) {
       setIsLoadingData(false);
-      setRecentPrompts([]); 
+      setRecentPrompts([]);
       setTotalPromptsCount(0);
       return;
     }
     setIsLoadingData(true);
     try {
-      // Fetch recent prompts (limit 3 for dashboard)
       const recentPromptsQuery = query(collection(db, `users/${currentUser.uid}/promptHistory`), orderBy("timestamp", "desc"), limit(3));
       const recentQuerySnapshot = await getDocs(recentPromptsQuery);
       const firestoreRecentPrompts = recentQuerySnapshot.docs.map(docSnap => {
@@ -177,7 +162,7 @@ export default function DashboardPage() {
 
         return {
           id: docSnap.id,
-          name: data.name || data.goal, // Fallback to goal if name is missing for older entries
+          name: data.name || data.goal,
           goal: data.goal,
           optimizedPrompt: data.optimizedPrompt,
           timestamp: timestampStr,
@@ -186,7 +171,6 @@ export default function DashboardPage() {
       });
       setRecentPrompts(firestoreRecentPrompts);
 
-      // Fetch total prompts count
       const allPromptsQuery = query(collection(db, `users/${currentUser.uid}/promptHistory`));
       const countSnapshot = await getCountFromServer(allPromptsQuery);
       setTotalPromptsCount(countSnapshot.data().count);
@@ -194,7 +178,7 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Error loading dashboard data from Firestore:", error);
       toast({ title: "Error Loading Data", description: "Could not load dashboard data.", variant: "destructive"});
-      setRecentPrompts([]); 
+      setRecentPrompts([]);
       setTotalPromptsCount(0);
     } finally {
       setIsLoadingData(false);
@@ -227,7 +211,6 @@ export default function DashboardPage() {
   };
 
   const handleEditPrompt = (prompt: PromptHistory) => {
-    // Pass name, goal, optimizedPrompt, and tags to the create page
     const queryParams = new URLSearchParams({
       name: prompt.name,
       goal: prompt.goal,
@@ -250,7 +233,7 @@ export default function DashboardPage() {
     document.body.removeChild(link);
     toast({ title: "Prompt Exported", description: "The prompt details have been downloaded as a .txt file." });
   };
-  
+
   const openDeleteDialog = (prompt: PromptHistory) => {
     setPromptToDelete(prompt);
   };
@@ -259,15 +242,14 @@ export default function DashboardPage() {
     if (!promptToDelete || !currentUser) return;
     try {
       await deleteDoc(doc(db, `users/${currentUser.uid}/promptHistory`, promptToDelete.id));
-      // Optimistically update UI or re-fetch
       setRecentPrompts(prevPrompts => prevPrompts.filter(p => p.id !== promptToDelete.id));
-      setTotalPromptsCount(prevCount => prevCount - 1); // Decrement total count
+      setTotalPromptsCount(prevCount => prevCount - 1);
       toast({ title: "Prompt Deleted", description: `Prompt "${promptToDelete.name}" has been deleted.`});
     } catch (error) {
       console.error("Error deleting prompt from Firestore:", error);
       toast({ title: "Error Deleting Prompt", description: "Could not delete prompt.", variant: "destructive"});
     } finally {
-      setPromptToDelete(null); 
+      setPromptToDelete(null);
     }
   };
 
@@ -280,8 +262,8 @@ export default function DashboardPage() {
       (prompt.tags && prompt.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm)))
     );
   });
-  
-  if (authLoading || isLoadingData) { 
+
+  if (authLoading || isLoadingData) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -289,8 +271,8 @@ export default function DashboardPage() {
       </div>
     );
   }
-  
-  if (!currentUser && !authLoading) { 
+
+  if (!currentUser && !authLoading) {
      return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
@@ -309,8 +291,7 @@ export default function DashboardPage() {
           <p className="text-muted-foreground mb-8">
             Your central hub for creating, managing, and optimizing AI prompts.
           </p>
-        
-          {/* Top Section: Quick Stats/Analytics */}
+
           <section className="mb-8">
               <h2 className="font-headline text-xl font-semibold text-foreground mb-4">Your Prompting Snapshot</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -320,17 +301,15 @@ export default function DashboardPage() {
               </div>
           </section>
 
-          {/* Features Grid */}
           <section className="mb-8">
             <h2 className="font-headline text-xl font-semibold text-foreground mb-6">Explore Features</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {features.map((feature) => (
-                <FeatureCard key={feature.title} feature={feature} />
+                <FeatureCard key={feature.title} feature={feature as FeatureInfo} />
               ))}
             </div>
           </section>
 
-          {/* Recent Prompts Card */}
           <section className="mb-8">
             <GlassCard>
               <GlassCardHeader>
@@ -347,9 +326,9 @@ export default function DashboardPage() {
                 <div className="mb-4 flex gap-2">
                     <div className="relative flex-grow">
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input 
-                        type="search" 
-                        placeholder="Search recent prompts by name, goal, tags..." 
+                      <Input
+                        type="search"
+                        placeholder="Search recent prompts by name, goal, tags..."
                         className="pl-10"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -372,7 +351,7 @@ export default function DashboardPage() {
                         onView={handleViewPrompt}
                         onEdit={handleEditPrompt}
                         onExport={handleExportPrompt}
-                        onDelete={() => openDeleteDialog(prompt)} // Pass prompt itself
+                        onDelete={() => openDeleteDialog(prompt)}
                       />
                     ))}
                   </div>
@@ -396,7 +375,6 @@ export default function DashboardPage() {
             </GlassCard>
           </section>
 
-          {/* Notifications Placeholder */}
           <section>
               <GlassCard>
                   <GlassCardHeader>
@@ -413,7 +391,7 @@ export default function DashboardPage() {
         </Container>
       </main>
       <MinimalFooter />
-      
+
       {promptToDelete && (
         <AlertDialog open={!!promptToDelete} onOpenChange={() => setPromptToDelete(null)}>
           <AlertDialogContent>
@@ -480,5 +458,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

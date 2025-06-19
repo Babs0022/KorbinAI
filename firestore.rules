@@ -1,84 +1,73 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users collection
+    // Users Collection
     match /users/{userId} {
       allow read: if request.auth.uid != null && request.auth.uid == userId;
-      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.uid && request.resource.data.uid == userId;
-      allow update: if request.auth.uid != null && request.auth.uid == userId;
+      allow create: if request.auth.uid != null &&
+                       request.auth.uid == request.resource.data.uid &&
+                       request.resource.data.email == request.auth.token.email &&
+                       request.resource.data.displayName is string &&
+                       request.resource.data.createdAt == request.time;
+      allow update: if request.auth.uid != null && request.auth.uid == userId &&
+                       // Allow only specific fields to be updated by user
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt']);
       allow delete: if request.auth.uid != null && request.auth.uid == userId;
 
-      // Prompt History subcollection
+      // User Subcollections (e.g., promptHistory)
       match /promptHistory/{promptId} {
-        allow read, list: if request.auth.uid != null && request.auth.uid == userId;
-        allow create: if request.auth.uid != null && request.auth.uid == userId && request.resource.data.userId == userId;
-        allow update: if request.auth.uid != null && request.auth.uid == userId && request.resource.data.userId == userId;
-        allow delete: if request.auth.uid != null && request.auth.uid == userId;
+        allow read, write, delete: if request.auth.uid != null && request.auth.uid == userId;
       }
     }
 
-    // User Settings collection
+    // User Settings Collection
     match /userSettings/{userId} {
       allow read, write: if request.auth.uid != null && request.auth.uid == userId;
+      // Write: allow if user is creating their own settings or updating existing ones.
+      // Ensure only expected fields are written.
+      allow create: if request.auth.uid == userId &&
+                       request.resource.data.keys().hasOnly(['emailNotifications', 'promotionalEmails', 'theme']);
+      allow update: if request.auth.uid == userId &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['emailNotifications', 'promotionalEmails', 'theme']);
+
     }
 
-    // Transactions collection (Paystack integration)
+    // Transactions Collection (for Paystack integration)
     match /transactions/{transactionId} {
-      // Allow create by authenticated user if they are the userId in the transaction
-      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
-      // Allow read by the user who owns the transaction
-      allow read: if request.auth.uid != null && request.auth.uid == resource.data.userId;
-      // Allow update by backend (Firebase Functions) or specific conditions
-      // For client-side updates (like status from "pending"), this might be too open or need refinement.
-      // For now, only allow if status changes and it's the user. This is likely better done by backend.
-      allow update: if request.auth.uid != null && request.auth.uid == resource.data.userId;
-      // Deletion typically not allowed for transaction records
-      allow delete: if false;
-    }
-
-    // User Subscriptions collection
-    match /userSubscriptions/{userId} {
-      // Allow read by the user who owns the subscription
-      allow read: if request.auth.uid != null && request.auth.uid == userId;
-      // Subscriptions primarily managed by backend (Paystack webhook handler)
-      allow create, update, delete: if false; // Disallow direct client modification
-    }
-
-    // Referral Codes collection
-    match /referralCodes/{codeDocId} {
-      // For signup: unauthenticated user needs to check if a code exists and is active.
-      allow get, list: if request.auth == null;
-
-      // For user managing their own code (e.g., viewing on account page, potentially re-generating if allowed by app logic)
-      allow read: if request.auth.uid != null && resource.data.userId == request.auth.uid;
-
-      // Authenticated user creating THEIR OWN referral code (e.g., on account page or onboarding)
+      // Users can create their own pending transaction document
       allow create: if request.auth.uid != null &&
                        request.resource.data.userId == request.auth.uid &&
-                       request.resource.data.code != null &&
-                       request.resource.data.isActive == true &&
-                       request.resource.data.createdAt == request.time &&
-                       request.resource.data.usesLeft > 0 &&
-                       request.resource.data.usersReferred is list &&
-                       request.resource.data.usersReferred.size() == 0;
+                       request.resource.data.status == "pending_paystack_redirect";
+      // Server (backend function) can update transaction status to success/failure
+      // Users should not be able to directly update the status of a transaction.
+      // This is typically handled by a backend function after webhook verification.
+      // For simplicity in this example, read access is given to the user for their transactions.
+      // In a production app, you might restrict updates to backend processes only.
+      allow read: if request.auth.uid != null && request.auth.uid == resource.data.userId;
+      // Updates should be handled by backend functions.
+      allow update: if false; // Or more specific rules for backend updates if necessary
+      allow delete: if false; // Transactions generally shouldn't be deleted by users
+    }
 
-      // This rule allows an authenticated (newly signed up) user to update a specific referral code document
-      // by decrementing usesLeft, adding their UID to usersReferred, and setting lastUsedAt.
-      // This is a critical rule for the client-side signup flow.
-      allow update: if request.auth.uid != null &&
-                       // Ensure usesLeft is being decremented or remains 0 if it was already 0
-                       (request.resource.data.usesLeft == resource.data.usesLeft - 1 || (resource.data.usesLeft == 0 && request.resource.data.usesLeft == 0)) &&
-                       // Ensure the new user's UID is being added to the usersReferred list
-                       request.resource.data.usersReferred == list_append(resource.data.usersReferred, request.auth.uid) &&
-                       // Ensure lastUsedAt is being set to the current server time
-                       request.resource.data.lastUsedAt == request.time &&
-                       // Ensure ONLY these specific fields are being modified
-                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usesLeft', 'usersReferred', 'lastUsedAt']);
-      
-      // Generally, users should not delete referral codes directly. This might be an admin action.
+    // User Subscriptions Collection
+    match /userSubscriptions/{userId} {
+      // Only the user can read their own subscription details.
+      allow read: if request.auth.uid != null && request.auth.uid == userId;
+      // Subscriptions are created/updated by backend functions after payment verification.
+      allow create: if false;
+      allow update: if false;
       allow delete: if false;
+    }
+
+    // Referral Codes Collection - REMOVED/DEPRECATED
+    // No rules needed as the system is removed. If collection still exists,
+    // it should be secured or deleted if not used by any other process.
+    // For safety, explicitly deny all access if the collection might still exist.
+    match /referralCodes/{codeDocId} {
+       allow read, write, create, update, delete: if false;
     }
   }
 }

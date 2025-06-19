@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, type LucideIcon, Crown } from 'lucide-react'; 
+import { ArrowRight, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface FeatureInfo {
@@ -12,9 +12,8 @@ export interface FeatureInfo {
   description: string;
   href: string;
   icon: LucideIcon | React.ElementType;
-  enabled: boolean; 
-  isPremium?: boolean;
-  isUnlimitedFeature?: boolean; // New property for unlimited indication
+  enabled: boolean;
+  // isPremium and isUnlimitedFeature flags are removed as access gating is removed
 }
 
 interface FeatureCardProps {
@@ -26,26 +25,9 @@ export function FeatureCard({ feature }: FeatureCardProps) {
 
   return (
     <GlassCard className={cn(
-      "flex flex-col h-full transition-all duration-300 ease-in-out relative", 
+      "flex flex-col h-full transition-all duration-300 ease-in-out relative",
       feature.enabled ? "hover:shadow-2xl hover:scale-[1.02]" : "opacity-60 cursor-not-allowed"
     )}>
-      {feature.enabled && feature.isPremium && (
-        <div className={cn(
-            "absolute top-2 right-2 z-10",
-            feature.isUnlimitedFeature ? "p-0.5 bg-yellow-400 rounded-full shadow-md" : "" // Golden circle for unlimited
-        )}>
-          <div className={cn(
-            feature.isUnlimitedFeature ? "p-1 bg-background/80 rounded-full" : "p-1 bg-background/70 rounded-full shadow-md"
-          )}>
-            <Crown 
-              className={cn(
-                "h-4 w-4 text-yellow-500", 
-                feature.isUnlimitedFeature ? "fill-yellow-500" : "fill-yellow-400"
-              )} 
-            />
-          </div>
-        </div>
-      )}
       <GlassCardHeader className="pb-3">
         <div className="flex items-center mb-3">
           <div className={cn("p-2 rounded-lg mr-3", feature.enabled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground" )}>

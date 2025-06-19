@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, type FormEvent, useCallback } from 'react';
+import React, { useState, useEffect, type FormEvent } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
@@ -10,11 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon, ArrowLeft, CheckCircle2, Star, Gift, Copy as CopyIcon } from 'lucide-react'; // Removed PackagePause
+import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon, ArrowLeft, CheckCircle2, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { auth, db } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -26,7 +26,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
@@ -42,7 +41,6 @@ import NextImage from 'next/image';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { app } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
-import { collection, query, where, getDocs, limit, doc, setDoc, serverTimestamp, orderBy, Timestamp } from "firebase/firestore";
 
 const predefinedIcons = Array.from({ length: 10 }, (_, i) => `https://avatar.iran.liara.run/public/${i + 1}`);
 const defaultPlaceholderUrl = "https://placehold.co/40x40.png";
@@ -75,7 +73,7 @@ const pricingTiers: Tier[] = [
     ],
     cta: 'Subscriptions Paused (Beta)',
     emphasized: true,
-    isBetaPaused: true, 
+    isBetaPaused: true,
   },
   {
     name: 'Unlimited',
@@ -92,18 +90,9 @@ const pricingTiers: Tier[] = [
     ],
     cta: 'Subscriptions Paused (Beta)',
     emphasized: false,
-    isBetaPaused: true, 
+    isBetaPaused: true,
   },
 ];
-
-interface ReferralCode {
-  id: string;
-  code: string;
-  userId: string;
-  isActive: boolean;
-  usesLeft?: number; 
-  createdAt: any; 
-}
 
 export default function AccountPage() {
   const authContext = useAuth();
@@ -128,84 +117,14 @@ export default function AccountPage() {
   const [isChangePlanModalOpen, setIsChangePlanModalOpen] = useState(false);
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
 
-  const [userReferralCode, setUserReferralCode] = useState<ReferralCode | null>(null);
-  const [isLoadingReferralCode, setIsLoadingReferralCode] = useState(true);
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
-
-  const fetchUserReferralCode = useCallback(async () => {
-    if (!currentUser) {
-      setIsLoadingReferralCode(false);
-      return;
-    }
-    setIsLoadingReferralCode(true);
-    try {
-      const q = query(
-        collection(db, "referralCodes"), 
-        where("userId", "==", currentUser.uid),
-        where("isActive", "==", true),
-        orderBy("createdAt", "desc"), 
-        limit(1)
-      );
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        const docData = querySnapshot.docs[0].data() as Omit<ReferralCode, 'id'>;
-        let createdAtValue = docData.createdAt;
-        if (createdAtValue instanceof Timestamp) {
-          createdAtValue = createdAtValue.toDate();
-        }
-        setUserReferralCode({ id: querySnapshot.docs[0].id, ...docData, createdAt: createdAtValue });
-      } else {
-        setUserReferralCode(null); 
-      }
-    } catch (error) {
-      console.error("Error fetching referral code:", error);
-      toast({ title: "Referral Code Error", description: "Could not fetch your referral code. Ensure you have an active code or generate a new one.", variant: "destructive" });
-    } finally {
-      setIsLoadingReferralCode(false);
-    }
-  }, [currentUser, toast]);
-
   useEffect(() => {
     if (!loading && !currentUser) {
       router.push('/login');
     } else if (currentUser) {
       setNewDisplayName(authContext.displayName || '');
       setSelectedIconUrl(authContext.avatarUrl || defaultPlaceholderUrl);
-      fetchUserReferralCode();
     }
-  }, [currentUser, loading, router, authContext.displayName, authContext.avatarUrl, fetchUserReferralCode]);
-
-  const generateNewReferralCode = async () => {
-    if (!currentUser) return;
-    setIsGeneratingCode(true);
-    try {
-      const code = `BRIEFLY${currentUser.uid.substring(0, 4)}${Math.random().toString(36).substring(2, 7)}`.toUpperCase();
-      const newCodeRef = doc(collection(db, "referralCodes"));
-      const newCodeData: Omit<ReferralCode, 'id' | 'createdAt'> & { createdAt: any } = { 
-        code,
-        userId: currentUser.uid,
-        isActive: true,
-        usesLeft: 5, 
-        createdAt: serverTimestamp(),
-      };
-      await setDoc(newCodeRef, newCodeData);
-      setUserReferralCode({ id: newCodeRef.id, ...newCodeData, createdAt: new Date() } as ReferralCode); 
-      toast({ title: "Referral Code Generated!", description: "Your new referral code is ready." });
-    } catch (error) {
-      console.error("Error generating new referral code:", error);
-      toast({ title: "Code Generation Failed", description: "Could not generate a new referral code.", variant: "destructive" });
-    } finally {
-      setIsGeneratingCode(false);
-    }
-  };
-
-  const handleCopyReferralCode = () => {
-    if (userReferralCode?.code) {
-      navigator.clipboard.writeText(userReferralCode.code);
-      toast({ title: "Copied!", description: "Referral code copied to clipboard." });
-    }
-  };
-
+  }, [currentUser, loading, router, authContext.displayName, authContext.avatarUrl]);
 
   const handleSaveProfile = async (e: FormEvent) => {
     e.preventDefault();
@@ -233,7 +152,7 @@ export default function AccountPage() {
         if (authContext.currentUser?.reload) {
             await authContext.currentUser.reload();
         }
-        authContext.currentUser?.reload().then(() => { 
+        authContext.currentUser?.reload().then(() => {
         });
 
         toast({ title: "Profile Updated", description: "Your profile has been successfully updated." });
@@ -314,7 +233,7 @@ export default function AccountPage() {
 
       await deleteUser(currentUser);
       toast({ title: "Account Deleted", description: "Your account has been permanently deleted." });
-      router.push('/login'); 
+      router.push('/login');
     } catch (error: any) {
       console.error("Error deleting account:", error);
       let description = "Could not delete account. Please try again.";
@@ -325,7 +244,7 @@ export default function AccountPage() {
       }
       toast({ title: "Error Deleting Account", description, variant: "destructive" });
       setIsDeletingAccount(false);
-      setShowDeleteConfirm(false); 
+      setShowDeleteConfirm(false);
       setReAuthPassword('');
     }
   };
@@ -347,7 +266,7 @@ export default function AccountPage() {
         description: 'Please log in or sign up to subscribe.',
         variant: 'destructive',
       });
-      router.push('/login?redirect=/dashboard/account'); 
+      router.push('/login?redirect=/dashboard/account');
       return;
     }
 
@@ -357,12 +276,12 @@ export default function AccountPage() {
       const createSubscriptionFunction = httpsCallable(functions, 'createPaystackSubscription');
 
       const result: any = await createSubscriptionFunction({
-        email: currentUser.email, 
-        planId: tierPlanId, 
+        email: currentUser.email,
+        planId: tierPlanId,
       });
 
       if (result.data && result.data.authorization_url) {
-        window.location.href = result.data.authorization_url; 
+        window.location.href = result.data.authorization_url;
       } else {
         throw new Error(result.data?.error || 'Could not initiate payment. Please try again.');
       }
@@ -379,7 +298,7 @@ export default function AccountPage() {
   };
 
 
-  if (loading || !currentUser) { 
+  if (loading || !currentUser) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -425,7 +344,7 @@ export default function AccountPage() {
                         <div className="grid grid-cols-5 gap-2">
                           {predefinedIcons.map(iconSrc => (
                             <button
-                              type="button" 
+                              type="button"
                               key={iconSrc}
                               onClick={() => setSelectedIconUrl(iconSrc)}
                               className={`rounded-full aspect-square relative overflow-hidden border-2 transition-all duration-150 ease-in-out
@@ -504,54 +423,11 @@ export default function AccountPage() {
 
               <GlassCard>
                 <GlassCardHeader>
-                  <GlassCardTitle className="flex items-center"><Gift className="mr-2 h-5 w-5"/> Referral Program</GlassCardTitle>
-                  <GlassCardDescription>Share BrieflyAI and earn rewards (coming soon!).</GlassCardDescription>
-                </GlassCardHeader>
-                <GlassCardContent>
-                  {isLoadingReferralCode ? (
-                    <div className="flex items-center space-x-2 text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Loading your referral code...</span>
-                    </div>
-                  ) : userReferralCode ? (
-                    <div className="space-y-3">
-                      <div>
-                        <Label htmlFor="referralCodeDisplay">Your Unique Referral Code</Label>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <Input id="referralCodeDisplay" value={userReferralCode.code} readOnly className="font-mono text-sm" />
-                          <Button variant="outline" size="icon" onClick={handleCopyReferralCode} aria-label="Copy referral code">
-                            <CopyIcon className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      {userReferralCode.usesLeft !== undefined && (
-                        <p className="text-xs text-muted-foreground">
-                          Uses left: {userReferralCode.usesLeft}
-                        </p>
-                      )}
-                      <p className="text-sm text-muted-foreground">
-                        Share this code with friends! For each friend who signs up, you'll both get a bonus (details coming soon).
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-center space-y-2">
-                       <p className="text-sm text-muted-foreground">You don't have a referral code yet.</p>
-                       <Button onClick={generateNewReferralCode} disabled={isGeneratingCode} variant="outline" size="sm">
-                          {isGeneratingCode ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Gift className="mr-2 h-4 w-4"/>}
-                          Generate My Code
-                       </Button>
-                    </div>
-                  )}
-                </GlassCardContent>
-              </GlassCard>
-
-              <GlassCard>
-                <GlassCardHeader>
                   <GlassCardTitle className="flex items-center"><CreditCard className="mr-2 h-5 w-5"/> Subscription</GlassCardTitle>
                   <GlassCardDescription>Manage your BrieflyAI plan.</GlassCardDescription>
                 </GlassCardHeader>
                 <GlassCardContent>
-                  <p className="text-sm mb-3">Current Plan: <span className="font-semibold text-primary">Basic Plan</span> (Feature to dynamically show current plan coming soon!)</p>
+                  <p className="text-sm mb-3">Current Plan: <span className="font-semibold text-primary">BrieflyAI Free Plan</span></p>
                   <div className="flex items-start space-x-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-300">
                       <Info className="h-4 w-4 mt-0.5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
                       <p>Paid subscriptions are temporarily paused during our Beta phase. Thank you for your understanding!</p>
@@ -591,9 +467,9 @@ export default function AccountPage() {
                                 <span className="text-3xl font-bold text-foreground">{tier.price}</span>
                                 <span className="text-sm text-muted-foreground">{tier.frequency}</span>
                               </p>
-                              <p className="mt-2 text-sm text-muted-foreground h-10">{tier.description}</p> 
+                              <p className="mt-2 text-sm text-muted-foreground h-10">{tier.description}</p>
 
-                              <ul className="mt-4 space-y-2 text-sm flex-grow"> 
+                              <ul className="mt-4 space-y-2 text-sm flex-grow">
                                 {tier.features.map((feature) => (
                                   <li key={feature} className="flex items-start">
                                     <CheckCircle2 className="mr-2 h-4 w-4 text-accent flex-shrink-0 mt-0.5" />
@@ -607,8 +483,8 @@ export default function AccountPage() {
                                 disabled={loadingPlanId === tier.planId || tier.isBetaPaused}
                                 className={cn(
                                   "mt-6 w-full",
-                                  tier.emphasized && !tier.isBetaPaused ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
-                                    : tier.isBetaPaused ? "bg-muted hover:bg-muted text-muted-foreground cursor-not-allowed" 
+                                  tier.emphasized && !tier.isBetaPaused ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                                    : tier.isBetaPaused ? "bg-muted hover:bg-muted text-muted-foreground cursor-not-allowed"
                                     : "bg-accent hover:bg-accent/90 text-accent-foreground"
                                 )}
                               >
@@ -617,7 +493,7 @@ export default function AccountPage() {
                             </div>
                           ))}
                         </div>
-                        <DialogFooter className="mt-auto pt-4 border-t"> 
+                        <DialogFooter className="mt-auto pt-4 border-t">
                            <p className="text-xs text-muted-foreground mr-auto">Payments are securely processed via Paystack.</p>
                           <DialogClose asChild>
                             <Button variant="outline">Cancel</Button>
@@ -625,7 +501,7 @@ export default function AccountPage() {
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
-                    <Button variant="ghost" disabled={true}>Cancel Subscription</Button> 
+                    <Button variant="ghost" disabled={true}>Cancel Subscription</Button>
                   </div>
                 </GlassCardContent>
               </GlassCard>
@@ -677,7 +553,7 @@ export default function AccountPage() {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-                  {!isEmailPasswordUser && ( 
+                  {!isEmailPasswordUser && (
                     <div className="mt-3 flex items-start space-x-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
                         <ShieldAlert className="h-4 w-4 mt-0.5 flex-shrink-0" />
                         <p>If you signed up using a social provider, you may need to re-authenticate with them to complete this action.</p>
@@ -693,5 +569,3 @@ export default function AccountPage() {
     </div>
   );
 }
-
-    
