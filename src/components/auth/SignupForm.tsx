@@ -58,12 +58,9 @@ export function SignupForm() {
         
         console.log("[SignupForm] User document successfully written to Firestore.");
 
-        toast({
-          title: "Account Created! Please Verify Your Email",
-          description: `A verification link has been sent to ${newUser.email}. Please check your inbox (and spam folder) to verify your account before logging in.`,
-          duration: 10000, // Longer duration for this important message
-        });
-        router.push("/onboarding");
+        // Redirect to the verification page instead of showing a toast and going to onboarding
+        router.push(`/verify-email?email=${encodeURIComponent(newUser.email || '')}`);
+        
       } else {
         throw new Error("User creation failed, no user object returned.");
       }
