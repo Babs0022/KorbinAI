@@ -33,22 +33,25 @@ export function SignupForm() {
       if (newUser) {
         await updateProfile(newUser, {
           displayName: name,
+          // photoURL: can be set later or if you have a default
         });
 
+        // Create user document in Firestore
         const userDocRef = doc(db, "users", newUser.uid);
         await setDoc(userDocRef, {
             uid: newUser.uid,
             email: newUser.email,
             displayName: name,
+            photoURL: newUser.photoURL || null,
             createdAt: Timestamp.now(),
-        }, { merge: true });
+        }, { merge: true }); // Use merge true to be safe if doc somehow exists
       }
 
       toast({
         title: "Account Created!",
         description: "Welcome to BrieflyAI. Let's get you started.",
       });
-      router.push("/onboarding");
+      router.push("/onboarding"); // Redirect to onboarding after successful signup
 
     } catch (error: any) {
       console.error("Signup process error:", error);
@@ -66,14 +69,6 @@ export function SignupForm() {
             break;
           case "auth/invalid-email":
             description = "The email address is not valid.";
-            break;
-          case "permission-denied":
-            description = "Could not finalize signup due to a permission issue. This might be temporary. Please try again. If it persists, contact support.";
-            console.error("Firestore Permission Denied during signup:", error.message);
-            break;
-          case "unavailable":
-             description = "Our database seems to be temporarily unavailable. Please try again in a few moments.";
-             console.error("Firestore unavailable during signup:", error.message);
             break;
           default:
             description = `An error occurred (${error.code}). Please try again.`;
@@ -142,7 +137,7 @@ export function SignupForm() {
         </div>
       </div>
       <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isLoading}>
-        {isLoading ? "Creating account..." : "Create Account"}
+        {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating account...</>) : "Create Account"}
       </Button>
       <SocialLogins type="signup" />
       <p className="text-center text-sm text-muted-foreground">
