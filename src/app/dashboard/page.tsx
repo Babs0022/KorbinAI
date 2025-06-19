@@ -140,12 +140,14 @@ export default function DashboardPage() {
   const { toast } = useToast();
 
   const [averagePromptScore, setAveragePromptScore] = useState<number | null>(null);
+  const [mostFrequentTag, setMostFrequentTag] = useState<string | null>(null);
 
   const fetchDashboardData = useCallback(async () => {
     if (!currentUser) {
       setIsLoadingData(false);
       setAllUserPrompts([]);
       setAveragePromptScore(null);
+      setMostFrequentTag(null);
       return;
     }
     setIsLoadingData(true);
@@ -183,11 +185,33 @@ export default function DashboardPage() {
         setAveragePromptScore(null);
       }
 
+      // Calculate most frequent tag
+      const tagCounts: Record<string, number> = {};
+      firestorePrompts.forEach(prompt => {
+        if (prompt.tags && prompt.tags.length > 0) {
+          prompt.tags.forEach(tag => {
+            const normalizedTag = tag.toLowerCase().trim();
+            if (normalizedTag) {
+                tagCounts[normalizedTag] = (tagCounts[normalizedTag] || 0) + 1;
+            }
+          });
+        }
+      });
+
+      if (Object.keys(tagCounts).length > 0) {
+        const sortedTags = Object.entries(tagCounts).sort(([,a],[,b]) => b-a);
+        setMostFrequentTag(sortedTags[0][0]); // Store the tag name
+      } else {
+        setMostFrequentTag(null);
+      }
+
+
     } catch (error) {
       console.error("Error loading dashboard data from Firestore:", error);
       toast({ title: "Error Loading Data", description: "Could not load dashboard data.", variant: "destructive"});
       setAllUserPrompts([]);
       setAveragePromptScore(null);
+      setMostFrequentTag(null);
     } finally {
       setIsLoadingData(false);
     }
@@ -202,6 +226,7 @@ export default function DashboardPage() {
       setIsLoadingData(false);
       setAllUserPrompts([]);
       setAveragePromptScore(null);
+      setMostFrequentTag(null);
     }
   }, [currentUser, authLoading, router, fetchDashboardData]);
   
@@ -260,9 +285,11 @@ export default function DashboardPage() {
     if (!promptToDelete || !currentUser) return;
     try {
       await deleteDoc(doc(db, `users/${currentUser.uid}/promptHistory`, promptToDelete.id));
-      setAllUserPrompts(prevPrompts => prevPrompts.filter(p => p.id !== promptToDelete.id));
-      // Recalculate average score after deletion
+      // Optimistically update UI and then refetch or recalculate
       const updatedPrompts = allUserPrompts.filter(p => p.id !== promptToDelete.id);
+      setAllUserPrompts(updatedPrompts); // Update local state first
+      
+      // Recalculate average score and most frequent tag from the updated local state
       const scoredPrompts = updatedPrompts.filter(p => typeof p.qualityScore === 'number' && p.qualityScore !== undefined);
       if (scoredPrompts.length > 0) {
         const sum = scoredPrompts.reduce((acc, p) => acc + (p.qualityScore || 0), 0);
@@ -270,10 +297,30 @@ export default function DashboardPage() {
       } else {
         setAveragePromptScore(null);
       }
+
+      const tagCounts: Record<string, number> = {};
+      updatedPrompts.forEach(prompt => {
+        if (prompt.tags && prompt.tags.length > 0) {
+          prompt.tags.forEach(tag => {
+            const normalizedTag = tag.toLowerCase().trim();
+             if (normalizedTag) {
+                tagCounts[normalizedTag] = (tagCounts[normalizedTag] || 0) + 1;
+            }
+          });
+        }
+      });
+      if (Object.keys(tagCounts).length > 0) {
+        const sortedTags = Object.entries(tagCounts).sort(([,a],[,b]) => b-a);
+        setMostFrequentTag(sortedTags[0][0]);
+      } else {
+        setMostFrequentTag(null);
+      }
+
       toast({ title: "Prompt Deleted", description: `Prompt "${promptToDelete.name}" has been deleted.`});
     } catch (error) {
       console.error("Error deleting prompt from Firestore:", error);
       toast({ title: "Error Deleting Prompt", description: "Could not delete prompt.", variant: "destructive"});
+      fetchDashboardData(); // Refetch if optimistic update fails or for full consistency
     } finally {
       setPromptToDelete(null);
     }
@@ -290,7 +337,7 @@ export default function DashboardPage() {
     );
   });
 
-  if (authLoading || (isLoadingData && !currentUser)) { // Show loader if auth is loading OR if data is loading and no user yet
+  if (authLoading || (isLoadingData && !currentUser)) { 
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -335,10 +382,10 @@ export default function DashboardPage() {
                   description="Average of your scored prompts" 
                 />
                 <AnalyticsSummaryCard 
-                    title="Most Used Category" 
-                    value="N/A" 
-                    icon={Eye} 
-                    description="Categorization coming soon!" 
+                  title="Most Frequent Tag" 
+                  value={isLoadingData ? "..." : (mostFrequentTag || "N/A")}
+                  icon={Tag} 
+                  description="Your most used prompt tag" 
                 />
               </div>
           </section>
