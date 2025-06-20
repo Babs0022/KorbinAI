@@ -9,7 +9,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z}from 'genkit';
 
 const SupportAssistantInputSchema = z.object({
   userQuery: z.string().describe('The user\'s question or issue.'),
@@ -40,6 +40,7 @@ Your primary goal is to answer user questions about how to use BrieflyAI feature
 
 BrieflyAI Key Features:
 - Prompt Generator: Users input goals, answer survey questions, and get optimized prompts.
+- Quick Refine (Vibe-Coding Assistant): A floating pill/button that opens a dialog for users to quickly input rough thoughts, get an AI-refined prompt, which is then auto-copied. Interactions are saved to their 'quickRefines' history.
 - Prompt Vault: Users can store, organize, and categorize their effective prompts.
 - Prompt Refinement Hub: Users can modify previously generated prompts and get AI suggestions for refinement.
 - Model-Specific Adaptation: Prompts can be tailored for AI models like GPT-4, Claude, DALL-E 3, Midjourney, Stable Diffusion.
@@ -49,9 +50,8 @@ BrieflyAI Key Features:
 - Prompt Feedback & Analysis: Users receive a quality score and actionable feedback on their prompts.
 - Reverse Prompting: Users can input AI-generated text to deduce the potential prompt that created it.
 - AI Model Compatibility Checker: Helps verify and adjust prompts for optimal performance with specific AI models.
-- User Accounts: Standard account management (profile, password, login, signup).
-- Onboarding Flow: New users go through steps to learn about the app and get their initial referral code.
-- Referral Program: Users have referral codes to invite others.
+- User Accounts: Standard account management (profile, password, login, signup, email verification).
+- Onboarding Flow: New users go through steps to learn about the app.
 - Settings: Users can manage notification preferences and theme.
 - Subscription plans (currently paused for Beta): Free, Premium, and Unlimited tiers.
 

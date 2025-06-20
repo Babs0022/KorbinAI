@@ -22,7 +22,8 @@ import { signOut } from 'firebase/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardSidebar } from './DashboardSidebar'; // Sidebar for mobile
 import { useState } from 'react';
-import { SupportAssistant } from '@/components/assistant/SupportAssistant'; // Added SupportAssistant
+import { SupportAssistant } from '@/components/assistant/SupportAssistant';
+import { VibeCodingAssistantPill } from '@/components/assistant/VibeCodingAssistantPill'; // Added VibeCodingAssistantPill
 
 export function DashboardHeader() {
   const router = useRouter();
@@ -137,7 +138,8 @@ export function DashboardHeader() {
           </nav>
         </div>
       </header>
-      {currentUser && <SupportAssistant />} {/* Conditionally render SupportAssistant */}
+      {currentUser && <SupportAssistant />}
+      {currentUser && <VibeCodingAssistantPill />} 
     </>
   );
 }
