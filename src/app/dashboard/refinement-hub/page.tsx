@@ -15,13 +15,21 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, getDocs, doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, doc, updateDoc, serverTimestamp, Timestamp, limit, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem'; 
-import { getPromptRefinementSuggestions, type GetPromptRefinementSuggestionsInput, type GetPromptRefinementSuggestionsOutput } from '@/ai/flows/refine-prompt-suggestions-flow';
+import { getContextualRefinementSuggestions, type GetContextualRefinementSuggestionsInput, type GetContextualRefinementSuggestionsOutput } from '@/ai/flows/contextual-refinement-suggestions-flow';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type SortOption = "timestamp_desc" | "timestamp_asc" | "name_asc" | "name_desc";
+
+interface HistoricalPromptForFlow {
+  name?: string;
+  optimizedPrompt: string;
+  goal?: string;
+  tags?: string[];
+  qualityScore?: number;
+}
 
 export default function RefinementHubPage() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -37,13 +45,13 @@ export default function RefinementHubPage() {
   const [editableGoal, setEditableGoal] = useState('');
   const [editableOptimizedPrompt, setEditableOptimizedPrompt] = useState('');
   const [editableTags, setEditableTags] = useState('');
-  // State for quality score and target model, if they exist on the selected prompt
   const [editableQualityScore, setEditableQualityScore] = useState<number | undefined>(undefined);
   const [editableTargetModel, setEditableTargetModel] = useState<string | undefined>(undefined);
   
   const [isSaving, setIsSaving] = useState(false);
 
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [aiInsights, setAiInsights] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   const fetchPrompts = useCallback(async () => {
@@ -71,8 +79,8 @@ export default function RefinementHubPage() {
           optimizedPrompt: data.optimizedPrompt || '',
           timestamp: timestampStr,
           tags: data.tags || [],
-          qualityScore: data.qualityScore, // Include even if undefined
-          targetModel: data.targetModel,   // Include even if undefined
+          qualityScore: data.qualityScore,
+          targetModel: data.targetModel,   
         } as PromptHistory;
       });
       setAllPrompts(firestorePrompts);
@@ -117,6 +125,7 @@ export default function RefinementHubPage() {
     setEditableQualityScore(prompt.qualityScore);
     setEditableTargetModel(prompt.targetModel);
     setAiSuggestions([]); 
+    setAiInsights([]);
   };
 
   const handleSaveChanges = async (event: FormEvent) => {
@@ -143,7 +152,6 @@ export default function RefinementHubPage() {
         timestamp: serverTimestamp() 
       };
 
-      // Only include qualityScore and targetModel if they have defined values
       if (typeof editableQualityScore === 'number') {
         dataToUpdate.qualityScore = editableQualityScore;
       }
@@ -174,20 +182,53 @@ export default function RefinementHubPage() {
   };
 
   const handleGetAISuggestions = async () => {
-    if (!selectedPrompt) {
+    if (!selectedPrompt || !currentUser) {
       toast({ title: "No Prompt Selected", description: "Please select a prompt to get AI suggestions.", variant: "destructive" });
       return;
     }
     setIsLoadingSuggestions(true);
     setAiSuggestions([]);
+    setAiInsights([]);
+
+    let historicalPromptsForFlow: HistoricalPromptForFlow[] = [];
     try {
-      const input: GetPromptRefinementSuggestionsInput = {
+      // Fetch 3-5 most recent, high-quality prompts for context, excluding the current one
+      const historyQuery = query(
+        collection(db, `users/${currentUser.uid}/promptHistory`),
+        where("id", "!=", selectedPrompt.id), // Exclude the currently selected prompt
+        orderBy("qualityScore", "desc"), // Prioritize higher scored prompts
+        orderBy("timestamp", "desc"),    // Then by most recent
+        limit(5)
+      );
+      const historySnapshot = await getDocs(historyQuery);
+      historicalPromptsForFlow = historySnapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          name: data.name,
+          optimizedPrompt: data.optimizedPrompt,
+          goal: data.goal,
+          tags: data.tags,
+          qualityScore: data.qualityScore,
+        };
+      });
+
+    } catch (fetchError) {
+      console.error("Error fetching historical prompts for context:", fetchError);
+      toast({ title: "Context Fetch Error", description: "Could not load historical context for suggestions. Using general suggestions.", variant: "default" });
+      // Proceed without historical context if fetch fails
+    }
+
+    try {
+      const input: GetContextualRefinementSuggestionsInput = {
         currentPromptText: editableOptimizedPrompt,
         originalGoal: editableGoal,
+        historicalPrompts: historicalPromptsForFlow,
       };
-      const result = await getPromptRefinementSuggestions(input);
+      const result: GetContextualRefinementSuggestionsOutput = await getContextualRefinementSuggestions(input);
+      
       if (result.suggestions && result.suggestions.length > 0) {
         setAiSuggestions(result.suggestions);
+        setAiInsights(result.insights || []);
         toast({ title: "AI Suggestions Ready!", description: "Check below for tips to improve your prompt." });
       } else {
         toast({ title: "No Specific Suggestions", description: "The AI didn't have specific new suggestions for this prompt at the moment.", variant: "default" });
@@ -274,6 +315,7 @@ export default function RefinementHubPage() {
                             <p className="font-medium text-sm text-foreground truncate" title={p.name}>{p.name}</p>
                             <p className="text-xs text-muted-foreground">
                               Last updated: {new Date(p.timestamp).toLocaleDateString()}
+                              {p.qualityScore && <span className="ml-2 text-primary/70">(Score: {p.qualityScore})</span>}
                             </p>
                           </button>
                         </li>
@@ -294,7 +336,7 @@ export default function RefinementHubPage() {
                     Prompt Refinement Editor
                   </GlassCardTitle>
                   <GlassCardDescription>
-                    Select a prompt to edit its name, goal, optimized text, and tags. Use AI to get suggestions!
+                    Select a prompt to edit its name, goal, optimized text, and tags. Use AI to get contextual suggestions!
                   </GlassCardDescription>
                 </GlassCardHeader>
                 <GlassCardContent>
@@ -332,16 +374,15 @@ export default function RefinementHubPage() {
                           placeholder="Your AI-ready prompt text goes here..."
                         />
                       </div>
-                       {/* Optional fields for score and model - mainly for display/awareness if present */}
                         {typeof editableQualityScore === 'number' && (
                             <div>
-                                <Label htmlFor="editableQualityScore" className="text-sm font-medium">Quality Score (read-only for now)</Label>
+                                <Label htmlFor="editableQualityScore" className="text-sm font-medium">Quality Score (read-only)</Label>
                                 <Input id="editableQualityScore" value={`${editableQualityScore}/10`} readOnly className="mt-1 text-xs bg-muted/50" />
                             </div>
                         )}
                         {editableTargetModel && (
                              <div>
-                                <Label htmlFor="editableTargetModel" className="text-sm font-medium">Target Model (read-only for now)</Label>
+                                <Label htmlFor="editableTargetModel" className="text-sm font-medium">Target Model (read-only)</Label>
                                 <Input id="editableTargetModel" value={editableTargetModel} readOnly className="mt-1 text-xs bg-muted/50" />
                             </div>
                         )}
@@ -383,32 +424,53 @@ export default function RefinementHubPage() {
                     <div className="text-center py-16">
                       <Edit3 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                       <p className="text-lg font-medium text-foreground">Select a prompt from the left panel to start refining.</p>
-                      <p className="text-muted-foreground mt-1">Make direct edits or get AI-powered suggestions.</p>
+                      <p className="text-muted-foreground mt-1">Make direct edits or get AI-powered suggestions based on your history.</p>
                     </div>
                   )}
 
-                  {selectedPrompt && (isLoadingSuggestions || aiSuggestions.length > 0) && (
+                  {selectedPrompt && (isLoadingSuggestions || aiSuggestions.length > 0 || aiInsights.length > 0) && (
                     <div className="mt-8 border-t border-border/50 pt-6">
                       <h4 className="font-headline text-lg font-semibold text-foreground mb-3 flex items-center">
                         <Lightbulb className="mr-2 h-5 w-5 text-yellow-500" />
-                        AI Refinement Suggestions
+                        Contextual AI Refinement Suggestions
                       </h4>
                       {isLoadingSuggestions ? (
                         <div className="flex items-center justify-center py-6">
                           <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary" />
-                          <p className="text-muted-foreground">Fetching suggestions...</p>
+                          <p className="text-muted-foreground">Fetching contextual suggestions...</p>
                         </div>
-                      ) : aiSuggestions.length > 0 ? (
-                        <ul className="space-y-3">
-                          {aiSuggestions.map((suggestion, index) => (
-                            <li key={index} className="flex items-start p-3 border rounded-md bg-muted/20 shadow-sm">
-                              <Wand2 className="mr-3 h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                              <span className="text-sm text-muted-foreground">{suggestion}</span>
-                            </li>
-                          ))}
-                        </ul>
                       ) : (
-                         !isLoadingSuggestions && <p className="text-sm text-muted-foreground">No specific suggestions at this time.</p>
+                        <>
+                          {aiSuggestions.length > 0 && (
+                            <div className="mb-4">
+                              <p className="text-sm font-medium text-foreground mb-1">Suggestions:</p>
+                              <ul className="space-y-3">
+                                {aiSuggestions.map((suggestion, index) => (
+                                  <li key={`sugg-${index}`} className="flex items-start p-3 border rounded-md bg-muted/20 shadow-sm">
+                                    <Wand2 className="mr-3 h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                                    <span className="text-sm text-muted-foreground">{suggestion}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {aiInsights.length > 0 && (
+                            <div>
+                              <p className="text-sm font-medium text-foreground mb-1">Insights from your history:</p>
+                              <ul className="space-y-2">
+                                {aiInsights.map((insight, index) => (
+                                   <li key={`insight-${index}`} className="flex items-start p-2.5 border border-dashed border-primary/30 rounded-md bg-primary/5">
+                                    <Info className="mr-2.5 h-4 w-4 text-primary/70 flex-shrink-0 mt-0.5" />
+                                    <span className="text-xs text-primary/90">{insight}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {aiSuggestions.length === 0 && aiInsights.length === 0 && !isLoadingSuggestions && (
+                              <p className="text-sm text-muted-foreground">No specific suggestions or insights at this time.</p>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -423,3 +485,4 @@ export default function RefinementHubPage() {
     </div>
   );
 }
+
