@@ -11,7 +11,7 @@ import { optimizePrompt, type OptimizePromptInput, type OptimizePromptOutput } f
 import { generateSurveyQuestions, type GenerateSurveyQuestionsInput, type GenerateSurveyQuestionsOutput, type SurveyQuestion } from '@/ai/flows/generate-survey-questions-flow';
 import { generatePromptMetadata, type GeneratePromptMetadataInput, type GeneratePromptMetadataOutput } from '@/ai/flows/generate-prompt-metadata-flow';
 import { useToast } from '@/hooks/use-toast';
-import { Wand2, Lightbulb, Loader2, Send, Mic, MicOff, AlertTriangle } from 'lucide-react';
+import { Wand2, Lightbulb, Loader2, Send, Mic, MicOff, AlertTriangle, Volume2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
@@ -20,6 +20,7 @@ declare global {
   interface Window {
     SpeechRecognition: typeof SpeechRecognition;
     webkitSpeechRecognition: typeof SpeechRecognition;
+    speechSynthesis: SpeechSynthesis;
   }
 }
 
@@ -42,9 +43,13 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
   const { toast } = useToast();
 
   const [speechRecognitionSupported, setSpeechRecognitionSupported] = useState(false);
+  const [ttsSupported, setTtsSupported] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [currentListeningField, setCurrentListeningField] = useState<string | null>(null); // 'goal' or questionId
+  const [isBrieflyAISpeaking, setIsBrieflyAISpeaking] = useState(false);
+  const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
 
   useEffect(() => {
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -52,7 +57,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       setSpeechRecognitionSupported(true);
       recognitionRef.current = new SpeechRecognitionAPI();
       recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false; // Get final result
+      recognitionRef.current.interimResults = false;
 
       recognitionRef.current.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
@@ -68,47 +73,68 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       };
 
       recognitionRef.current.onerror = (event) => {
-        // Gracefully handle "aborted" - it's not always a user-facing error.
         if (event.error === 'aborted') {
-          console.info("Speech recognition aborted.", event); // Log for debugging
-          // Ensure UI state is consistent if aborted unexpectedly.
-          // stopListening() is typically called by onend or explicit user action.
-          // If `isListening` is still true here, onend should clean it up.
+          console.info("Speech recognition aborted.", event);
           return; 
         }
-
         console.error("Speech recognition error", event.error);
         let errorMsg = "Speech recognition error. Please try again.";
         if (event.error === 'no-speech') errorMsg = "No speech detected. Please try again.";
         if (event.error === 'audio-capture') errorMsg = "Microphone error. Please check permissions and hardware.";
         if (event.error === 'not-allowed') errorMsg = "Microphone access denied. Please allow microphone access in your browser settings.";
         toast({ title: "Voice Input Error", description: errorMsg, variant: "destructive" });
-        stopListening(); // Reset UI for actual errors
+        stopListening();
       };
 
       recognitionRef.current.onend = () => {
-        // This event fires after recognition stops, either naturally, by error, or by explicit stop/abort.
-        // Ensure the listening state is always reset.
         if (isListening) {
             stopListening();
         }
       };
     } else {
       setSpeechRecognitionSupported(false);
-      toast({ title: "Voice Input Not Supported", description: "Your browser does not support speech recognition.", variant: "default", duration: 5000 });
     }
 
+    if ('speechSynthesis' in window) {
+      setTtsSupported(true);
+      utteranceRef.current = new SpeechSynthesisUtterance();
+      utteranceRef.current.onstart = () => setIsBrieflyAISpeaking(true);
+      utteranceRef.current.onend = () => setIsBrieflyAISpeaking(false);
+      utteranceRef.current.onerror = (event) => {
+        console.error("Speech synthesis error", event.error);
+        toast({ title: "Speech Output Error", description: "Could not speak the text.", variant: "destructive" });
+        setIsBrieflyAISpeaking(false);
+      };
+    } else {
+      setTtsSupported(false);
+    }
+    
     return () => {
         if (recognitionRef.current) {
-            recognitionRef.current.abort(); // Stop any ongoing recognition if component unmounts
+            recognitionRef.current.abort(); 
+        }
+        if (window.speechSynthesis && isBrieflyAISpeaking) {
+            window.speechSynthesis.cancel();
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentListeningField]); // `isListening` was removed as per eslint suggestion to avoid re-running effect too often, `stopListening` handles it.
+  }, [currentListeningField]);
+
+
+  const speakText = (text: string, lang?: string) => {
+    if (!ttsSupported || !utteranceRef.current || window.speechSynthesis.speaking) {
+      if (!ttsSupported) console.warn("TTS not supported or utterance not ready.");
+      return;
+    }
+    utteranceRef.current.text = text;
+    utteranceRef.current.lang = lang || navigator.language || 'en-US';
+    window.speechSynthesis.speak(utteranceRef.current);
+  };
 
   const startListening = (fieldId: string) => {
-    if (!speechRecognitionSupported || !recognitionRef.current) {
-      toast({ title: "Voice Input Not Supported", description: "Your browser does not support speech recognition.", variant: "destructive" });
+    if (!speechRecognitionSupported || !recognitionRef.current || isBrieflyAISpeaking) {
+      if (isBrieflyAISpeaking) toast({ title: "Speaking", description: "Please wait until BrieflyAI finishes speaking.", variant: "default" });
+      else toast({ title: "Voice Input Not Supported", description: "Your browser does not support speech recognition.", variant: "destructive" });
       return;
     }
     if (isListening) { 
@@ -156,6 +182,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       toast({ title: "Goal Required", description: "Please enter your goal before fetching questions.", variant: "destructive" });
       return;
     }
+    if (isBrieflyAISpeaking) window.speechSynthesis.cancel();
     setIsLoadingQuestions(true);
     setSurveyQuestions([]);
     setSurveyAnswers({});
@@ -168,9 +195,17 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
         setSurveyQuestions(result.questions);
         setQuestionsFetched(true);
         toast({ title: "Survey Ready!", description: "Please answer the tailored questions below." });
+        // Speak questions one by one, or a summary
+        if (ttsSupported) {
+            let questionsToSpeak = "Here are some questions to refine your goal: ";
+            result.questions.forEach(q => { questionsToSpeak += `${q.text} `; });
+            speakText(questionsToSpeak, recognitionRef.current?.lang);
+        }
       } else {
         setQuestionsFetched(false);
-        toast({ title: "No Specific Questions Needed", description: "Your goal is clear, proceed to optimize or add more details if you wish.", variant: "default"});
+        const noQuestionsMessage = "Your goal is clear, proceed to optimize or add more details if you wish.";
+        toast({ title: "No Specific Questions Needed", description: noQuestionsMessage, variant: "default"});
+        if(ttsSupported) speakText(noQuestionsMessage, recognitionRef.current?.lang);
       }
     } catch (error) {
       console.error("Error fetching survey questions:", error);
@@ -184,6 +219,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (isListening) stopListening(); 
+    if (isBrieflyAISpeaking) window.speechSynthesis.cancel();
 
     if (!goal.trim()) {
       toast({ title: "Goal Required", description: "Please enter your goal for the prompt.", variant: "destructive" });
@@ -215,13 +251,19 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       };
       const metadataResult = await generatePromptMetadata(metadataInput);
       
-      onPromptOptimized({
+      const finalResult: OptimizedPromptResult = {
         ...optimizationResult,
         originalGoal: goal,
         suggestedName: metadataResult.suggestedName,
         suggestedTags: metadataResult.suggestedTags,
-      });
-      toast({ title: "Prompt Ready!", description: "Your optimized prompt with suggested name and tags is complete." });
+      };
+      onPromptOptimized(finalResult);
+      
+      const readyMessage = "Your optimized prompt with suggested name and tags is complete and displayed below.";
+      toast({ title: "Prompt Ready!", description: readyMessage });
+      if (ttsSupported) {
+        speakText(`Here's your optimized prompt: ${finalResult.optimizedPrompt}. The suggested name is ${finalResult.suggestedName}. Suggested tags are: ${finalResult.suggestedTags.join(', ')}. It is now displayed on your screen.`, recognitionRef.current?.lang);
+      }
 
     } catch (error) {
       console.error("Error during prompt creation process:", error);
@@ -253,7 +295,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
               rows={4}
               className="mt-0 flex-grow"
               required
-              disabled={isListening && currentListeningField !== 'goal'}
+              disabled={(isListening && currentListeningField !== 'goal') || isBrieflyAISpeaking}
             />
             {speechRecognitionSupported && (
               <Button
@@ -261,7 +303,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                 variant="outline"
                 size="icon"
                 onClick={() => isListening && currentListeningField === 'goal' ? stopListening() : startListening('goal')}
-                disabled={(isListening && currentListeningField !== 'goal') || isProcessing || isLoadingQuestions}
+                disabled={(isListening && currentListeningField !== 'goal') || isProcessing || isLoadingQuestions || isBrieflyAISpeaking}
                 title={isListening && currentListeningField === 'goal' ? "Stop Listening" : "Speak Goal"}
                 className="flex-shrink-0 mt-0"
               >
@@ -269,12 +311,14 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
               </Button>
             )}
           </div>
-          {!speechRecognitionSupported && (
+          {(!speechRecognitionSupported || !ttsSupported) && (
              <div className="flex items-center text-xs text-muted-foreground mt-1">
-                <AlertTriangle className="h-3 w-3 mr-1 text-amber-500"/> Voice input not supported by your browser.
+                <AlertTriangle className="h-3 w-3 mr-1 text-amber-500"/>
+                {!speechRecognitionSupported && "Voice input not supported. "}
+                {!ttsSupported && "Speech output not supported by your browser."}
              </div>
           )}
-           <Button type="button" variant="outline" onClick={handleFetchSurveyQuestions} disabled={isLoadingQuestions || !goal.trim() || isListening} className="w-full sm:w-auto">
+           <Button type="button" variant="outline" onClick={handleFetchSurveyQuestions} disabled={isLoadingQuestions || !goal.trim() || isListening || isBrieflyAISpeaking} className="w-full sm:w-auto">
             {isLoadingQuestions ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Fetching Questions...</>
             ) : (
@@ -310,7 +354,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                       className="flex-grow" 
                       value={(surveyAnswers[q.id] as string) || ''}
                       onChange={(e) => handleSurveyChange(q.id, e.target.value, q.type)} 
-                      disabled={isListening && currentListeningField !== q.id}
+                      disabled={(isListening && currentListeningField !== q.id) || isBrieflyAISpeaking}
                     />
                     {speechRecognitionSupported && (
                        <Button
@@ -318,7 +362,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                         variant="outline"
                         size="icon"
                         onClick={() => isListening && currentListeningField === q.id ? stopListening() : startListening(q.id)}
-                        disabled={(isListening && currentListeningField !== q.id) || isProcessing || isLoadingQuestions}
+                        disabled={(isListening && currentListeningField !== q.id) || isProcessing || isLoadingQuestions || isBrieflyAISpeaking}
                         title={isListening && currentListeningField === q.id ? "Stop Listening" : `Speak Answer for "${q.text.substring(0,20)}..."`}
                       >
                         {isListening && currentListeningField === q.id ? <MicOff className="h-5 w-5 text-destructive" /> : <Mic className="h-5 w-5" />}
@@ -332,7 +376,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                     className="mt-2 space-y-1"
                     value={surveyAnswers[q.id] as string}
                     onValueChange={(value) => handleSurveyChange(q.id, value, q.type)}
-                    disabled={isListening}
+                    disabled={isListening || isBrieflyAISpeaking}
                   >
                     {q.options.map(option => (
                       <div key={option} className="flex items-center space-x-2">
@@ -352,7 +396,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                           onCheckedChange={() => { 
                             handleSurveyChange(q.id, option, q.type);
                           }}
-                          disabled={isListening}
+                          disabled={isListening || isBrieflyAISpeaking}
                         />
                         <Label htmlFor={`${q.id}-${option.replace(/\s+/g, '-')}`} className="font-normal">{option}</Label>
                       </div>
@@ -361,6 +405,12 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                 )}
               </div>
             ))}
+            {isBrieflyAISpeaking && (
+              <div className="flex items-center text-sm text-primary mt-2">
+                <Volume2 className="mr-2 h-4 w-4 animate-pulse" />
+                BrieflyAI is speaking...
+              </div>
+            )}
           </GlassCardContent>
         </GlassCard>
       )}
@@ -369,7 +419,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
         type="submit" 
         size="lg" 
         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-base" 
-        disabled={isProcessing || isLoadingQuestions || isListening}
+        disabled={isProcessing || isLoadingQuestions || isListening || isBrieflyAISpeaking}
       >
         {isProcessing ? (
           <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing...</>
@@ -380,3 +430,4 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
     </form>
   );
 }
+
