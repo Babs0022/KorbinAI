@@ -79,8 +79,8 @@ export default function PromptVaultPage() {
           optimizedPrompt: data.optimizedPrompt || '',
           timestamp: timestampStr,
           tags: data.tags || [],
-          qualityScore: data.qualityScore, // Keep even if undefined
-          targetModel: data.targetModel,   // Keep even if undefined
+          qualityScore: data.qualityScore, 
+          targetModel: data.targetModel,   
         } as PromptHistory;
       });
       setPrompts(firestorePrompts);
@@ -101,35 +101,34 @@ export default function PromptVaultPage() {
     }
   }, [currentUser, authLoading, router, fetchPrompts]);
 
-  const handleViewPrompt = (prompt: PromptHistory) => {
+  const handleViewPrompt = useCallback((prompt: PromptHistory) => {
     setViewingPrompt(prompt);
-  };
+  }, []);
 
-  const handleCopyToClipboard = (text: string, type: string) => {
+  const handleCopyToClipboard = useCallback((text: string, type: string) => {
     if (!text) return;
     navigator.clipboard.writeText(text);
     toast({
       title: `${type} Copied!`,
       description: `The ${type.toLowerCase()} has been copied to your clipboard.`,
     });
-  };
+  }, [toast]);
   
-  const handleEditPrompt = (prompt: PromptHistory) => {
+  const handleEditPrompt = useCallback((prompt: PromptHistory) => {
     const queryParams = new URLSearchParams({ 
         name: prompt.name, 
         goal: prompt.goal, 
         optimizedPrompt: prompt.optimizedPrompt,
         tags: prompt.tags?.join(',') || ''
     });
-    // Potentially pass score and model if the create page can handle them
     if (prompt.qualityScore) queryParams.set('qualityScore', prompt.qualityScore.toString());
     if (prompt.targetModel) queryParams.set('targetModel', prompt.targetModel);
 
     router.push(`/create-prompt?${queryParams.toString()}`);
     toast({ title: "Loading Prompt", description: `Loading "${prompt.name}" for a new session.`});
-  };
+  }, [router, toast]);
 
-  const handleExportPrompt = (prompt: PromptHistory) => {
+  const handleExportPrompt = useCallback((prompt: PromptHistory) => {
     let content = `Name: ${prompt.name}\nGoal: ${prompt.goal}\nTags: ${prompt.tags?.join(', ') || 'N/A'}\n`;
     if (prompt.qualityScore) content += `Quality Score: ${prompt.qualityScore}/10\n`;
     if (prompt.targetModel) content += `Target Model: ${prompt.targetModel}\n`;
@@ -144,13 +143,13 @@ export default function PromptVaultPage() {
     link.click();
     document.body.removeChild(link);
     toast({ title: "Prompt Exported", description: "The prompt details have been downloaded as a .txt file." });
-  };
+  }, [toast]);
 
-  const openDeleteDialog = (prompt: PromptHistory) => {
+  const openDeleteDialog = useCallback((prompt: PromptHistory) => {
     setPromptToDelete(prompt);
-  };
+  }, []);
 
-  const handleDeletePrompt = async () => {
+  const handleDeletePrompt = useCallback(async () => {
     if (!promptToDelete || !currentUser) return;
     try {
       await deleteDoc(doc(db, `users/${currentUser.uid}/promptHistory`, promptToDelete.id));
@@ -162,7 +161,7 @@ export default function PromptVaultPage() {
     } finally {
       setPromptToDelete(null);
     }
-  };
+  }, [promptToDelete, currentUser, toast]);
 
   const sortedAndFilteredPrompts = useMemo(() => {
     let filtered = prompts.filter(prompt => {

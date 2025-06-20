@@ -176,7 +176,6 @@ export default function DashboardPage() {
       });
       setAllUserPrompts(firestorePrompts);
 
-      // Calculate average prompt score
       const scoredPrompts = firestorePrompts.filter(p => typeof p.qualityScore === 'number' && p.qualityScore !== undefined);
       if (scoredPrompts.length > 0) {
         const sum = scoredPrompts.reduce((acc, p) => acc + (p.qualityScore || 0), 0);
@@ -185,7 +184,6 @@ export default function DashboardPage() {
         setAveragePromptScore(null);
       }
 
-      // Calculate most frequent tag
       const tagCounts: Record<string, number> = {};
       firestorePrompts.forEach(prompt => {
         if (prompt.tags && prompt.tags.length > 0) {
@@ -200,11 +198,10 @@ export default function DashboardPage() {
 
       if (Object.keys(tagCounts).length > 0) {
         const sortedTags = Object.entries(tagCounts).sort(([,a],[,b]) => b-a);
-        setMostFrequentTag(sortedTags[0][0]); // Store the tag name
+        setMostFrequentTag(sortedTags[0][0]); 
       } else {
         setMostFrequentTag(null);
       }
-
 
     } catch (error) {
       console.error("Error loading dashboard data from Firestore:", error);
@@ -233,21 +230,20 @@ export default function DashboardPage() {
   const recentPrompts = useMemo(() => allUserPrompts.slice(0, 3), [allUserPrompts]);
   const totalPromptsCount = useMemo(() => allUserPrompts.length, [allUserPrompts]);
 
-
-  const handleViewPrompt = (prompt: PromptHistory) => {
+  const handleViewPrompt = useCallback((prompt: PromptHistory) => {
     setViewingPrompt(prompt);
-  };
+  }, []);
 
-  const handleCopyToClipboard = (text: string, type: string) => {
+  const handleCopyToClipboard = useCallback((text: string, type: string) => {
     if (!text) return;
     navigator.clipboard.writeText(text);
     toast({
       title: `${type} Copied!`,
       description: `The ${type.toLowerCase()} has been copied to your clipboard.`,
     });
-  };
+  }, [toast]);
 
-  const handleEditPrompt = (prompt: PromptHistory) => {
+  const handleEditPrompt = useCallback((prompt: PromptHistory) => {
     const queryParams = new URLSearchParams({
       name: prompt.name,
       goal: prompt.goal,
@@ -258,9 +254,9 @@ export default function DashboardPage() {
     if (prompt.targetModel) queryParams.set('targetModel', prompt.targetModel);
     router.push(`/create-prompt?${queryParams.toString()}`);
     toast({ title: "Loading Prompt", description: `Loading "${prompt.name}" for a new session.`});
-  };
+  }, [router, toast]);
 
-  const handleExportPrompt = (prompt: PromptHistory) => {
+  const handleExportPrompt = useCallback((prompt: PromptHistory) => {
     let content = `Name: ${prompt.name}\nGoal: ${prompt.goal}\nTags: ${prompt.tags?.join(', ') || 'N/A'}\n`;
     if (prompt.qualityScore) content += `Quality Score: ${prompt.qualityScore}/10\n`;
     if (prompt.targetModel) content += `Target Model: ${prompt.targetModel}\n`;
@@ -275,58 +271,59 @@ export default function DashboardPage() {
     link.click();
     document.body.removeChild(link);
     toast({ title: "Prompt Exported", description: "The prompt details have been downloaded as a .txt file." });
-  };
+  }, [toast]);
 
-  const openDeleteDialog = (prompt: PromptHistory) => {
+  const openDeleteDialog = useCallback((prompt: PromptHistory) => {
     setPromptToDelete(prompt);
-  };
+  }, []);
 
-  const handleDeletePrompt = async () => {
+  const handleDeletePrompt = useCallback(async () => {
     if (!promptToDelete || !currentUser) return;
     try {
       await deleteDoc(doc(db, `users/${currentUser.uid}/promptHistory`, promptToDelete.id));
-      // Optimistically update UI and then refetch or recalculate
-      const updatedPrompts = allUserPrompts.filter(p => p.id !== promptToDelete.id);
-      setAllUserPrompts(updatedPrompts); // Update local state first
       
-      // Recalculate average score and most frequent tag from the updated local state
-      const scoredPrompts = updatedPrompts.filter(p => typeof p.qualityScore === 'number' && p.qualityScore !== undefined);
-      if (scoredPrompts.length > 0) {
-        const sum = scoredPrompts.reduce((acc, p) => acc + (p.qualityScore || 0), 0);
-        setAveragePromptScore(parseFloat((sum / scoredPrompts.length).toFixed(1)));
-      } else {
-        setAveragePromptScore(null);
-      }
-
-      const tagCounts: Record<string, number> = {};
-      updatedPrompts.forEach(prompt => {
-        if (prompt.tags && prompt.tags.length > 0) {
-          prompt.tags.forEach(tag => {
-            const normalizedTag = tag.toLowerCase().trim();
-             if (normalizedTag) {
-                tagCounts[normalizedTag] = (tagCounts[normalizedTag] || 0) + 1;
-            }
-          });
+      setAllUserPrompts(prevPrompts => {
+        const updatedPrompts = prevPrompts.filter(p => p.id !== promptToDelete.id);
+        
+        const scoredPrompts = updatedPrompts.filter(p => typeof p.qualityScore === 'number' && p.qualityScore !== undefined);
+        if (scoredPrompts.length > 0) {
+          const sum = scoredPrompts.reduce((acc, p) => acc + (p.qualityScore || 0), 0);
+          setAveragePromptScore(parseFloat((sum / scoredPrompts.length).toFixed(1)));
+        } else {
+          setAveragePromptScore(null);
         }
+
+        const tagCounts: Record<string, number> = {};
+        updatedPrompts.forEach(pItem => {
+          if (pItem.tags && pItem.tags.length > 0) {
+            pItem.tags.forEach(tag => {
+              const normalizedTag = tag.toLowerCase().trim();
+               if (normalizedTag) {
+                  tagCounts[normalizedTag] = (tagCounts[normalizedTag] || 0) + 1;
+              }
+            });
+          }
+        });
+        if (Object.keys(tagCounts).length > 0) {
+          const sortedTags = Object.entries(tagCounts).sort(([,a],[,b]) => b-a);
+          setMostFrequentTag(sortedTags[0][0]);
+        } else {
+          setMostFrequentTag(null);
+        }
+        return updatedPrompts;
       });
-      if (Object.keys(tagCounts).length > 0) {
-        const sortedTags = Object.entries(tagCounts).sort(([,a],[,b]) => b-a);
-        setMostFrequentTag(sortedTags[0][0]);
-      } else {
-        setMostFrequentTag(null);
-      }
 
       toast({ title: "Prompt Deleted", description: `Prompt "${promptToDelete.name}" has been deleted.`});
     } catch (error) {
       console.error("Error deleting prompt from Firestore:", error);
       toast({ title: "Error Deleting Prompt", description: "Could not delete prompt.", variant: "destructive"});
-      fetchDashboardData(); // Refetch if optimistic update fails or for full consistency
+      fetchDashboardData(); 
     } finally {
       setPromptToDelete(null);
     }
-  };
+  }, [promptToDelete, currentUser, toast, fetchDashboardData]);
 
-  const filteredRecentPrompts = recentPrompts.filter(prompt => {
+  const filteredRecentPrompts = useMemo(() => recentPrompts.filter(prompt => {
     const lowerSearchTerm = searchTerm.toLowerCase();
     return (
       prompt.name.toLowerCase().includes(lowerSearchTerm) ||
@@ -335,7 +332,7 @@ export default function DashboardPage() {
       (prompt.tags && prompt.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm))) ||
       (prompt.targetModel && prompt.targetModel.toLowerCase().includes(lowerSearchTerm))
     );
-  });
+  }), [recentPrompts, searchTerm]);
 
   if (authLoading || (isLoadingData && !currentUser)) { 
     return (
@@ -559,4 +556,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

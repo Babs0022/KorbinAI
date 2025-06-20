@@ -1,3 +1,5 @@
+
+import React from 'react'; // Added React for React.memo
 import { Button } from '@/components/ui/button';
 import { Eye, Edit, Download, Trash2, Tag } from 'lucide-react';
 import { GlassCard } from '../shared/GlassCard';
@@ -10,6 +12,8 @@ export interface PromptHistory {
   optimizedPrompt: string;
   timestamp: string; // ISO string or formatted date
   tags?: string[];
+  qualityScore?: number; // Optional: For analytics
+  targetModel?: string;  // Optional: For analytics
 }
 
 interface PromptHistoryItemProps {
@@ -17,10 +21,11 @@ interface PromptHistoryItemProps {
   onView: (prompt: PromptHistory) => void;
   onEdit: (prompt: PromptHistory) => void;
   onExport: (prompt: PromptHistory) => void;
-  onDelete: (promptId: string) => void; // Changed to accept promptId string
+  onDelete: (promptId: string) => void;
 }
 
-export function PromptHistoryItem({ prompt, onView, onEdit, onExport, onDelete }: PromptHistoryItemProps) {
+// Wrapped component with React.memo
+export const PromptHistoryItem = React.memo(function PromptHistoryItem({ prompt, onView, onEdit, onExport, onDelete }: PromptHistoryItemProps) {
   const formattedDate = new Date(prompt.timestamp).toLocaleDateString('en-US', {
     year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
   });
@@ -39,10 +44,6 @@ export function PromptHistoryItem({ prompt, onView, onEdit, onExport, onDelete }
               {prompt.tags.map(tag => <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>)}
             </div>
           )}
-          {/* Removed direct display of optimizedPrompt, full goal still in title of name if needed */}
-          {/* <p className="text-sm text-muted-foreground line-clamp-2" title={prompt.optimizedPrompt}>
-            <span className="font-medium text-foreground/80">Optimized: </span>{prompt.optimizedPrompt}
-          </p> */}
         </div>
         <div className="flex space-x-1 sm:space-x-2 mt-3 sm:mt-0 sm:ml-4 flex-shrink-0">
           <Button variant="ghost" size="icon" onClick={() => onView(prompt)} title="View Details">
@@ -61,4 +62,5 @@ export function PromptHistoryItem({ prompt, onView, onEdit, onExport, onDelete }
       </div>
     </GlassCard>
   );
-}
+});
+PromptHistoryItem.displayName = 'PromptHistoryItem';
