@@ -68,17 +68,27 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       };
 
       recognitionRef.current.onerror = (event) => {
+        // Gracefully handle "aborted" - it's not always a user-facing error.
+        if (event.error === 'aborted') {
+          console.info("Speech recognition aborted.", event); // Log for debugging
+          // Ensure UI state is consistent if aborted unexpectedly.
+          // stopListening() is typically called by onend or explicit user action.
+          // If `isListening` is still true here, onend should clean it up.
+          return; 
+        }
+
         console.error("Speech recognition error", event.error);
         let errorMsg = "Speech recognition error. Please try again.";
         if (event.error === 'no-speech') errorMsg = "No speech detected. Please try again.";
         if (event.error === 'audio-capture') errorMsg = "Microphone error. Please check permissions and hardware.";
         if (event.error === 'not-allowed') errorMsg = "Microphone access denied. Please allow microphone access in your browser settings.";
         toast({ title: "Voice Input Error", description: errorMsg, variant: "destructive" });
-        stopListening();
+        stopListening(); // Reset UI for actual errors
       };
 
       recognitionRef.current.onend = () => {
-        // Automatically stop if it was listening. This might be redundant with manual stop.
+        // This event fires after recognition stops, either naturally, by error, or by explicit stop/abort.
+        // Ensure the listening state is always reset.
         if (isListening) {
             stopListening();
         }
@@ -94,20 +104,20 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentListeningField]); // Re-setup if currentListeningField changes, though onresult logic handles field update
+  }, [currentListeningField]); // `isListening` was removed as per eslint suggestion to avoid re-running effect too often, `stopListening` handles it.
 
   const startListening = (fieldId: string) => {
     if (!speechRecognitionSupported || !recognitionRef.current) {
       toast({ title: "Voice Input Not Supported", description: "Your browser does not support speech recognition.", variant: "destructive" });
       return;
     }
-    if (isListening) { // If already listening, stop current before starting new
+    if (isListening) { 
         recognitionRef.current.stop();
     }
     setCurrentListeningField(fieldId);
     setIsListening(true);
     try {
-      recognitionRef.current.lang = navigator.language || 'en-US'; // Use browser language
+      recognitionRef.current.lang = navigator.language || 'en-US'; 
       recognitionRef.current.start();
     } catch (e) {
         console.error("Error starting speech recognition:", e);
@@ -118,7 +128,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
   };
 
   const stopListening = () => {
-    if (recognitionRef.current && isListening) {
+    if (recognitionRef.current && isListening) { 
       recognitionRef.current.stop();
     }
     setIsListening(false);
@@ -173,7 +183,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (isListening) stopListening(); // Stop any active listening
+    if (isListening) stopListening(); 
 
     if (!goal.trim()) {
       toast({ title: "Goal Required", description: "Please enter your goal for the prompt.", variant: "destructive" });
@@ -339,7 +349,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                         <Checkbox 
                           id={`${q.id}-${option.replace(/\s+/g, '-')}`} 
                           checked={(surveyAnswers[q.id] as string[] || []).includes(option)}
-                          onCheckedChange={() => { // `checked` param is boolean | 'indeterminate'
+                          onCheckedChange={() => { 
                             handleSurveyChange(q.id, option, q.type);
                           }}
                           disabled={isListening}
