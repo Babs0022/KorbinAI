@@ -11,17 +11,21 @@ import { Loader2, ArrowRight, Sparkles, Lightbulb, Clock, Star, PartyPopper } fr
 import Container from '@/components/layout/Container';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 const TOTAL_STEPS = 5; 
 
 export default function OnboardingPage() {
   const { currentUser, loading: authLoading, displayName } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   const [currentStep, setCurrentStep] = useState(1);
-  // State for the new survey questions - not saving them for now, just for UI interaction
   const [aiUsageFrequency, setAiUsageFrequency] = useState('');
   const [aiResultSatisfaction, setAiResultSatisfaction] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !currentUser) {
@@ -29,11 +33,45 @@ export default function OnboardingPage() {
     }
   }, [currentUser, authLoading, router]);
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (currentStep < TOTAL_STEPS) {
       setCurrentStep(prev => prev + 1);
     } else {
-      router.push('/dashboard');
+      // Final step: Save data and redirect
+      if (!currentUser) {
+        toast({ title: "Error", description: "User not found. Cannot save onboarding data.", variant: "destructive"});
+        router.push('/dashboard'); // Still proceed to dashboard
+        return;
+      }
+      if (!aiUsageFrequency || !aiResultSatisfaction) {
+        toast({ title: "Incomplete Survey", description: "Please answer all questions before proceeding.", variant: "destructive"});
+        // Optionally prevent moving forward if answers are mandatory
+        // For now, we'll allow proceeding but log it or skip saving.
+        // Or, we could just save what we have.
+        // Let's proceed to dashboard even if data is incomplete for now, and not save incomplete data.
+        if(!aiUsageFrequency && !aiResultSatisfaction) { // only if both are empty, otherwise save what's there.
+            router.push('/dashboard');
+            return;
+        }
+      }
+
+      setIsSaving(true);
+      try {
+        const onboardingData = {
+          aiUsageFrequency: aiUsageFrequency || null, // Store null if empty
+          aiResultSatisfaction: aiResultSatisfaction || null,
+          completedAt: serverTimestamp(),
+        };
+        const onboardingDocRef = doc(db, `users/${currentUser.uid}/onboardingInfo/surveyResponses`);
+        await setDoc(onboardingDocRef, onboardingData, { merge: true }); // Use merge if doc might exist
+        toast({ title: "Onboarding Complete!", description: "Your preferences have been noted."});
+      } catch (error) {
+        console.error("Error saving onboarding data:", error);
+        toast({ title: "Save Error", description: "Could not save your onboarding responses. Proceeding anyway.", variant: "destructive"});
+      } finally {
+        setIsSaving(false);
+        router.push('/dashboard');
+      }
     }
   };
 
@@ -148,6 +186,9 @@ export default function OnboardingPage() {
     }
   };
 
+  const isSurveyStep = currentStep === 3 || currentStep === 4;
+  const isSurveyAnswerMissing = (currentStep === 3 && !aiUsageFrequency) || (currentStep === 4 && !aiResultSatisfaction);
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background via-indigo-50/50 to-mint-50/50 p-4">
       <div className="mb-8">
@@ -175,12 +216,14 @@ export default function OnboardingPage() {
               onClick={handleNextStep}
               size="lg"
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-              // Disable button for question steps if no answer is selected (optional, for stricter flow)
-              // disabled={(currentStep === 3 && !aiUsageFrequency) || (currentStep === 4 && !aiResultSatisfaction)}
+              disabled={isSaving || (isSurveyStep && isSurveyAnswerMissing)}
             >
-              {currentStep < TOTAL_STEPS ? 'Continue' : `Enter the VERSE (Go to Dashboard)`}
-              {currentStep < TOTAL_STEPS && <ArrowRight className="ml-2 h-5 w-5" />}
+              {isSaving ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Saving & Entering...</> : (currentStep < TOTAL_STEPS ? 'Continue' : `Enter the VERSE (Go to Dashboard)`)}
+              {currentStep < TOTAL_STEPS && !isSaving && <ArrowRight className="ml-2 h-5 w-5" />}
             </Button>
+            {isSurveyStep && isSurveyAnswerMissing && (
+                <p className="text-xs text-destructive mt-2">Please select an option to continue.</p>
+            )}
           </div>
         </GlassCard>
          <p className="mt-8 text-center text-xs text-muted-foreground">
