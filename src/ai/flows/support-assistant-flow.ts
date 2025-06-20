@@ -49,6 +49,7 @@ BrieflyAI Key Features:
 - Prompt Feedback & Analysis: Users receive a quality score and actionable feedback on their prompts.
 - Reverse Prompting: Users can input AI-generated text to deduce the potential prompt that created it.
 - AI Model Compatibility Checker: Helps verify and adjust prompts for optimal performance with specific AI models.
+- Quick Refine / Vibe-Coding Assistant: A floating pill on dashboard pages that allows users to quickly input rough thoughts, get a refined prompt, and have it copied to their clipboard. Interactions are saved to a 'quickRefines' history.
 - User Accounts: Standard account management (profile, password, login, signup, email verification).
 - Onboarding Flow: New users go through steps to learn about the app.
 - Settings: Users can manage notification preferences and theme.
