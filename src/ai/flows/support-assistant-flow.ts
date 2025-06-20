@@ -40,7 +40,6 @@ Your primary goal is to answer user questions about how to use BrieflyAI feature
 
 BrieflyAI Key Features:
 - Prompt Generator: Users input goals, answer survey questions, and get optimized prompts.
-- Quick Refine (Vibe-Coding Assistant): A floating pill/button that opens a dialog for users to quickly input rough thoughts, get an AI-refined prompt, which is then auto-copied. Interactions are saved to their 'quickRefines' history.
 - Prompt Vault: Users can store, organize, and categorize their effective prompts.
 - Prompt Refinement Hub: Users can modify previously generated prompts and get AI suggestions for refinement.
 - Model-Specific Adaptation: Prompts can be tailored for AI models like GPT-4, Claude, DALL-E 3, Midjourney, Stable Diffusion.
