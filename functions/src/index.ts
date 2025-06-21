@@ -6,7 +6,6 @@ import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 import Paystack from "paystack-node";
 import * as crypto from "crypto";
-import cors from "cors";
 
 // Environment variable logging at module load (cold start)
 logger.info(
@@ -50,18 +49,6 @@ if (!APP_CALLBACK_URL_AT_LOAD) {
     + " FOUND (length > 0).",
   );
 }
-
-
-const corsHandler = cors({
-  origin: [
-    "http://localhost:9002", // Your local dev Next.js app
-    "https://brieflyai.xyz", // Your production domain
-    // Add any other specific domains you need to allow
-    "https:/localhost:5000",
-  ],
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-});
 
 try {
   admin.initializeApp();
@@ -443,87 +430,85 @@ async function processChargeSuccessEvent(
 export const paystackWebhookHandler = onRequest(
   {region: "us-central1"},
   async (req, res) => {
-    corsHandler(req, res, async () => {
-      logger.info("paystackWebhookHandler invoked.");
-      const paystackWebhookSecret = process.env.PAYSTACK_WEBHOOK_SECRET;
+    logger.info("paystackWebhookHandler invoked.");
+    const paystackWebhookSecret = process.env.PAYSTACK_WEBHOOK_SECRET;
 
-      if (!paystackWebhookSecret) {
-        logger.error(
-          "Invocation: CRITICAL: PAYSTACK_WEBHOOK_SECRET process.env "
-          + "var is MISSING.",
-        );
-        res.status(500).send(
-          "Webhook secret configuration error. "
-          + "[Code: WHS_ENV_MISSING]",
-        );
-        return;
-      }
-      logger.info(
-        "Invocation: PAYSTACK_WEBHOOK_SECRET check passed at invocation.",
+    if (!paystackWebhookSecret) {
+      logger.error(
+        "Invocation: CRITICAL: PAYSTACK_WEBHOOK_SECRET process.env "
+        + "var is MISSING.",
       );
-
-      const requestBodyString = req.rawBody?.toString();
-      if (!requestBodyString) {
-        logger.error(
-          "Raw request body missing for signature verification.",
-        );
-        res.status(400).send("Raw request body required.");
-        return;
-      }
-
-      const hash = crypto.createHmac("sha512", paystackWebhookSecret)
-        .update(requestBodyString)
-        .digest("hex");
-
-      if (hash !== req.headers["x-paystack-signature"]) {
-        logger.warn(
-          "Invalid Paystack webhook signature. "
-          + `Expected: ${hash}, Got: ${req.headers["x-paystack-signature"]}`,
-        );
-        res.status(401).send("Invalid signature.");
-        return;
-      }
-
-      const event = req.body;
-      logger.info(
-        "Received Paystack webhook event:",
-        event.event,
-        "for reference:",
-        event.data?.reference || "N/A",
+      res.status(500).send(
+        "Webhook secret configuration error. "
+        + "[Code: WHS_ENV_MISSING]",
       );
+      return;
+    }
+    logger.info(
+      "Invocation: PAYSTACK_WEBHOOK_SECRET check passed at invocation.",
+    );
 
-      if (event.event === "charge.success") {
-        // Acknowledge immediately
-        res.status(200).send({
-          message: "Webhook acknowledged. Processing in background.",
-        });
+    const requestBodyString = req.rawBody?.toString();
+    if (!requestBodyString) {
+      logger.error(
+        "Raw request body missing for signature verification.",
+      );
+      res.status(400).send("Raw request body required.");
+      return;
+    }
 
-        try {
-          await processChargeSuccessEvent(
-            event.data as PaystackChargeSuccessData,
-          );
-          logger.info(
-            "Background processing for charge.success completed for "
-            + `event reference: ${event.data?.reference || "N/A"}`,
-          );
-        } catch (processingError: unknown) {
-          logger.error(
-            "Error during background processing of charge.success for "
-            + `event reference: ${event.data?.reference || "N/A"}`,
-            processingError,
-          );
-          // Already sent 200 OK, cannot send error response here.
-        }
-      } else {
+    const hash = crypto.createHmac("sha512", paystackWebhookSecret)
+      .update(requestBodyString)
+      .digest("hex");
+
+    if (hash !== req.headers["x-paystack-signature"]) {
+      logger.warn(
+        "Invalid Paystack webhook signature. "
+        + `Expected: ${hash}, Got: ${req.headers["x-paystack-signature"]}`,
+      );
+      res.status(401).send("Invalid signature.");
+      return;
+    }
+
+    const event = req.body;
+    logger.info(
+      "Received Paystack webhook event:",
+      event.event,
+      "for reference:",
+      event.data?.reference || "N/A",
+    );
+
+    if (event.event === "charge.success") {
+      // Acknowledge immediately
+      res.status(200).send({
+        message: "Webhook acknowledged. Processing in background.",
+      });
+
+      try {
+        await processChargeSuccessEvent(
+          event.data as PaystackChargeSuccessData,
+        );
         logger.info(
-          "Unhandled Paystack event type:",
-          event.event,
+          "Background processing for charge.success completed for "
+          + `event reference: ${event.data?.reference || "N/A"}`,
         );
-        res.status(200).send({
-          message: "Event received and acknowledged "
-          + "(unhandled type).",
-        });
+      } catch (processingError: unknown) {
+        logger.error(
+          "Error during background processing of charge.success for "
+          + `event reference: ${event.data?.reference || "N/A"}`,
+          processingError,
+        );
+        // Already sent 200 OK, cannot send error response here.
       }
-    });
+    } else {
+      logger.info(
+        "Unhandled Paystack event type:",
+        event.event,
+      );
+      res.status(200).send({
+        message: "Event received and acknowledged "
+        + "(unhandled type).",
+      });
+    }
   },
 );

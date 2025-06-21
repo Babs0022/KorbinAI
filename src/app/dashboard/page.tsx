@@ -227,7 +227,6 @@ export default function DashboardPage() {
     }
   }, [currentUser, authLoading, router, fetchDashboardData]);
   
-  const recentPrompts = useMemo(() => allUserPrompts.slice(0, 3), [allUserPrompts]);
   const totalPromptsCount = useMemo(() => allUserPrompts.length, [allUserPrompts]);
 
   const handleViewPrompt = useCallback((prompt: PromptHistory) => {
@@ -323,16 +322,21 @@ export default function DashboardPage() {
     }
   }, [promptToDelete, currentUser, toast, fetchDashboardData]);
 
-  const filteredRecentPrompts = useMemo(() => recentPrompts.filter(prompt => {
-    const lowerSearchTerm = searchTerm.toLowerCase();
-    return (
-      prompt.name.toLowerCase().includes(lowerSearchTerm) ||
-      prompt.goal.toLowerCase().includes(lowerSearchTerm) ||
-      (prompt.optimizedPrompt && prompt.optimizedPrompt.toLowerCase().includes(lowerSearchTerm)) ||
-      (prompt.tags && prompt.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm))) ||
-      (prompt.targetModel && prompt.targetModel.toLowerCase().includes(lowerSearchTerm))
-    );
-  }), [recentPrompts, searchTerm]);
+  const filteredPrompts = useMemo(() => {
+    if (!searchTerm) {
+      return allUserPrompts;
+    }
+    return allUserPrompts.filter(prompt => {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      return (
+        prompt.name.toLowerCase().includes(lowerSearchTerm) ||
+        prompt.goal.toLowerCase().includes(lowerSearchTerm) ||
+        (prompt.optimizedPrompt && prompt.optimizedPrompt.toLowerCase().includes(lowerSearchTerm)) ||
+        (prompt.tags && prompt.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm))) ||
+        (prompt.targetModel && prompt.targetModel.toLowerCase().includes(lowerSearchTerm))
+      );
+    });
+  }, [allUserPrompts, searchTerm]);
 
   if (authLoading || (isLoadingData && !currentUser)) { 
     return (
@@ -428,9 +432,9 @@ export default function DashboardPage() {
                     <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary mb-3" />
                     <h3 className="font-semibold text-lg text-foreground">Loading Recent Prompts...</h3>
                   </div>
-                ) : filteredRecentPrompts.length > 0 ? (
+                ) : filteredPrompts.length > 0 ? (
                   <div className="space-y-4">
-                    {filteredRecentPrompts.map((prompt) => (
+                    {filteredPrompts.slice(0, 3).map((prompt) => (
                       <PromptHistoryItem
                         key={prompt.id}
                         prompt={prompt}
@@ -444,7 +448,7 @@ export default function DashboardPage() {
                 ) : (
                   <div className="text-center py-10">
                     <Search className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-                    <h3 className="font-semibold text-lg text-foreground">No Recent Prompts Found</h3>
+                    <h3 className="font-semibold text-lg text-foreground">No Prompts Found</h3>
                     <p className="text-muted-foreground mt-1 text-sm">
                       {searchTerm ? "Try adjusting your search terms." : "Create a new prompt to see it here!"}
                     </p>
