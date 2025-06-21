@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, getDocs, doc, updateDoc, serverTimestamp, Timestamp, limit, where } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, doc, updateDoc, serverTimestamp, Timestamp, limit } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem'; 
 import { getContextualRefinementSuggestions, type GetContextualRefinementSuggestionsInput, type GetContextualRefinementSuggestionsOutput } from '@/ai/flows/contextual-refinement-suggestions-flow';
@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 type SortOption = "timestamp_desc" | "timestamp_asc" | "name_asc" | "name_desc";
 
 interface HistoricalPromptForFlow {
+  id: string;
   name?: string;
   optimizedPrompt: string;
   goal?: string;
@@ -192,25 +193,28 @@ export default function RefinementHubPage() {
 
     let historicalPromptsForFlow: HistoricalPromptForFlow[] = [];
     try {
-      // Fetch 3-5 most recent, high-quality prompts for context, excluding the current one
+      // Fetch 6 most recent, high-quality prompts for context.
       const historyQuery = query(
         collection(db, `users/${currentUser.uid}/promptHistory`),
-        where("id", "!=", selectedPrompt.id), // Exclude the currently selected prompt
-        orderBy("qualityScore", "desc"), // Prioritize higher scored prompts
-        orderBy("timestamp", "desc"),    // Then by most recent
-        limit(5)
+        orderBy("qualityScore", "desc"),
+        orderBy("timestamp", "desc"),
+        limit(6) // Fetch one extra to potentially filter out the current one
       );
       const historySnapshot = await getDocs(historyQuery);
-      historicalPromptsForFlow = historySnapshot.docs.map(docSnap => {
-        const data = docSnap.data();
-        return {
-          name: data.name,
-          optimizedPrompt: data.optimizedPrompt,
-          goal: data.goal,
-          tags: data.tags,
-          qualityScore: data.qualityScore,
-        };
-      });
+      historicalPromptsForFlow = historySnapshot.docs
+        .map(docSnap => {
+          const data = docSnap.data();
+          return {
+            id: docSnap.id,
+            name: data.name,
+            optimizedPrompt: data.optimizedPrompt,
+            goal: data.goal,
+            tags: data.tags,
+            qualityScore: data.qualityScore,
+          };
+        })
+        .filter(p => p.id !== selectedPrompt.id) // Filter on client side
+        .slice(0, 5); // Ensure we only send 5
 
     } catch (fetchError) {
       console.error("Error fetching historical prompts for context:", fetchError);
@@ -485,4 +489,3 @@ export default function RefinementHubPage() {
     </div>
   );
 }
-

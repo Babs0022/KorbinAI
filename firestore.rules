@@ -3,51 +3,31 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default deny all reads and writes unless explicitly allowed
-    match /{document=**} {
+
+    // User-specific data: User can read/write their own documents and subcollections.
+    // This covers /users/{uid}, /users/{uid}/promptHistory/{promptId}, etc.
+    match /users/{userId}/{document=**} {
+      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // User settings: User can read/write their own settings document.
+    match /userSettings/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // App-wide announcements: Any authenticated user can read announcements.
+    // Writes should only happen from the backend/console, so deny client writes.
+    match /appAnnouncements/{announcementId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // The following collections are managed by backend functions. Deny all client access.
+    match /transactions/{transactionId} {
       allow read, write: if false;
     }
-
-    // Users can manage their own user document
-    match /users/{userId} {
-      allow read: if request.auth.uid != null && request.auth.uid == userId;
-      // User can create their own document if their auth.uid matches the documentId (userId)
-      // AND the 'uid' field in the document data also matches their auth.uid.
-      allow create: if request.auth.uid != null
-                    && request.auth.uid == userId
-                    && request.resource.data.uid == request.auth.uid;
-      // User can update their own document if their auth.uid matches the documentId.
-      // Consider restricting which fields can be updated using request.resource.data.diff().affectedKeys().hasOnly([...])
-      allow update: if request.auth.uid != null && request.auth.uid == userId;
-      // User can delete their own document.
-      allow delete: if request.auth.uid != null && request.auth.uid == userId;
-    }
-
-    // Transactions: User can create and read their own transactions.
-    // Update/delete might need more specific rules (e.g., based on status).
-    match /transactions/{transactionId} {
-      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
-      allow read: if request.auth.uid != null && resource.data.userId == request.auth.uid;
-      allow update: if request.auth.uid != null && resource.data.userId == request.auth.uid; // Example: only allow update if status is 'pending'
-      // allow delete: if false; // Generally, transactions are not deleted.
-    }
-
-    // User Subscriptions: User can read their own subscription document.
-    // Writes to subscriptions are typically handled by backend/webhook functions.
     match /userSubscriptions/{userId} {
-      allow read: if request.auth.uid != null && request.auth.uid == userId;
-      // Writes should be server-side/admin only
-      allow create, update, delete: if false;
-    }
-
-    // User Settings: User can manage their own settings document
-    match /userSettings/{userId} {
-      allow read, write: if request.auth.uid != null && request.auth.uid == userId;
-    }
-
-    // Prompt History (subcollection of users): User can manage their own prompt history
-    match /users/{userId}/promptHistory/{promptId} {
-      allow read, create, update, delete: if request.auth.uid != null && request.auth.uid == userId;
+      allow read, write: if false;
     }
   }
 }
