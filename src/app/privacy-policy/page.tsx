@@ -1,18 +1,16 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { MainHeader } from '@/components/layout/MainHeader';
 import { Footer } from '@/components/layout/Footer';
 import Container from '@/components/layout/Container';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 
 export default function PrivacyPolicyPage() {
-  const [lastUpdatedDate, setLastUpdatedDate] = useState<string>("Loading date...");
-
-  useEffect(() => {
-    setLastUpdatedDate(new Date().toLocaleDateString());
-  }, []);
+  // Using a static date to prevent hydration mismatches.
+  // This value should be updated manually when the policy changes.
+  const lastUpdatedDate = "July 26, 2024";
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
