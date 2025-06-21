@@ -1,4 +1,5 @@
 
+
 import type { Metadata } from 'next';
 import { Toaster } from "@/components/ui/toaster";
 import './globals.css';
@@ -8,7 +9,12 @@ export const metadata: Metadata = {
   title: 'BrieflyAI - Optimize Your Prompts',
   description: 'AI-powered prompt optimization for founders, marketers, and students. Achieve clarity and impact with BrieflyAI.',
   manifest: '/manifest.json',
-  themeColor: '#220 10% 10%',
+  themeColor: '#4B0082', // Set to primary color for better PWA themeing
+  icons: {
+    icon: '/logo.svg',
+    shortcut: '/logo.svg',
+    apple: '/logo.svg',
+  },
 };
 
 export default function RootLayout({
@@ -19,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+        {/* The <link rel="icon"...> is now handled by the metadata object above */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -34,3 +40,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    
