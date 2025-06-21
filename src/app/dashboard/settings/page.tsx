@@ -9,8 +9,7 @@ import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCard
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Bell, Palette, DownloadCloud, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Bell, DownloadCloud, Loader2, Save } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
@@ -22,13 +21,11 @@ import Link from 'next/link';
 interface UserSettings {
   emailNotifications: boolean;
   promotionalEmails: boolean;
-  theme: 'light' | 'dark' | 'system';
 }
 
 const defaultSettings: UserSettings = {
   emailNotifications: true,
   promotionalEmails: false,
-  theme: 'system',
 };
 
 export default function SettingsPage() {
@@ -40,59 +37,30 @@ export default function SettingsPage() {
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isExportingData, setIsExportingData] = useState(false);
-
-  const applyThemePreference = useCallback((theme: 'light' | 'dark' | 'system') => {
-    console.log('[SettingsPage] applyThemePreference called with theme:', theme);
-    localStorage.setItem('theme', theme);
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      console.log('[SettingsPage] Applied dark theme.');
-    } else if (theme === 'light') {
-      document.documentElement.classList.remove('dark');
-      console.log('[SettingsPage] Applied light theme (removed .dark class).');
-    } else { // system
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.documentElement.classList.add('dark');
-        console.log('[SettingsPage] Applied system theme (dark).');
-      } else {
-        document.documentElement.classList.remove('dark');
-        console.log('[SettingsPage] Applied system theme (light).');
-      }
-    }
-  }, []);
   
   const fetchSettings = useCallback(async () => {
     if (!currentUser) {
       setIsLoadingSettings(false);
-      const localTheme = (localStorage.getItem('theme') as UserSettings['theme']) || 'system';
-      setSettings({...defaultSettings, theme: localTheme });
-      applyThemePreference(localTheme);
+      setSettings(defaultSettings);
       return;
     }
     setIsLoadingSettings(true);
     try {
       const settingsDocRef = doc(db, `userSettings/${currentUser.uid}`);
       const docSnap = await getDoc(settingsDocRef);
-      let loadedSettings = defaultSettings;
       if (docSnap.exists()) {
-        loadedSettings = { ...defaultSettings, ...docSnap.data() } as UserSettings;
+        setSettings({ ...defaultSettings, ...docSnap.data() } as UserSettings);
       } else {
-         // If no settings in Firestore, check localStorage for theme as a fallback for the initial UI state
-        const localTheme = (localStorage.getItem('theme') as UserSettings['theme']) || 'system';
-        loadedSettings = {...defaultSettings, theme: localTheme};
+        setSettings(defaultSettings);
       }
-      setSettings(loadedSettings);
-      applyThemePreference(loadedSettings.theme);
     } catch (error) {
       console.error("Error loading settings:", error);
       toast({ title: "Error Loading Settings", description: "Could not load your saved settings. Using defaults.", variant: "destructive" });
-      const localTheme = (localStorage.getItem('theme') as UserSettings['theme']) || 'system';
-      setSettings({...defaultSettings, theme: localTheme});
-      applyThemePreference(localTheme);
+      setSettings(defaultSettings);
     } finally {
       setIsLoadingSettings(false);
     }
-  }, [currentUser, toast, applyThemePreference]);
+  }, [currentUser, toast]);
 
 
   useEffect(() => {
@@ -100,36 +68,15 @@ export default function SettingsPage() {
       router.push('/login');
     } else if (currentUser) {
       fetchSettings();
-    } else if (!authLoading && !currentUser) { // Explicitly handle case where auth is done loading but no user
+    } else if (!authLoading && !currentUser) {
       setIsLoadingSettings(false);
-      const localTheme = (localStorage.getItem('theme') as UserSettings['theme']) || 'system';
-      setSettings({...defaultSettings, theme: localTheme });
-      applyThemePreference(localTheme);
+      setSettings(defaultSettings);
     }
-  }, [currentUser, authLoading, router, fetchSettings, applyThemePreference]);
+  }, [currentUser, authLoading, router, fetchSettings]);
 
 
-  // Listen for system theme changes if 'system' is selected
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
-      if (settings.theme === 'system') {
-        applyThemePreference('system');
-      }
-    };
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [settings.theme, applyThemePreference]);
-
-
-  const handleSettingChange = (key: keyof UserSettings, value: string | boolean) => {
-    setSettings(prev => {
-      const newSettings = { ...prev, [key]: value };
-      if (key === 'theme') {
-        applyThemePreference(value as UserSettings['theme']);
-      }
-      return newSettings;
-    });
+  const handleSettingChange = (key: keyof UserSettings, value: boolean) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
   };
 
   const handleSaveSettings = async () => {
@@ -141,7 +88,6 @@ export default function SettingsPage() {
     try {
       const settingsDocRef = doc(db, `userSettings/${currentUser.uid}`);
       await setDoc(settingsDocRef, settings, { merge: true });
-      applyThemePreference(settings.theme); // Ensure localStorage is also updated on save
       toast({ title: "Settings Saved", description: "Your preferences have been updated." });
     } catch (error) {
       console.error("Error saving settings:", error);
@@ -264,31 +210,6 @@ export default function SettingsPage() {
                     onCheckedChange={(checked) => handleSettingChange('promotionalEmails', checked)}
                     aria-label="Toggle promotional emails"
                   />
-                </div>
-              </GlassCardContent>
-            </GlassCard>
-
-            <GlassCard>
-              <GlassCardHeader>
-                <GlassCardTitle className="flex items-center"><Palette className="mr-2 h-5 w-5"/> Appearance</GlassCardTitle>
-                <GlassCardDescription>Customize the look and feel of BrieflyAI.</GlassCardDescription>
-              </GlassCardHeader>
-              <GlassCardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="theme">Theme</Label>
-                  <Select 
-                    value={settings.theme} 
-                    onValueChange={(value) => handleSettingChange('theme', value as UserSettings['theme'])}
-                  >
-                    <SelectTrigger id="theme" className="w-full mt-1" aria-label="Select theme">
-                      <SelectValue placeholder="Select theme" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="light">Light</SelectItem>
-                      <SelectItem value="dark">Dark</SelectItem>
-                      <SelectItem value="system">System Default</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </GlassCardContent>
             </GlassCard>
