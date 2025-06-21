@@ -8,10 +8,6 @@ import { ThemeProvider } from '@/components/theme/ThemeProvider';
 export const metadata: Metadata = {
   title: 'BrieflyAI - Optimize Your Prompts',
   description: 'AI-powered prompt optimization for founders, marketers, and students. Achieve clarity and impact with BrieflyAI.',
-  icons: {
-    icon: '/logo.svg',
-    apple: '/logo.svg',
-  },
   manifest: '/manifest.json',
   themeColor: '#4B0082',
 };

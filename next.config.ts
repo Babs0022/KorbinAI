@@ -25,6 +25,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack: (config, options) => {
+    config.module.rules.push({
+      test: /\.ico$/,
+      loader: 'ignore-loader',
+    });
+    return config;
+  },
 };
 
 export default nextConfig;
