@@ -53,7 +53,10 @@ export function HowItWorksSection() {
                 </GlassCardContent>
               </GlassCard>
               {index < steps.length - 1 && (
-                <div className="hidden lg:flex absolute top-1/2 left-[calc(25%*(1+${index * 2}))-1.5rem] -translate-y-1/2 transform items-center justify-center">
+                <div
+                  className="hidden lg:flex absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transform items-center justify-center"
+                  style={{ left: `${(index + 1) * 25}%` }}
+                >
                   <ArrowRight className="h-8 w-8 text-primary/50" />
                 </div>
               )}
