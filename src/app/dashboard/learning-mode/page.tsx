@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -6,7 +5,7 @@ import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Brain, TrendingUp, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Brain, TrendingUp, Lightbulb, Settings, Database } from 'lucide-react';
 import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 
@@ -28,66 +27,54 @@ export default function LearningModePage() {
             <GlassCardHeader>
               <GlassCardTitle className="font-headline text-3xl flex items-center">
                 <Brain className="mr-3 h-8 w-8 text-primary" />
-                Prompt Learning Mode
+                Automated Optimization Engine
               </GlassCardTitle>
               <GlassCardDescription className="mt-2 text-lg">
-                BrieflyAI is designed to get smarter and more helpful the more you use it.
+                BrieflyAI is designed to get smarter and more helpful the more you use it, leveraging advanced, data-driven techniques.
               </GlassCardDescription>
             </GlassCardHeader>
             <GlassCardContent className="space-y-6">
               <div>
                 <h3 className="font-headline text-xl font-semibold text-foreground mb-2 flex items-center">
                   <TrendingUp className="mr-2 h-5 w-5 text-accent" />
-                  Our Goal: Personalized Prompting Excellence
+                  Our Optimization Philosophy
                 </h3>
                 <p className="text-muted-foreground">
-                  The "Prompt Learning Mode" reflects our commitment to making BrieflyAI adapt to your unique style and needs.
-                  It's about continuously refining BrieflyAI's internal strategies and system prompts that guide the underlying AI model (like Gemini).
-                  This is different from training a foundational LLM like GPT-4 or Claude from scratch.
-                  Instead, we focus on making BrieflyAI smarter by improving how it *uses* powerful existing AI models.
+                  Our "Automated Optimization Engine" is at the core of making BrieflyAI a truly intelligent platform. It's not about training a foundational LLM like GPT-4 from scratch. Instead, we focus on making BrieflyAI smarter by improving how it *uses* powerful existing AI models, tailored to your specific needs and successes.
                 </p>
               </div>
 
               <div>
                 <h3 className="font-headline text-xl font-semibold text-foreground mb-2 flex items-center">
                   <Lightbulb className="mr-2 h-5 w-5 text-accent" />
-                  How It Works (and Will Improve!)
+                  Feedback-Driven Evolution
                 </h3>
                 <p className="text-muted-foreground mb-2">
-                  Currently, BrieflyAI uses the immediate context you provide—your goal and survey answers—to generate and optimize prompts.
-                </p>
-                <p className="text-muted-foreground">
-                  <strong>Our Vision for Enhancement:</strong> As you continue to use BrieflyAI, especially features like the Prompt Vault and Refinement Hub,
-                  we plan to develop capabilities that analyze broader patterns in your activity (e.g., common topics, preferred output styles, frequently used models).
-                  This information will be used to:
+                  Our vision is to build a system that learns from your interactions to provide increasingly personalized and effective results. This includes developing capabilities for:
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground mt-2 pl-4 space-y-1">
-                  <li>Offer more relevant initial survey questions.</li>
-                  <li>Provide more insightful real-time suggestions.</li>
-                  <li>Suggest refinements that align better with your past successes.</li>
-                  <li>Further tune the system prompts BrieflyAI uses internally for even better results.</li>
+                  <li><strong>Feedback-Driven Self-Evolving Prompts:</strong> Analyzing which prompts you refine, save, and reuse to understand what "good" looks like *for you*.</li>
+                  <li><strong>Reinforcement Learning from Human Feedback (RLHF) Principles:</strong> Using your ratings and the performance of prompts (e.g., quality scores) as a signal to improve future suggestions.</li>
+                  <li><strong>Contextual Suggestions:</strong> Leveraging patterns from your Prompt Vault to offer more relevant initial survey questions and refinement tips that align with your past successes.</li>
                 </ul>
-                 <p className="text-muted-foreground mt-3">
-                  This is an evolving aspect of BrieflyAI. The more you interact with the platform and its features,
-                  the better the foundation we have for building these intelligent personalization layers.
-                </p>
               </div>
               
               <div>
-                <h3 className="font-headline text-xl font-semibold text-foreground mb-2">
-                  Your Role in Enhancing BrieflyAI's "Learning"
+                <h3 className="font-headline text-xl font-semibold text-foreground mb-2 flex items-center">
+                  <Database className="mr-2 h-5 w-5 text-accent" />
+                   Your Role in Building the Engine
                 </h3>
                 <p className="text-muted-foreground">
-                  For now, the best way to help BrieflyAI "learn" and improve is by actively using its features:
+                  Your activity powers the engine. The best way to help BrieflyAI "learn" and improve is by actively using its features:
                 </p>
                  <ul className="list-disc list-inside text-muted-foreground mt-2 pl-4 space-y-1">
-                  <li>Consistently use the <strong>Prompt Generator</strong> for various tasks.</li>
-                  <li>Save your most effective prompts to the <strong>Prompt Vault</strong>.</li>
-                  <li>Utilize the <strong>Refinement Hub</strong> to tweak and improve your prompts.</li>
-                  <li>Explore different <strong>Model-Specific Adaptations</strong> to see what works best for you.</li>
+                  <li>Use the <strong>Prompt Feedback & Analysis</strong> tool to generate quality scores for your prompts. This is a crucial feedback signal.</li>
+                  <li>Save your most effective prompts to the <strong>Prompt Vault</strong>, and use descriptive names and tags.</li>
+                  <li>Utilize the <strong>Refinement Hub</strong> to iteratively improve prompts. Each refinement is a learning opportunity for our system.</li>
+                  <li>Explore different <strong>Model-Specific Adaptations</strong> to see what works best for you and your use cases.</li>
                 </ul>
                 <p className="text-muted-foreground mt-3">
-                   Your interactions provide valuable (anonymized, where appropriate) insights that will guide the development of a more intelligent and personalized BrieflyAI.
+                   Your interactions provide the valuable (and anonymized) data that will guide the development of a more intelligent and personalized BrieflyAI.
                 </p>
               </div>
               
@@ -103,4 +90,3 @@ export default function LearningModePage() {
     </div>
   );
 }
-

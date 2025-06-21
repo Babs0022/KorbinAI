@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -10,27 +9,27 @@ import { HelpCircle } from 'lucide-react';
 const faqs = [
   {
     question: "What is BrieflyAI?",
-    answer: "BrieflyAI is a comprehensive SaaS platform designed to help you craft, adapt, and analyze AI prompts. Our tools empower you to generate highly effective prompts for various AI models, leading to superior results, increased efficiency, and a deeper understanding of prompt engineering.",
+    answer: "BrieflyAI is an advanced prompt engineering platform designed for developers, teams, and creators. It provides a comprehensive suite of tools for crafting, managing, testing, and collaborating on AI prompts. Our mission is to enable users to achieve consistent, high-quality, and scalable results from any large language model (LLM).",
   },
   {
     question: "How does BrieflyAI improve my prompts?",
-    answer: "BrieflyAI uses a multi-faceted approach: \n1. **Intelligent Crafting:** Our guided workflow with adaptive surveys helps you clarify your goals and provide essential context. \n2. **Model-Specific Adaptation:** We tailor your prompts to the specific nuances of different AI models (like GPT-4, Claude, DALL-E). \n3. **Advanced Grading:** Get AI-powered feedback, quality scores, and actionable suggestions to iteratively refine your prompts.",
+    answer: "BrieflyAI enhances prompts through a structured engineering process. Key capabilities include: \n• **Clarity & Specificity:** Tools to eliminate ambiguity. \n• **Contextual Framing:** Easily add necessary background information. \n• **Role-Playing Techniques:** Assign personas to the AI (e.g., 'expert copywriter'). \n• **Chain-of-Thought:** Guide the AI through complex reasoning step-by-step. \n• **Parameter Tuning:** Precisely adjust variables like temperature to steer AI behavior.",
   },
   {
     question: "Which AI models does BrieflyAI support?",
-    answer: "BrieflyAI is designed to be model-agnostic in principle. Our 'Model-Specific Adaptation' feature currently focuses on popular models like GPT-3.5/4, Claude series, Gemini, DALL-E 3, Midjourney, and Stable Diffusion, with more being added. The core prompt crafting and analysis principles apply broadly.",
+    answer: "Our platform is designed for multi-LLM compatibility, supporting a wide array of text, image, and code generation models. This includes models from OpenAI (GPT series), Anthropic (Claude series), Google (Gemini family), and open-source alternatives. This ensures you can use the best model for any specific task.",
   },
   {
-    question: "Is my data secure with BrieflyAI?",
-    answer: "Yes, data security is a top priority. We use Firebase for secure authentication and data storage. When your prompts are sent for AI processing (e.g., optimization or analysis by our AI or third-party models like OpenAI), they are handled according to strict privacy and security protocols. We do not use your specific prompt content to train our core models without explicit consent. Please refer to our Privacy Policy for full details.",
+    question: "Is BrieflyAI suitable for teams?",
+    answer: "Yes, absolutely. BrieflyAI is built for collaboration. Features include a shared prompt library, version control, A/B testing capabilities, and performance logging. Teams can work together in real-time to build, test, and deploy reliable prompt configurations across their organization.",
   },
   {
-    question: "Can I use BrieflyAI for free?",
-    answer: "Absolutely! BrieflyAI offers a free tier that allows you to experience our core features with a limited number of prompts per month. For more advanced capabilities and higher usage limits, we offer flexible paid plans.",
+    question: "How does BrieflyAI handle data privacy and security?",
+    answer: "We prioritize your data security. Prompts and sensitive information are handled with strict security protocols. We provide tools for usage monitoring and cost estimation without compromising the privacy of your content. For enterprise clients, we offer solutions that can be integrated within your own virtual private cloud. Please see our Privacy Policy for more details.",
   },
   {
-    question: "How does the 'Prompt Grading' feature work?",
-    answer: "Our Prompt Grading feature uses an AI model trained to analyze prompts based on criteria like clarity, specificity, conciseness, and potential for ambiguity. It provides a numerical score (0-10) and actionable feedback items to help you understand strengths and areas for improvement.",
+    question: "How does the automated optimization work?",
+    answer: "This is one of our core value propositions. BrieflyAI leverages data-driven techniques, including analyzing prompt performance over time. Our system can suggest improvements based on historical data and is being developed with feedback-driven, self-evolving capabilities inspired by reinforcement learning to continually enhance prompt effectiveness with minimal manual intervention.",
   },
 ];
 

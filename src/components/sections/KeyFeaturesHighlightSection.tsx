@@ -1,28 +1,27 @@
-
 "use client";
 
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import Container from '@/components/layout/Container';
-import { Wand2, Cpu, BarChart3, Sparkles } from 'lucide-react';
+import { Wand2, Settings, Share2 } from 'lucide-react';
 import React from 'react';
 
 const features = [
   {
-    icon: <Wand2 className="h-10 w-10 text-primary" />,
-    title: 'Intelligent Prompt Crafting',
-    description: 'Transform vague ideas into precise, powerful prompts. Our AI-assisted workflow guides you from initial goal to optimized output, ensuring clarity and effectiveness for any task.',
+    icon: <Settings className="h-10 w-10 text-primary" />,
+    title: 'Precision Engineering Suite',
+    description: 'Develop exceptionally clear prompts using contextual framing, role-playing techniques, and format specification. Eliminate ambiguity for consistent, high-quality AI outputs every time.',
     bgColor: 'bg-indigo-500/10',
   },
   {
-    icon: <Cpu className="h-10 w-10 text-accent" />,
-    title: 'Model-Specific Adaptation',
-    description: 'Maximize results from any AI. BrieflyAI tailors your prompts for specific models like GPT-4, Claude 3, Gemini, DALL-E 3, Midjourney, ensuring optimal performance and compatibility.',
+    icon: <Wand2 className="h-10 w-10 text-accent" />,
+    title: 'Automated Optimization Engine',
+    description: 'Leverage advanced techniques like chain-of-thought prompting and automated parameter tuning. Our platform helps you decompose complex tasks and steer AI behavior for optimal results.',
     bgColor: 'bg-mint-500/10',
   },
   {
-    icon: <BarChart3 className="h-10 w-10 text-primary" />,
-    title: 'Advanced Prompt Grading',
-    description: 'Receive instant, AI-powered feedback on your prompts. Get quality scores, actionable insights, and suggestions to refine your prompts for peak AI performance.',
+    icon: <Share2 className="h-10 w-10 text-primary" />,
+    title: 'Management & Collaboration Hub',
+    description: 'Utilize robust prompt management with versioning and A/B testing. Foster team collaboration with real-time sharing and monitor performance with cost-estimation tools.',
     bgColor: 'bg-indigo-500/10',
   },
 ];
@@ -33,10 +32,10 @@ export function KeyFeaturesHighlightSection() {
       <Container>
         <div className="text-center mb-12 md:mb-16">
           <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            The BrieflyAI Power Suite
+            An Enterprise-Grade Prompting Platform
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Elevate your AI interactions with tools designed for precision and impact.
+            Go beyond basic prompting. Access a full suite of tools for precision, optimization, and collaboration.
           </p>
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
