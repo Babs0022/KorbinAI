@@ -1,8 +1,8 @@
 
-import { initializeApp, getApps, getApp, type FirebaseOptions } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getStorage } from 'firebase/storage';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,10 +14,10 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-let app;
-let auth;
-let storage;
-let db;
+let app: FirebaseApp;
+let auth: Auth;
+let storage: FirebaseStorage;
+let db: Firestore;
 
 console.log("src/lib/firebase.ts: Attempting to load Firebase config...");
 console.log(`src/lib/firebase.ts: NEXT_PUBLIC_FIREBASE_API_KEY value: ${firebaseConfig.apiKey ? "'********'" : firebaseConfig.apiKey}`);
