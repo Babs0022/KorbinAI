@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -15,7 +14,7 @@ export function Logo({ className, onClick }: { className?: string, onClick?: () 
       aria-label="BrieflyAI Home"
     >
       <Image 
-        src="/logo.svg" 
+        src="/logo.png" 
         alt="BrieflyAI Logo" 
         width={30} 
         height={30}

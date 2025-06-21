@@ -81,8 +81,8 @@ export default function RootLayout({
         {/* Metadata can be defined in page.tsx or child layouts for more specificity */}
         <title>BrieflyAI - Optimize Your Prompts</title>
         <meta name="description" content="AI-powered prompt optimization for founders, marketers, and students. Achieve clarity and impact with BrieflyAI." />
-        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/logo.svg" />
+        <link rel="icon" href="/logo.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/logo.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
