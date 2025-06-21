@@ -1,5 +1,4 @@
 
-
 import type { Metadata } from 'next';
 import { Toaster } from "@/components/ui/toaster";
 import './globals.css';
@@ -13,7 +12,7 @@ export const metadata: Metadata = {
   icons: {
     icon: '/logo.svg',
     shortcut: '/logo.svg',
-    apple: '/logo.svg',
+    apple: '/icon-192.svg',
   },
 };
 
@@ -40,5 +39,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-    
