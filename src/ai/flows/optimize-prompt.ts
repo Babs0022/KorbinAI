@@ -14,6 +14,8 @@ import {z} from 'genkit';
 const OptimizePromptInputSchema = z.object({
   goal: z.string().describe('The goal or task the user wants to accomplish with the prompt.'),
   answers: z.record(z.string()).describe('Answers to adaptive survey questions.'),
+  temperature: z.number().min(0).max(1).optional().describe('Controls randomness. Lower is more deterministic. Default is 0.5.'),
+  maxTokens: z.number().int().positive().optional().describe('Maximum number of tokens to generate.'),
 });
 export type OptimizePromptInput = z.infer<typeof OptimizePromptInputSchema>;
 
@@ -45,7 +47,10 @@ const optimizePromptFlow = ai.defineFlow(
     outputSchema: OptimizePromptOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await prompt(input, {
+        temperature: input.temperature,
+        maxOutputTokens: input.maxTokens,
+    });
     return output!;
   }
 );

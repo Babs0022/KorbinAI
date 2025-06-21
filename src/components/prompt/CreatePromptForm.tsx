@@ -11,9 +11,11 @@ import { optimizePrompt, type OptimizePromptInput, type OptimizePromptOutput } f
 import { generateSurveyQuestions, type GenerateSurveyQuestionsInput, type GenerateSurveyQuestionsOutput, type SurveyQuestion } from '@/ai/flows/generate-survey-questions-flow';
 import { generatePromptMetadata, type GeneratePromptMetadataInput, type GeneratePromptMetadataOutput } from '@/ai/flows/generate-prompt-metadata-flow';
 import { useToast } from '@/hooks/use-toast';
-import { Wand2, Lightbulb, Loader2, Send, Mic, MicOff, AlertTriangle, Volume2, Square } from 'lucide-react';
+import { Wand2, Lightbulb, Loader2, Send, Mic, Square, AlertTriangle, Volume2, Settings2, Info } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Slider } from "@/components/ui/slider";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 declare global {
   interface Window {
@@ -49,28 +51,31 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
+  const [temperature, setTemperature] = useState(0.7);
+  const [maxTokens, setMaxTokens] = useState<string>("");
+
   useEffect(() => {
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognitionAPI) {
       setSpeechRecognitionSupported(true);
       const recognitionInstance = new SpeechRecognitionAPI();
-      recognitionInstance.continuous = false; // Process after user stops speaking
-      recognitionInstance.interimResults = false; // Only final results
+      recognitionInstance.continuous = false; 
+      recognitionInstance.interimResults = false; 
       recognitionRef.current = recognitionInstance;
+      console.log("[SpeechRecognition] Initialized successfully.");
 
       recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
         if (event.error === 'aborted') {
-          console.info("[SpeechRecognition onerror] Recognition aborted for field:", currentListeningField);
-          // No user-facing toast for "aborted" as it's often programmatic
+          console.info("[SpeechRecognition onerror] Recognition aborted programmatically for field:", currentListeningField);
           return;
         }
-        console.error("[SpeechRecognition onerror] Error for field:", currentListeningField, "Error type:", event.error);
+        console.error("[SpeechRecognition onerror] Error for field:", currentListeningField, "Error type:", event.error, "Message:", event.message);
         let errorMsg = "Speech recognition error. Please try again.";
         if (event.error === 'no-speech') errorMsg = "No speech detected. Please try again.";
         if (event.error === 'audio-capture') errorMsg = "Microphone error. Please check permissions and hardware.";
         if (event.error === 'not-allowed') errorMsg = "Microphone access denied. Please allow microphone access in your browser settings.";
         toast({ title: "Voice Input Error", description: errorMsg, variant: "destructive" });
-        setIsListening(false); // Ensure listening state is reset
+        setIsListening(false); 
         setCurrentListeningField(null);
       };
 
@@ -82,7 +87,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
 
       return () => {
         if (recognitionRef.current) {
-          recognitionRef.current.abort(); // Clean up on unmount
+          recognitionRef.current.abort();
           console.log("[SpeechRecognition cleanup] Aborted recognition on unmount.");
         }
       };
@@ -90,40 +95,36 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       setSpeechRecognitionSupported(false);
       console.warn("[SpeechRecognition] Not supported by this browser.");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array: runs once on mount
+  }, []); 
 
   useEffect(() => {
     if (recognitionRef.current && currentListeningField) {
-      console.log(`[Effect onresult] Setting up onresult for field: ${currentListeningField}.`);
+      console.log(`[Effect onresult] Attaching onresult handler for field: ${currentListeningField}.`);
       recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
         console.log(`[Event onresult] Fired for ${currentListeningField}. Number of results: ${event.results.length}`);
         if (event.results.length > 0 && event.results[0].length > 0) {
             const transcript = event.results[0][0].transcript;
             console.log(`[Event onresult] Transcript for ${currentListeningField}: "${transcript}"`);
-
             if (currentListeningField === 'goal') {
               console.log(`[State Update] Setting goal with: "${transcript}"`);
-              setGoal(transcript); // Replace content
+              setGoal(transcript); 
             } else {
               console.log(`[State Update] Setting surveyAnswer for ${currentListeningField} with: "${transcript}"`);
               setSurveyAnswers(prev => ({
                 ...prev,
-                [currentListeningField]: transcript, // Replace content
+                [currentListeningField]: transcript,
               }));
             }
         } else {
             console.warn(`[Event onresult] No transcript found in results for ${currentListeningField}.`);
         }
-        // Do not set isListening or currentListeningField here; onend handles it.
       };
     } else {
       if (recognitionRef.current) {
-        recognitionRef.current.onresult = null; // Clear handler if not listening
-        console.log("[Effect onresult] Cleared onresult because currentListeningField is null.");
+        recognitionRef.current.onresult = null; 
       }
     }
-  }, [currentListeningField]); // Re-run this effect when currentListeningField changes
+  }, [currentListeningField]); 
 
   useEffect(() => {
     if ('speechSynthesis' in window) {
@@ -163,10 +164,8 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       return;
     }
     if (window.speechSynthesis.speaking) {
-        console.log("[TTS speakText] Cancelling previous speech before speaking new text:", text);
-        window.speechSynthesis.cancel(); // Important: ensure previous speech is stopped.
-        // It's possible a slight delay is needed for cancel to take effect before new speak command
-        // For now, trying without explicit delay.
+        console.log("[TTS speakText] Cancelling previous speech before speaking new text:", text.substring(0,50) + "...");
+        window.speechSynthesis.cancel();
     }
     utteranceRef.current.text = text;
     utteranceRef.current.lang = lang || navigator.language || 'en-US';
@@ -191,7 +190,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
         return;
       } else {
         console.warn(`[VoiceInput startListening] Already listening for ${currentListeningField}, but requested for ${fieldId}. Stopping current one first.`);
-        recognitionRef.current.stop(); // This will trigger onend to reset states
+        recognitionRef.current.stop();
         toast({ title: "Switching Input", description: "Mic for previous field stopped. Click new mic again.", variant: "default", duration: 4000 });
         return;
       }
@@ -215,9 +214,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
     console.log(`[VoiceInput stopListening] Explicitly stopping for field: ${currentListeningField}. isListening: ${isListening}`);
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
-      // onend handler will set isListening = false and currentListeningField = null
     } else {
-      // Fallback if somehow stopListening is called when not actually listening by our state
       setIsListening(false);
       setCurrentListeningField(null);
       console.log("[VoiceInput stopListening] State reset as fallback (was not actively listening by component state).");
@@ -265,7 +262,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
             speakText(questionsToSpeak, recognitionRef.current?.lang);
         }
       } else {
-        setQuestionsFetched(false); // Ensure it's false if no questions
+        setQuestionsFetched(false); 
         const noQuestionsMessage = "Your goal seems clear enough, or I couldn't generate specific follow-up questions. You can proceed to optimize or add more details to your goal if you wish.";
         toast({ title: "No Specific Questions Needed", description: noQuestionsMessage, variant: "default"});
         if(ttsSupported) speakText(noQuestionsMessage, recognitionRef.current?.lang);
@@ -302,6 +299,8 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
     const optimizeInput: OptimizePromptInput = {
       goal,
       answers: formattedAnswers,
+      temperature,
+      maxTokens: maxTokens ? parseInt(maxTokens, 10) : undefined,
     };
 
     try {
@@ -474,6 +473,49 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                 )}
               </div>
             ))}
+
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="advanced-settings">
+                <AccordionTrigger>
+                  <div className="flex items-center text-sm font-medium">
+                    <Settings2 className="mr-2 h-4 w-4" />
+                    Advanced Settings (Optional)
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-4 pt-2">
+                    <div>
+                      <Label htmlFor="temperature" className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Temperature (Creativity)</span>
+                        <span className="text-foreground font-medium">{temperature.toFixed(1)}</span>
+                      </Label>
+                      <Slider
+                        id="temperature"
+                        min={0}
+                        max={1}
+                        step={0.1}
+                        value={[temperature]}
+                        onValueChange={(value) => setTemperature(value[0])}
+                        className="mt-2"
+                        disabled={!canInteractGenerally || isListening}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Lower values are more predictable, higher values are more creative.</p>
+                    </div>
+                     <div>
+                      <Label htmlFor="maxTokens" className="text-xs text-muted-foreground">Max Tokens (Length)</Label>
+                       <Input
+                          id="maxTokens"
+                          type="number"
+                          value={maxTokens}
+                          onChange={(e) => setMaxTokens(e.target.value)}
+                          placeholder="e.g., 1024 (optional)"
+                          className="mt-1"
+                          disabled={!canInteractGenerally || isListening}
+                        />
+                       <p className="text-xs text-muted-foreground mt-1">Maximum length of the generated prompt. Leave blank for default.</p>
+                    </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </GlassCardContent>
         </GlassCard>
       )}
@@ -500,6 +542,3 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
     </form>
   );
 }
-    
-
-    
