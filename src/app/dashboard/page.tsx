@@ -35,11 +35,18 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp } from 'firebase/firestore';
-import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
+import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp, limit } from 'firebase/firestore';
+import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCard';
 import Container from '@/components/layout/Container';
 import { Badge } from '@/components/ui/badge';
+
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  timestamp: string;
+}
 
 const features: Omit<FeatureInfo, 'isPremium' | 'isUnlimitedFeature'>[] = [ 
   {
@@ -139,6 +146,9 @@ export default function DashboardPage() {
   const [viewingPrompt, setViewingPrompt] = useState<PromptHistory | null>(null);
   const { toast } = useToast();
 
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
+
   const [averagePromptScore, setAveragePromptScore] = useState<number | null>(null);
   const [mostFrequentTag, setMostFrequentTag] = useState<string | null>(null);
 
@@ -214,18 +224,48 @@ export default function DashboardPage() {
     }
   }, [currentUser, toast]);
 
+  const fetchAnnouncements = useCallback(async () => {
+    setIsLoadingAnnouncements(true);
+    try {
+      const announcementsQuery = query(collection(db, `appAnnouncements`), orderBy("timestamp", "desc"), limit(1));
+      const querySnapshot = await getDocs(announcementsQuery);
+      const fetchedAnnouncements = querySnapshot.docs.map(docSnap => {
+          const data = docSnap.data();
+          let timestampStr = new Date().toISOString();
+          if (data.timestamp instanceof Timestamp) {
+            timestampStr = data.timestamp.toDate().toISOString();
+          }
+          return {
+            id: docSnap.id,
+            title: data.title || 'Update',
+            content: data.content || 'No content available.',
+            timestamp: timestampStr
+          } as Announcement;
+      });
+      setAnnouncements(fetchedAnnouncements);
+    } catch (error) {
+       console.error("Error loading announcements:", error);
+       // No toast here to avoid bothering users if announcements fail to load
+       setAnnouncements([]);
+    } finally {
+        setIsLoadingAnnouncements(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!authLoading && !currentUser) {
       router.push('/login');
     } else if (currentUser) {
       fetchDashboardData();
+      fetchAnnouncements();
     } else if (!authLoading && !currentUser) {
       setIsLoadingData(false);
       setAllUserPrompts([]);
       setAveragePromptScore(null);
       setMostFrequentTag(null);
+      setIsLoadingAnnouncements(false);
     }
-  }, [currentUser, authLoading, router, fetchDashboardData]);
+  }, [currentUser, authLoading, router, fetchDashboardData, fetchAnnouncements]);
   
   const totalPromptsCount = useMemo(() => allUserPrompts.length, [allUserPrompts]);
 
@@ -471,10 +511,25 @@ export default function DashboardPage() {
                       <GlassCardTitle className="text-xl font-headline flex items-center"><Bell className="mr-2 h-5 w-5"/> Notifications & Updates</GlassCardTitle>
                   </GlassCardHeader>
                   <GlassCardContent>
-                      <div className="flex items-center text-muted-foreground">
+                      {isLoadingAnnouncements ? (
+                        <div className="flex items-center text-muted-foreground">
+                          <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                          <p>Loading latest announcements...</p>
+                        </div>
+                      ) : announcements.length > 0 ? (
+                        <div className="text-muted-foreground">
+                          <h4 className="font-semibold text-foreground mb-1">{announcements[0].title}</h4>
+                          <p className="text-sm whitespace-pre-line">{announcements[0].content}</p>
+                          <p className="text-xs text-muted-foreground/70 mt-2">
+                            {new Date(announcements[0].timestamp).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-muted-foreground">
                           <Bell className="mr-3 h-6 w-6 text-primary" />
-                          <p>New features and learning resources will be announced here. Stay tuned!</p>
-                      </div>
+                          <p>No new updates right now. Stay tuned!</p>
+                        </div>
+                      )}
                   </GlassCardContent>
               </GlassCard>
           </section>
