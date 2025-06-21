@@ -20,7 +20,7 @@ export function Logo({ className, onClick }: { className?: string, onClick?: () 
         height={30}
         priority 
       />
-      <span className="text-primary">BrieflyAI</span>
+      <span className="text-white">BrieflyAI</span>
     </Link>
   );
 }
