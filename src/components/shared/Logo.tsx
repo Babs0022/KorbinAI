@@ -14,7 +14,7 @@ export function Logo({ className, onClick }: { className?: string, onClick?: () 
       aria-label="BrieflyAI Home"
     >
       <Image 
-        src="/logo.png" 
+        src="/logo.svg" 
         alt="BrieflyAI Logo" 
         width={30} 
         height={30}
