@@ -24,6 +24,7 @@ import { DashboardSidebar } from './DashboardSidebar'; // Sidebar for mobile
 import { useState } from 'react';
 import { SupportAssistant } from '@/components/assistant/SupportAssistant';
 import { NotificationBell } from '@/components/dashboard/NotificationBell';
+import { VibeCodingAssistantPill } from '@/components/assistant/VibeCodingAssistantPill';
 
 export function DashboardHeader() {
   const router = useRouter();
@@ -142,7 +143,7 @@ export function DashboardHeader() {
         </div>
       </header>
       {currentUser && <SupportAssistant />}
+      {currentUser && <VibeCodingAssistantPill />}
     </>
   );
 }
-    
