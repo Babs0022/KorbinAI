@@ -22,7 +22,9 @@ const SurveyQuestionSchema = z.object({
 export type SurveyQuestion = z.infer<typeof SurveyQuestionSchema>;
 
 const GenerateSurveyQuestionsInputSchema = z.object({
-  goal: z.string().describe('The user\'s initial goal or task for the AI prompt.'),
+  goal: z.string().optional().describe("The user's initial goal or task for the AI prompt."),
+  imageUrl: z.string().optional().describe("An image provided by the user, as a data URI."),
+  websiteUrl: z.string().optional().describe("A website URL provided by the user for context."),
 });
 export type GenerateSurveyQuestionsInput = z.infer<typeof GenerateSurveyQuestionsInputSchema>;
 
@@ -39,9 +41,19 @@ const prompt = ai.definePrompt({
   name: 'generateSurveyQuestionsPrompt',
   input: {schema: GenerateSurveyQuestionsInputSchema},
   output: {schema: GenerateSurveyQuestionsOutputSchema},
-  prompt: `You are an expert prompt engineering assistant. Based on the user's goal, generate 3-4 insightful and concise survey questions that will help clarify and refine their initial goal into a more effective prompt for an AI model.
+  prompt: `You are an expert prompt engineering assistant. Based on the user's input (which could be a text goal, an image, a website URL, or a combination), generate 3-4 insightful and concise survey questions. These questions should help clarify and refine their initial intent into a more effective prompt for an AI model.
 
+{{#if goal}}
 User's Goal: "{{goal}}"
+{{/if}}
+
+{{#if imageUrl}}
+User has provided an image for context. The questions should help understand what the user wants to do with this image (e.g., describe it, create a story about it, generate marketing copy based on it).
+{{/if}}
+
+{{#if websiteUrl}}
+User has provided a website URL: {{websiteUrl}}. The questions should help understand what the user wants to do with the content of this website (e.g., summarize it, extract key information, write a review).
+{{/if}}
 
 For each question, you MUST provide:
 - "id": A unique string identifier (e.g., "q1_audience", "q2_tone").
@@ -54,16 +66,13 @@ Focus on questions that elicit details about:
 - Key constraints or elements to include/exclude.
 - The intended audience or context, if applicable.
 - The desired style, tone, or perspective.
+- The specific action to be performed on the input (e.g., describe, analyze, summarize, create content based on).
 
 Example for a coding goal like "Generate Python code for a web scraper":
 A good question might be: "What specific website(s) should the scraper target?" (type: text)
-Another could be: "What data points should the scraper extract?" (type: text)
-Or: "Should the output be a script, a function, or a class?" (type: radio, options: ["Script", "Function", "Class"])
 
 Example for a marketing goal like "Write a tweet about a new product":
-A good question might be: "What are the key features of the product to highlight?" (type: text)
-Or: "What is the desired call to action?" (type: text)
-Or: "What is the tone of the tweet?" (type: radio, options: ["Excited", "Informative", "Humorous"])
+A good question might be: "What is the desired call to action?" (type: text)
 
 Generate exactly 3 or 4 questions.
 Ensure each radio or checkbox question has an 'options' array. Text questions should NOT have an 'options' array.
@@ -82,4 +91,3 @@ const generateSurveyQuestionsFlow = ai.defineFlow(
     return { questions: output?.questions || [] };
   }
 );
-

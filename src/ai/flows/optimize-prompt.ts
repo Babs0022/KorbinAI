@@ -12,7 +12,9 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const OptimizePromptInputSchema = z.object({
-  goal: z.string().describe('The goal or task the user wants to accomplish with the prompt.'),
+  goal: z.string().optional().describe('The goal or task the user wants to accomplish with the prompt.'),
+  imageUrl: z.string().optional().describe("An image file encoded as a Base64 data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+  websiteUrl: z.string().optional().describe("A URL to a website for context."),
   answers: z.record(z.string()).describe('Answers to adaptive survey questions.'),
   temperature: z.number().min(0).max(1).optional().describe('Controls randomness. Lower is more deterministic. Default is 0.5.'),
   maxTokens: z.number().int().positive().optional().describe('Maximum number of tokens to generate.'),
@@ -32,12 +34,45 @@ const prompt = ai.definePrompt({
   name: 'optimizePromptPrompt',
   input: {schema: OptimizePromptInputSchema},
   output: {schema: OptimizePromptOutputSchema},
-  prompt: `You are an expert prompt optimizer. You will take the user's goal and their answers to a survey and generate an optimized prompt for them to use.
+  prompt: `You are an expert prompt optimizer. Your task is to generate an optimized, detailed, and effective prompt based on the user's provided inputs. The user might provide a text goal, an image, a website URL, or a combination of these, along with answers to clarifying survey questions.
 
-Goal: {{{goal}}}
+The final prompt should be a clear set of instructions for an AI model.
 
-Answers: {{#each answers}}{{{@key}}}: {{{this}}}
-{{/each}}`,
+USER'S INPUTS:
+---
+{{#if goal}}
+Goal:
+"{{{goal}}}"
+{{/if}}
+
+{{#if imageUrl}}
+Image Context:
+An image has been provided. Incorporate its content and themes into the final prompt. The prompt should instruct an AI to perform an action related to this image (e.g., describe it, write a story about it, create marketing copy based on it).
+{{media url=imageUrl}}
+{{/if}}
+
+{{#if websiteUrl}}
+Website Context:
+Analyze the content from the following website and use it as context: {{{websiteUrl}}}
+{{/if}}
+---
+ANSWERS TO CLARIFYING QUESTIONS:
+---
+{{#if answers}}
+{{#each answers}}
+- {{{@key}}}: {{{this}}}
+{{/each}}
+{{else}}
+(No survey answers provided)
+{{/if}}
+---
+
+Based on ALL the information above, generate the optimized prompt.
+If the input is an image, the prompt should be suitable for an image-analysis or image-to-text model.
+If the input is a website, the prompt could be for summarizing, analyzing, or creating content based on it.
+If the input is text, refine it into a comprehensive prompt.
+Combine all inputs logically into a single, cohesive, and powerful prompt.
+`,
 });
 
 const optimizePromptFlow = ai.defineFlow(
