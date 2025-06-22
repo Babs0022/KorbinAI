@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -8,28 +9,60 @@ import { HelpCircle } from 'lucide-react';
 
 const faqs = [
   {
-    question: "What is BrieflyAI?",
-    answer: "BrieflyAI is an advanced prompt engineering platform designed for developers, teams, and creators. It provides a comprehensive suite of tools for crafting, managing, testing, and collaborating on AI prompts. Our mission is to enable users to achieve consistent, high-quality, and scalable results from any large language model (LLM).",
+    question: "What is the Prompt Generator and how does it work?",
+    answer: "The Prompt Generator is BrieflyAI's core feature for creating new prompts from scratch. You start by defining a clear goal. The app's AI then generates a dynamic, adaptive survey with tailored questions to gather the necessary context, tone, and desired format. Your answers are then used to engineer a highly optimized and effective prompt.",
   },
   {
-    question: "How does BrieflyAI improve my prompts?",
-    answer: "BrieflyAI enhances prompts through a structured engineering process. Key capabilities include: \n• **Clarity & Specificity:** Tools to eliminate ambiguity. \n• **Contextual Framing:** Easily add necessary background information. \n• **Role-Playing Techniques:** Assign personas to the AI (e.g., 'expert copywriter'). \n• **Chain-of-Thought:** Guide the AI through complex reasoning step-by-step. \n• **Parameter Tuning:** Precisely adjust variables like temperature to steer AI behavior.",
+    question: "What is the Prompt Vault?",
+    answer: "The Prompt Vault is your personal, cloud-based library for all saved prompts. Every time you create and save a prompt, it's stored here. The vault allows you to easily search, sort, and manage your entire history, making it simple to find and reuse your most effective prompts.",
   },
   {
-    question: "Which AI models does BrieflyAI support?",
-    answer: "Our platform is designed for multi-LLM compatibility, supporting a wide array of text, image, and code generation models. This includes models from OpenAI (GPT series), Anthropic (Claude series), Google (Gemini family), and open-source alternatives. This ensures you can use the best model for any specific task.",
+    question: "How does the Prompt Refinement Hub work?",
+    answer: "The Refinement Hub allows you to iterate on your saved prompts. You can select any prompt from your vault to manually edit its details. Crucially, you can also request AI-powered suggestions. The AI analyzes your prompt in the context of your past successful prompts to provide unique, actionable tips for improvement.",
   },
   {
-    question: "Is BrieflyAI suitable for teams?",
-    answer: "Yes, absolutely. BrieflyAI is built for collaboration. Features include a shared prompt library, version control, A/B testing capabilities, and performance logging. Teams can work together in real-time to build, test, and deploy reliable prompt configurations across their organization.",
+    question: "What does the Model-Specific Prompts feature do?",
+    answer: "Different AI models have different strengths. This feature adapts a general prompt to make it highly effective for a specific model (e.g., GPT-4 for text, DALL-E 3 for images, or Midjourney for artistic styles). It adjusts the syntax and structure and provides tips for getting the best results from your chosen model.",
+  },
+   {
+    question: "What is Contextual Prompting?",
+    answer: "This tool generates new prompts based on existing content. You can paste a document, an email, or any piece of text, and the AI will analyze it to create a relevant prompt. This is useful for summarizing text, asking follow-up questions, or expanding on ideas within the document.",
   },
   {
-    question: "How does BrieflyAI handle data privacy and security?",
-    answer: "We prioritize your data security. Prompts and sensitive information are handled with strict security protocols. We provide tools for usage monitoring and cost estimation without compromising the privacy of your content. For enterprise clients, we offer solutions that can be integrated within your own virtual private cloud. Please see our Privacy Policy for more details.",
+    question: "What is the Prompt Academy?",
+    answer: "The Prompt Academy is an educational section designed to help you master prompt engineering. It contains articles, best practices, and tutorials on the fundamental principles of crafting effective prompts, helping you improve your skills.",
   },
   {
-    question: "How does the automated optimization work?",
-    answer: "This is one of our core value propositions. BrieflyAI leverages data-driven techniques, including analyzing prompt performance over time. Our system can suggest improvements based on historical data and is being developed with feedback-driven, self-evolving capabilities inspired by reinforcement learning to continually enhance prompt effectiveness with minimal manual intervention.",
+    question: "How do Real-Time AI Suggestions work?",
+    answer: "As you type a prompt into the dedicated text area on this page, BrieflyAI's AI assistant works in the background. After a brief pause in your typing, it automatically provides suggestions to enhance clarity, add detail, or improve the structure of your prompt-in-progress.",
+  },
+  {
+    question: "What is Prompt Feedback & Analysis?",
+    answer: "This tool acts as a quality check for your prompts. You submit a prompt, and the AI analyzes it based on criteria like clarity, specificity, and actionability. It then provides a numerical quality score out of 10 and a list of specific, actionable feedback items to help you improve it.",
+  },
+  {
+    question: "How does Reverse Prompting work?",
+    answer: "If you have a piece of text that was generated by an AI, you can use this feature to figure out what the original prompt might have been. Paste the AI's output, and our tool will reverse-engineer a plausible prompt that could have produced that result.",
+  },
+  {
+    question: "What is the Prompt Analytics Dashboard?",
+    answer: "The Analytics Dashboard provides insights into your prompting activity. It visualizes key metrics such as your total number of saved prompts, your average prompt quality score over time, and your most frequently used AI models, helping you track your improvement and habits.",
+  },
+  {
+    question: "What is Prompt Learning Mode?",
+    answer: "This page explains the philosophy behind BrieflyAI. Our platform is designed to learn from your interactions. By analyzing the prompts you save, refine, and score, our system can provide increasingly personalized and effective suggestions over time, tailored to what works for you.",
+  },
+  {
+    question: "What is the AI Model Compatibility Checker?",
+    answer: "This feature helps ensure your prompt is suitable for your target AI model. It checks for mismatches (e.g., asking an image model to write text) and provides feedback. It uses the same underlying technology as the Model-Specific Prompts feature to adapt your prompt for the best performance.",
+  },
+    {
+    question: "What is the Support Assistant?",
+    answer: "The Support Assistant is an AI-powered chatbot, available on your dashboard, designed to answer your questions about using BrieflyAI's features. For sensitive issues like billing or security, it will guide you to contact human support.",
+  },
+    {
+    question: "What is the Quick Refine tool?",
+    answer: "The Quick Refine tool is a floating assistant accessible from your dashboard. It allows you to quickly input a raw idea or thought, and it will instantly return a polished, optimized prompt that is automatically copied to your clipboard for immediate use.",
   },
 ];
 
@@ -40,10 +73,10 @@ export function FAQSection() {
         <div className="text-center mb-12 md:mb-16">
           <HelpCircle className="h-12 w-12 text-primary mx-auto mb-4" />
           <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Frequently Asked Questions
+            BrieflyAI Feature Overview
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Find answers to common questions about BrieflyAI.
+            Find answers to common questions about BrieflyAI's capabilities.
           </p>
         </div>
 
