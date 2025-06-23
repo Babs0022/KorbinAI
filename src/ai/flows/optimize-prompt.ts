@@ -14,13 +14,7 @@ import {z} from 'genkit';
 
 const OptimizePromptInputSchema = z.object({
   goal: z.string().describe('The primary task or objective for the AI.'),
-  context: z.string().optional().describe('Background information or context for the task.'),
-  persona: z.string().optional().describe('The persona or role the AI should adopt (e.g., "Act as an expert copywriter").'),
-  format: z.string().optional().describe('The desired output format (e.g., "JSON", "a bulleted list", "a 3-paragraph blog post").'),
-  examples: z.string().optional().describe('Examples of the desired output style or content (few-shot prompting).'),
-  constraints: z.string().optional().describe('Specific constraints or things the AI should avoid.'),
-  temperature: z.number().min(0).max(1).optional().describe('Controls randomness. Lower is more deterministic.'),
-  maxTokens: z.number().int().positive().optional().describe('Maximum number of tokens to generate.'),
+  answers: z.record(z.string()).optional().describe('A key-value map of survey questions to user answers, providing additional context.'),
 });
 export type OptimizePromptInput = z.infer<typeof OptimizePromptInputSchema>;
 
@@ -37,47 +31,21 @@ const prompt = ai.definePrompt({
   name: 'optimizePromptPrompt',
   input: {schema: OptimizePromptInputSchema},
   output: {schema: OptimizePromptOutputSchema},
-  prompt: `You are an expert AI Prompt Engineer. Your task is to construct a single, cohesive, and powerful prompt for an AI model by integrating the user's structured inputs.
+  prompt: `You are an expert AI Prompt Engineer. Your task is to construct a single, cohesive, and powerful prompt for an AI model by integrating the user's primary "Goal" and their "Survey Answers".
 
 The final output should be ONLY the engineered prompt itself, without any conversational text or explanations.
 
-Combine the following components into a clear and effective set of instructions.
-
-**1. Primary Task (Goal):**
+**1. Primary Goal:**
 This is the core instruction.
 "{{{goal}}}"
 
-{{#if context}}
-**2. Context:**
-Provide this background information to the AI.
-"{{{context}}}"
-{{/if}}
+**2. Additional Context from Survey Answers:**
+Use these answers to add necessary details, constraints, persona, and formatting instructions.
+{{#each answers}}
+- For the question "{{@key}}", the user provided: "{{this}}"
+{{/each}}
 
-{{#if persona}}
-**3. Persona / Role:**
-The AI should adopt this persona.
-"Act as {{{persona}}}."
-{{/if}}
-
-{{#if format}}
-**4. Output Format:**
-The final output must be in this format.
-"{{{format}}}"
-{{/if}}
-
-{{#if constraints}}
-**5. Constraints & Rules:**
-The AI must adhere to these rules.
-"{{{constraints}}}"
-{{/if}}
-
-{{#if examples}}
-**6. Examples (Few-shot):**
-Use these examples to guide the output style.
-"{{{examples}}}"
-{{/if}}
-
-Now, synthesize all the provided elements into a complete and optimized prompt ready for an AI model.
+Synthesize the goal and the answers into a complete, optimized prompt. Ensure clarity, specificity, and actionability. If the user's answers imply a certain persona for the AI or a specific output format, incorporate that into the prompt.
 `,
 });
 
@@ -88,10 +56,7 @@ const optimizePromptFlow = ai.defineFlow(
     outputSchema: OptimizePromptOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input, {
-        temperature: input.temperature,
-        maxOutputTokens: input.maxTokens,
-    });
+    const {output} = await prompt(input);
     return output!;
   }
 );
