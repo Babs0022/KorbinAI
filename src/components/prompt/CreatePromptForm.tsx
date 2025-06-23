@@ -10,10 +10,9 @@ import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCard
 import { optimizePrompt, type OptimizePromptInput, type OptimizePromptOutput } from '@/ai/flows/optimize-prompt';
 import { generatePromptMetadata } from '@/ai/flows/generate-prompt-metadata-flow';
 import { useToast } from '@/hooks/use-toast';
-import { Wand2, Loader2, Settings2, Info, FileUp, Link as LinkIcon, Bot, BookOpen, User, Scale, FileText, FileX } from 'lucide-react';
+import { Wand2, Loader2, Settings2, Bot, BookOpen, FileText } from 'lucide-react';
 import { Slider } from "@/components/ui/slider";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import NextImage from 'next/image';
 
 export interface OptimizedPromptResult extends OptimizePromptOutput {
   originalGoal: string;
@@ -32,28 +31,11 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
   const [examples, setExamples] = useState('');
   const [constraints, setConstraints] = useState('');
   
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [websiteUrl, setWebsiteUrl] = useState('');
-  
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState<string>("");
   
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
-
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 4 * 1024 * 1024) { // 4MB limit
-        toast({ title: "Image Too Large", description: "Please upload an image smaller than 4MB.", variant: "destructive" });
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => setImageUrl(reader.result as string);
-      reader.onerror = () => toast({ title: "Error Reading File", description: "Could not read your image.", variant: "destructive" });
-      reader.readAsDataURL(file);
-    }
-  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -70,8 +52,6 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       format: format || undefined,
       examples: examples || undefined,
       constraints: constraints || undefined,
-      imageUrl: imageUrl ?? undefined,
-      websiteUrl: websiteUrl || undefined,
       temperature,
       maxTokens: maxTokens ? parseInt(maxTokens, 10) : undefined,
     };
@@ -149,24 +129,6 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                   <Label htmlFor="constraints">Constraints & Rules</Label>
                   <p className="text-xs text-muted-foreground mb-1">Specify what the AI should NOT do, or other rules to follow.</p>
                   <Textarea id="constraints" value={constraints} onChange={(e) => setConstraints(e.target.value)} placeholder="e.g., Do not use jargon. The email body must be under 150 words." rows={3} />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-             <AccordionItem value="external-data">
-              <AccordionTrigger><div className="flex items-center text-sm font-medium"><FileUp className="mr-2 h-4 w-4" />External Data (Optional)</div></AccordionTrigger>
-              <AccordionContent className="space-y-4 pt-2">
-                <div>
-                  <Label htmlFor="image-upload">Upload an Image</Label>
-                  <Input id="image-upload" type="file" accept="image/*" onChange={handleImageChange} className="file:text-primary mt-1"/>
-                  {imageUrl && (
-                    <div className="mt-2 relative aspect-video w-full max-w-sm rounded-md overflow-hidden border">
-                      <NextImage src={imageUrl} alt="Uploaded preview" layout="fill" objectFit="contain" data-ai-hint="user uploaded image"/>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="website-url">Website URL</Label>
-                  <Input id="website-url" type="url" value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} placeholder="https://example.com" className="mt-1" />
                 </div>
               </AccordionContent>
             </AccordionItem>

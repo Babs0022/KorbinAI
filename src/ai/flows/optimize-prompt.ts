@@ -1,3 +1,4 @@
+
 // src/ai/flows/optimize-prompt.ts
 'use server';
 /**
@@ -18,8 +19,6 @@ const OptimizePromptInputSchema = z.object({
   format: z.string().optional().describe('The desired output format (e.g., "JSON", "a bulleted list", "a 3-paragraph blog post").'),
   examples: z.string().optional().describe('Examples of the desired output style or content (few-shot prompting).'),
   constraints: z.string().optional().describe('Specific constraints or things the AI should avoid.'),
-  imageUrl: z.string().optional().describe("An image file encoded as a Base64 data URI."),
-  websiteUrl: z.string().optional().describe("A URL to a website for context."),
   temperature: z.number().min(0).max(1).optional().describe('Controls randomness. Lower is more deterministic.'),
   maxTokens: z.number().int().positive().optional().describe('Maximum number of tokens to generate.'),
 });
@@ -76,17 +75,6 @@ The AI must adhere to these rules.
 **6. Examples (Few-shot):**
 Use these examples to guide the output style.
 "{{{examples}}}"
-{{/if}}
-
-{{#if imageUrl}}
-**7. Image Input:**
-This prompt is related to the following image. Analyze its content as part of the task.
-{{media url=imageUrl}}
-{{/if}}
-
-{{#if websiteUrl}}
-**8. Website Content:**
-Use the content from the following website as a key source of information for the task: {{{websiteUrl}}}
 {{/if}}
 
 Now, synthesize all the provided elements into a complete and optimized prompt ready for an AI model.

@@ -24,6 +24,7 @@ import { DashboardSidebar } from './DashboardSidebar'; // Sidebar for mobile
 import { useState } from 'react';
 import { SupportAssistant } from '@/components/assistant/SupportAssistant';
 import { NotificationBell } from '@/components/dashboard/NotificationBell';
+import { QuickRefineAssistant } from '@/components/assistant/QuickRefineAssistant';
 
 export function DashboardHeader() {
   const router = useRouter();
@@ -142,6 +143,7 @@ export function DashboardHeader() {
         </div>
       </header>
       {currentUser && <SupportAssistant />}
+      {currentUser && <QuickRefineAssistant />}
     </>
   );
 }
