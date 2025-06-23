@@ -13,8 +13,7 @@ import { generateSurveyQuestions, type SurveyQuestion } from '@/ai/flows/generat
 import { optimizePrompt, type OptimizePromptInput, type OptimizePromptOutput } from '@/ai/flows/optimize-prompt';
 import { generatePromptMetadata } from '@/ai/flows/generate-prompt-metadata-flow';
 import { useToast } from '@/hooks/use-toast';
-import { Wand2, Loader2, ArrowRight } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import { Wand2, Loader2, Send, Mic, Lightbulb } from 'lucide-react';
 
 export interface OptimizedPromptResult extends OptimizePromptOutput {
   originalGoal: string;
@@ -26,8 +25,6 @@ interface CreatePromptFormProps {
   onPromptOptimized: (output: OptimizedPromptResult) => void;
 }
 
-const TOTAL_STEPS = 3;
-
 export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [goal, setGoal] = useState('');
@@ -36,8 +33,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
-  const handleGoalSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  const handleGetQuestions = async () => {
     if (!goal.trim()) {
       toast({ title: "Goal Required", description: "Please describe the task for the AI.", variant: "destructive" });
       return;
@@ -49,6 +45,43 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       setCurrentStep(2);
     } catch (error) {
       toast({ title: "Failed to Get Questions", description: "Could not generate survey questions. Please try again.", variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDirectGenerate = async () => {
+    if (!goal.trim()) {
+      toast({ title: "Goal Required", description: "Please describe the task for the AI.", variant: "destructive" });
+      return;
+    }
+    setIsProcessing(true);
+    setCurrentStep(3); // Go to processing state
+
+    try {
+      const optimizeInput: OptimizePromptInput = {
+        goal,
+        answers: {}, // No answers
+      };
+      
+      const optimizationResult = await optimizePrompt(optimizeInput);
+      const metadataResult = await generatePromptMetadata({
+          optimizedPrompt: optimizationResult.optimizedPrompt,
+          originalGoal: goal,
+      });
+
+      const finalResult: OptimizedPromptResult = {
+        ...optimizationResult,
+        originalGoal: goal,
+        suggestedName: metadataResult.suggestedName,
+        suggestedTags: metadataResult.suggestedTags,
+      };
+
+      onPromptOptimized(finalResult);
+      toast({ title: "Prompt Ready!", description: "Your optimized prompt is complete and displayed below." });
+    } catch (error) {
+       toast({ title: "Optimization Failed", description: "Could not optimize the prompt. Please try again.", variant: "destructive" });
+       setCurrentStep(1); // Go back to the input step on failure
     } finally {
       setIsProcessing(false);
     }
@@ -109,31 +142,50 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       toast({ title: "Prompt Ready!", description: "Your optimized prompt is complete and displayed below." });
     } catch (error) {
        toast({ title: "Optimization Failed", description: "Could not optimize the prompt. Please try again.", variant: "destructive" });
+       setCurrentStep(1); // Go back to the input step on failure
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const progressPercentage = ((currentStep -1) / (TOTAL_STEPS - 1)) * 100;
-
   return (
     <div className="space-y-6">
-      <Progress value={progressPercentage} className="w-full h-2" />
       {currentStep === 1 && (
-        <GlassCard>
-          <GlassCardHeader>
-            <GlassCardTitle>Step 1: Define Your Goal</GlassCardTitle>
-          </GlassCardHeader>
-          <GlassCardContent>
-            <form onSubmit={handleGoalSubmit}>
-              <Label htmlFor="goal">What is the primary task you want the AI to accomplish?</Label>
-              <Textarea id="goal" value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="e.g., Write a marketing email for a new SaaS product..." rows={4} className="mt-2" required />
-              <Button type="submit" className="mt-4 w-full" disabled={isProcessing}>
-                {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Getting Questions...</> : <>Get Tailored Questions <ArrowRight className="ml-2 h-4 w-4" /></>}
-              </Button>
-            </form>
-          </GlassCardContent>
-        </GlassCard>
+        <>
+          <GlassCard>
+            <GlassCardHeader>
+              <GlassCardTitle className="flex items-center">
+                <Lightbulb className="mr-2 h-5 w-5 text-accent" />
+                1. Define Your Goal
+              </GlassCardTitle>
+            </GlassCardHeader>
+            <GlassCardContent>
+              <div className="space-y-4">
+                <Label htmlFor="goal">What task or objective do you want your AI prompt to achieve? Be as specific as possible.</Label>
+                <div className="relative">
+                    <Textarea 
+                        id="goal" 
+                        value={goal} 
+                        onChange={(e) => setGoal(e.target.value)} 
+                        placeholder="e.g., Write a marketing email for a new SaaS product, or Generate a Python function to sort a list of objects by a specific attribute." 
+                        rows={4} 
+                        className="pr-12 text-base bg-muted/30 border-border/50"
+                        required 
+                    />
+                    <Button type="button" variant="ghost" size="icon" className="absolute right-2 bottom-2 h-8 w-8 text-muted-foreground hover:bg-transparent" aria-label="Use voice input" disabled>
+                        <Mic className="h-4 w-4" />
+                    </Button>
+                </div>
+                <Button type="button" variant="secondary" onClick={handleGetQuestions} disabled={isProcessing || !goal.trim()}>
+                  {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /></> : <><Send className="mr-2 h-4 w-4" /> Get Tailored Questions</>}
+                </Button>
+              </div>
+            </GlassCardContent>
+          </GlassCard>
+          <Button onClick={handleDirectGenerate} size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isProcessing || !goal.trim()}>
+            {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : <><Wand2 className="mr-2 h-4 w-4" /> Generate My Prompt</>}
+          </Button>
+        </>
       )}
 
       {currentStep === 2 && (
@@ -171,8 +223,8 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                   )}
                 </div>
               ))}
-              <Button type="submit" className="w-full" disabled={isProcessing}>
-                 Generate Prompt <Wand2 className="ml-2 h-4 w-4" />
+              <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isProcessing}>
+                 {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : <><Wand2 className="ml-2 h-4 w-4" /> Generate My Prompt</>}
               </Button>
             </form>
           </GlassCardContent>
@@ -182,7 +234,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
        {currentStep === 3 && (
         <GlassCard>
           <GlassCardHeader>
-            <GlassCardTitle>Step 3: Processing</GlassCardTitle>
+            <GlassCardTitle>Processing Your Prompt</GlassCardTitle>
           </GlassCardHeader>
           <GlassCardContent className="flex flex-col items-center justify-center text-center h-48">
              <Loader2 className="h-12 w-12 animate-spin text-primary" />
