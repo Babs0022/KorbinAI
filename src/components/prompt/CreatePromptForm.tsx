@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState, type FormEvent, type ChangeEvent } from 'react';
+import React, { useState, type FormEvent, type ChangeEvent, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -13,7 +12,16 @@ import { generateSurveyQuestions, type SurveyQuestion } from '@/ai/flows/generat
 import { optimizePrompt, type OptimizePromptInput, type OptimizePromptOutput } from '@/ai/flows/optimize-prompt';
 import { generatePromptMetadata } from '@/ai/flows/generate-prompt-metadata-flow';
 import { useToast } from '@/hooks/use-toast';
-import { Wand2, Loader2, Send, Mic, Lightbulb } from 'lucide-react';
+import { Wand2, Loader2, Send, Mic, Lightbulb, MicOff } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+// Extending the window object for SpeechRecognition
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+}
 
 export interface OptimizedPromptResult extends OptimizePromptOutput {
   originalGoal: string;
@@ -32,6 +40,79 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string | string[]>>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  useEffect(() => {
+    // Check for browser support on component mount
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setIsSpeechSupported(true);
+      recognitionRef.current = new SpeechRecognition();
+    } else {
+      setIsSpeechSupported(false);
+      console.warn("Speech Recognition not supported by this browser.");
+    }
+  }, []);
+
+  const handleMicClick = () => {
+    if (!isSpeechSupported || !recognitionRef.current) {
+      toast({
+        title: "Browser Not Supported",
+        description: "Your browser does not support speech recognition.",
+        variant: "destructive",
+      });
+      return;
+    }
+  
+    const recognition = recognitionRef.current;
+  
+    if (isRecording) {
+      recognition.stop();
+      setIsRecording(false);
+    } else {
+      recognition.lang = 'en-US';
+      recognition.continuous = true;
+      recognition.interimResults = false;
+  
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          }
+        }
+        if (finalTranscript) {
+          setGoal(prevGoal => (prevGoal ? prevGoal + ' ' : '') + finalTranscript.trim());
+        }
+      };
+  
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error', event);
+        let description = `An error occurred: ${event.error}. Please try again.`;
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+            description = "Microphone access was denied. Please allow microphone access in your browser settings to use this feature.";
+        } else if (event.error === 'no-speech') {
+            description = "No speech was detected. Please try again."
+        }
+        toast({
+          title: "Speech Recognition Error",
+          description,
+          variant: "destructive",
+        });
+        setIsRecording(false);
+      };
+  
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+  
+      recognition.start();
+      setIsRecording(true);
+    }
+  };
 
   const handleGetQuestions = async () => {
     if (!goal.trim()) {
@@ -172,8 +253,20 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                         className="pr-12 text-base bg-muted/30 border-border/50"
                         required 
                     />
-                    <Button type="button" variant="ghost" size="icon" className="absolute right-2 bottom-2 h-8 w-8 text-muted-foreground hover:bg-transparent" aria-label="Use voice input" disabled>
-                        <Mic className="h-4 w-4" />
+                    <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={handleMicClick}
+                        className={cn(
+                            "absolute right-2 bottom-2 h-8 w-8 hover:bg-transparent",
+                             isRecording ? "text-destructive" : "text-muted-foreground"
+                        )} 
+                        aria-label={isRecording ? "Stop recording" : "Use voice input"} 
+                        disabled={!isSpeechSupported || isProcessing}
+                        title={isSpeechSupported ? (isRecording ? "Stop recording" : "Use voice input") : "Speech recognition not supported"}
+                    >
+                        {isRecording ? <MicOff className="h-4 w-4 animate-pulse" /> : <Mic className="h-4 w-4" />}
                     </Button>
                 </div>
                 <Button type="button" variant="secondary" onClick={handleGetQuestions} disabled={isProcessing || !goal.trim()}>
