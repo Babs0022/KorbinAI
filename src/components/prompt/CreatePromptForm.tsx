@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, type FormEvent, type ChangeEvent, useRef, useEffect } from 'react';
@@ -44,6 +45,11 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const transcriptRef = useRef<string>('');
+  
+  const [visualizerData, setVisualizerData] = useState<number[]>(new Array(20).fill(2));
+  const visualizerAnimationRef = useRef<number>();
+
 
   useEffect(() => {
     // Check for browser support on component mount
@@ -56,6 +62,12 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       console.warn("Speech Recognition not supported by this browser.");
     }
   }, []);
+
+  const runVisualizer = () => {
+    const newData = Array.from({ length: 20 }, () => Math.random() * 100);
+    setVisualizerData(newData);
+    visualizerAnimationRef.current = requestAnimationFrame(runVisualizer);
+  };
 
   const handleMicClick = () => {
     if (!isSpeechSupported || !recognitionRef.current) {
@@ -71,8 +83,9 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
   
     if (isRecording) {
       recognition.stop();
-      setIsRecording(false);
+      // onend handles cleanup
     } else {
+      transcriptRef.current = ''; // Reset transcript for new recording
       recognition.lang = 'en-US';
       recognition.continuous = true;
       recognition.interimResults = false;
@@ -81,11 +94,11 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
         let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
+            finalTranscript += event.results[i][0].transcript + ' ';
           }
         }
         if (finalTranscript) {
-          setGoal(prevGoal => (prevGoal ? prevGoal + ' ' : '') + finalTranscript.trim());
+          transcriptRef.current += finalTranscript;
         }
       };
   
@@ -93,7 +106,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
         console.error('Speech recognition error', event);
         let description = `An error occurred: ${event.error}. Please try again.`;
         if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-            description = "Microphone access was denied. Please allow microphone access in your browser settings to use this feature.";
+            description = "Microphone access was denied. Please allow microphone access in your browser settings.";
         } else if (event.error === 'no-speech') {
             description = "No speech was detected. Please try again."
         }
@@ -102,15 +115,30 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
           description,
           variant: "destructive",
         });
+        // Ensure cleanup happens on error
         setIsRecording(false);
+        if (visualizerAnimationRef.current) {
+          cancelAnimationFrame(visualizerAnimationRef.current);
+        }
+        setVisualizerData(new Array(20).fill(2));
       };
   
       recognition.onend = () => {
         setIsRecording(false);
+        if (visualizerAnimationRef.current) {
+          cancelAnimationFrame(visualizerAnimationRef.current);
+        }
+        setVisualizerData(new Array(20).fill(2));
+
+        if (transcriptRef.current.trim()) {
+            setGoal(prevGoal => (prevGoal ? prevGoal.trim() + ' ' : '') + transcriptRef.current.trim());
+        }
+        transcriptRef.current = '';
       };
   
       recognition.start();
       setIsRecording(true);
+      runVisualizer();
     }
   };
 
@@ -253,20 +281,31 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                         className="pr-12 text-base bg-muted/30 border-border/50"
                         required 
                     />
+                     {isRecording && (
+                      <div className="absolute inset-x-0 bottom-1 flex h-10 items-end justify-center gap-px pb-2 pointer-events-none">
+                          {visualizerData.map((height, i) => (
+                              <div
+                                  key={i}
+                                  className="w-1 bg-primary/70 rounded-full"
+                                  style={{ height: `${height}%`, transition: 'height 0.1s ease-in-out' }}
+                              />
+                          ))}
+                      </div>
+                    )}
                     <Button 
                         type="button" 
                         variant="ghost" 
                         size="icon" 
                         onClick={handleMicClick}
                         className={cn(
-                            "absolute right-2 bottom-2 h-8 w-8 hover:bg-transparent",
+                            "absolute right-2 bottom-2 h-8 w-8 hover:bg-transparent z-10",
                              isRecording ? "text-destructive" : "text-muted-foreground"
                         )} 
-                        aria-label={isRecording ? "Stop recording" : "Use voice input"} 
+                        aria-label={isRecording ? "Stop recording" : "Start recording"} 
                         disabled={!isSpeechSupported || isProcessing}
-                        title={isSpeechSupported ? (isRecording ? "Stop recording" : "Use voice input") : "Speech recognition not supported"}
+                        title={isSpeechSupported ? (isRecording ? "Stop recording" : "Start recording") : "Speech recognition not supported"}
                     >
-                        {isRecording ? <MicOff className="h-4 w-4 animate-pulse" /> : <Mic className="h-4 w-4" />}
+                        {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                     </Button>
                 </div>
                 <Button type="button" variant="secondary" onClick={handleGetQuestions} disabled={isProcessing || !goal.trim()}>
