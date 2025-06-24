@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, type FormEvent, type ChangeEvent, useRef, useEffect } from 'react';
+import React, { useState, type FormEvent, type ChangeEvent, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -13,7 +13,7 @@ import { generateSurveyQuestions, type SurveyQuestion } from '@/ai/flows/generat
 import { optimizePrompt, type OptimizePromptInput, type OptimizePromptOutput } from '@/ai/flows/optimize-prompt';
 import { generatePromptMetadata } from '@/ai/flows/generate-prompt-metadata-flow';
 import { useToast } from '@/hooks/use-toast';
-import { Wand2, Loader2, Send, Mic, Lightbulb, MicOff } from 'lucide-react';
+import { Wand2, Loader2, Send, Mic, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Extending the window object for SpeechRecognition
@@ -21,6 +21,8 @@ declare global {
   interface Window {
     SpeechRecognition: typeof SpeechRecognition;
     webkitSpeechRecognition: typeof SpeechRecognition;
+    AudioContext: typeof AudioContext;
+    webkitAudioContext: typeof AudioContext;
   }
 }
 
@@ -34,6 +36,13 @@ interface CreatePromptFormProps {
   onPromptOptimized: (output: OptimizedPromptResult) => void;
 }
 
+// Helper to format time
+const formatTime = (seconds: number) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+};
+
 export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [goal, setGoal] = useState('');
@@ -44,53 +53,76 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
 
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const transcriptRef = useRef<string>('');
-  
-  const [visualizerData, setVisualizerData] = useState<number[]>(new Array(20).fill(2));
-  const visualizerAnimationRef = useRef<number>();
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [visualizerData, setVisualizerData] = useState<Uint8Array>(new Uint8Array(32).fill(0));
 
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const visualizerAnimationRef = useRef<number>();
+  const timerIntervalRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    // Check for browser support on component mount
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       setIsSpeechSupported(true);
-      recognitionRef.current = new SpeechRecognition();
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true; // Use interim to provide faster feedback if needed, but final is appended
+      recognitionRef.current = recognition;
     } else {
       setIsSpeechSupported(false);
       console.warn("Speech Recognition not supported by this browser.");
     }
+
+    // Cleanup on unmount
+    return () => {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      if (visualizerAnimationRef.current) cancelAnimationFrame(visualizerAnimationRef.current);
+      if (streamRef.current) streamRef.current.getTracks().forEach(track => track.stop());
+      if (recognitionRef.current) recognitionRef.current.abort();
+    };
   }, []);
 
-  const runVisualizer = () => {
-    const newData = Array.from({ length: 20 }, () => Math.random() * 100);
-    setVisualizerData(newData);
-    visualizerAnimationRef.current = requestAnimationFrame(runVisualizer);
-  };
-
-  const handleMicClick = () => {
-    if (!isSpeechSupported || !recognitionRef.current) {
-      toast({
-        title: "Browser Not Supported",
-        description: "Your browser does not support speech recognition.",
-        variant: "destructive",
-      });
-      return;
+  const runVisualizer = useCallback(() => {
+    if (!analyserRef.current) return;
+    // We use getByteFrequencyData for a more "bouncy" visualizer
+    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    analyserRef.current.getByteFrequencyData(dataArray);
+    
+    // We only need a subset of the data for 32 bars
+    const step = Math.floor(dataArray.length / 32);
+    const vizSubset = new Uint8Array(32);
+    for(let i=0; i<32; i++) {
+       // Average a slice of the data for each bar
+       let slice = dataArray.slice(i * step, (i+1) * step);
+       let avg = slice.reduce((a,b) => a+b, 0) / slice.length;
+       vizSubset[i] = avg;
     }
-  
-    const recognition = recognitionRef.current;
-  
-    if (isRecording) {
-      recognition.stop();
-      // onend handles cleanup
-    } else {
-      transcriptRef.current = ''; // Reset transcript for new recording
-      recognition.lang = 'en-US';
-      recognition.continuous = true;
-      recognition.interimResults = false;
-  
-      recognition.onresult = (event) => {
+    setVisualizerData(vizSubset);
+    visualizerAnimationRef.current = requestAnimationFrame(runVisualizer);
+  }, []);
+
+  const startRecording = async () => {
+    if (!isSpeechSupported || !recognitionRef.current) return;
+    setIsRecording(true);
+    setRecordingTime(0);
+    timerIntervalRef.current = setInterval(() => {
+      setRecordingTime(prev => prev + 1);
+    }, 1000);
+
+    try {
+      streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      analyserRef.current.fftSize = 256;
+      const source = audioContextRef.current.createMediaStreamSource(streamRef.current);
+      source.connect(analyserRef.current);
+      
+      runVisualizer();
+
+      recognitionRef.current.onresult = (event) => {
         let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
@@ -98,47 +130,60 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
           }
         }
         if (finalTranscript) {
-          transcriptRef.current += finalTranscript;
+          setGoal(prev => (prev ? prev.trim() + ' ' : '') + finalTranscript.trim());
         }
       };
-  
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error', event);
-        let description = `An error occurred: ${event.error}. Please try again.`;
-        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-            description = "Microphone access was denied. Please allow microphone access in your browser settings.";
-        } else if (event.error === 'no-speech') {
+      
+      recognitionRef.current.onerror = (event) => {
+         console.error('Speech recognition error', event);
+         let description = "An unknown error occurred with the microphone.";
+         if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+            description = "Microphone access was denied. Please allow it in your browser settings.";
+         } else if (event.error === 'no-speech') {
             description = "No speech was detected. Please try again."
-        }
-        toast({
-          title: "Speech Recognition Error",
-          description,
-          variant: "destructive",
-        });
-        // Ensure cleanup happens on error
-        setIsRecording(false);
-        if (visualizerAnimationRef.current) {
-          cancelAnimationFrame(visualizerAnimationRef.current);
-        }
-        setVisualizerData(new Array(20).fill(2));
+         }
+         toast({ title: "Mic Error", description, variant: "destructive" });
+         stopRecording();
       };
-  
-      recognition.onend = () => {
-        setIsRecording(false);
-        if (visualizerAnimationRef.current) {
-          cancelAnimationFrame(visualizerAnimationRef.current);
-        }
-        setVisualizerData(new Array(20).fill(2));
+      
+      recognitionRef.current.start();
 
-        if (transcriptRef.current.trim()) {
-            setGoal(prevGoal => (prevGoal ? prevGoal.trim() + ' ' : '') + transcriptRef.current.trim());
-        }
-        transcriptRef.current = '';
-      };
-  
-      recognition.start();
-      setIsRecording(true);
-      runVisualizer();
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      toast({ title: "Mic Access Denied", description: "Please enable microphone permissions in your browser.", variant: "destructive" });
+      setIsRecording(false);
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    }
+  };
+
+  const stopRecording = useCallback(() => {
+    if (recognitionRef.current) recognitionRef.current.stop();
+    if (visualizerAnimationRef.current) cancelAnimationFrame(visualizerAnimationRef.current);
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    
+    streamRef.current?.getTracks().forEach(track => track.stop());
+    // Safely close the AudioContext
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+    }
+
+    streamRef.current = null;
+    audioContextRef.current = null;
+    analyserRef.current = null;
+    
+    setIsRecording(false);
+    setVisualizerData(new Uint8Array(32).fill(0));
+  }, []);
+
+  const handleMicClick = () => {
+    if (!isSpeechSupported) {
+       toast({ title: "Browser Not Supported", description: "Speech recognition isn't available in your browser.", variant: "destructive" });
+       return;
+    }
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
     }
   };
 
@@ -281,32 +326,33 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                         className="pr-12 text-base bg-muted/30 border-border/50"
                         required 
                     />
-                     {isRecording && (
-                      <div className="absolute inset-x-0 bottom-1 flex h-10 items-end justify-center gap-px pb-2 pointer-events-none">
-                          {visualizerData.map((height, i) => (
-                              <div
-                                  key={i}
-                                  className="w-1 bg-primary/70 rounded-full"
-                                  style={{ height: `${height}%`, transition: 'height 0.1s ease-in-out' }}
-                              />
-                          ))}
-                      </div>
-                    )}
-                    <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={handleMicClick}
-                        className={cn(
-                            "absolute right-2 bottom-2 h-8 w-8 hover:bg-transparent z-10",
-                             isRecording ? "text-destructive" : "text-muted-foreground"
-                        )} 
-                        aria-label={isRecording ? "Stop recording" : "Start recording"} 
-                        disabled={!isSpeechSupported || isProcessing}
-                        title={isSpeechSupported ? (isRecording ? "Stop recording" : "Start recording") : "Speech recognition not supported"}
-                    >
-                        {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                    </Button>
+                    <div className="absolute right-2 bottom-2 flex items-center space-x-2">
+                        {isRecording && (
+                           <div className="flex items-center gap-2 p-1 rounded-md bg-destructive/10 text-destructive text-xs font-mono">
+                               <span>{formatTime(recordingTime)}</span>
+                               <div className="flex items-end gap-0.5 h-4">
+                                   {Array.from(visualizerData).map((value, i) => (
+                                       <div key={i} className="w-0.5 bg-destructive rounded-full" style={{ height: `${Math.max(2, (value / 255) * 100)}%` }}></div>
+                                   ))}
+                               </div>
+                           </div>
+                        )}
+                        <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={handleMicClick}
+                            className={cn(
+                                "h-8 w-8 z-10 rounded-full",
+                                 isRecording ? "text-white bg-destructive hover:bg-destructive/90" : "text-muted-foreground hover:bg-accent/10"
+                            )} 
+                            aria-label={isRecording ? "Stop recording" : "Start recording"} 
+                            disabled={!isSpeechSupported || isProcessing}
+                            title={isSpeechSupported ? (isRecording ? "Stop recording" : "Start recording") : "Speech recognition not supported"}
+                        >
+                            <Mic className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
                 <Button type="button" variant="secondary" onClick={handleGetQuestions} disabled={isProcessing || !goal.trim()}>
                   {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /></> : <><Send className="mr-2 h-4 w-4" /> Get Tailored Questions</>}
