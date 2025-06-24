@@ -13,9 +13,11 @@ import { generateSurveyQuestions, type SurveyQuestion, type GenerateSurveyQuesti
 import { optimizePrompt, type OptimizePromptInput, type OptimizePromptOutput } from '@/ai/flows/optimize-prompt';
 import { generatePromptMetadata } from '@/ai/flows/generate-prompt-metadata-flow';
 import { useToast } from '@/hooks/use-toast';
-import { Wand2, Loader2, Send, Mic, Lightbulb, Image as ImageIcon, X } from 'lucide-react';
+import { Wand2, Loader2, Send, Mic, Lightbulb, Image as ImageIcon, X, FileText, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import NextImage from 'next/image';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 // Extending the window object for SpeechRecognition
 declare global {
@@ -37,6 +39,8 @@ interface CreatePromptFormProps {
   onPromptOptimized: (output: OptimizedPromptResult) => void;
 }
 
+type ContextType = 'image' | 'pdf' | 'url' | 'none';
+
 // Helper to format time
 const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
@@ -47,13 +51,21 @@ const formatTime = (seconds: number) => {
 export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [goal, setGoal] = useState('');
+  
+  // Context state
+  const [activeContext, setActiveContext] = useState<ContextType>('none');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [pdfDataUri, setPdfDataUri] = useState<string | null>(null);
+  const [pdfFileName, setPdfFileName] = useState<string | null>(null);
+  const [sourceUrl, setSourceUrl] = useState('');
+
   const [surveyQuestions, setSurveyQuestions] = useState<SurveyQuestion[]>([]);
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string | string[]>>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
 
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
@@ -183,28 +195,75 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       startRecording();
     }
   };
+
+  const clearAllContext = () => {
+    setImageDataUri(null);
+    setImagePreview(null);
+    if(fileInputRef.current) fileInputRef.current.value = "";
+    
+    setPdfDataUri(null);
+    setPdfFileName(null);
+    if(pdfInputRef.current) pdfInputRef.current.value = "";
+    
+    setSourceUrl('');
+  }
+
+  const handleTabChange = (value: string) => {
+    clearAllContext();
+    setActiveContext(value as ContextType);
+  }
   
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
+      clearAllContext();
       const reader = new FileReader();
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
         setImageDataUri(dataUrl);
         setImagePreview(URL.createObjectURL(file));
+        setActiveContext('image');
       };
       reader.readAsDataURL(file);
     } else {
       toast({ title: "Invalid File", description: "Please select an image file.", variant: "destructive" });
     }
   };
-  
-  const removeImage = () => {
-      setImageDataUri(null);
-      setImagePreview(null);
-      if(fileInputRef.current) {
-          fileInputRef.current.value = "";
-      }
+
+  const handlePdfChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      clearAllContext();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        setPdfDataUri(dataUrl);
+        setPdfFileName(file.name);
+        setActiveContext('pdf');
+      };
+      reader.readAsDataURL(file);
+    } else {
+      toast({ title: "Invalid File", description: "Please select a PDF file.", variant: "destructive" });
+    }
+  };
+
+  const handleUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
+    clearAllContext();
+    setSourceUrl(event.target.value);
+    setActiveContext('url');
+  }
+
+  const removeContext = () => {
+      clearAllContext();
+      setActiveContext('none');
+  }
+
+  const buildFlowInput = () => {
+    let input: GenerateSurveyQuestionsInput | OptimizePromptInput = { goal };
+    if (activeContext === 'image' && imageDataUri) input.imageDataUri = imageDataUri;
+    if (activeContext === 'pdf' && pdfDataUri) input.pdfDataUri = pdfDataUri;
+    if (activeContext === 'url' && sourceUrl) input.sourceUrl = sourceUrl;
+    return input;
   }
 
   const handleGetQuestions = async () => {
@@ -214,10 +273,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
     }
     setIsProcessing(true);
     try {
-      const input: GenerateSurveyQuestionsInput = { goal };
-      if (imageDataUri) {
-          input.imageDataUri = imageDataUri;
-      }
+      const input = buildFlowInput() as GenerateSurveyQuestionsInput;
       const { questions } = await generateSurveyQuestions(input);
       setSurveyQuestions(questions);
       setCurrentStep(2);
@@ -237,13 +293,8 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
     setCurrentStep(3); // Go to processing state
 
     try {
-      const optimizeInput: OptimizePromptInput = {
-        goal,
-        answers: {}, // No answers
-      };
-      if (imageDataUri) {
-        optimizeInput.imageDataUri = imageDataUri;
-      }
+      const optimizeInput = buildFlowInput() as OptimizePromptInput;
+      optimizeInput.answers = {}; // No survey answers
       
       const optimizationResult = await optimizePrompt(optimizeInput);
       const metadataResult = await generatePromptMetadata({
@@ -300,13 +351,8 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
         }
     }
 
-    const optimizeInput: OptimizePromptInput = {
-      goal,
-      answers: formattedAnswers,
-    };
-    if (imageDataUri) {
-        optimizeInput.imageDataUri = imageDataUri;
-    }
+    const optimizeInput = buildFlowInput() as OptimizePromptInput;
+    optimizeInput.answers = formattedAnswers;
     
     try {
       const optimizationResult = await optimizePrompt(optimizeInput);
@@ -345,13 +391,13 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
             </GlassCardHeader>
             <GlassCardContent>
               <div className="space-y-4">
-                <Label htmlFor="goal">What task or objective do you want your AI prompt to achieve? You can also upload an image for context.</Label>
+                <Label htmlFor="goal">What task or objective do you want your AI prompt to achieve?</Label>
                 <div className="relative">
                     <Textarea 
                         id="goal" 
                         value={goal} 
                         onChange={(e) => setGoal(e.target.value)} 
-                        placeholder="e.g., Write a marketing email for a new SaaS product, or Generate a Python function to sort a list of objects by a specific attribute." 
+                        placeholder="e.g., Write a marketing email for a new SaaS product..." 
                         rows={4} 
                         className="pr-12 text-base bg-muted/30 border-border/50"
                         required 
@@ -384,52 +430,80 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                         </Button>
                     </div>
                 </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="image-upload" className="text-sm font-medium">Image Context (Optional)</Label>
-                    {imagePreview ? (
-                        <div className="relative w-32 h-32 rounded-md overflow-hidden border">
-                            <NextImage src={imagePreview} alt="Image preview" layout="fill" objectFit="cover" />
-                            <Button variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 rounded-full" onClick={removeImage}>
-                                <X className="h-4 w-4" />
-                                <span className="sr-only">Remove image</span>
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="flex items-center">
-                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                                <ImageIcon className="mr-2 h-4 w-4" />
-                                Upload Image
-                            </Button>
-                            <Input 
-                                id="image-upload"
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleImageChange}
-                                accept="image/*"
-                                className="hidden"
-                            />
-                        </div>
-                    )}
-                </div>
-
-
-                <Button type="button" variant="secondary" onClick={handleGetQuestions} disabled={isProcessing || !goal.trim()}>
-                  {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /></> : <><Send className="mr-2 h-4 w-4" /> Get Tailored Questions</>}
-                </Button>
               </div>
             </GlassCardContent>
           </GlassCard>
-          <Button onClick={handleDirectGenerate} size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isProcessing || !goal.trim()}>
-            {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : <><Wand2 className="mr-2 h-4 w-4" /> Generate My Prompt</>}
-          </Button>
+
+          <GlassCard>
+            <GlassCardHeader>
+              <GlassCardTitle>2. Provide Context (Optional)</GlassCardTitle>
+              <p className="text-sm text-muted-foreground">Add an image, PDF, or website URL to give the AI more context.</p>
+            </GlassCardHeader>
+            <GlassCardContent>
+                <Tabs value={activeContext} onValueChange={handleTabChange} className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="image"><ImageIcon className="mr-2 h-4 w-4"/>Image</TabsTrigger>
+                        <TabsTrigger value="pdf"><FileText className="mr-2 h-4 w-4"/>PDF</TabsTrigger>
+                        <TabsTrigger value="url"><Globe className="mr-2 h-4 w-4"/>Website</TabsTrigger>
+                    </TabsList>
+                    <div className="pt-4">
+                        <TabsContent value="image" className="mt-0">
+                            {imagePreview ? (
+                                <div className="relative w-32 h-32 rounded-md overflow-hidden border">
+                                    <NextImage src={imagePreview} alt="Image preview" layout="fill" objectFit="cover" data-ai-hint="file upload" />
+                                    <Button variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 rounded-full" onClick={removeContext}>
+                                        <X className="h-4 w-4" />
+                                        <span className="sr-only">Remove image</span>
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                    <ImageIcon className="mr-2 h-4 w-4" /> Upload Image
+                                </Button>
+                            )}
+                             <Input id="image-upload" type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+                        </TabsContent>
+                        <TabsContent value="pdf" className="mt-0">
+                             {pdfFileName ? (
+                                <div className="flex items-center gap-2 p-2 rounded-md border bg-muted/50">
+                                    <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                                    <p className="text-sm text-foreground truncate flex-grow">{pdfFileName}</p>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={removeContext}>
+                                        <X className="h-4 w-4" />
+                                        <span className="sr-only">Remove PDF</span>
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button type="button" variant="outline" onClick={() => pdfInputRef.current?.click()}>
+                                    <FileText className="mr-2 h-4 w-4" /> Upload PDF
+                                </Button>
+                            )}
+                             <Input id="pdf-upload" type="file" ref={pdfInputRef} onChange={handlePdfChange} accept=".pdf" className="hidden" />
+                        </TabsContent>
+                        <TabsContent value="url" className="mt-0">
+                            <Label htmlFor="url-input" className="sr-only">Website URL</Label>
+                            <Input id="url-input" type="url" placeholder="https://example.com" value={sourceUrl} onChange={handleUrlChange}/>
+                        </TabsContent>
+                    </div>
+                </Tabs>
+            </GlassCardContent>
+          </GlassCard>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button type="button" variant="secondary" onClick={handleGetQuestions} disabled={isProcessing || !goal.trim()} className="flex-1">
+              {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /></> : <><Send className="mr-2 h-4 w-4" /> Get Tailored Questions</>}
+            </Button>
+            <Button onClick={handleDirectGenerate} size="lg" className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isProcessing || !goal.trim()}>
+              {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : <><Wand2 className="mr-2 h-4 w-4" /> Generate My Prompt</>}
+            </Button>
+          </div>
         </>
       )}
 
       {currentStep === 2 && (
         <GlassCard>
           <GlassCardHeader>
-            <GlassCardTitle>Step 2: Refine the Details</GlassCardTitle>
+            <GlassCardTitle>3. Refine the Details</GlassCardTitle>
           </GlassCardHeader>
           <GlassCardContent>
             <form onSubmit={handleSurveySubmit} className="space-y-4">
