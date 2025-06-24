@@ -59,29 +59,32 @@ Original Prompt:
 Target AI Model: "{{targetModel}}"
 
 Consider these model-specific nuances:
-- **GPT-4 / GPT-3.5-Turbo / Gemini / Claude (Text Models):**
+- **GPT-4 / GPT-3.5-Turbo / Gemini (Text Models):**
   - Clarity and Specificity: Ensure instructions are unambiguous.
   - Context: Provide sufficient background if needed.
   - Persona: Define a role for the AI if it helps (e.g., "Act as an expert marketer...").
   - Format: Specify the desired output format (e.g., list, paragraph, JSON).
   - Constraints: Mention length, topics to avoid, style (e.g., formal, casual).
-  - For complex tasks, break them down into steps.
+  - For complex tasks, break them down into steps ("Think step-by-step").
+- **Claude Models (Opus, Sonnet):**
+  - Follows general text model guidance.
+  - Excels when instructions or examples are wrapped in XML tags, e.g., <example>...</example> or <document>...</document>.
 - **DALL-E 3 (Image Model):**
-  - Descriptive Language: Use vivid adjectives and nouns.
+  - Descriptive Language: Use vivid adjectives and nouns in full sentences.
   - Scene Details: Include objects, characters, setting, atmosphere.
   - Artistic Style: Suggest styles (e.g., "photorealistic", "impressionist painting", "pixel art").
   - Camera View/Angle: (e.g., "close-up", "wide-angle shot").
   - Lighting: (e.g., "soft morning light", "dramatic studio lighting").
-  - DALL-E 3 understands natural language well, so full sentences are effective. Avoid overly complex Midjourney-style keyword lists.
+  - Avoid Midjourney-style keyword lists and parameters.
 - **Midjourney (Image Model):**
-  - Keywords and Phrases: Often relies on comma-separated keywords.
+  - Keyword and Phrase Driven: Often relies on comma-separated keywords.
   - Artistic Styles & Mediums: (e.g., "impressionism", "cyberpunk", "watercolor").
   - Influences: Mention specific artists or art styles.
-  - Parameters: Use Midjourney parameters like "--ar 16:9" (aspect ratio), "--v 6.0" (version), "--style raw".
-  - Subject Emphasis: Use "::" for weighting, e.g., "cat::2 dog::1".
+  - Parameters: Use Midjourney parameters like --ar 16:9 (aspect ratio), --v 6.0 (version), --style raw.
+  - Subject Emphasis: Use :: for weighting, e.g., "cat::2 dog::1".
 - **Stable Diffusion (Image Model):**
-  - Detailed Descriptions: Similar to DALL-E 3 but can be more keyword-driven.
-  - Negative Prompts: Often benefits from specifying what *not* to include.
+  - Detailed Descriptions: Can be a mix of natural language and keywords.
+  - Negative Prompts: Often benefits from specifying what *not* to include (e.g., \`(worst quality, low quality:1.4)\`).
   - Artist Names & Styles: Effective for guiding the output.
   - Technical Terms: (e.g., "8k", "UHD", "trending on ArtStation").
 
