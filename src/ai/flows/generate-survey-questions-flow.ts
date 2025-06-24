@@ -46,42 +46,25 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateSurveyQuestionsInputSchema},
   output: {schema: GenerateSurveyQuestionsOutputSchema},
   tools: [fetchWebsiteContentTool, extractTextFromPdfTool],
-  prompt: `You are an expert prompt engineering assistant. Based on the user's goal and any provided context (image, PDF, or URL), generate 3-4 insightful and concise survey questions to help clarify their intent and refine it into a more effective prompt for an AI model.
+  system: `You are an expert prompt engineering assistant. Your task is to generate 3-4 insightful and concise survey questions to help a user refine their goal into a more effective AI prompt.
 
-User's Goal: "{{goal}}"
+If a 'sourceUrl' is provided in the input, you MUST use the 'fetchWebsiteContentTool' to retrieve the website's text content.
+If a 'pdfDataUri' is provided in the input, you MUST use the 'extractTextFromPdfTool' with the provided data URI to retrieve the document's text content.
+If an 'imageDataUri' is provided, you must analyze the image.
 
-{{#if sourceUrl}}
-**External Context from Website:**
-The user has provided a URL for context. Use the 'fetchWebsiteContentTool' with the URL "{{{sourceUrl}}}" to retrieve the website's text content. Your survey questions should be based on the user's goal AND the content of this website.
-{{/if}}
+Base your survey questions on the user's goal and any content retrieved from the tools or image.
 
-{{#if pdfDataUri}}
-**External Context from PDF:**
-The user has provided a PDF document for context. Use the 'extractTextFromPdfTool' to retrieve the text content from the document. Your survey questions should be based on the user's goal AND the content of this document. The PDF is provided as a data URI.
-{{/if}}
-
-{{#if imageDataUri}}
-**Image Context:**
-The user has also provided the following image for context. Analyze it. Your questions can be about the image's style, subject, or how it should relate to the user's goal.
-{{media url=imageDataUri}}
-{{/if}}
-
-For each question, you MUST provide:
-- "id": A unique string identifier (e.g., "q1_audience", "q2_tone").
-- "text": The question text. This should be clear and direct.
-- "type": The type of question, which must be one of "text", "radio", or "checkbox".
-- "options": (ONLY if type is "radio" or "checkbox") An array of 2-4 short, distinct string options. Do NOT provide options if type is "text".
-
-Focus on questions that elicit details about:
-- The desired output format or structure.
-- Key constraints or elements to include/exclude.
-- The intended audience or context, if applicable.
-- The desired style, tone, or perspective.
-- If context is provided (image, PDF, URL), ask about its role. (e.g., "What is the key takeaway from the provided document that should be highlighted?", "Describe the art style you want to replicate from this image.", "What is the primary call-to-action on the provided website?").
-
+For each generated question, you MUST provide: "id", "text", "type" (text, radio, or checkbox), and "options" (only for radio/checkbox).
+Focus questions on clarifying: desired output format, key constraints, target audience, style/tone, and the role of any provided context.
 Generate exactly 3 or 4 questions.
-Ensure each radio or checkbox question has an 'options' array. Text questions should NOT have an 'options' array.
-`,
+Ensure radio/checkbox questions have an 'options' array.`,
+  prompt: `Please generate survey questions for the following goal: "{{goal}}"
+  
+  {{#if imageDataUri}}
+  Also consider the attached image.
+  {{media url=imageDataUri}}
+  {{/if}}
+  `,
 });
 
 const generateSurveyQuestionsFlow = ai.defineFlow(
