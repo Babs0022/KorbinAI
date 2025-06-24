@@ -109,9 +109,9 @@ const optimizePromptFlow = ai.defineFlow(
 
     // Deterministically call the correct tool if the input is provided.
     if (input.sourceUrl) {
-        retrievedContext = await fetchWebsiteContentTool.run({ url: input.sourceUrl });
+        retrievedContext = await fetchWebsiteContentTool({ url: input.sourceUrl });
     } else if (input.pdfDataUri) {
-        retrievedContext = await extractTextFromPdfTool.run(input.pdfDataUri);
+        retrievedContext = await extractTextFromPdfTool(input.pdfDataUri);
     }
     
     // Prepare the input for the final prompt generation.
