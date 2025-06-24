@@ -2,7 +2,7 @@
 'use server';
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import pdf from 'pdf-parse';
+// pdf-parse is imported dynamically below to prevent build-time errors
 
 export const extractTextFromPdfTool = ai.defineTool(
   {
@@ -13,9 +13,12 @@ export const extractTextFromPdfTool = ai.defineTool(
   },
   async (dataUri) => {
     try {
-        if (!dataUri.startsWith('data:application/pdf;base64,')) {
-            throw new Error('Invalid PDF data URI format.');
-        }
+      // Dynamically import pdf-parse only when the tool is executed
+      const pdf = (await import('pdf-parse')).default;
+
+      if (!dataUri.startsWith('data:application/pdf;base64,')) {
+          throw new Error('Invalid PDF data URI format.');
+      }
       const base64Data = dataUri.substring(dataUri.indexOf(',') + 1);
       const pdfBuffer = Buffer.from(base64Data, 'base64');
       const data = await pdf(pdfBuffer);
