@@ -32,7 +32,7 @@ const pricingTiers: Omit<Tier, 'isCurrent' | 'loadingPlanId'>[] = [
     {
       name: 'BrieflyAI Free',
       planId: 'free',
-      price: { monthly: 'NGN 0', annually: 'NGN 0' },
+      price: { monthly: '$0', annually: '$0' },
       description: 'For individuals starting their journey with AI prompting.',
       features: [
         '15 Prompts per month',
@@ -53,7 +53,7 @@ const pricingTiers: Omit<Tier, 'isCurrent' | 'loadingPlanId'>[] = [
     {
       name: 'BrieflyAI Premium',
       planId: 'premium',
-      price: { monthly: 'NGN 16,000', annually: 'NGN 160,000' },
+      price: { monthly: '$11', annually: '$118.80' },
       description: 'For power users & professionals who need advanced tools.',
       features: [
         '500 Prompts per month',
@@ -71,7 +71,7 @@ const pricingTiers: Omit<Tier, 'isCurrent' | 'loadingPlanId'>[] = [
     {
       name: 'BrieflyAI Unlimited',
       planId: 'unlimited',
-      price: { monthly: 'NGN 56,000', annually: 'NGN 560,000' },
+      price: { monthly: '$40', annually: '$432' },
       description: 'For teams & businesses that demand unlimited scale.',
       features: [
         'Unlimited Prompts & Vault Storage',
@@ -176,7 +176,7 @@ export function PricingSection() {
                 aria-label="Toggle between monthly and annual billing"
               />
               <Label htmlFor="billing-cycle" className={cn("text-muted-foreground", billingCycle === 'annually' && 'text-foreground font-medium')}>
-                Annually <span className="text-accent font-semibold">(Save 20%!)</span>
+                Annually <span className="text-accent font-semibold">(Save 10%!)</span>
               </Label>
             </div>
 
@@ -202,7 +202,7 @@ export function PricingSection() {
                         {billingCycle === 'monthly' ? tier.price.monthly : tier.price.annually}
                     </span>
                     <span className="ml-1 text-md font-semibold text-muted-foreground">
-                        {tier.price.monthly !== 'NGN 0' && (billingCycle === 'monthly' ? '/mo' : '/yr')}
+                        {tier.price.monthly !== '$0' && (billingCycle === 'monthly' ? '/mo' : '/yr')}
                     </span>
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground h-10">{tier.description}</p>
