@@ -7,7 +7,6 @@ import { InteractiveDemoSection } from '@/components/sections/DemoVideoSection';
 import { HowItWorksSection } from '@/components/sections/HowItWorksSection';
 import { TargetAudienceSection } from '@/components/sections/TargetAudienceSection';
 import { SocialProofSection } from '@/components/sections/SocialProofSection';
-import { PricingSection } from '@/components/sections/PricingSection';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { FinalCTASection } from '@/components/sections/FinalCTASection';
 
@@ -22,7 +21,6 @@ export default function HomePage() {
         <HowItWorksSection />
         <TargetAudienceSection />
         <SocialProofSection />
-        <PricingSection />
         <FAQSection />
         <FinalCTASection />
       </main>

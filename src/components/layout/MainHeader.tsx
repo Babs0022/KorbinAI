@@ -26,7 +26,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const navLinks = [
   { href: '/#features', label: 'Features' },
   { href: '/#solutions', label: 'Solutions' },
-  { href: '/#pricing', label: 'Pricing' },
   { href: '/#faq', label: 'FAQ' },
   { href: 'https://discord.gg/8muUf5Nzb4', label: 'Join Discord', external: true },
 ];
@@ -182,7 +181,7 @@ export function MainHeader() {
                       <Button variant="outline" asChild className="w-full" onClick={closeMobileMenu}>
                          <Link href="/login">Login</Link>
                       </Button>
-                      <Button variant="default" asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" onClick={closeMobileMenu}>
+                      <Button variant="default" asChild className="w-full" onClick={closeMobileMenu}>
                         <Link href="/signup">Sign Up</Link>
                       </Button>
                     </>
@@ -196,4 +195,3 @@ export function MainHeader() {
     </header>
   );
 }
-

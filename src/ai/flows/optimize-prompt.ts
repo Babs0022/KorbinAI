@@ -11,26 +11,13 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { fetchWebsiteContentTool } from '../tools/web-scraper';
-import { extractTextFromPdfTool } from '../tools/pdf-parser';
 
-// This is the public-facing input for the flow.
 const OptimizePromptInputSchema = z.object({
   goal: z.string().describe('The primary task or objective for the AI.'),
   answers: z.record(z.string()).optional().describe('A key-value map of survey questions to user answers, providing additional context.'),
   imageDataUri: z.string().optional().describe("An image provided by the user, as a data URI. Use this for visual context."),
-  sourceUrl: z.string().url().optional().describe("A website URL provided by the user. Use the fetchWebsiteContentTool to get its content for context."),
-  pdfDataUri: z.string().optional().describe("A PDF document provided by the user as a data URI. Use the extractTextFromPdfTool to get its content for context."),
 });
 export type OptimizePromptInput = z.infer<typeof OptimizePromptInputSchema>;
-
-// This is the internal input for the prompt, after context has been processed.
-const OptimizePromptWithContextInputSchema = z.object({
-    goal: z.string(),
-    answers: z.record(z.string()).optional(),
-    imageDataUri: z.string().optional(),
-    retrievedContext: z.string().optional().describe("Text content that has been retrieved from a URL or PDF."),
-});
 
 
 const OptimizePromptOutputSchema = z.object({
@@ -43,10 +30,9 @@ export async function optimizePrompt(input: OptimizePromptInput): Promise<Optimi
   return optimizePromptFlow(input);
 }
 
-// This prompt is now simpler and does not need the 'tools' parameter.
 const optimizePromptPrompt = ai.definePrompt({
   name: 'optimizePromptPrompt',
-  input: {schema: OptimizePromptWithContextInputSchema},
+  input: {schema: OptimizePromptInputSchema},
   output: {schema: OptimizePromptOutputSchema},
   system: `You are Briefly, an expert AI Prompt Engineer and a master of over 1000 digital skills. You have comprehensive knowledge of all features within the BrieflyAI platform.
 
@@ -54,9 +40,9 @@ Your primary task is to take a user's 'Goal', any 'Survey Answers', and any prov
 
 **Your Process:**
 
-1.  **Analyze Goal and Context:** Synthesize the user's goal with any provided context from the 'retrievedContext' or image analysis. This external context is the PRIMARY source of truth.
+1.  **Analyze Goal and Context:** Synthesize the user's goal with any provided context from the image analysis.
 
-2.  **Construct the Optimized Prompt:** Engineer a single, cohesive, and powerful prompt. This prompt should be clear, specific, actionable, and incorporate best practices like defining a role, setting constraints, and specifying the desired format. If context was retrieved, ensure the prompt explicitly instructs the AI on how to use it (e.g., "Based on the provided text from the website, do X", "Analyze the key themes from the uploaded document to do Y", "Write a product description inspired by the uploaded image."). The prompt should be concise (under 200 words) unless the goal implies a need for more length.
+2.  **Construct the Optimized Prompt:** Engineer a single, cohesive, and powerful prompt. This prompt should be clear, specific, actionable, and incorporate best practices like defining a role, setting constraints, and specifying the desired format. If context was retrieved, ensure the prompt explicitly instructs the AI on how to use it (e.g., "Write a product description inspired by the uploaded image."). The prompt should be concise (under 200 words) unless the goal implies a need for more length.
 
 3.  **Formulate the Explanation:** After creating the prompt, write a concise explanation. In this explanation, you MUST:
     *   Briefly state why the optimized prompt is more effective than the original goal (e.g., "This prompt adds specific constraints and a clear structure...").
@@ -75,13 +61,6 @@ Your primary task is to take a user's 'Goal', any 'Survey Answers', and any prov
 **Goal:**
 "{{goal}}"
 
-{{#if retrievedContext}}
-**Additional Context from a Document/Website:**
----
-{{{retrievedContext}}}
----
-{{/if}}
-
 {{#if answers}}
 **Additional Context from Survey Answers:**
 {{#each answers}}
@@ -97,7 +76,6 @@ The user has also provided an image.
 `,
 });
 
-// The flow now calls the tools *before* calling the prompt.
 const optimizePromptFlow = ai.defineFlow(
   {
     name: 'optimizePromptFlow',
@@ -105,24 +83,7 @@ const optimizePromptFlow = ai.defineFlow(
     outputSchema: OptimizePromptOutputSchema,
   },
   async input => {
-    let retrievedContext: string | undefined;
-
-    // Deterministically call the correct tool if the input is provided.
-    if (input.sourceUrl) {
-        retrievedContext = await fetchWebsiteContentTool({ url: input.sourceUrl });
-    } else if (input.pdfDataUri) {
-        retrievedContext = await extractTextFromPdfTool(input.pdfDataUri);
-    }
-    
-    // Prepare the input for the final prompt generation.
-    const promptInput: z.infer<typeof OptimizePromptWithContextInputSchema> = {
-        goal: input.goal,
-        answers: input.answers,
-        imageDataUri: input.imageDataUri,
-        retrievedContext: retrievedContext,
-    };
-    
-    const {output} = await optimizePromptPrompt(promptInput);
+    const {output} = await optimizePromptPrompt(input);
     return output!;
   }
 );
