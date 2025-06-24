@@ -6,6 +6,7 @@ import { KeyFeaturesHighlightSection } from '@/components/sections/KeyFeaturesHi
 import { InteractiveDemoSection } from '@/components/sections/DemoVideoSection';
 import { HowItWorksSection } from '@/components/sections/HowItWorksSection';
 import { TargetAudienceSection } from '@/components/sections/TargetAudienceSection';
+import { PricingSection } from '@/components/sections/PricingSection';
 import { SocialProofSection } from '@/components/sections/SocialProofSection';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { FinalCTASection } from '@/components/sections/FinalCTASection';
@@ -20,6 +21,7 @@ export default function HomePage() {
         <InteractiveDemoSection />
         <HowItWorksSection />
         <TargetAudienceSection />
+        <PricingSection />
         <SocialProofSection />
         <FAQSection />
         <FinalCTASection />
