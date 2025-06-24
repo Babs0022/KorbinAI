@@ -24,6 +24,7 @@ const SurveyQuestionSchema = z.object({
 });
 export type SurveyQuestion = z.infer<typeof SurveyQuestionSchema>;
 
+// This is the public-facing input for the flow.
 const GenerateSurveyQuestionsInputSchema = z.object({
   goal: z.string().describe("The user's initial goal or task for the AI prompt."),
   imageDataUri: z.string().optional().describe("An optional image provided by the user, as a data URI."),
@@ -31,6 +32,13 @@ const GenerateSurveyQuestionsInputSchema = z.object({
   pdfDataUri: z.string().optional().describe("An optional PDF document provided by the user as a data URI for context."),
 });
 export type GenerateSurveyQuestionsInput = z.infer<typeof GenerateSurveyQuestionsInputSchema>;
+
+// This is the internal input for the prompt, after context has been processed.
+const GenerateSurveyQuestionsPromptInputSchema = z.object({
+    goal: z.string(),
+    imageDataUri: z.string().optional(),
+    retrievedContext: z.string().optional().describe("Text content that has been retrieved from a URL or PDF."),
+});
 
 const GenerateSurveyQuestionsOutputSchema = z.object({
   questions: z.array(SurveyQuestionSchema).describe('An array of 3-4 dynamically generated survey questions tailored to the user\'s goal. Ensure options are provided if type is radio or checkbox.'),
@@ -41,32 +49,36 @@ export async function generateSurveyQuestions(input: GenerateSurveyQuestionsInpu
   return generateSurveyQuestionsFlow(input);
 }
 
-const prompt = ai.definePrompt({
+// This prompt is now simpler; it doesn't need to know about tools.
+const generateSurveyQuestionsPrompt = ai.definePrompt({
   name: 'generateSurveyQuestionsPrompt',
-  input: {schema: GenerateSurveyQuestionsInputSchema},
+  input: {schema: GenerateSurveyQuestionsPromptInputSchema},
   output: {schema: GenerateSurveyQuestionsOutputSchema},
-  tools: [fetchWebsiteContentTool, extractTextFromPdfTool],
-  system: `You are an expert prompt engineering assistant. Your task is to generate 3-4 insightful and concise survey questions to help a user refine their goal into a more effective AI prompt.
+  prompt: `You are an expert prompt engineering assistant. Your task is to generate 3-4 insightful and concise survey questions to help a user refine their goal into a more effective AI prompt.
 
-If a 'sourceUrl' is provided in the input, you MUST use the 'fetchWebsiteContentTool' to retrieve the website's text content.
-If a 'pdfDataUri' is provided in the input, you MUST use the 'extractTextFromPdfTool' with the provided data URI to retrieve the document's text content.
-If an 'imageDataUri' is provided, you must analyze the image.
+Base your survey questions on the user's goal and any additional context provided.
 
-Base your survey questions on the user's goal and any content retrieved from the tools or image.
+Goal: "{{goal}}"
+
+{{#if retrievedContext}}
+Additional Context from a document or website:
+---
+{{{retrievedContext}}}
+---
+{{/if}}
+
+{{#if imageDataUri}}
+Image Context:
+{{media url=imageDataUri}}
+{{/if}}
 
 For each generated question, you MUST provide: "id", "text", "type" (text, radio, or checkbox), and "options" (only for radio/checkbox).
 Focus questions on clarifying: desired output format, key constraints, target audience, style/tone, and the role of any provided context.
 Generate exactly 3 or 4 questions.
 Ensure radio/checkbox questions have an 'options' array.`,
-  prompt: `Please generate survey questions for the following goal: "{{goal}}"
-  
-  {{#if imageDataUri}}
-  Also consider the attached image.
-  {{media url=imageDataUri}}
-  {{/if}}
-  `,
 });
 
+// The flow now does the work of calling the tools *before* calling the prompt.
 const generateSurveyQuestionsFlow = ai.defineFlow(
   {
     name: 'generateSurveyQuestionsFlow',
@@ -74,7 +86,24 @@ const generateSurveyQuestionsFlow = ai.defineFlow(
     outputSchema: GenerateSurveyQuestionsOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
+    let retrievedContext: string | undefined;
+
+    // Deterministically call the correct tool if the input is provided.
+    if (input.sourceUrl) {
+      retrievedContext = await fetchWebsiteContentTool.run({ url: input.sourceUrl });
+    } else if (input.pdfDataUri) {
+      retrievedContext = await extractTextFromPdfTool.run(input.pdfDataUri);
+    }
+    
+    // Prepare the input for the final prompt generation.
+    const promptInput = {
+        goal: input.goal,
+        imageDataUri: input.imageDataUri,
+        retrievedContext: retrievedContext,
+    };
+
+    const {output} = await generateSurveyQuestionsPrompt(promptInput);
+    
     // Ensure questions are not null/undefined and provide a default empty array if needed
     return { questions: output?.questions || [] };
   }
