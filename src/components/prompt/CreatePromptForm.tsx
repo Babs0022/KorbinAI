@@ -9,12 +9,13 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
-import { generateSurveyQuestions, type SurveyQuestion } from '@/ai/flows/generate-survey-questions-flow';
+import { generateSurveyQuestions, type SurveyQuestion, type GenerateSurveyQuestionsInput } from '@/ai/flows/generate-survey-questions-flow';
 import { optimizePrompt, type OptimizePromptInput, type OptimizePromptOutput } from '@/ai/flows/optimize-prompt';
 import { generatePromptMetadata } from '@/ai/flows/generate-prompt-metadata-flow';
 import { useToast } from '@/hooks/use-toast';
-import { Wand2, Loader2, Send, Mic, Lightbulb } from 'lucide-react';
+import { Wand2, Loader2, Send, Mic, Lightbulb, Image as ImageIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import NextImage from 'next/image';
 
 // Extending the window object for SpeechRecognition
 declare global {
@@ -46,10 +47,13 @@ const formatTime = (seconds: number) => {
 export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [goal, setGoal] = useState('');
+  const [imageDataUri, setImageDataUri] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [surveyQuestions, setSurveyQuestions] = useState<SurveyQuestion[]>([]);
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string | string[]>>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
@@ -69,14 +73,12 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       setIsSpeechSupported(true);
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
-      recognition.interimResults = true; // Use interim to provide faster feedback if needed, but final is appended
+      recognition.interimResults = true;
       recognitionRef.current = recognition;
     } else {
       setIsSpeechSupported(false);
       console.warn("Speech Recognition not supported by this browser.");
     }
-
-    // Cleanup on unmount
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       if (visualizerAnimationRef.current) cancelAnimationFrame(visualizerAnimationRef.current);
@@ -87,15 +89,11 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
 
   const runVisualizer = useCallback(() => {
     if (!analyserRef.current) return;
-    // We use getByteFrequencyData for a more "bouncy" visualizer
     const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
     analyserRef.current.getByteFrequencyData(dataArray);
-    
-    // We only need a subset of the data for 32 bars
     const step = Math.floor(dataArray.length / 32);
     const vizSubset = new Uint8Array(32);
     for(let i=0; i<32; i++) {
-       // Average a slice of the data for each bar
        let slice = dataArray.slice(i * step, (i+1) * step);
        let avg = slice.reduce((a,b) => a+b, 0) / slice.length;
        vizSubset[i] = avg;
@@ -162,7 +160,6 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     
     streamRef.current?.getTracks().forEach(track => track.stop());
-    // Safely close the AudioContext
     if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
         audioContextRef.current.close();
     }
@@ -186,6 +183,29 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       startRecording();
     }
   };
+  
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        setImageDataUri(dataUrl);
+        setImagePreview(URL.createObjectURL(file));
+      };
+      reader.readAsDataURL(file);
+    } else {
+      toast({ title: "Invalid File", description: "Please select an image file.", variant: "destructive" });
+    }
+  };
+  
+  const removeImage = () => {
+      setImageDataUri(null);
+      setImagePreview(null);
+      if(fileInputRef.current) {
+          fileInputRef.current.value = "";
+      }
+  }
 
   const handleGetQuestions = async () => {
     if (!goal.trim()) {
@@ -194,7 +214,11 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
     }
     setIsProcessing(true);
     try {
-      const { questions } = await generateSurveyQuestions({ goal });
+      const input: GenerateSurveyQuestionsInput = { goal };
+      if (imageDataUri) {
+          input.imageDataUri = imageDataUri;
+      }
+      const { questions } = await generateSurveyQuestions(input);
       setSurveyQuestions(questions);
       setCurrentStep(2);
     } catch (error) {
@@ -217,6 +241,9 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
         goal,
         answers: {}, // No answers
       };
+      if (imageDataUri) {
+        optimizeInput.imageDataUri = imageDataUri;
+      }
       
       const optimizationResult = await optimizePrompt(optimizeInput);
       const metadataResult = await generatePromptMetadata({
@@ -277,6 +304,9 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
       goal,
       answers: formattedAnswers,
     };
+    if (imageDataUri) {
+        optimizeInput.imageDataUri = imageDataUri;
+    }
     
     try {
       const optimizationResult = await optimizePrompt(optimizeInput);
@@ -315,7 +345,7 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
             </GlassCardHeader>
             <GlassCardContent>
               <div className="space-y-4">
-                <Label htmlFor="goal">What task or objective do you want your AI prompt to achieve? Be as specific as possible.</Label>
+                <Label htmlFor="goal">What task or objective do you want your AI prompt to achieve? You can also upload an image for context.</Label>
                 <div className="relative">
                     <Textarea 
                         id="goal" 
@@ -354,6 +384,36 @@ export function CreatePromptForm({ onPromptOptimized }: CreatePromptFormProps) {
                         </Button>
                     </div>
                 </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="image-upload" className="text-sm font-medium">Image Context (Optional)</Label>
+                    {imagePreview ? (
+                        <div className="relative w-32 h-32 rounded-md overflow-hidden border">
+                            <NextImage src={imagePreview} alt="Image preview" layout="fill" objectFit="cover" />
+                            <Button variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 rounded-full" onClick={removeImage}>
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Remove image</span>
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center">
+                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                <ImageIcon className="mr-2 h-4 w-4" />
+                                Upload Image
+                            </Button>
+                            <Input 
+                                id="image-upload"
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleImageChange}
+                                accept="image/*"
+                                className="hidden"
+                            />
+                        </div>
+                    )}
+                </div>
+
+
                 <Button type="button" variant="secondary" onClick={handleGetQuestions} disabled={isProcessing || !goal.trim()}>
                   {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /></> : <><Send className="mr-2 h-4 w-4" /> Get Tailored Questions</>}
                 </Button>

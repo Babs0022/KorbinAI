@@ -15,6 +15,7 @@ import {z} from 'genkit';
 const OptimizePromptInputSchema = z.object({
   goal: z.string().describe('The primary task or objective for the AI.'),
   answers: z.record(z.string()).optional().describe('A key-value map of survey questions to user answers, providing additional context.'),
+  imageDataUri: z.string().optional().describe("An optional image provided by the user, as a data URI."),
 });
 export type OptimizePromptInput = z.infer<typeof OptimizePromptInputSchema>;
 
@@ -34,7 +35,7 @@ const prompt = ai.definePrompt({
   output: {schema: OptimizePromptOutputSchema},
   prompt: `You are Briefly, an expert AI Prompt Engineer and a master of over 1000 digital skills. You have comprehensive knowledge of all features within the BrieflyAI platform.
 
-Your primary task is to take a user's 'Goal' and any 'Survey Answers' and transform them into a highly optimized, professional-grade prompt. Then, you must provide a concise, expert explanation of the improvements made and suggest how the user can leverage BrieflyAI's features for even better results.
+Your primary task is to take a user's 'Goal', any 'Survey Answers', and any provided 'Image Context' and transform them into a highly optimized, professional-grade prompt. Then, you must provide a concise, expert explanation of the improvements made and suggest how the user can leverage BrieflyAI's features for even better results.
 
 **User's Goal:**
 "{{{goal}}}"
@@ -44,10 +45,16 @@ Your primary task is to take a user's 'Goal' and any 'Survey Answers' and transf
 - For the question "{{@key}}", the user provided: "{{this}}"
 {{/each}}
 
+{{#if imageDataUri}}
+**Image Context:**
+The user has provided the following image for context. Analyze its contents, style, and subject matter. Your optimized prompt must incorporate and reference this visual information as a key part of the user's request.
+{{media url=imageDataUri}}
+{{/if}}
+
 **Your Process:**
 
-1.  **Analyze the Goal and Context:** Deeply understand the user's intent, drawing upon your vast knowledge of digital skills (e.g., social media strategy, cold email sequencing, Python scripting, market analysis, etc.).
-2.  **Construct the Optimized Prompt:** Engineer a single, cohesive, and powerful prompt. This prompt should be clear, specific, actionable, and incorporate best practices like defining a role, setting constraints, and specifying the desired format. The prompt should be concise (under 200 words) unless the goal implies a need for more length.
+1.  **Analyze the Goal and Context:** Deeply understand the user's intent, drawing upon your vast knowledge of digital skills (e.g., social media strategy, cold email sequencing, Python scripting, market analysis, etc.). If an image is provided, it is a critical piece of context.
+2.  **Construct the Optimized Prompt:** Engineer a single, cohesive, and powerful prompt. This prompt should be clear, specific, actionable, and incorporate best practices like defining a role, setting constraints, and specifying the desired format. If an image was provided, ensure the prompt explicitly instructs the AI on how to use it (e.g., "describe this image," "write a story based on this image," "identify the objects in this photo"). The prompt should be concise (under 200 words) unless the goal implies a need for more length.
 3.  **Formulate the Explanation:** After creating the prompt, write a concise explanation. In this explanation, you MUST:
     *   Briefly state why the optimized prompt is more effective than the original goal (e.g., "This prompt adds specific constraints and a clear structure...").
     *   Connect your optimization to at least one specific BrieflyAI feature. This is crucial.
