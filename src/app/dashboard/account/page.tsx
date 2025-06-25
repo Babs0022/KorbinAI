@@ -72,7 +72,7 @@ const pricingTiers: Tier[] = [
       'Contextual Prompting & Analysis',
       'Prompt Academy Access',
     ],
-    cta: 'Subscriptions Paused (Beta)',
+    cta: 'Upgrade to Premium',
     emphasized: true,
     isBetaPaused: true,
   },
@@ -89,7 +89,7 @@ const pricingTiers: Tier[] = [
       'Unlimited Reverse Prompting',
       'Early access to new features',
     ],
-    cta: 'Subscriptions Paused (Beta)',
+    cta: 'Upgrade to Unlimited',
     emphasized: false,
     isBetaPaused: true,
   },
@@ -570,3 +570,5 @@ export default function AccountPage() {
     </div>
   );
 }
+
+    

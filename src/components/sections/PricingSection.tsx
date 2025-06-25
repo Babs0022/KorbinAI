@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import Container from '@/components/layout/Container';
-import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
+import { GlassCard } from '@/components/shared/GlassCard';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -32,7 +32,7 @@ const pricingTiers: Omit<Tier, 'isCurrent' | 'loadingPlanId'>[] = [
     {
       name: 'BrieflyAI Free',
       planId: 'free',
-      price: { monthly: '$0', annually: '$0' },
+      price: { monthly: 'NGN 0', annually: 'NGN 0' },
       description: 'For individuals starting their journey with AI prompting.',
       features: [
         '15 Prompts per month',
@@ -53,7 +53,7 @@ const pricingTiers: Omit<Tier, 'isCurrent' | 'loadingPlanId'>[] = [
     {
       name: 'BrieflyAI Premium',
       planId: 'premium',
-      price: { monthly: '$11', annually: '$118.80' },
+      price: { monthly: 'NGN 16,000', annually: 'NGN 172,800' },
       description: 'For power users & professionals who need advanced tools.',
       features: [
         '500 Prompts per month',
@@ -71,7 +71,7 @@ const pricingTiers: Omit<Tier, 'isCurrent' | 'loadingPlanId'>[] = [
     {
       name: 'BrieflyAI Unlimited',
       planId: 'unlimited',
-      price: { monthly: '$40', annually: '$432' },
+      price: { monthly: 'NGN 56,000', annually: 'NGN 604,800' },
       description: 'For teams & businesses that demand unlimited scale.',
       features: [
         'Unlimited Prompts & Vault Storage',
@@ -117,7 +117,7 @@ export function PricingSection() {
                 description: 'Please log in or sign up to subscribe.',
                 variant: 'destructive',
             });
-            router.push(`/login?redirect=/dashboard/account#pricing`);
+            router.push(`/login?redirect=/#pricing`);
             return;
         }
 
@@ -161,7 +161,7 @@ export function PricingSection() {
                 Choose the Plan That's Right For You
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-                Simple, transparent pricing. No hidden fees. Cancel anytime.
+                Simple, transparent pricing in Nigerian Naira (NGN). No hidden fees. Cancel anytime.
               </p>
             </div>
             
@@ -202,7 +202,7 @@ export function PricingSection() {
                         {billingCycle === 'monthly' ? tier.price.monthly : tier.price.annually}
                     </span>
                     <span className="ml-1 text-md font-semibold text-muted-foreground">
-                        {tier.price.monthly !== '$0' && (billingCycle === 'monthly' ? '/mo' : '/yr')}
+                        {tier.price.monthly !== 'NGN 0' && (billingCycle === 'monthly' ? '/mo' : '/yr')}
                     </span>
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground h-10">{tier.description}</p>
@@ -241,3 +241,5 @@ export function PricingSection() {
         </section>
     );
 }
+
+    
