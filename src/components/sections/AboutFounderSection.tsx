@@ -48,11 +48,6 @@ export function AboutFounderSection() {
                   </a>
                 </Button>
                 <Button variant="outline" size="sm" asChild>
-                  <a href="https://discord.gg/8muUf5Nzb4" target="_blank" rel="noopener noreferrer">
-                    <Users className="mr-2 h-4 w-4" /> Join Discord
-                  </a>
-                </Button>
-                <Button variant="outline" size="sm" asChild>
                   <a href="mailto:babseli933@gmail.com">
                     <Mail className="mr-2 h-4 w-4" /> Email Me
                   </a>

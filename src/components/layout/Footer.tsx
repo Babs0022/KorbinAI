@@ -29,7 +29,6 @@ export function Footer() {
             <ul className="mt-2 space-y-1">
               <li><a href="mailto:babseli933@gmail.com" className="text-sm text-muted-foreground hover:text-primary flex items-center"><Send size={16} className="mr-2" /> Email Support</a></li>
               <li><a href="https://twitter.com/babsbuilds" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary flex items-center"><XLogoIcon className="mr-2 h-4 w-4" /> @babsbuilds</a></li>
-              <li><a href="https://discord.gg/8muUf5Nzb4" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary flex items-center"><Users size={16} className="mr-2" /> Join Discord</a></li>
             </ul>
           </div>
         </div>

@@ -28,7 +28,6 @@ const navLinks = [
   { href: '/#solutions', label: 'Solutions' },
   { href: '/#pricing', label: 'Pricing' },
   { href: '/#faq', label: 'FAQ' },
-  { href: 'https://discord.gg/8muUf5Nzb4', label: 'Join Discord', external: true },
 ];
 
 export function MainHeader() {
