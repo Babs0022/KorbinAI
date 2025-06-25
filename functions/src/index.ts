@@ -11,33 +11,13 @@ import cors from "cors";
 // Initialize CORS middleware to be used in the webhook
 const corsHandler = cors({ origin: true });
 
-// --- Environment Variable Validation ---
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
-const PAYSTACK_WEBHOOK_SECRET = process.env.PAYSTACK_WEBHOOK_SECRET;
-const APP_CALLBACK_URL = process.env.APP_CALLBACK_URL;
-
-if (!PAYSTACK_SECRET_KEY) {
-  logger.error("CRITICAL: PAYSTACK_SECRET_KEY env var is not set. Payment functions will fail.");
-}
-if (!PAYSTACK_WEBHOOK_SECRET) {
-  logger.error("CRITICAL: PAYSTACK_WEBHOOK_SECRET env var is not set. Webhook verification will fail.");
-}
-if (!APP_CALLBACK_URL) {
-  logger.error("CRITICAL: APP_CALLBACK_URL env var is not set. Subscription callbacks will fail.");
-}
-
-// --- Firebase and Paystack SDK Initialization ---
+// --- Firebase Admin SDK Initialization ---
 try {
   admin.initializeApp();
 } catch (e) {
   logger.warn("Firebase Admin SDK may have already been initialized:", e);
 }
 const db = admin.firestore();
-
-if (!PAYSTACK_SECRET_KEY) {
-    throw new Error("Cannot initialize Paystack SDK: PAYSTACK_SECRET_KEY is not defined in environment variables.");
-}
-const paystack = new Paystack(PAYSTACK_SECRET_KEY);
 
 
 // --- Plan Details ---
@@ -81,11 +61,17 @@ interface CreateSubscriptionData {
 export const createPaystackSubscription = onCall(
   { region: "us-central1", enforceAppCheck: false },
   async (request) => {
+    const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
+    const APP_CALLBACK_URL = process.env.APP_CALLBACK_URL;
+    
     if (!PAYSTACK_SECRET_KEY || !APP_CALLBACK_URL) {
         logger.error("Server Configuration Error: Paystack Secret Key or App Callback URL is missing.");
         throw new HttpsError("internal", "Payment system is not configured correctly. Please contact support.");
     }
     
+    // Initialize Paystack SDK inside the function for robustness
+    const paystack = new Paystack(PAYSTACK_SECRET_KEY);
+
     const { auth, data } = request;
     if (!auth) {
       throw new HttpsError("unauthenticated", "You must be logged in to subscribe.");
@@ -166,7 +152,7 @@ interface PaystackChargeSuccessData {
     paid_at?: string | number;
 }
 
-async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): Promise<void> {
+async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData, paystackInstance: Paystack): Promise<void> {
   const { reference, customer, amount, currency, metadata, plan_object, paid_at } = eventData;
   logger.info(`Processing 'charge.success' for reference: ${reference}`);
 
@@ -179,7 +165,7 @@ async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): 
   }
 
   try {
-    const verification = await paystack.transaction.verify({ reference });
+    const verification = await paystackInstance.transaction.verify({ reference });
     if (!verification.status || verification.data.status !== "success") {
       logger.error(`Transaction re-verification failed for reference ${reference}. Status: ${verification.data?.status}`, { verification });
       return;
@@ -226,11 +212,17 @@ async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): 
 
 export const paystackWebhookHandler = onRequest({ region: "us-central1" }, (req, res) => {
     corsHandler(req, res, async () => {
-        if (!PAYSTACK_WEBHOOK_SECRET) {
-            logger.error("Webhook handler called, but PAYSTACK_WEBHOOK_SECRET is not configured.");
+        const PAYSTACK_WEBHOOK_SECRET = process.env.PAYSTACK_WEBHOOK_SECRET;
+        const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
+
+        if (!PAYSTACK_WEBHOOK_SECRET || !PAYSTACK_SECRET_KEY) {
+            logger.error("Webhook handler called, but Paystack secrets are not configured.");
             res.status(500).send("Webhook secret is not configured on the server.");
             return;
         }
+
+        // Initialize Paystack SDK inside the webhook handler as well
+        const paystack = new Paystack(PAYSTACK_SECRET_KEY);
 
         const requestBodyString = req.rawBody?.toString();
         if (!requestBodyString) {
@@ -254,7 +246,7 @@ export const paystackWebhookHandler = onRequest({ region: "us-central1" }, (req,
         
         if (event.event === "charge.success") {
             res.status(200).send({ message: "Webhook acknowledged, processing in background." });
-            await processChargeSuccessEvent(event.data as PaystackChargeSuccessData);
+            await processChargeSuccessEvent(event.data as PaystackChargeSuccessData, paystack);
         } else {
             res.status(200).send({ message: "Event received and acknowledged (unhandled type)." });
         }
