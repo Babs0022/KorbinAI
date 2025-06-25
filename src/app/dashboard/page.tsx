@@ -7,7 +7,7 @@ import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import { PromptHistoryItem, type PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, TestTubes, Maximize, AlertTriangle, Tag, Star } from 'lucide-react';
+import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, TestTubes, Maximize, AlertTriangle, Tag, Star, Users } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import {
@@ -131,6 +131,13 @@ const features: Omit<FeatureInfo, 'isPremium' | 'isUnlimitedFeature'>[] = [
     description: "Compare prompt variations across different models to find the optimal combination.",
     href: "/dashboard/compatibility-checker",
     icon: TestTubes,
+    enabled: true,
+  },
+  {
+    title: "Collaboration",
+    description: "Share, manage, and collaborate on prompts with your team. (Coming Soon)",
+    href: "/dashboard/collaboration",
+    icon: Users,
     enabled: true,
   },
 ];
