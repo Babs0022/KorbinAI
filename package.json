@@ -58,6 +58,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@ducanh2912/next-pwa": "^10.2.7",
     "@types/cors": "^2.8.19",
     "@types/node": "^20",
     "@types/react": "^18",
