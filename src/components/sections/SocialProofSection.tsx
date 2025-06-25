@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -17,6 +18,13 @@ const FarcasterIcon = () => (
 
 
 const testimonials = [
+  {
+    name: 'HACHIRO',
+    handle: '@hachiro52',
+    platform: 'X',
+    icon: '8',
+    feedback: "I just checked out BrieflyAi, the interface is super clean and the flow makes prompt crafting very much easier.",
+  },
   {
     name: 'Sir Chocs',
     handle: '@waverchocs',
