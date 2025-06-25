@@ -11,40 +11,32 @@ import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { adaptPromptForModel, type AdaptPromptForModelInput, type AdaptPromptForModelOutput, type AIModelEnum } from '@/ai/flows/adapt-prompt-model-flow';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
-// Define the model options directly in the component, same as model-specific-prompts
-const modelOptions = [
-  // OpenAI
-  "gpt-4.5",
-  "gpt-4o",
-  "gpt-4",
-  "gpt-3.5-turbo",
-  // Google
-  "gemini-2.5-pro",
-  "gemini-2.5-flash",
-  "gemini-2.0-flash",
-  "gemini-1.5-pro",
-  "gemini-1.5-flash",
-  "gemini-1.0-pro",
-  // Anthropic
-  "claude-3-opus",
-  "claude-3-sonnet",
-  "claude-3-haiku",
-  // xAI
-  "grok-3",
-  // Open Source
-  "llama-3-70b",
-  "deepseek-r1",
-  // Image Models
-  "dall-e-3",
-  "stable-diffusion-3",
-  "stable-diffusion",
-  "midjourney",
+const modelGroups = [
+  {
+    groupName: 'Text Models (OpenAI)',
+    models: ["gpt-4.5", "gpt-4o", "gpt-4", "gpt-3.5-turbo"]
+  },
+  {
+    groupName: 'Text Models (Google)',
+    models: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"]
+  },
+  {
+    groupName: 'Text Models (Anthropic)',
+    models: ["claude-3-opus", "claude-3-sonnet", "claude-3-haiku"]
+  },
+  {
+    groupName: 'Text Models (Other)',
+    models: ["grok-3", "llama-3-70b", "deepseek-r1"]
+  },
+  {
+    groupName: 'Image Models',
+    models: ["dall-e-3", "stable-diffusion-3", "stable-diffusion", "midjourney"]
+  }
 ];
 
 export default function CompatibilityCheckerPage() {
@@ -151,19 +143,28 @@ export default function CompatibilityCheckerPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="targetModel" className="text-base font-semibold">Target AI Model</Label>
-                  <Select value={targetModel} onValueChange={setTargetModel}>
-                    <SelectTrigger id="targetModel" className="mt-1">
-                      <SelectValue placeholder="Select an AI model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {modelOptions.map(model => (
-                        <SelectItem key={model} value={model}>
-                          {model.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-base font-semibold">Target AI Model</Label>
+                  <div className="mt-2 space-y-4">
+                    {modelGroups.map((group) => (
+                      <div key={group.groupName}>
+                        <p className="mb-2 text-sm font-medium text-muted-foreground">{group.groupName}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {group.models.map((model) => (
+                            <Button
+                              key={model}
+                              type="button"
+                              variant={targetModel === model ? "default" : "outline"}
+                              size="sm"
+                              className="h-auto px-3 py-1.5 text-xs"
+                              onClick={() => setTargetModel(model)}
+                            >
+                              {model.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <Button type="submit" disabled={isLoading} className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90">
                   {isLoading ? (
