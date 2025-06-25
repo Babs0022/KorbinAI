@@ -39,6 +39,7 @@ export function LoginForm() {
             duration: 10000,
           });
           setIsLoading(false);
+          router.push(`/verify-email?email=${encodeURIComponent(user.email || '')}`);
           return; // Prevent further action
         }
 
@@ -68,12 +69,7 @@ export function LoginForm() {
         description: errorMessage,
         variant: "destructive",
       });
-    } finally {
-      // Only set isLoading to false if not already handled (e.g., for email verification failure)
-      // The check `if (user && !user.emailVerified)` will set isLoading to false itself.
-      if (isLoading) { // Check if still loading, otherwise it might have been set to false already
-          setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   };
 

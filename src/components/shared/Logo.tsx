@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -20,7 +21,7 @@ export function Logo({ className, onClick }: { className?: string, onClick?: () 
         height={30}
         priority 
       />
-      <span className="text-white">BrieflyAI</span>
+      <span className="text-foreground">BrieflyAI</span>
     </Link>
   );
 }

@@ -21,7 +21,7 @@ export function Footer() {
             <ul className="mt-2 space-y-1">
               <li><Link href="/#how-it-works" className="text-sm text-muted-foreground hover:text-primary">How It Works</Link></li>
               <li><Link href="/#pricing" className="text-sm text-muted-foreground hover:text-primary">Pricing</Link></li>
-              
+              <li><Link href="/#faq" className="text-sm text-muted-foreground hover:text-primary">FAQ</Link></li>
             </ul>
           </div>
           <div className="md:justify-self-end">
@@ -44,4 +44,3 @@ export function Footer() {
     </footer>
   );
 }
-

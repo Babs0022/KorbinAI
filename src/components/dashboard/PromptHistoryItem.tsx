@@ -1,20 +1,10 @@
 
-import React from 'react'; // Added React for React.memo
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, Edit, Download, Trash2, Tag } from 'lucide-react';
 import { GlassCard } from '../shared/GlassCard';
 import { Badge } from '../ui/badge';
-
-export interface PromptHistory {
-  id: string;
-  name: string; // Display name for the prompt
-  goal: string; // Original goal
-  optimizedPrompt: string;
-  timestamp: string; // ISO string or formatted date
-  tags?: string[];
-  qualityScore?: number; // Optional: For analytics
-  targetModel?: string;  // Optional: For analytics
-}
+import type { PromptHistory } from './PromptHistoryItem';
 
 interface PromptHistoryItemProps {
   prompt: PromptHistory;
@@ -24,7 +14,6 @@ interface PromptHistoryItemProps {
   onDelete: (promptId: string) => void;
 }
 
-// Wrapped component with React.memo
 export const PromptHistoryItem = React.memo(function PromptHistoryItem({ prompt, onView, onEdit, onExport, onDelete }: PromptHistoryItemProps) {
   const formattedDate = new Date(prompt.timestamp).toLocaleDateString('en-US', {
     year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'

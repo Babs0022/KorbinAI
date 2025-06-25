@@ -882,3 +882,15 @@ Dev App Server is now running.
 
 Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
  
+[info] i  firestore: Change detected, updating rules... 
+[debug] [2025-06-25T11:00:41.066Z] >>> [apiv2][query] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-app:securityRules [none]
+[debug] [2025-06-25T11:00:41.073Z] >>> [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-app:securityRules {"ignore_errors":true,"rules":{"files":[{"name":"security.rules","content":"\nrules_version = '2';\n\nservice cloud.firestore {\n  match /databases/{database}/documents {\n\n    // Users can only read/write their own profile data.\n    match /users/{userId} {\n      allow read, write: if request.auth != null && request.auth.uid == userId;\n    }\n\n    // Users can only manage their own subcollections (like promptHistory).\n    match /users/{userId}/{document=**} {\n      allow read, write: if request.auth != null && request.auth.uid == userId;\n    }\n\n    // User settings are private to the owner.\n    match /userSettings/{userId} {\n       allow read, write: if request.auth != null && request.auth.uid == userId;\n    }\n\n    // Announcements are read-only for authenticated users.\n    // Writing is locked down, should be done via Admin SDK.\n    match /appAnnouncements/{announcementId} {\n      allow read: if request.auth != null;\n      allow write: if false;\n    }\n    \n    // Transaction documents can only be read by the user who initiated them.\n    // Writes are handled by secure Cloud Functions.\n    match /transactions/{transactionId} {\n      allow read: if request.auth != null && resource.data.userId == request.auth.uid;\n      allow write: if false; // Only backend can write\n    }\n\n    // User subscription data is private and read-only for the client.\n    // Writes are handled by secure Cloud Functions.\n    match /userSubscriptions/{userId} {\n       allow read: if request.auth != null && request.auth.uid == userId;\n       allow write: if false; // Only backend can write\n    }\n  }\n}\n"}]}}
+[debug] [2025-06-25T11:00:41.525Z] Jun 25, 2025 11:00:41 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 25, 2025 11:00:41 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-25T11:00:42.976Z] Jun 25, 2025 11:00:42 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 25, 2025 11:00:42 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected HTTP/2 connection.\n"}}
+[debug] [2025-06-25T11:00:45.778Z] <<< [apiv2][status] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-app:securityRules 200
+[debug] [2025-06-25T11:00:45.780Z] <<< [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-app:securityRules {}
+[info] ✔  firestore: Rules updated. 

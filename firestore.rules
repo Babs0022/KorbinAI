@@ -4,42 +4,40 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users Collection: Users can only read/write their own document and subcollections.
+    // Users can only read/write their own profile data.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Users can only manage their own subcollections (like promptHistory).
     match /users/{userId}/{document=**} {
-      allow read, write, delete: if request.auth.uid == userId;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // User settings are private to the owner.
+    match /userSettings/{userId} {
+       allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Announcements are read-only for authenticated users.
+    // Writing is locked down, should be done via Admin SDK.
+    match /appAnnouncements/{announcementId} {
+      allow read: if request.auth != null;
+      allow write: if false;
     }
     
-    // Explicitly handle the top-level user document as well for clarity and security.
-    match /users/{userId} {
-      allow read, update, delete: if request.auth.uid == userId;
-      // Allow create only if the user is creating their own document.
-      allow create: if request.auth.uid == userId && request.resource.data.uid == userId;
-    }
-
-    // User Settings Collection: Users can read/write their own settings document.
-    match /userSettings/{userId} {
-       allow read, write: if request.auth.uid == userId;
-    }
-
-    // User Subscriptions: Users can only read their own subscription status.
-    // Writes are handled by secure Cloud Functions.
-    match /userSubscriptions/{userId} {
-      allow read: if request.auth.uid == userId;
-      allow write: if false; // Disallow client-side writes
-    }
-
-    // Transactions: Users can only read their own transactions.
+    // Transaction documents can only be read by the user who initiated them.
     // Writes are handled by secure Cloud Functions.
     match /transactions/{transactionId} {
-      allow read: if resource.data.userId == request.auth.uid;
-      allow write: if false; // Disallow client-side writes
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if false; // Only backend can write
     }
-    
-    // App Announcements: Any authenticated user can read announcements.
-    // Only admins can write (enforced by 'allow write: if false;' from client).
-    match /appAnnouncements/{announcementId} {
-      allow read: if request.auth.uid != null;
-      allow write: if false; // Disallow client-side writes
+
+    // User subscription data is private and read-only for the client.
+    // Writes are handled by secure Cloud Functions.
+    match /userSubscriptions/{userId} {
+       allow read: if request.auth != null && request.auth.uid == userId;
+       allow write: if false; // Only backend can write
     }
   }
 }

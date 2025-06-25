@@ -10,6 +10,7 @@ import { PricingSection } from '@/components/sections/PricingSection';
 import { SocialProofSection } from '@/components/sections/SocialProofSection';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { FinalCTASection } from '@/components/sections/FinalCTASection';
+import { AboutFounderSection } from '@/components/sections/AboutFounderSection';
 
 export default function HomePage() {
   return (
@@ -22,6 +23,7 @@ export default function HomePage() {
         <HowItWorksSection />
         <TargetAudienceSection />
         <PricingSection />
+        <AboutFounderSection />
         <SocialProofSection />
         <FAQSection />
         <FinalCTASection />

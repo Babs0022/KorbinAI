@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Toaster } from "@/components/ui/toaster";
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { AppFonts } from '@/components/shared/AppFonts';
 
 export const metadata: Metadata = {
   title: 'BrieflyAI - Optimize Your Prompts',
@@ -24,11 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-        {/* The <link rel="icon"...> is now handled by the metadata object above */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+        <AppFonts />
       </head>
       <body className="font-body" suppressHydrationWarning={true}>
         <AuthProvider>

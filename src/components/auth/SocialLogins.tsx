@@ -35,7 +35,6 @@ export function SocialLogins({ type }: { type: "login" | "signup" }) {
                 displayName: user.displayName || user.email?.split('@')[0] || "New User",
                 photoURL: user.photoURL || null,
                 createdAt: Timestamp.now(),
-                // No referral fields as referral system is removed
              }, { merge: true });
           }
           toast({
