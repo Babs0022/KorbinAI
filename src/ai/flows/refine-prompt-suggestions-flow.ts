@@ -68,4 +68,3 @@ const refinePromptSuggestionsFlow = ai.defineFlow(
     return { suggestions: output?.suggestions || [] };
   }
 );
-
