@@ -19,53 +19,11 @@ const FarcasterIcon = () => (
 const testimonials = [
   {
     name: 'Sir Chocs',
-    handle: '@waverchoc',
+    handle: '@waverchocs',
     platform: 'X',
     icon: '7',
     feedback: "This is really cool, I just created an account and it works fine. Tried generateing a prompt too, and it's cool",
   },
-  {
-    name: 'Sarah L.',
-    handle: '@sarahLovesAI',
-    platform: 'X',
-    icon: '1',
-    feedback: "BrieflyAI is a game-changer. My prompts are clearer, and the results I get from my AI tools are leagues better. The Refinement Hub is a lifesaver!",
-  },
-  {
-    name: 'David Chen',
-    handle: 'david.chen',
-    platform: 'Discord',
-    icon: '15',
-    feedback: "As a marketer, speed and quality are everything. BrieflyAI helps me generate entire campaign ideas in minutes. The Model-Specific adapter is genius.",
-  },
-  {
-    name: 'Alex Rivera',
-    handle: '@alex_creates',
-    platform: 'Farcaster',
-    icon: '25',
-    feedback: "The contextual prompting feature is incredibly powerful. I fed it a client brief, and it generated a perfect starting point for a full proposal.",
-  },
-  {
-    name: 'Maria Garcia',
-    handle: 'Maria G',
-    platform: 'X',
-    icon: '42',
-    feedback: "Finally, a prompt tool that thinks like a professional. The ability to A/B test prompts across different models has saved me hours of guesswork.",
-  },
-  {
-    name: 'James Park',
-    handle: 'jp_dev',
-    platform: 'Discord',
-    icon: '81',
-    feedback: "The reverse prompting tool is surprisingly useful for deconstructing and learning from high-quality AI outputs I find online. Highly recommend.",
-  },
-  {
-      name: 'Emily Wong',
-      handle: '@em_wong',
-      platform: 'Farcaster',
-      icon: '56',
-      feedback: "I love the clean UI and the focus on utility. BrieflyAI doesn't just give you a prompt; it teaches you how to be a better prompter. The analytics are a nice touch too!",
-  }
 ];
 
 const TestimonialCard = ({ testimonial }: { testimonial: typeof testimonials[0] }) => {
@@ -103,7 +61,7 @@ const TestimonialCard = ({ testimonial }: { testimonial: typeof testimonials[0] 
 };
 
 export function SocialProofSection() {
-  const extendedTestimonials = [...testimonials, ...testimonials];
+  const extendedTestimonials = [...testimonials, ...testimonials, ...testimonials, ...testimonials];
 
   return (
     <section id="social-proof" className="py-16 md:py-24 bg-gradient-to-b from-background via-indigo-50/5 to-background">
