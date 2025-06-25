@@ -41,7 +41,6 @@ const paystack = new Paystack(PAYSTACK_SECRET_KEY);
 
 
 // --- Plan Details ---
-// IMPORTANT: You must create annual plans in your Paystack dashboard and replace the placeholder plan codes below.
 const planDetails: Record<string, {
   name: string;
   monthly: { amount: number; plan_code: string; };
@@ -55,7 +54,7 @@ const planDetails: Record<string, {
     },
     annually: {
       amount: 172800 * 100, // NGN 172,800 in Kobo (10% discount)
-      plan_code: "PLN_REPLACE_WITH_ANNUAL_PREMIUM_CODE", // TODO: Replace with your actual annual plan code from Paystack
+      plan_code: "PLN_ip0rfr3kbnjd0oh",
     },
   },
   unlimited: {
@@ -66,7 +65,7 @@ const planDetails: Record<string, {
     },
     annually: {
         amount: 604800 * 100, // NGN 604,800 in Kobo (10% discount)
-        plan_code: "PLN_REPLACE_WITH_ANNUAL_UNLIMITED_CODE", // TODO: Replace with your actual annual plan code from Paystack
+        plan_code: "PLN_a90hrxjuodtw4ia",
     }
   },
 };
@@ -96,13 +95,28 @@ export const createPaystackSubscription = onCall(
     const userId = auth.uid;
     const authenticatedUserEmail = auth.token?.email;
     
+    // --- Robust Input Validation ---
     const emailToUse = clientProvidedEmail || authenticatedUserEmail;
-    const plan = planDetails[planId];
-    const selectedPlan = plan?.[billingCycle];
+    if (!emailToUse) {
+      logger.error("Validation Error: Missing email.", { userId, planId, billingCycle });
+      throw new HttpsError("invalid-argument", "A valid email is required.");
+    }
 
-    if (!emailToUse || !plan || !selectedPlan || !selectedPlan.plan_code || selectedPlan.plan_code.includes('REPLACE_WITH')) {
-      logger.error("Invalid subscription data provided or placeholder plan code used:", { userId, planId, billingCycle, emailExists: !!emailToUse });
-      throw new HttpsError("invalid-argument", "A valid email, plan ID, and billing cycle are required, and plan codes must be configured.");
+    const plan = planDetails[planId];
+    if (!plan) {
+      logger.error("Validation Error: Invalid planId.", { userId, planId });
+      throw new HttpsError("invalid-argument", "A valid plan ID is required.");
+    }
+
+    const selectedPlan = plan?.[billingCycle];
+    if (!selectedPlan) {
+      logger.error("Validation Error: Invalid or missing billingCycle.", { userId, planId, billingCycle });
+      throw new HttpsError("invalid-argument", "A valid billing cycle ('monthly' or 'annually') is required.");
+    }
+    
+    if (selectedPlan.plan_code.includes('REPLACE_WITH')) {
+      logger.error("Configuration Error: Placeholder plan code used.", { userId, planId, billingCycle, planCode: selectedPlan.plan_code });
+      throw new HttpsError("invalid-argument", "The selected plan is not yet configured on the server.");
     }
     
     const reference = `briefly-${userId}-${planId}-${billingCycle}-${Date.now()}`;

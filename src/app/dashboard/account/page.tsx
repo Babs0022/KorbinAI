@@ -9,6 +9,7 @@ import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCard
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon, ArrowLeft, CheckCircle2, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,7 +27,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger, // Added AlertDialogTrigger here
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
@@ -49,8 +50,7 @@ const defaultPlaceholderUrl = "https://placehold.co/40x40.png";
 interface Tier {
   name: string;
   planId: string;
-  price: string;
-  frequency: string;
+  price: { monthly: string; annually: string };
   description: string;
   features: string[];
   cta: string;
@@ -62,8 +62,7 @@ const pricingTiers: Tier[] = [
   {
     name: 'Premium',
     planId: 'premium',
-    price: 'NGN 16,000',
-    frequency: '/mo',
+    price: { monthly: 'NGN 16,000', annually: 'NGN 172,800' },
     description: 'Supercharge your AI interactions.',
     features: [
       '50 Prompts per month',
@@ -79,8 +78,7 @@ const pricingTiers: Tier[] = [
   {
     name: 'Unlimited',
     planId: 'unlimited',
-    price: 'NGN 56,000',
-    frequency: '/mo',
+    price: { monthly: 'NGN 56,000', annually: 'NGN 604,800' },
     description: 'For power users who need it all.',
     features: [
       'Unlimited Prompts',
@@ -117,6 +115,7 @@ export default function AccountPage() {
 
   const [isChangePlanModalOpen, setIsChangePlanModalOpen] = useState(false);
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
+  const [modalBillingCycle, setModalBillingCycle] = useState<'monthly' | 'annually'>('monthly');
 
   useEffect(() => {
     if (!loading && !currentUser) {
@@ -250,7 +249,7 @@ export default function AccountPage() {
     }
   };
 
-  const handleSubscription = async (tierPlanId: string) => {
+  const handleSubscription = async (tierPlanId: string, cycle: 'monthly' | 'annually') => {
     const selectedTier = pricingTiers.find(t => t.planId === tierPlanId);
     if (selectedTier?.isBetaPaused) {
       toast({
@@ -279,6 +278,7 @@ export default function AccountPage() {
       const result: any = await createSubscriptionFunction({
         email: currentUser.email,
         planId: tierPlanId,
+        billingCycle: cycle,
       });
 
       if (result.data && result.data.authorization_url) {
@@ -441,6 +441,20 @@ export default function AccountPage() {
                             Select a plan that best suits your prompting needs. All prices in Nigerian Naira (NGN).
                           </DialogDescription>
                         </DialogHeader>
+                        <div className="flex justify-center items-center space-x-4 py-4 border-b">
+                            <Label htmlFor="billing-cycle-modal" className={cn("text-muted-foreground", modalBillingCycle === 'monthly' && 'text-foreground font-medium')}>
+                                Monthly
+                            </Label>
+                            <Switch
+                                id="billing-cycle-modal"
+                                checked={modalBillingCycle === 'annually'}
+                                onCheckedChange={(checked) => setModalBillingCycle(checked ? 'annually' : 'monthly')}
+                                aria-label="Toggle between monthly and annual billing"
+                            />
+                            <Label htmlFor="billing-cycle-modal" className={cn("text-muted-foreground", modalBillingCycle === 'annually' && 'text-foreground font-medium')}>
+                                Annually <span className="text-accent font-semibold">(Save 10%!)</span>
+                            </Label>
+                        </div>
                         <div className="py-4 grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto">
                           {pricingTiers.map((tier) => (
                             <div
@@ -459,9 +473,13 @@ export default function AccountPage() {
                                 </div>
                               )}
                               <h3 className="text-xl font-semibold font-headline text-foreground">{tier.name}</h3>
-                              <p className="mt-1">
-                                <span className="text-3xl font-bold text-foreground">{tier.price}</span>
-                                <span className="text-sm text-muted-foreground">{tier.frequency}</span>
+                              <p className="mt-1 flex items-baseline">
+                                <span className="text-3xl font-bold text-foreground">
+                                  {modalBillingCycle === 'monthly' ? tier.price.monthly : tier.price.annually}
+                                </span>
+                                <span className="ml-1 text-sm text-muted-foreground">
+                                  {modalBillingCycle === 'monthly' ? '/mo' : '/yr'}
+                                </span>
                               </p>
                               <p className="mt-2 text-sm text-muted-foreground h-10">{tier.description}</p>
 
@@ -475,7 +493,7 @@ export default function AccountPage() {
                               </ul>
                               <Button
                                 size="lg"
-                                onClick={() => handleSubscription(tier.planId)}
+                                onClick={() => handleSubscription(tier.planId, modalBillingCycle)}
                                 disabled={loadingPlanId === tier.planId || tier.isBetaPaused}
                                 className={cn(
                                   "mt-6 w-full",
