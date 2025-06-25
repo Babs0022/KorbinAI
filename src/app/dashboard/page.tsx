@@ -7,7 +7,7 @@ import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import { PromptHistoryItem, type PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, CheckCheck, Maximize, AlertTriangle, Tag, Star } from 'lucide-react';
+import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, TestTubes, Maximize, AlertTriangle, Tag, Star } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import {
@@ -127,10 +127,10 @@ const features: Omit<FeatureInfo, 'isPremium' | 'isUnlimitedFeature'>[] = [
     enabled: true,
   },
   {
-    title: "AI Model Compatibility Checker",
-    description: "Verify and adjust your prompt for optimal performance with specific AI models.",
+    title: "A/B Prompt Testing",
+    description: "Compare prompt variations across different models to find the optimal combination.",
     href: "/dashboard/compatibility-checker",
-    icon: CheckCheck,
+    icon: TestTubes,
     enabled: true,
   },
 ];
