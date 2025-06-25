@@ -14,15 +14,20 @@ import {z} from 'genkit';
 
 // Define the Zod schema locally, but do not export it.
 const AIModelEnumSchema = z.enum([
+  "gpt-4o",
   "gpt-4",
   "gpt-3.5-turbo",
   "gemini-1.5-pro",
+  "gemini-1.5-flash",
   "gemini-1.0-pro",
   "claude-3-opus",
   "claude-3-sonnet",
+  "claude-3-haiku",
+  "llama-3-70b",
   "dall-e-3",
-  "midjourney",
-  "stable-diffusion"
+  "stable-diffusion-3",
+  "stable-diffusion",
+  "midjourney"
 ]).describe("The target AI model for which the prompt should be adapted.");
 
 // Export the TypeScript type derived from the schema.
@@ -59,16 +64,23 @@ Original Prompt:
 Target AI Model: "{{targetModel}}"
 
 Consider these model-specific nuances:
-- **GPT-4 / GPT-3.5-Turbo / Gemini (Text Models):**
+- **GPT-4o / GPT-4 / GPT-3.5-Turbo / Gemini (Text Models):**
+  - GPT-4o is a new flagship model, highly capable in text, vision, and audio. It's faster and more cost-effective than GPT-4 Turbo. Prompting principles are similar.
+  - Gemini 1.5 Flash is a lightweight, fast version of Gemini Pro. Ideal for high-volume or speed-sensitive tasks.
   - Clarity and Specificity: Ensure instructions are unambiguous.
   - Context: Provide sufficient background if needed.
   - Persona: Define a role for the AI if it helps (e.g., "Act as an expert marketer...").
   - Format: Specify the desired output format (e.g., list, paragraph, JSON).
   - Constraints: Mention length, topics to avoid, style (e.g., formal, casual).
   - For complex tasks, break them down into steps ("Think step-by-step").
-- **Claude Models (Opus, Sonnet):**
+- **Claude Models (Opus, Sonnet, Haiku):**
+  - The Claude 3 family varies in speed and power (Opus > Sonnet > Haiku). Haiku is best for near-instant responsiveness.
   - Follows general text model guidance.
   - Excels when instructions or examples are wrapped in XML tags, e.g., <example>...</example> or <document>...</document>.
+- **Llama 3 Models (e.g., llama-3-70b):**
+  - Highly capable open models that are excellent at following complex instructions and have a very low refusal rate.
+  - Respond well to detailed system prompts.
+  - Benefit from clearly defined roles and structured output formats.
 - **DALL-E 3 (Image Model):**
   - Descriptive Language: Use vivid adjectives and nouns in full sentences.
   - Scene Details: Include objects, characters, setting, atmosphere.
@@ -82,7 +94,8 @@ Consider these model-specific nuances:
   - Influences: Mention specific artists or art styles.
   - Parameters: Use Midjourney parameters like --ar 16:9 (aspect ratio), --v 6.0 (version), --style raw.
   - Subject Emphasis: Use :: for weighting, e.g., "cat::2 dog::1".
-- **Stable Diffusion (Image Model):**
+- **Stable Diffusion (SD3, etc.):**
+  - Stable Diffusion 3 has significantly improved prompt following and text rendering capabilities compared to older versions.
   - Detailed Descriptions: Can be a mix of natural language and keywords.
   - Negative Prompts: Often benefits from specifying what *not* to include (e.g., \`(worst quality, low quality:1.4)\`).
   - Artist Names & Styles: Effective for guiding the output.
@@ -92,8 +105,8 @@ If the Original Prompt seems fundamentally unsuited for the Target AI Model's pr
 
 Return the adapted prompt and 2-4 unique, actionable tips.
 Determine the 'modelType' based on the 'targetModel':
-- gpt-4, gpt-3.5-turbo, gemini-1.5-pro, gemini-1.0-pro, claude-3-opus, claude-3-sonnet are 'text' models.
-- dall-e-3, midjourney, stable-diffusion are 'image' models.
+- gpt-4o, gpt-4, gpt-3.5-turbo, gemini-1.5-pro, gemini-1.5-flash, gemini-1.0-pro, claude-3-opus, claude-3-sonnet, claude-3-haiku, llama-3-70b are 'text' models.
+- dall-e-3, midjourney, stable-diffusion-3, stable-diffusion are 'image' models.
 - If unsure, use 'unknown'.
 `,
 });

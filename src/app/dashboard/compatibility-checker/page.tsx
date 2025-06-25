@@ -19,15 +19,20 @@ import { useRouter } from 'next/navigation';
 
 // Define the model options directly in the component, same as model-specific-prompts
 const modelOptions = [
+  "gpt-4o",
   "gpt-4",
   "gpt-3.5-turbo",
   "gemini-1.5-pro",
+  "gemini-1.5-flash",
   "gemini-1.0-pro",
   "claude-3-opus",
   "claude-3-sonnet",
+  "claude-3-haiku",
+  "llama-3-70b",
   "dall-e-3",
+  "stable-diffusion-3",
+  "stable-diffusion",
   "midjourney",
-  "stable-diffusion"
 ];
 
 export default function CompatibilityCheckerPage() {
@@ -142,7 +147,7 @@ export default function CompatibilityCheckerPage() {
                     <SelectContent>
                       {modelOptions.map(model => (
                         <SelectItem key={model} value={model}>
-                          {model.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          {model.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -164,7 +169,7 @@ export default function CompatibilityCheckerPage() {
               <GlassCardHeader>
                 <GlassCardTitle className="font-headline text-xl">Compatibility Check Results</GlassCardTitle>
                 <GlassCardDescription>
-                  For target model: <span className="font-semibold text-primary">{targetModel.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                  For target model: <span className="font-semibold text-primary">{targetModel.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
                   {' '}({result.modelType} model)
                 </GlassCardDescription>
               </GlassCardHeader>
