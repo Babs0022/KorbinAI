@@ -48,7 +48,7 @@ interface Announcement {
   timestamp: string;
 }
 
-const features: Omit<FeatureInfo, 'isPremium' | 'isUnlimitedFeature'>[] = [ 
+const features: FeatureInfo[] = [ 
   {
     title: "Prompt Generator",
     description: "Input goals, answer surveys, and get optimized AI prompts.",
@@ -442,7 +442,7 @@ export default function DashboardPage() {
             <h2 className="font-headline text-xl font-semibold text-foreground mb-6">Explore Features</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {features.map((feature) => (
-                <FeatureCard key={feature.title} feature={feature as FeatureInfo} />
+                <FeatureCard key={feature.title} feature={feature} />
               ))}
             </div>
           </section>
