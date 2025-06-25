@@ -74,7 +74,7 @@ const pricingTiers: Tier[] = [
     ],
     cta: 'Upgrade to Premium',
     emphasized: true,
-    isBetaPaused: true,
+    isBetaPaused: false,
   },
   {
     name: 'Unlimited',
@@ -91,7 +91,7 @@ const pricingTiers: Tier[] = [
     ],
     cta: 'Upgrade to Unlimited',
     emphasized: false,
-    isBetaPaused: true,
+    isBetaPaused: false,
   },
 ];
 
@@ -429,21 +429,16 @@ export default function AccountPage() {
                 </GlassCardHeader>
                 <GlassCardContent>
                   <p className="text-sm mb-3">Current Plan: <span className="font-semibold text-primary">BrieflyAI Free Plan</span></p>
-                  <div className="flex items-start space-x-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-300">
-                      <Info className="h-4 w-4 mt-0.5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
-                      <p>Paid subscriptions are temporarily paused during our Beta phase. Thank you for your understanding!</p>
-                  </div>
                   <div className="mt-4 flex gap-2">
                     <Dialog open={isChangePlanModalOpen} onOpenChange={setIsChangePlanModalOpen}>
                       <DialogTrigger asChild>
-                        <Button variant="outline" disabled={true}>Change Plan</Button>
+                        <Button variant="outline">Change Plan</Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
                         <DialogHeader>
                           <DialogTitle className="font-headline text-2xl">Choose Your BrieflyAI Plan</DialogTitle>
                           <DialogDescription>
                             Select a plan that best suits your prompting needs. All prices in Nigerian Naira (NGN).
-                            <br/> <span className="font-semibold text-yellow-600 dark:text-yellow-400">(Subscriptions are currently paused for Beta)</span>
                           </DialogDescription>
                         </DialogHeader>
                         <div className="py-4 grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto">
@@ -570,5 +565,3 @@ export default function AccountPage() {
     </div>
   );
 }
-
-    

@@ -66,7 +66,7 @@ const pricingTiers: Omit<Tier, 'isCurrent' | 'loadingPlanId'>[] = [
       ],
       cta: 'Upgrade to Premium',
       emphasized: true,
-      isBetaPaused: true,
+      isBetaPaused: false,
     },
     {
       name: 'BrieflyAI Unlimited',
@@ -83,7 +83,7 @@ const pricingTiers: Omit<Tier, 'isCurrent' | 'loadingPlanId'>[] = [
       ],
       cta: 'Contact Sales',
       emphasized: false,
-      isBetaPaused: true,
+      isBetaPaused: false,
     },
 ];
 
