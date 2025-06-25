@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -18,6 +17,13 @@ const FarcasterIcon = () => (
 
 
 const testimonials = [
+  {
+    name: 'Sir Chocs',
+    handle: '@waverchoc',
+    platform: 'X',
+    icon: '7',
+    feedback: "This is really cool, I just created an account and it works fine. Tried generateing a prompt too, and it's cool",
+  },
   {
     name: 'Sarah L.',
     handle: '@sarahLovesAI',
