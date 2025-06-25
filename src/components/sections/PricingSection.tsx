@@ -133,6 +133,7 @@ export function PricingSection() {
             const result: any = await createSubscriptionFunction({
                 email: currentUser.email,
                 planId: tier.planId,
+                billingCycle: billingCycle,
             });
 
             if (result.data && result.data.authorization_url) {
@@ -241,5 +242,3 @@ export function PricingSection() {
         </section>
     );
 }
-
-    

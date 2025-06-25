@@ -12,7 +12,6 @@ import cors from "cors";
 const corsHandler = cors({ origin: true });
 
 // --- Environment Variable Validation ---
-// Validate these at startup to fail early and prevent runtime errors.
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 const PAYSTACK_WEBHOOK_SECRET = process.env.PAYSTACK_WEBHOOK_SECRET;
 const APP_CALLBACK_URL = process.env.APP_CALLBACK_URL;
@@ -35,7 +34,6 @@ try {
 }
 const db = admin.firestore();
 
-// Initialize Paystack SDK once. The function will fail to deploy if the key is missing.
 if (!PAYSTACK_SECRET_KEY) {
     throw new Error("Cannot initialize Paystack SDK: PAYSTACK_SECRET_KEY is not defined in environment variables.");
 }
@@ -43,20 +41,33 @@ const paystack = new Paystack(PAYSTACK_SECRET_KEY);
 
 
 // --- Plan Details ---
+// IMPORTANT: You must create annual plans in your Paystack dashboard and replace the placeholder plan codes below.
 const planDetails: Record<string, {
-  amount: number,
-  name: string,
-  plan_code: string
+  name: string;
+  monthly: { amount: number; plan_code: string; };
+  annually: { amount: number; plan_code: string; };
 }> = {
   premium: {
-    amount: 16000 * 100, // NGN 16,000 in Kobo
     name: "BrieflyAI Premium",
-    plan_code: "PLN_c7d9pwc77ezn3a8",
+    monthly: {
+      amount: 16000 * 100, // NGN 16,000 in Kobo
+      plan_code: "PLN_c7d9pwc77ezn3a8",
+    },
+    annually: {
+      amount: 172800 * 100, // NGN 172,800 in Kobo (10% discount)
+      plan_code: "PLN_REPLACE_WITH_ANNUAL_PREMIUM_CODE", // TODO: Replace with your actual annual plan code from Paystack
+    },
   },
   unlimited: {
-    amount: 56000 * 100, // NGN 56,000 in Kobo
     name: "BrieflyAI Unlimited",
-    plan_code: "PLN_kb83pnnocije9fz",
+    monthly: {
+      amount: 56000 * 100, // NGN 56,000 in Kobo
+      plan_code: "PLN_kb83pnnocije9fz",
+    },
+    annually: {
+        amount: 604800 * 100, // NGN 604,800 in Kobo (10% discount)
+        plan_code: "PLN_REPLACE_WITH_ANNUAL_UNLIMITED_CODE", // TODO: Replace with your actual annual plan code from Paystack
+    }
   },
 };
 
@@ -65,6 +76,7 @@ const planDetails: Record<string, {
 interface CreateSubscriptionData {
   email?: string;
   planId: string;
+  billingCycle: 'monthly' | 'annually';
 }
 
 export const createPaystackSubscription = onCall(
@@ -80,27 +92,28 @@ export const createPaystackSubscription = onCall(
       throw new HttpsError("unauthenticated", "You must be logged in to subscribe.");
     }
 
-    const { planId, email: clientProvidedEmail } = data as CreateSubscriptionData;
+    const { planId, email: clientProvidedEmail, billingCycle } = data as CreateSubscriptionData;
     const userId = auth.uid;
     const authenticatedUserEmail = auth.token?.email;
     
     const emailToUse = clientProvidedEmail || authenticatedUserEmail;
     const plan = planDetails[planId];
+    const selectedPlan = plan?.[billingCycle];
 
-    if (!emailToUse || !plan || !plan.plan_code) {
-      logger.error("Invalid subscription data provided:", { userId, planId, emailExists: !!emailToUse });
-      throw new HttpsError("invalid-argument", "A valid email and plan ID are required.");
+    if (!emailToUse || !plan || !selectedPlan || !selectedPlan.plan_code || selectedPlan.plan_code.includes('REPLACE_WITH')) {
+      logger.error("Invalid subscription data provided or placeholder plan code used:", { userId, planId, billingCycle, emailExists: !!emailToUse });
+      throw new HttpsError("invalid-argument", "A valid email, plan ID, and billing cycle are required, and plan codes must be configured.");
     }
     
-    const reference = `briefly-${userId}-${planId}-${Date.now()}`;
+    const reference = `briefly-${userId}-${planId}-${billingCycle}-${Date.now()}`;
     
     try {
       const transactionArgs = {
         email: emailToUse,
-        plan: plan.plan_code,
+        plan: selectedPlan.plan_code,
         reference: reference,
         callback_url: `${APP_CALLBACK_URL}?ref=${reference}&planId=${planId}&uid=${userId}`,
-        metadata: { userId, planId, service: "BrieflyAI Subscription" },
+        metadata: { userId, planId, billingCycle, service: "BrieflyAI Subscription" },
       };
 
       logger.info("Initializing Paystack transaction with args:", transactionArgs);
@@ -114,9 +127,10 @@ export const createPaystackSubscription = onCall(
       await db.collection("transactions").doc(reference).set({
         userId,
         planId,
+        billingCycle,
         email: emailToUse,
-        amount: plan.amount,
-        planCode: plan.plan_code,
+        amount: selectedPlan.amount,
+        planCode: selectedPlan.plan_code,
         status: "pending_paystack_redirect",
         paystackReference: response.data.reference,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -139,13 +153,17 @@ export const createPaystackSubscription = onCall(
 
 
 // --- Webhook Handler: paystackWebhookHandler ---
+interface PaystackPlanObject {
+    interval?: 'monthly' | 'annually' | string;
+    metadata?: { userId?: string; planId?: string; [key: string]: unknown; };
+}
 interface PaystackChargeSuccessData {
     reference: string;
     customer?: { email?: string };
     amount: number;
     currency: string;
     metadata?: { userId?: string; planId?: string; [key: string]: unknown; };
-    plan_object?: { metadata?: { userId?: string; planId?: string; [key: string]: unknown; }; };
+    plan_object?: PaystackPlanObject;
     paid_at?: string | number;
 }
 
@@ -153,7 +171,6 @@ async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): 
   const { reference, customer, amount, currency, metadata, plan_object, paid_at } = eventData;
   logger.info(`Processing 'charge.success' for reference: ${reference}`);
 
-  // Prioritize metadata source
   const effectiveMetadata = metadata || plan_object?.metadata || {};
   const { userId, planId } = effectiveMetadata;
 
@@ -172,7 +189,14 @@ async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): 
 
     const paidAtDate = new Date(paid_at || Date.now());
     const currentPeriodEndDate = new Date(paidAtDate.getTime());
-    currentPeriodEndDate.setDate(currentPeriodEndDate.getDate() + 30); // Add 30 days for subscription period
+    
+    // Set subscription end date based on plan interval from Paystack
+    if (plan_object?.interval === 'annually') {
+        currentPeriodEndDate.setFullYear(currentPeriodEndDate.getFullYear() + 1);
+    } else {
+        // Default to monthly for 'monthly' or any other interval string
+        currentPeriodEndDate.setDate(currentPeriodEndDate.getDate() + 30);
+    }
 
     const subscriptionData = {
       userId,
@@ -230,9 +254,7 @@ export const paystackWebhookHandler = onRequest({ region: "us-central1" }, (req,
         logger.info(`Webhook received: ${event.event}`, { reference: event.data?.reference || "N/A" });
         
         if (event.event === "charge.success") {
-            // Acknowledge immediately to prevent Paystack from retrying.
             res.status(200).send({ message: "Webhook acknowledged, processing in background." });
-            // Process the event asynchronously.
             await processChargeSuccessEvent(event.data as PaystackChargeSuccessData);
         } else {
             res.status(200).send({ message: "Event received and acknowledged (unhandled type)." });
