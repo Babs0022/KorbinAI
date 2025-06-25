@@ -18,6 +18,7 @@ const APP_CALLBACK_URL = process.env.APP_CALLBACK_URL;
 
 if (!PAYSTACK_SECRET_KEY) {
   logger.error("CRITICAL: PAYSTACK_SECRET_KEY env var is not set. Payment functions will fail.");
+  throw new Error("FATAL_ERROR: PAYSTACK_SECRET_KEY is not defined in environment variables. Function cannot start.");
 }
 if (!PAYSTACK_WEBHOOK_SECRET) {
   logger.error("CRITICAL: PAYSTACK_WEBHOOK_SECRET env var is not set. Webhook verification will fail.");
@@ -34,9 +35,8 @@ try {
 }
 const db = admin.firestore();
 
-if (!PAYSTACK_SECRET_KEY) {
-    throw new Error("Cannot initialize Paystack SDK: PAYSTACK_SECRET_KEY is not defined in environment variables.");
-}
+// Initialize Paystack SDK once at the global scope.
+// The check above ensures PAYSTACK_SECRET_KEY is present.
 const paystack = new Paystack(PAYSTACK_SECRET_KEY);
 
 
@@ -81,8 +81,8 @@ interface CreateSubscriptionData {
 export const createPaystackSubscription = onCall(
   { region: "us-central1", enforceAppCheck: false },
   async (request) => {
-    if (!PAYSTACK_SECRET_KEY || !APP_CALLBACK_URL) {
-        logger.error("Server Configuration Error: Paystack Secret Key or App Callback URL is missing.");
+    if (!APP_CALLBACK_URL) {
+        logger.error("Server Configuration Error: App Callback URL is missing.");
         throw new HttpsError("internal", "Payment system is not configured correctly. Please contact support.");
     }
     
@@ -126,7 +126,6 @@ export const createPaystackSubscription = onCall(
 
     const selectedPlan = plan[billingCycle];
     if (!selectedPlan) {
-      // This case should be caught by the billingCycle check above, but it's good for robustness.
       logger.error("Internal Error: Could not find selected plan details.", { userId, planId, billingCycle });
       throw new HttpsError("internal", "Could not process plan selection. Please contact support.");
     }
@@ -224,11 +223,9 @@ async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): 
     const paidAtDate = new Date(paid_at || Date.now());
     const currentPeriodEndDate = new Date(paidAtDate.getTime());
     
-    // Set subscription end date based on plan interval from Paystack
     if (plan_object?.interval === 'annually') {
         currentPeriodEndDate.setFullYear(currentPeriodEndDate.getFullYear() + 1);
     } else {
-        // Default to monthly for 'monthly' or any other interval string
         currentPeriodEndDate.setDate(currentPeriodEndDate.getDate() + 30);
     }
 
