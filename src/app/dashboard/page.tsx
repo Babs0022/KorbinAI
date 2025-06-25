@@ -36,7 +36,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp, limit } from 'firebase/firestore';
-import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
+import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCard';
 import Container from '@/components/layout/Container';
 import { Badge } from '@/components/ui/badge';
