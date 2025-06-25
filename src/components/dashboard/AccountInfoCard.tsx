@@ -5,14 +5,32 @@ import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { UserCircle, Edit3, Loader2, BadgeInfo } from 'lucide-react';
+import { UserCircle, Edit3, Loader2, BadgeInfo, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
+
+// Helper to format planId to a display name
+const formatPlanName = (planId: string) => {
+  if (!planId) return "Free Plan";
+  return `${planId.charAt(0).toUpperCase() + planId.slice(1)} Plan`;
+};
 
 export function AccountInfoCard() {
-  const { currentUser, loading, displayName, displayEmail, avatarUrl, userInitials } = useAuth();
+  const { 
+    currentUser, 
+    loading: authLoading, 
+    subscription, 
+    subscriptionLoading,
+    displayName, 
+    displayEmail, 
+    avatarUrl, 
+    userInitials 
+  } = useAuth();
 
-  if (loading) {
+  const isLoading = authLoading || subscriptionLoading;
+
+  if (isLoading) {
     return (
       <GlassCard className="w-full">
         <GlassCardContent className="flex justify-center items-center h-48">
@@ -37,6 +55,9 @@ export function AccountInfoCard() {
     );
   }
 
+  const planName = formatPlanName(subscription?.planId || 'free');
+  const isPaidPlan = subscription && subscription.planId !== 'free';
+
   return (
     <GlassCard className="w-full">
       <GlassCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -52,8 +73,9 @@ export function AccountInfoCard() {
           <div>
             <h3 className="text-2xl font-semibold font-headline">{displayName}</h3>
             <p className="text-sm text-muted-foreground">{displayEmail}</p>
-            <Badge variant="secondary" className="mt-2 flex items-center gap-1">
-             <BadgeInfo className="h-3 w-3"/> Basic Plan
+            <Badge variant={isPaidPlan ? 'default' : 'secondary'} className="mt-2 flex items-center gap-1">
+             {isPaidPlan ? <Star className="h-3 w-3"/> : <BadgeInfo className="h-3 w-3"/>}
+             {planName}
             </Badge>
           </div>
         </div>
