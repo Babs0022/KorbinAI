@@ -40,8 +40,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import NextImage from 'next/image';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 
 const predefinedIcons = Array.from({ length: 10 }, (_, i) => `https://avatar.iran.liara.run/public/${i + 1}`);
@@ -51,11 +49,11 @@ interface Tier {
   name: string;
   planId: string;
   price: { monthly: string; annually: string };
+  paymentLink: { monthly: string; annually: string };
   description: string;
   features: string[];
   cta: string;
   emphasized: boolean;
-  isBetaPaused?: boolean;
 }
 
 const pricingTiers: Tier[] = [
@@ -63,6 +61,10 @@ const pricingTiers: Tier[] = [
     name: 'Premium',
     planId: 'premium',
     price: { monthly: 'NGN 16,000', annually: 'NGN 172,800' },
+    paymentLink: {
+        monthly: 'https://paystack.com/pay/REPLACE_WITH_YOUR_PREMIUM_MONTHLY_LINK',
+        annually: 'https://paystack.com/pay/REPLACE_WITH_YOUR_PREMIUM_ANNUAL_LINK'
+    },
     description: 'Supercharge your AI interactions.',
     features: [
       '50 Prompts per month',
@@ -73,12 +75,15 @@ const pricingTiers: Tier[] = [
     ],
     cta: 'Upgrade to Premium',
     emphasized: true,
-    isBetaPaused: false,
   },
   {
     name: 'Unlimited',
     planId: 'unlimited',
     price: { monthly: 'NGN 56,000', annually: 'NGN 604,800' },
+    paymentLink: {
+        monthly: 'https://paystack.com/pay/REPLACE_WITH_YOUR_UNLIMITED_MONTHLY_LINK',
+        annually: 'https://paystack.com/pay/REPLACE_WITH_YOUR_UNLIMITED_ANNUAL_LINK'
+    },
     description: 'For power users who need it all.',
     features: [
       'Unlimited Prompts',
@@ -89,7 +94,6 @@ const pricingTiers: Tier[] = [
     ],
     cta: 'Upgrade to Unlimited',
     emphasized: false,
-    isBetaPaused: false,
   },
 ];
 
@@ -98,7 +102,6 @@ export default function AccountPage() {
   const { currentUser, loading } = authContext;
   const router = useRouter();
   const { toast } = useToast();
-  const functions = getFunctions(app, "us-central1");
 
   const [newDisplayName, setNewDisplayName] = useState('');
   const [selectedIconUrl, setSelectedIconUrl] = useState<string>(authContext.avatarUrl || defaultPlaceholderUrl);
@@ -114,7 +117,6 @@ export default function AccountPage() {
   const [reAuthPassword, setReAuthPassword] = useState('');
 
   const [isChangePlanModalOpen, setIsChangePlanModalOpen] = useState(false);
-  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
   const [modalBillingCycle, setModalBillingCycle] = useState<'monthly' | 'annually'>('monthly');
 
   useEffect(() => {
@@ -125,6 +127,14 @@ export default function AccountPage() {
       setSelectedIconUrl(authContext.avatarUrl || defaultPlaceholderUrl);
     }
   }, [currentUser, loading, router, authContext.displayName, authContext.avatarUrl]);
+  
+  const getPaymentLink = (tier: Tier) => {
+    let link = modalBillingCycle === 'monthly' ? tier.paymentLink.monthly : tier.paymentLink.annually;
+    if (currentUser?.email) {
+      link += link.includes('?') ? `&email=${encodeURIComponent(currentUser.email)}` : `?email=${encodeURIComponent(currentUser.email)}`;
+    }
+    return link;
+  };
 
   const handleSaveProfile = async (e: FormEvent) => {
     e.preventDefault();
@@ -248,56 +258,6 @@ export default function AccountPage() {
       setReAuthPassword('');
     }
   };
-
-  const handleSubscription = async (tierPlanId: string, cycle: 'monthly' | 'annually') => {
-    const selectedTier = pricingTiers.find(t => t.planId === tierPlanId);
-    if (selectedTier?.isBetaPaused) {
-      toast({
-        title: 'Subscriptions Paused',
-        description: 'Paid subscriptions are temporarily paused during our beta phase. Please check back later!',
-        variant: 'default',
-      });
-      return;
-    }
-
-    if (!currentUser) {
-      toast({
-        title: 'Login Required',
-        description: 'Please log in or sign up to subscribe.',
-        variant: 'destructive',
-      });
-      router.push('/login?redirect=/dashboard/account');
-      return;
-    }
-
-    setLoadingPlanId(tierPlanId);
-
-    try {
-      const createSubscriptionFunction = httpsCallable(functions, 'createPaystackSubscription');
-
-      const result: any = await createSubscriptionFunction({
-        email: currentUser.email,
-        planId: tierPlanId,
-        billingCycle: cycle,
-      });
-
-      if (result.data && result.data.authorization_url) {
-        window.location.href = result.data.authorization_url;
-      } else {
-        throw new Error(result.data?.error || 'Could not initiate payment. Please try again.');
-      }
-    } catch (error: any) {
-      console.error('Subscription Error:', error);
-      toast({
-        title: 'Subscription Failed',
-        description: error.message || 'An unexpected error occurred. Please contact support if this persists.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoadingPlanId(null);
-    }
-  };
-
 
   if (loading || !currentUser) {
     return (
@@ -461,11 +421,11 @@ export default function AccountPage() {
                               key={tier.name}
                               className={cn(
                                 "flex flex-col rounded-lg border p-6 shadow-sm transition-all",
-                                tier.emphasized && !tier.isBetaPaused ? "border-2 border-primary bg-primary/5" : "bg-card",
-                                tier.isBetaPaused ? "opacity-60" : "hover:shadow-lg"
+                                tier.emphasized ? "border-2 border-primary bg-primary/5" : "bg-card",
+                                "hover:shadow-lg"
                               )}
                             >
-                              {tier.emphasized && !tier.isBetaPaused && (
+                              {tier.emphasized && (
                                 <div className="absolute top-0 right-0 -mt-3 -mr-3">
                                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl">
                                     <Star className="h-5 w-5" />
@@ -492,23 +452,23 @@ export default function AccountPage() {
                                 ))}
                               </ul>
                               <Button
+                                asChild
                                 size="lg"
-                                onClick={() => handleSubscription(tier.planId, modalBillingCycle)}
-                                disabled={loadingPlanId === tier.planId || tier.isBetaPaused}
                                 className={cn(
                                   "mt-6 w-full",
-                                  tier.emphasized && !tier.isBetaPaused ? "bg-primary hover:bg-primary/90 text-primary-foreground"
-                                    : tier.isBetaPaused ? "bg-muted hover:bg-muted text-muted-foreground cursor-not-allowed"
+                                  tier.emphasized ? "bg-primary hover:bg-primary/90 text-primary-foreground"
                                     : "bg-accent hover:bg-accent/90 text-accent-foreground"
                                 )}
                               >
-                                {loadingPlanId === tier.planId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (tier.isBetaPaused ? 'Paused (Beta)' : tier.cta)}
+                                <a href={getPaymentLink(tier)} rel="noopener noreferrer">
+                                    {tier.cta}
+                                </a>
                               </Button>
                             </div>
                           ))}
                         </div>
                         <DialogFooter className="mt-auto pt-4 border-t">
-                           <p className="text-xs text-muted-foreground mr-auto">Payments are securely processed via Paystack.</p>
+                           <p className="text-xs text-muted-foreground mr-auto">Payments are securely processed via Paystack. Ensure your payment email matches your account email.</p>
                           <DialogClose asChild>
                             <Button variant="outline">Cancel</Button>
                           </DialogClose>

@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import Container from '@/components/layout/Container';
 import { GlassCard } from '@/components/shared/GlassCard';
 import { Button } from '@/components/ui/button';
@@ -11,28 +12,25 @@ import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '@/lib/firebase';
 
 interface Tier {
   name: string;
   planId: string;
   price: { monthly: string; annually: string };
+  paymentLink: { monthly: string; annually: string };
   description: string;
   features: string[];
   missingFeatures?: string[];
   cta: string;
   emphasized: boolean;
-  isCurrent?: boolean;
-  isBetaPaused?: boolean;
 }
 
-const pricingTiers: Omit<Tier, 'isCurrent' | 'loadingPlanId'>[] = [
+const pricingTiers: Tier[] = [
     {
       name: 'BrieflyAI Free',
       planId: 'free',
       price: { monthly: 'NGN 0', annually: 'NGN 0' },
+      paymentLink: { monthly: '/signup', annually: '/signup' },
       description: 'For individuals starting their journey with AI prompting.',
       features: [
         '15 Prompts per month',
@@ -48,12 +46,15 @@ const pricingTiers: Omit<Tier, 'isCurrent' | 'loadingPlanId'>[] = [
       ],
       cta: 'Start for Free',
       emphasized: false,
-      isBetaPaused: false, // Free plan is always available
     },
     {
       name: 'BrieflyAI Premium',
       planId: 'premium',
       price: { monthly: 'NGN 16,000', annually: 'NGN 172,800' },
+      paymentLink: {
+          monthly: 'https://paystack.com/pay/REPLACE_WITH_YOUR_PREMIUM_MONTHLY_LINK',
+          annually: 'https://paystack.com/pay/REPLACE_WITH_YOUR_PREMIUM_ANNUAL_LINK'
+      },
       description: 'For power users & professionals who need advanced tools.',
       features: [
         '500 Prompts per month',
@@ -66,12 +67,15 @@ const pricingTiers: Omit<Tier, 'isCurrent' | 'loadingPlanId'>[] = [
       ],
       cta: 'Upgrade to Premium',
       emphasized: true,
-      isBetaPaused: false,
     },
     {
       name: 'BrieflyAI Unlimited',
       planId: 'unlimited',
       price: { monthly: 'NGN 56,000', annually: 'NGN 604,800' },
+      paymentLink: {
+          monthly: 'https://paystack.com/pay/REPLACE_WITH_YOUR_UNLIMITED_MONTHLY_LINK',
+          annually: 'https://paystack.com/pay/REPLACE_WITH_YOUR_UNLIMITED_ANNUAL_LINK'
+      },
       description: 'For teams & businesses that demand unlimited scale.',
       features: [
         'Unlimited Prompts & Vault Storage',
@@ -81,9 +85,8 @@ const pricingTiers: Omit<Tier, 'isCurrent' | 'loadingPlanId'>[] = [
         'Centralized Billing & User Management',
         'Dedicated Onboarding & Support',
       ],
-      cta: 'Contact Sales',
+      cta: 'Go Unlimited',
       emphasized: false,
-      isBetaPaused: false,
     },
 ];
 
@@ -92,67 +95,25 @@ export function PricingSection() {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'annually'>('monthly');
     const { currentUser } = useAuth();
     const router = useRouter();
-    const { toast } = useToast();
-    const functions = getFunctions(app, "us-central1");
-    const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
 
-    const handleSubscription = async (tier: Tier) => {
-        if (tier.planId === 'free') {
-          router.push('/signup');
-          return;
+    const getPaymentLink = (tier: Tier) => {
+        let link = billingCycle === 'monthly' ? tier.paymentLink.monthly : tier.paymentLink.annually;
+
+        if(tier.planId === 'free') {
+            return link;
         }
 
-        if (tier.isBetaPaused) {
-            toast({
-              title: 'Subscriptions Paused',
-              description: 'Paid subscriptions are temporarily paused during our beta phase. Please check back later!',
-              variant: 'default',
-            });
-            return;
-        }
-
-        if (!currentUser) {
-            toast({
-                title: 'Login Required',
-                description: 'Please log in or sign up to subscribe.',
-                variant: 'destructive',
-            });
-            router.push(`/login?redirect=/#pricing`);
-            return;
-        }
-
-        if(tier.planId === 'unlimited') {
-            window.location.href = "mailto:babseli933@gmail.com?subject=BrieflyAI Unlimited Plan Inquiry";
-            return;
-        }
-
-        setLoadingPlanId(tier.planId);
-
-        try {
-            const createSubscriptionFunction = httpsCallable(functions, 'createPaystackSubscription');
-            const result: any = await createSubscriptionFunction({
-                email: currentUser.email,
-                planId: tier.planId,
-                billingCycle: billingCycle,
-            });
-
-            if (result.data && result.data.authorization_url) {
-                window.location.href = result.data.authorization_url;
+        // Append user's email as a query parameter if they are logged in
+        if (currentUser && currentUser.email) {
+            // Check if the link already has query params
+            if (link.includes('?')) {
+                link += `&email=${encodeURIComponent(currentUser.email)}`;
             } else {
-                throw new Error(result.data?.error || 'Could not initiate payment. Please try again.');
+                link += `?email=${encodeURIComponent(currentUser.email)}`;
             }
-        } catch (error: any) {
-            console.error('Subscription Error:', error);
-            toast({
-                title: 'Subscription Failed',
-                description: error.message || 'An unexpected error occurred. Please contact support if this persists.',
-                variant: 'destructive',
-            });
-        } finally {
-            setLoadingPlanId(null);
         }
+        return link;
     };
-
 
     return (
         <section id="pricing" className="py-16 md:py-24 bg-gradient-to-b from-background via-indigo-50/10 to-background">
@@ -222,21 +183,25 @@ export function PricingSection() {
                         </li>
                     ))}
                   </ul>
-
                   <Button
-                    onClick={() => handleSubscription(tier as Tier)}
-                    disabled={loadingPlanId === tier.planId}
+                    asChild
                     className={cn(
                       "mt-8 w-full",
                       tier.emphasized && tier.planId !== 'free' ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-accent hover:bg-accent/90 text-accent-foreground",
-                       tier.planId === 'free' ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground" : "",
-                      tier.isBetaPaused && tier.planId !== 'free' ? "bg-muted hover:bg-muted text-muted-foreground cursor-not-allowed" : ""
+                       tier.planId === 'free' ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground" : ""
                     )}
                   >
-                    {loadingPlanId === tier.planId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (tier.isBetaPaused && tier.planId !== 'free' ? 'Paused (Beta)' : tier.cta)}
+                    <a href={getPaymentLink(tier)} rel="noopener noreferrer">
+                        {tier.cta}
+                    </a>
                   </Button>
                 </GlassCard>
               ))}
+            </div>
+            <div className="text-center mt-8">
+                <p className="text-xs text-muted-foreground">
+                    Important: Please ensure the email you use for payment matches your BrieflyAI account email.
+                </p>
             </div>
           </Container>
         </section>

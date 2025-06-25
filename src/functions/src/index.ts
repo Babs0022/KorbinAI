@@ -1,6 +1,6 @@
 
 import {
-  HttpsError, onCall, onRequest,
+  HttpsError, onRequest,
 } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
@@ -14,7 +14,6 @@ const corsHandler = cors({ origin: true });
 // --- Environment Variable Validation ---
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 const PAYSTACK_WEBHOOK_SECRET = process.env.PAYSTACK_WEBHOOK_SECRET;
-const APP_CALLBACK_URL = process.env.APP_CALLBACK_URL;
 
 if (!PAYSTACK_SECRET_KEY) {
   logger.error("CRITICAL: PAYSTACK_SECRET_KEY env var is not set. Payment functions will fail.");
@@ -22,9 +21,6 @@ if (!PAYSTACK_SECRET_KEY) {
 }
 if (!PAYSTACK_WEBHOOK_SECRET) {
   logger.error("CRITICAL: PAYSTACK_WEBHOOK_SECRET env var is not set. Webhook verification will fail.");
-}
-if (!APP_CALLBACK_URL) {
-  logger.error("CRITICAL: APP_CALLBACK_URL env var is not set. Subscription callbacks will fail.");
 }
 
 // --- Firebase and Paystack SDK Initialization ---
@@ -34,9 +30,6 @@ try {
   logger.warn("Firebase Admin SDK may have already been initialized:", e);
 }
 const db = admin.firestore();
-
-// Initialize Paystack SDK once at the global scope.
-// The check above ensures PAYSTACK_SECRET_KEY is present.
 const paystack = new Paystack(PAYSTACK_SECRET_KEY);
 
 
@@ -70,160 +63,80 @@ const planDetails: Record<string, {
   },
 };
 
-
-// --- Callable Function: createPaystackSubscription ---
-interface CreateSubscriptionData {
-  email?: string;
-  planId: string;
-  billingCycle: 'monthly' | 'annually';
+/**
+ * Finds the internal plan ID (e.g., 'premium') and billing cycle from a Paystack plan code.
+ * @param {string} planCode The plan code from Paystack.
+ * @returns An object containing the planId and billingCycle, or null if not found.
+ */
+function findPlanDetailsByCode(planCode: string): { planId: string | null; billingCycle: 'monthly' | 'annually' | null } {
+    for (const [planId, details] of Object.entries(planDetails)) {
+        if (details.monthly.plan_code === planCode) {
+            return { planId, billingCycle: 'monthly' };
+        }
+        if (details.annually.plan_code === planCode) {
+            return { planId, billingCycle: 'annually' };
+        }
+    }
+    return { planId: null, billingCycle: null };
 }
-
-export const createPaystackSubscription = onCall(
-  { region: "us-central1", enforceAppCheck: false },
-  async (request) => {
-    if (!APP_CALLBACK_URL) {
-        logger.error("Server Configuration Error: App Callback URL is missing.");
-        throw new HttpsError("internal", "Payment system is not configured correctly. Please contact support.");
-    }
-    
-    const { auth, data } = request;
-    if (!auth) {
-      throw new HttpsError("unauthenticated", "You must be logged in to subscribe.");
-    }
-    const userId = auth.uid;
-    
-    // --- Defensive Input Validation ---
-    logger.info("Received subscription request.", { userId, data });
-    if (typeof data !== 'object' || data === null) {
-        logger.error("Validation Error: request.data is not a valid object.", { userId, receivedData: data });
-        throw new HttpsError("invalid-argument", "Invalid request format. Expected an object.");
-    }
-
-    const { planId, billingCycle, email: clientProvidedEmail } = data as CreateSubscriptionData;
-
-    if (!planId || typeof planId !== 'string') {
-        logger.error("Validation Error: planId is missing or invalid.", { userId, planId });
-        throw new HttpsError("invalid-argument", "A valid 'planId' string is required.");
-    }
-    if (!billingCycle || (billingCycle !== 'monthly' && billingCycle !== 'annually')) {
-        logger.error("Validation Error: billingCycle is missing or invalid.", { userId, billingCycle });
-        throw new HttpsError("invalid-argument", "A 'billingCycle' of 'monthly' or 'annually' is required.");
-    }
-
-    const authenticatedUserEmail = auth.token?.email;
-    const emailToUse = clientProvidedEmail || authenticatedUserEmail;
-
-    if (!emailToUse) {
-      logger.error("Validation Error: Missing email.", { userId, planId, billingCycle });
-      throw new HttpsError("invalid-argument", "A valid email is required.");
-    }
-    
-    const plan = planDetails[planId];
-    if (!plan) {
-      logger.error("Validation Error: Invalid planId.", { userId, planId });
-      throw new HttpsError("not-found", `Plan with ID '${planId}' was not found.`);
-    }
-
-    const selectedPlan = plan[billingCycle];
-    if (!selectedPlan) {
-      logger.error("Internal Error: Could not find selected plan details.", { userId, planId, billingCycle });
-      throw new HttpsError("internal", "Could not process plan selection. Please contact support.");
-    }
-    
-    if (selectedPlan.plan_code.includes('REPLACE_WITH')) {
-      logger.error("Configuration Error: Placeholder plan code used.", { userId, planId, billingCycle, planCode: selectedPlan.plan_code });
-      throw new HttpsError("failed-precondition", "The selected plan is not yet configured on the server.");
-    }
-    
-    const reference = `briefly-${userId}-${planId}-${billingCycle}-${Date.now()}`;
-    
-    try {
-      const transactionArgs = {
-        email: emailToUse,
-        plan: selectedPlan.plan_code,
-        reference: reference,
-        callback_url: `${APP_CALLBACK_URL}?ref=${reference}&planId=${planId}&uid=${userId}`,
-        metadata: { userId, planId, billingCycle, service: "BrieflyAI Subscription" },
-      };
-
-      logger.info("Initializing Paystack transaction with args:", transactionArgs);
-      const response = await paystack.transaction.initialize(transactionArgs);
-
-      if (!response.status || !response.data) {
-        logger.error("Paystack initialization failed:", response.message);
-        throw new HttpsError("internal", response.message || "Failed to initialize payment.");
-      }
-
-      await db.collection("transactions").doc(reference).set({
-        userId,
-        planId,
-        billingCycle,
-        email: emailToUse,
-        amount: selectedPlan.amount,
-        planCode: selectedPlan.plan_code,
-        status: "pending_paystack_redirect",
-        paystackReference: response.data.reference,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
-      return {
-        authorization_url: response.data.authorization_url,
-        access_code: response.data.access_code,
-        reference: response.data.reference,
-      };
-
-    } catch (error) {
-      logger.error("Error in createPaystackSubscription during Paystack call:", error);
-      if (error instanceof HttpsError) {
-          throw error; // Re-throw HttpsError to the client
-      }
-      const errorMessage = (error instanceof Error) ? error.message : "An unknown error occurred during payment initialization.";
-      throw new HttpsError("internal", errorMessage);
-    }
-  }
-);
-
 
 // --- Webhook Handler: paystackWebhookHandler ---
-interface PaystackPlanObject {
-    interval?: 'monthly' | 'annually' | string;
-    metadata?: { userId?: string; planId?: string; [key: string]: unknown; };
+interface PaystackCustomer {
+    email?: string;
 }
+
+interface PaystackPlan {
+    plan_code?: string;
+    name?: string;
+}
+
 interface PaystackChargeSuccessData {
     reference: string;
-    customer?: { email?: string };
+    customer?: PaystackCustomer;
     amount: number;
     currency: string;
-    metadata?: { userId?: string; planId?: string; [key: string]: unknown; };
-    plan_object?: PaystackPlanObject;
     paid_at?: string | number;
+    plan?: PaystackPlan; // For subscription charge events
 }
 
 async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): Promise<void> {
-  const { reference, customer, amount, currency, metadata, plan_object, paid_at } = eventData;
-  logger.info(`Processing 'charge.success' for reference: ${reference}`);
+  const { reference, customer, amount, currency, paid_at, plan } = eventData;
+  logger.info(`Processing 'charge.success' or 'subscription.charge.success' for reference: ${reference}`);
 
-  const effectiveMetadata = metadata || plan_object?.metadata || {};
-  const { userId, planId } = effectiveMetadata;
+  const email = customer?.email;
+  const planCode = plan?.plan_code;
 
-  if (!userId || !planId) {
-    logger.error(`Webhook Error: Missing userId or planId in metadata for reference ${reference}.`, { effectiveMetadata });
+  if (!email || !planCode) {
+    logger.error(`Webhook Error: Missing email or plan_code in payload for reference ${reference}.`, { email, planCode });
     return;
   }
+  
+  const { planId } = findPlanDetailsByCode(planCode);
+
+  if (!planId) {
+      logger.error(`Webhook Error: Could not match plan code ${planCode} to a known plan.`);
+      return;
+  }
+
+  let userRecord: admin.auth.UserRecord;
+  try {
+      userRecord = await admin.auth().getUserByEmail(email);
+      logger.info(`Found user UID ${userRecord.uid} for email ${email}.`);
+  } catch (error) {
+      logger.error(`Webhook Error: Could not find a user with email ${email}. A user must sign up in BrieflyAI with this email first.`, { email, error });
+      return; // Stop processing if no user can be found
+  }
+
+  const userId = userRecord.uid;
 
   try {
-    const verification = await paystack.transaction.verify({ reference });
-    if (!verification.status || verification.data.status !== "success") {
-      logger.error(`Transaction re-verification failed for reference ${reference}. Status: ${verification.data?.status}`, { verification });
-      return;
-    }
-    logger.info(`Transaction re-verified successfully for reference: ${reference}`);
-
     const paidAtDate = new Date(paid_at || Date.now());
     const currentPeriodEndDate = new Date(paidAtDate.getTime());
     
-    if (plan_object?.interval === 'annually') {
+    // Determine subscription interval from the plan name in the payload if available.
+    // This is a fallback; a more robust method is checking against our plan codes.
+    const planName = plan?.name?.toLowerCase() || '';
+    if (planName.includes('annual') || planName.includes('yearly')) {
         currentPeriodEndDate.setFullYear(currentPeriodEndDate.getFullYear() + 1);
     } else {
         currentPeriodEndDate.setDate(currentPeriodEndDate.getDate() + 30);
@@ -243,11 +156,22 @@ async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): 
     };
 
     await db.collection("userSubscriptions").doc(String(userId)).set(subscriptionData, { merge: true });
-    await db.collection("transactions").doc(reference).update({
+    
+    // Also log the transaction itself for auditing purposes
+    const transactionRef = db.collection("transactions").doc(reference);
+    await transactionRef.set({
+      userId,
+      planId,
+      email: customer?.email,
+      amount,
+      currency,
       status: "success",
+      paystackReference: reference,
       paidAt: admin.firestore.Timestamp.fromDate(paidAtDate),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    }, { merge: true });
+
 
     logger.info(`Successfully updated subscription for user ${userId} (plan: ${planId}, ref: ${reference}).`);
 
@@ -284,10 +208,14 @@ export const paystackWebhookHandler = onRequest({ region: "us-central1" }, (req,
         const event = req.body;
         logger.info(`Webhook received: ${event.event}`, { reference: event.data?.reference || "N/A" });
         
-        if (event.event === "charge.success") {
+        // Paystack sends 'charge.success' for one-time payments and initial subscription payments.
+        // It sends 'subscription.charge.success' for recurring subscription payments.
+        // We can handle both with the same logic.
+        if (event.event === "charge.success" || event.event === "subscription.charge.success") {
             res.status(200).send({ message: "Webhook acknowledged, processing in background." });
             await processChargeSuccessEvent(event.data as PaystackChargeSuccessData);
         } else {
+            logger.info(`Unhandled event type received: ${event.event}`);
             res.status(200).send({ message: "Event received and acknowledged (unhandled type)." });
         }
     });
