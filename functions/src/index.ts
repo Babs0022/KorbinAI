@@ -1,6 +1,6 @@
 
 import {
-  HttpsError, onCall, onRequest, CallableRequest,
+  HttpsError, onCall, onRequest,
 } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
@@ -90,7 +90,7 @@ interface CreateSubscriptionData {
  */
 export const createPaystackSubscription = onCall(
   {region: "us-central1", enforceAppCheck: false},
-  async (request: CallableRequest<CreateSubscriptionData>) => {
+  async (request) => {
     logger.info(
       "createPaystackSubscription invoked. Validating env vars...",
     );
@@ -141,7 +141,7 @@ export const createPaystackSubscription = onCall(
       );
     }
 
-    const data = request.data;
+    const data = request.data as CreateSubscriptionData;
     const auth = request.auth;
 
     if (!auth) {
