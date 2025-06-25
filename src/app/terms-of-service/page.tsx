@@ -10,7 +10,7 @@ import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/
 export default function TermsOfServicePage() {
   // Using a static date to prevent hydration mismatches.
   // This value should be updated manually when the terms change.
-  const lastUpdatedDate = "July 26, 2024";
+  const lastUpdatedDate = "June 12, 2025";
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
