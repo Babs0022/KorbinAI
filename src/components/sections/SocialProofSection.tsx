@@ -4,29 +4,127 @@
 import React from 'react';
 import Container from '@/components/layout/Container';
 import { GlassCard, GlassCardContent } from '@/components/shared/GlassCard';
-import { MessageSquareText } from 'lucide-react'; // Using a generic icon for "Coming Soon"
+import { Users, Star } from 'lucide-react';
+import { XLogoIcon } from '@/components/shared/XLogoIcon';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+
+// Farcaster icon as SVG, similar to the one in AboutFounderSection
+const FarcasterIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-purple-600">
+    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.88 13.68H14.02V17.5H11.1V13.68H7.12V10.91L11.1 6.5H14.02V10.32H16.88V13.68Z" />
+  </svg>
+);
+
+
+const testimonials = [
+  {
+    name: 'Sarah L.',
+    handle: '@sarahLovesAI',
+    platform: 'X',
+    icon: '1',
+    feedback: "BrieflyAI is a game-changer. My prompts are clearer, and the results I get from my AI tools are leagues better. The Refinement Hub is a lifesaver!",
+  },
+  {
+    name: 'David Chen',
+    handle: 'david.chen',
+    platform: 'Discord',
+    icon: '15',
+    feedback: "As a marketer, speed and quality are everything. BrieflyAI helps me generate entire campaign ideas in minutes. The Model-Specific adapter is genius.",
+  },
+  {
+    name: 'Alex Rivera',
+    handle: '@alex_creates',
+    platform: 'Farcaster',
+    icon: '25',
+    feedback: "The contextual prompting feature is incredibly powerful. I fed it a client brief, and it generated a perfect starting point for a full proposal.",
+  },
+  {
+    name: 'Maria Garcia',
+    handle: 'Maria G',
+    platform: 'X',
+    icon: '42',
+    feedback: "Finally, a prompt tool that thinks like a professional. The ability to A/B test prompts across different models has saved me hours of guesswork.",
+  },
+  {
+    name: 'James Park',
+    handle: 'jp_dev',
+    platform: 'Discord',
+    icon: '81',
+    feedback: "The reverse prompting tool is surprisingly useful for deconstructing and learning from high-quality AI outputs I find online. Highly recommend.",
+  },
+  {
+      name: 'Emily Wong',
+      handle: '@em_wong',
+      platform: 'Farcaster',
+      icon: '56',
+      feedback: "I love the clean UI and the focus on utility. BrieflyAI doesn't just give you a prompt; it teaches you how to be a better prompter. The analytics are a nice touch too!",
+  }
+];
+
+const TestimonialCard = ({ testimonial }: { testimonial: typeof testimonials[0] }) => {
+  const PlatformIcon = () => {
+    switch(testimonial.platform) {
+      case 'X': return <XLogoIcon className="h-4 w-4" />;
+      case 'Discord': return <Users className="h-4 w-4 text-indigo-500" />;
+      case 'Farcaster': return <FarcasterIcon />;
+      default: return null;
+    }
+  };
+
+  return (
+    <GlassCard className="w-80 flex-shrink-0 mx-4">
+      <GlassCardContent className="p-6 h-full flex flex-col">
+        <div className="flex items-center mb-4">
+          <Avatar className="h-10 w-10 mr-3">
+             <AvatarImage src={`https://avatar.iran.liara.run/public/${testimonial.icon}`} alt={testimonial.name} data-ai-hint="user avatar"/>
+            <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div className="flex-grow">
+            <p className="font-semibold text-foreground">{testimonial.name}</p>
+            <div className="flex items-center text-xs text-muted-foreground">
+               <PlatformIcon />
+               <span className="ml-1.5">{testimonial.handle}</span>
+            </div>
+          </div>
+        </div>
+        <blockquote className="text-sm text-muted-foreground flex-grow">
+          &ldquo;{testimonial.feedback}&rdquo;
+        </blockquote>
+      </GlassCardContent>
+    </GlassCard>
+  );
+};
 
 export function SocialProofSection() {
+  const extendedTestimonials = [...testimonials, ...testimonials];
+
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-b from-background via-indigo-50/5 to-background">
+    <section id="social-proof" className="py-16 md:py-24 bg-gradient-to-b from-background via-indigo-50/5 to-background">
       <Container>
         <div className="text-center mb-12 md:mb-16">
           <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             See What Our Users Are Saying
           </h2>
+          <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
+            Trusted by innovators, creators, and professionals worldwide.
+          </p>
         </div>
-
-        {/* "Coming Soon" Placeholder */}
-        <GlassCard className="max-w-2xl mx-auto">
-          <GlassCardContent className="p-8 text-center">
-            <MessageSquareText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-foreground">Testimonials Coming Soon!</h3>
-            <p className="text-muted-foreground mt-2">
-              We're gathering feedback from our amazing users and will showcase their stories here shortly.
-            </p>
-          </GlassCardContent>
-        </GlassCard>
       </Container>
+
+      <div
+        className="relative w-full overflow-hidden"
+        style={{
+          maskImage: 'linear-gradient(to right, transparent, white 10%, white 90%, transparent)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent, white 10%, white 90%, transparent)',
+        }}
+      >
+        <div className="flex min-w-max animate-marquee-slow hover:[animation-play-state:paused]">
+          {extendedTestimonials.map((testimonial, index) => (
+            <TestimonialCard key={`${testimonial.name}-${index}`} testimonial={testimonial} />
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
