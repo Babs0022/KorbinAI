@@ -14,9 +14,13 @@ import {z} from 'genkit';
 
 // Define the Zod schema locally, but do not export it.
 const AIModelEnumSchema = z.enum([
+  "gpt-4.5",
   "gpt-4o",
   "gpt-4",
   "gpt-3.5-turbo",
+  "gemini-2.5-pro",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
   "gemini-1.5-pro",
   "gemini-1.5-flash",
   "gemini-1.0-pro",
@@ -24,6 +28,8 @@ const AIModelEnumSchema = z.enum([
   "claude-3-sonnet",
   "claude-3-haiku",
   "llama-3-70b",
+  "grok-3",
+  "deepseek-r1",
   "dall-e-3",
   "stable-diffusion-3",
   "stable-diffusion",
@@ -64,23 +70,23 @@ Original Prompt:
 Target AI Model: "{{targetModel}}"
 
 Consider these model-specific nuances:
-- **GPT-4o / GPT-4 / GPT-3.5-Turbo / Gemini (Text Models):**
-  - GPT-4o is a new flagship model, highly capable in text, vision, and audio. It's faster and more cost-effective than GPT-4 Turbo. Prompting principles are similar.
-  - Gemini 1.5 Flash is a lightweight, fast version of Gemini Pro. Ideal for high-volume or speed-sensitive tasks.
-  - Clarity and Specificity: Ensure instructions are unambiguous.
-  - Context: Provide sufficient background if needed.
-  - Persona: Define a role for the AI if it helps (e.g., "Act as an expert marketer...").
-  - Format: Specify the desired output format (e.g., list, paragraph, JSON).
-  - Constraints: Mention length, topics to avoid, style (e.g., formal, casual).
-  - For complex tasks, break them down into steps ("Think step-by-step").
+- **GPT-4.5 / GPT-4o / GPT-4 / GPT-3.5-Turbo:**
+  - These models excel with clear, direct instructions. GPT-4.5 and GPT-4o are top-tier multi-modal models.
+  - For complex tasks, use "chain-of-thought" or "think step-by-step" instructions.
+  - Defining a specific role or persona (e.g., "Act as an expert financial advisor") is highly effective.
+- **Gemini Models (2.5 Pro, 2.5 Flash, 2.0 Flash, 1.5 Pro, 1.5 Flash, 1.0 Pro):**
+  - The Gemini family is highly capable with multi-modal inputs (text, image, video).
+  - "Flash" versions are optimized for speed and high-volume tasks, while "Pro" versions offer maximum reasoning power.
+  - Benefit from well-structured prompts. Use clear headings and lists.
 - **Claude Models (Opus, Sonnet, Haiku):**
   - The Claude 3 family varies in speed and power (Opus > Sonnet > Haiku). Haiku is best for near-instant responsiveness.
-  - Follows general text model guidance.
-  - Excels when instructions or examples are wrapped in XML tags, e.g., <example>...</example> or <document>...</document>.
-- **Llama 3 Models (e.g., llama-3-70b):**
-  - Highly capable open models that are excellent at following complex instructions and have a very low refusal rate.
-  - Respond well to detailed system prompts.
-  - Benefit from clearly defined roles and structured output formats.
+  - Excels when instructions or examples are wrapped in XML tags, e.g., <example>...</example> or <document>...</document>. Best for long-context tasks.
+- **Grok 3:**
+  - Known for its potential access to real-time information and a more edgy or humorous tone.
+  - Tailor prompts to leverage this by asking for timely information or specifying a particular witty persona.
+- **Llama 3 & DeepSeek R1 (Open Models):**
+  - Highly capable open models that are excellent at following complex instructions and have a low refusal rate.
+  - Respond well to detailed system prompts that define roles, constraints, and output formats.
 - **DALL-E 3 (Image Model):**
   - Descriptive Language: Use vivid adjectives and nouns in full sentences.
   - Scene Details: Include objects, characters, setting, atmosphere.
@@ -105,7 +111,7 @@ If the Original Prompt seems fundamentally unsuited for the Target AI Model's pr
 
 Return the adapted prompt and 2-4 unique, actionable tips.
 Determine the 'modelType' based on the 'targetModel':
-- gpt-4o, gpt-4, gpt-3.5-turbo, gemini-1.5-pro, gemini-1.5-flash, gemini-1.0-pro, claude-3-opus, claude-3-sonnet, claude-3-haiku, llama-3-70b are 'text' models.
+- gpt-4.5, gpt-4o, gpt-4, gpt-3.5-turbo, gemini-2.5-pro, gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-pro, gemini-1.5-flash, gemini-1.0-pro, claude-3-opus, claude-3-sonnet, claude-3-haiku, llama-3-70b, grok-3, deepseek-r1 are 'text' models.
 - dall-e-3, midjourney, stable-diffusion-3, stable-diffusion are 'image' models.
 - If unsure, use 'unknown'.
 `,

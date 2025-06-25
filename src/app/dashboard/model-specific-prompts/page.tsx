@@ -20,16 +20,28 @@ import { useRouter } from 'next/navigation';
 
 // Define the model options directly in the component
 const modelOptions = [
+  // OpenAI
+  "gpt-4.5",
   "gpt-4o",
   "gpt-4",
   "gpt-3.5-turbo",
+  // Google
+  "gemini-2.5-pro",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
   "gemini-1.5-pro",
   "gemini-1.5-flash",
   "gemini-1.0-pro",
+  // Anthropic
   "claude-3-opus",
   "claude-3-sonnet",
   "claude-3-haiku",
+  // xAI
+  "grok-3",
+  // Open Source
   "llama-3-70b",
+  "deepseek-r1",
+  // Image Models
   "dall-e-3",
   "stable-diffusion-3",
   "stable-diffusion",
