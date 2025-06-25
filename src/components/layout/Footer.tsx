@@ -1,11 +1,46 @@
+"use client";
 
 import Link from 'next/link';
+import { useState, type FormEvent } from 'react';
 import { Logo } from '@/components/shared/Logo';
 import { Button } from '@/components/ui/button';
-import { Github, Send, Users } from 'lucide-react'; // Using Users for Discord
+import { Input } from '@/components/ui/input';
+import { Send, Mail, Loader2 } from 'lucide-react';
 import { XLogoIcon } from '@/components/shared/XLogoIcon';
+import { useToast } from '@/hooks/use-toast';
+import { db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export function Footer() {
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubscribe = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast({ title: "Email required", description: "Please enter your email address.", variant: "destructive" });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      // Use email as doc ID to prevent duplicates
+      const subscriberRef = doc(db, 'newsletterSubscribers', email); 
+      await setDoc(subscriberRef, {
+        email: email,
+        subscribedAt: serverTimestamp(),
+      }, { merge: true }); // Use merge to not overwrite if they re-subscribe
+
+      toast({ title: "Subscribed!", description: "Thanks for joining our newsletter." });
+      setEmail('');
+    } catch (error) {
+      console.error("Newsletter subscription error:", error);
+      toast({ title: "Subscription Failed", description: "Could not subscribe. Please try again.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <footer className="bg-muted/50 py-12">
       <div className="container mx-auto px-4 md:px-6">
@@ -32,7 +67,33 @@ export function Footer() {
             </ul>
           </div>
         </div>
-        <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground md:flex md:justify-between">
+
+        <div className="mt-12 border-t pt-8">
+          <div className="max-w-xl mx-auto text-center">
+            <h4 className="font-headline text-lg font-semibold">Stay Updated</h4>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Subscribe to our newsletter to get the latest news, updates, and tips.
+            </p>
+            <form onSubmit={handleSubscribe} className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-2">
+              <Input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+                required
+                className="max-w-sm w-full"
+                aria-label="Email for newsletter"
+              />
+              <Button type="submit" disabled={isLoading} className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90">
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+                Subscribe
+              </Button>
+            </form>
+          </div>
+        </div>
+
+        <div className="mt-12 border-t pt-8 text-center text-sm text-muted-foreground md:flex md:justify-between">
           <p>&copy; {new Date().getFullYear()} BrieflyAI. All rights reserved.</p>
           <div className="mt-4 space-x-4 md:mt-0">
             <Link href="/privacy-policy" className="hover:text-primary">Privacy Policy</Link>

@@ -1,45 +1,43 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only manage their own document.
-    match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
-    }
 
-    // Users can only manage their own prompt history.
-    match /users/{userId}/promptHistory/{promptId} {
-      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Users can only manage their own settings.
-    match /userSettings/{userId} {
-      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Onboarding info can only be managed by the user themselves.
-    match /users/{userId}/onboardingInfo/{docId} {
-      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Transactions can be created by authenticated users, but only read/updated securely by backend functions.
-    match /transactions/{transactionId} {
-       allow create: if request.auth != null;
-       allow read, update, delete: if false; // Only backend can manage
-    }
-
-    // Subscriptions can only be read by the user, managed by backend.
-    match /userSubscriptions/{userId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        allow create, update, delete: if false; // Only backend can manage
+    // Users can only read/write their own prompt history, and onboarding data.
+    match /users/{userId}/{documents=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Announcements are public read-only for authenticated users.
+    // User settings can only be read/written by the user themselves.
+    match /userSettings/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Anyone can read announcements. No one can write from the client.
     match /appAnnouncements/{announcementId} {
-      allow read: if request.auth != null;
-      allow write: if false; // Only admin/backend can write
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Allow anyone to submit to the newsletter collection.
+    // They can only create, not read, update, or delete, for privacy.
+    match /newsletterSubscribers/{subscriberId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+    
+    // Subscriptions and transactions are managed by backend functions.
+    // Users can read their own subscription/transaction data.
+    match /userSubscriptions/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+    
+    match /transactions/{transactionId} {
+      // Allow user to read their own transaction details.
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Writes are handled by backend Cloud Functions
+      allow write: if false; 
     }
   }
 }
