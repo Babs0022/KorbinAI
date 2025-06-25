@@ -52,8 +52,8 @@ const pricingTiers: Tier[] = [
       planId: 'premium',
       price: { monthly: 'NGN 16,000', annually: 'NGN 172,800' },
       paymentLink: {
-          monthly: 'https://paystack.com/pay/REPLACE_WITH_YOUR_PREMIUM_MONTHLY_LINK',
-          annually: 'https://paystack.com/pay/REPLACE_WITH_YOUR_PREMIUM_ANNUAL_LINK'
+          monthly: 'https://paystack.shop/pay/adn4uwot-5',
+          annually: 'https://paystack.shop/pay/sq8pii8rod'
       },
       description: 'For power users & professionals who need advanced tools.',
       features: [
@@ -73,8 +73,8 @@ const pricingTiers: Tier[] = [
       planId: 'unlimited',
       price: { monthly: 'NGN 56,000', annually: 'NGN 604,800' },
       paymentLink: {
-          monthly: 'https://paystack.com/pay/REPLACE_WITH_YOUR_UNLIMITED_MONTHLY_LINK',
-          annually: 'https://paystack.com/pay/REPLACE_WITH_YOUR_UNLIMITED_ANNUAL_LINK'
+          monthly: 'https://paystack.shop/pay/cnfqzc7xw1',
+          annually: 'https://paystack.shop/pay/w7iln7hu8e'
       },
       description: 'For teams & businesses that demand unlimited scale.',
       features: [

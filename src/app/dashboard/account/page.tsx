@@ -62,8 +62,8 @@ const pricingTiers: Tier[] = [
     planId: 'premium',
     price: { monthly: 'NGN 16,000', annually: 'NGN 172,800' },
     paymentLink: {
-        monthly: 'https://paystack.com/pay/REPLACE_WITH_YOUR_PREMIUM_MONTHLY_LINK',
-        annually: 'https://paystack.com/pay/REPLACE_WITH_YOUR_PREMIUM_ANNUAL_LINK'
+        monthly: 'https://paystack.shop/pay/adn4uwot-5',
+        annually: 'https://paystack.shop/pay/sq8pii8rod'
     },
     description: 'Supercharge your AI interactions.',
     features: [
@@ -81,8 +81,8 @@ const pricingTiers: Tier[] = [
     planId: 'unlimited',
     price: { monthly: 'NGN 56,000', annually: 'NGN 604,800' },
     paymentLink: {
-        monthly: 'https://paystack.com/pay/REPLACE_WITH_YOUR_UNLIMITED_MONTHLY_LINK',
-        annually: 'https://paystack.com/pay/REPLACE_WITH_YOUR_UNLIMITED_ANNUAL_LINK'
+        monthly: 'https://paystack.shop/pay/cnfqzc7xw1',
+        annually: 'https://paystack.shop/pay/w7iln7hu8e'
     },
     description: 'For power users who need it all.',
     features: [
@@ -392,7 +392,7 @@ export default function AccountPage() {
                   <div className="mt-4 flex gap-2">
                     <Dialog open={isChangePlanModalOpen} onOpenChange={setIsChangePlanModalOpen}>
                       <DialogTrigger asChild>
-                        <Button variant="outline">Change Plan</Button>
+                        <Button variant="default" className="bg-primary text-primary-foreground hover:bg-primary/90">Change Plan</Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
                         <DialogHeader>
