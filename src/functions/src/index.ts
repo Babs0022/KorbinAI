@@ -90,33 +90,50 @@ export const createPaystackSubscription = onCall(
     if (!auth) {
       throw new HttpsError("unauthenticated", "You must be logged in to subscribe.");
     }
-
-    const { planId, email: clientProvidedEmail, billingCycle } = data as CreateSubscriptionData;
     const userId = auth.uid;
-    const authenticatedUserEmail = auth.token?.email;
     
-    // --- Robust Input Validation ---
+    // --- Defensive Input Validation ---
+    logger.info("Received subscription request.", { userId, data });
+    if (typeof data !== 'object' || data === null) {
+        logger.error("Validation Error: request.data is not a valid object.", { userId, receivedData: data });
+        throw new HttpsError("invalid-argument", "Invalid request format. Expected an object.");
+    }
+
+    const { planId, billingCycle, email: clientProvidedEmail } = data as CreateSubscriptionData;
+
+    if (!planId || typeof planId !== 'string') {
+        logger.error("Validation Error: planId is missing or invalid.", { userId, planId });
+        throw new HttpsError("invalid-argument", "A valid 'planId' string is required.");
+    }
+    if (!billingCycle || (billingCycle !== 'monthly' && billingCycle !== 'annually')) {
+        logger.error("Validation Error: billingCycle is missing or invalid.", { userId, billingCycle });
+        throw new HttpsError("invalid-argument", "A 'billingCycle' of 'monthly' or 'annually' is required.");
+    }
+
+    const authenticatedUserEmail = auth.token?.email;
     const emailToUse = clientProvidedEmail || authenticatedUserEmail;
+
     if (!emailToUse) {
       logger.error("Validation Error: Missing email.", { userId, planId, billingCycle });
       throw new HttpsError("invalid-argument", "A valid email is required.");
     }
-
+    
     const plan = planDetails[planId];
     if (!plan) {
       logger.error("Validation Error: Invalid planId.", { userId, planId });
-      throw new HttpsError("invalid-argument", "A valid plan ID is required.");
+      throw new HttpsError("not-found", `Plan with ID '${planId}' was not found.`);
     }
 
-    const selectedPlan = plan?.[billingCycle];
+    const selectedPlan = plan[billingCycle];
     if (!selectedPlan) {
-      logger.error("Validation Error: Invalid or missing billingCycle.", { userId, planId, billingCycle });
-      throw new HttpsError("invalid-argument", "A valid billing cycle ('monthly' or 'annually') is required.");
+      // This case should be caught by the billingCycle check above, but it's good for robustness.
+      logger.error("Internal Error: Could not find selected plan details.", { userId, planId, billingCycle });
+      throw new HttpsError("internal", "Could not process plan selection. Please contact support.");
     }
     
     if (selectedPlan.plan_code.includes('REPLACE_WITH')) {
       logger.error("Configuration Error: Placeholder plan code used.", { userId, planId, billingCycle, planCode: selectedPlan.plan_code });
-      throw new HttpsError("invalid-argument", "The selected plan is not yet configured on the server.");
+      throw new HttpsError("failed-precondition", "The selected plan is not yet configured on the server.");
     }
     
     const reference = `briefly-${userId}-${planId}-${billingCycle}-${Date.now()}`;
@@ -158,8 +175,11 @@ export const createPaystackSubscription = onCall(
       };
 
     } catch (error) {
-      logger.error("Error in createPaystackSubscription:", error);
-      const errorMessage = (error instanceof Error) ? error.message : "An unknown error occurred.";
+      logger.error("Error in createPaystackSubscription during Paystack call:", error);
+      if (error instanceof HttpsError) {
+          throw error; // Re-throw HttpsError to the client
+      }
+      const errorMessage = (error instanceof Error) ? error.message : "An unknown error occurred during payment initialization.";
       throw new HttpsError("internal", errorMessage);
     }
   }
