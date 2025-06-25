@@ -111,7 +111,7 @@ async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): 
     return;
   }
   
-  const { planId } = findPlanDetailsByCode(planCode);
+  const { planId, billingCycle } = findPlanDetailsByCode(planCode);
 
   if (!planId) {
       logger.error(`Webhook Error: Could not match plan code ${planCode} to a known plan.`);
@@ -133,12 +133,10 @@ async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): 
     const paidAtDate = new Date(paid_at || Date.now());
     const currentPeriodEndDate = new Date(paidAtDate.getTime());
     
-    // Determine subscription interval from the plan name in the payload if available.
-    // This is a fallback; a more robust method is checking against our plan codes.
-    const planName = plan?.name?.toLowerCase() || '';
-    if (planName.includes('annual') || planName.includes('yearly')) {
+    // Determine subscription interval from the plan code lookup.
+    if (billingCycle === 'annually') {
         currentPeriodEndDate.setFullYear(currentPeriodEndDate.getFullYear() + 1);
-    } else {
+    } else { // Default to monthly for 'monthly' or any other unexpected case
         currentPeriodEndDate.setDate(currentPeriodEndDate.getDate() + 30);
     }
 
