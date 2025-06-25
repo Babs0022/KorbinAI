@@ -512,5 +512,3 @@ export const paystackWebhookHandler = onRequest(
     }
   },
 );
-
-    
