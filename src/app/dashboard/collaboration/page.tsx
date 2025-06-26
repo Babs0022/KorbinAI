@@ -160,7 +160,8 @@ export default function CollaborationPage() {
       await setDoc(newTeamRef, newTeamData);
 
       const userDocRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userDocRef, { teamId: newTeamRef.id });
+      // Use set with merge to safely create or update the document.
+      await setDoc(userDocRef, { teamId: newTeamRef.id }, { merge: true });
 
       toast({ title: "Team Created!", description: `Welcome to ${newTeamName}!` });
       setShowCreateTeamDialog(false);
@@ -433,5 +434,3 @@ export default function CollaborationPage() {
     </div>
   );
 }
-
-    
