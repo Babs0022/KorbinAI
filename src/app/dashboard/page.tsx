@@ -27,6 +27,7 @@ const featureCards: FeatureInfo[] = [
     href: '/dashboard/refinement-hub',
     icon: Settings2,
     enabled: true,
+    isPremium: true,
   },
    {
     title: 'Team Collaboration Hub',
@@ -34,6 +35,7 @@ const featureCards: FeatureInfo[] = [
     href: '/dashboard/collaboration',
     icon: Users,
     enabled: true,
+    isUnlimited: true,
   },
   {
     title: 'Model-Specific Adapter',
@@ -41,6 +43,7 @@ const featureCards: FeatureInfo[] = [
     href: '/dashboard/model-specific-prompts',
     icon: Puzzle,
     enabled: true,
+    isPremium: true,
   },
    {
     title: 'Real-Time Suggestions',
@@ -48,6 +51,7 @@ const featureCards: FeatureInfo[] = [
     href: '/dashboard/real-time-suggestions',
     icon: Lightbulb,
     enabled: true,
+    isPremium: true,
   },
   {
     title: 'A/B Testing',
@@ -55,6 +59,7 @@ const featureCards: FeatureInfo[] = [
     href: '/dashboard/compatibility-checker',
     icon: TestTubes,
     enabled: true,
+    isPremium: true,
   },
   {
     title: 'Prompt Feedback & Analysis',
@@ -62,6 +67,7 @@ const featureCards: FeatureInfo[] = [
     href: '/dashboard/feedback-analysis',
     icon: BarChart3,
     enabled: true,
+    isPremium: true,
   },
    {
     title: 'Contextual Prompting',
@@ -69,6 +75,7 @@ const featureCards: FeatureInfo[] = [
     href: '/dashboard/contextual-prompting',
     icon: FileText,
     enabled: true,
+    isPremium: true,
   },
   {
     title: 'Reverse Prompting',
@@ -76,6 +83,7 @@ const featureCards: FeatureInfo[] = [
     href: '/dashboard/reverse-prompting',
     icon: Repeat,
     enabled: true,
+    isPremium: true,
   },
    {
     title: 'Analytics Dashboard',
@@ -83,6 +91,7 @@ const featureCards: FeatureInfo[] = [
     href: '/dashboard/analytics',
     icon: BarChart3,
     enabled: true,
+    isPremium: true,
   },
   {
     title: 'Automated Optimization Engine',
@@ -136,11 +145,11 @@ export default function DashboardPage() {
       <DashboardHeader />
       <main className="flex-1 flex flex-col bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8 md:py-12">
         <Container>
-           <div className="pt-16 md:pt-20 mb-12 text-center"> {/* Increased top padding for mobile/desktop, centered text */}
+           <div className="pt-16 md:pt-20 mb-12 text-center">
               <h1 className="font-headline text-3xl font-bold text-foreground mb-4">
                  What can I help you create?
               </h1>
-              <div className="max-w-3xl mx-auto"> {/* Wrapper to center and constrain form width */}
+              <div className="max-w-3xl mx-auto">
                 <PromptInputForm />
               </div>
            </div>

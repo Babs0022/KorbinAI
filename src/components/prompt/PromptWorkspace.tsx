@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, type FormEvent, type ChangeEvent, useCallback } from 'react';
@@ -17,8 +18,9 @@ import { Wand2, Loader2, ArrowLeft, HelpCircle } from 'lucide-react';
 import { OptimizedPromptCard } from '@/components/prompt/OptimizedPromptCard';
 import Link from 'next/link';
 import { LoadingTips } from '@/components/shared/LoadingTips';
+import { useAuth } from '@/contexts/AuthContext';
 
-type WorkspaceState = 'loading_questions' | 'showing_questions' | 'loading_optimization' | 'showing_result' | 'error';
+type WorkspaceState = 'initial_loading' | 'loading_questions' | 'showing_questions' | 'loading_optimization' | 'showing_result' | 'error';
 
 interface OptimizedPromptResult extends OptimizePromptOutput, GeneratePromptMetadataOutput {
   originalGoal: string;
@@ -28,8 +30,9 @@ export function PromptWorkspace() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
+  const { subscription, subscriptionLoading } = useAuth();
 
-  const [workspaceState, setWorkspaceState] = useState<WorkspaceState>('loading_questions');
+  const [workspaceState, setWorkspaceState] = useState<WorkspaceState>('initial_loading');
   const [goal, setGoal] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
 
@@ -37,7 +40,8 @@ export function PromptWorkspace() {
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string | string[]>>({});
   
   const [optimizedOutput, setOptimizedOutput] = useState<OptimizedPromptResult | null>(null);
-  
+  const [isInitialized, setIsInitialized] = useState(false);
+
   const handleDirectGenerate = useCallback(async (currentGoal: string, currentImageDataUri: string | null) => {
     setWorkspaceState('loading_optimization');
     try {
@@ -68,6 +72,7 @@ export function PromptWorkspace() {
   }, [toast]);
 
   const fetchAndSetQuestions = useCallback(async (currentGoal: string, currentImageDataUri: string | null) => {
+    setWorkspaceState('loading_questions');
     try {
       const input: GenerateSurveyQuestionsInput = { goal: currentGoal };
       if (currentImageDataUri) {
@@ -87,8 +92,12 @@ export function PromptWorkspace() {
       setWorkspaceState('error');
     }
   }, [toast, handleDirectGenerate]);
-
+  
   useEffect(() => {
+    if (isInitialized || subscriptionLoading) {
+        return;
+    }
+    
     const goalFromParams = searchParams.get('goal');
     const hasImageFlag = searchParams.get('image') === 'true';
     let imageFromStorage: string | null = null;
@@ -99,18 +108,21 @@ export function PromptWorkspace() {
     }
 
     if (goalFromParams) {
-      setGoal(goalFromParams);
-      if (imageFromStorage) {
-        setImageDataUri(imageFromStorage);
-      }
-      setWorkspaceState('loading_questions');
-      fetchAndSetQuestions(goalFromParams, imageFromStorage);
+        setGoal(goalFromParams);
+        if (imageFromStorage) setImageDataUri(imageFromStorage);
+        
+        setIsInitialized(true);
+
+        if (subscription?.planId === 'free') {
+            handleDirectGenerate(goalFromParams, imageFromStorage);
+        } else {
+            fetchAndSetQuestions(goalFromParams, imageFromStorage);
+        }
     } else {
-      toast({ title: "No Goal Specified", description: "Redirecting to dashboard to start a new prompt.", variant: "destructive" });
-      router.push('/dashboard');
+        toast({ title: "No Goal Specified", description: "Redirecting to dashboard to start a new prompt.", variant: "destructive" });
+        router.push('/dashboard');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isInitialized, subscriptionLoading, subscription, searchParams, toast, router, handleDirectGenerate, fetchAndSetQuestions]);
 
 
   const handleSurveyChange = (id: string, type: SurveyQuestion['type'], value: string) => {
@@ -174,6 +186,7 @@ export function PromptWorkspace() {
 
   const renderContent = () => {
     switch (workspaceState) {
+      case 'initial_loading':
       case 'loading_questions':
       case 'loading_optimization':
         return (
@@ -182,7 +195,9 @@ export function PromptWorkspace() {
               loadingText={
                 workspaceState === 'loading_questions'
                   ? 'Generating clarifying questions...'
-                  : 'Crafting your optimized prompt...'
+                  : workspaceState === 'loading_optimization'
+                  ? 'Crafting your optimized prompt...'
+                  : 'Initializing workspace...'
               }
             />
           </GlassCard>
