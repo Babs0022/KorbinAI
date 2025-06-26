@@ -60,7 +60,7 @@ export function FeatureCard({ feature }: FeatureCardProps) {
 
   return (
     <GlassCard className={cn(
-      "flex flex-col h-full transition-all duration-300 ease-in-out relative",
+      "flex flex-col aspect-square md:aspect-auto md:h-full transition-all duration-300 ease-in-out relative",
       isEnabled ? "hover:shadow-2xl hover:scale-[1.02]" : "opacity-70 cursor-not-allowed bg-muted/30"
     )}>
       <GlassCardHeader className="pb-3">
