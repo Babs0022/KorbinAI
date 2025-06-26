@@ -48,7 +48,6 @@ export default function OnboardingPage() {
         // Optionally prevent moving forward if answers are mandatory
         // For now, we'll allow proceeding but log it or skip saving.
         // Or, we could just save what we have.
-        // Let's proceed to dashboard even if data is incomplete for now, and not save incomplete data.
         if(!aiUsageFrequency && !aiResultSatisfaction) { // only if both are empty, otherwise save what's there.
             router.push('/dashboard');
             return;
