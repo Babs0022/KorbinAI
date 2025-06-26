@@ -14,7 +14,7 @@ interface AcademyTopic {
   title: string;
   description: string;
   icon: React.ElementType;
-  href?: string; // Optional link for future individual topic pages
+  href: string; 
 }
 
 const keyTopics: AcademyTopic[] = [
@@ -22,21 +22,25 @@ const keyTopics: AcademyTopic[] = [
     title: "Understanding Prompt Structure",
     description: "Learn the fundamental components of a well-structured prompt for better AI understanding.",
     icon: BookOpen,
+    href: "/dashboard/academy/understanding-prompt-structure",
   },
   {
     title: "The Art of Specificity",
     description: "Discover how providing clear, concise, and specific details can dramatically improve AI output.",
     icon: Lightbulb,
+    href: "/dashboard/academy/art-of-specificity",
   },
   {
     title: "Crafting Effective Personas",
     description: "Explore techniques for assigning roles to your AI to guide its tone, style, and knowledge base.",
     icon: Users,
+    href: "/dashboard/academy/crafting-personas",
   },
   {
     title: "Iterative Prompt Refinement",
     description: "Master the process of testing and tweaking your prompts to achieve optimal results.",
     icon: Settings2,
+    href: "/dashboard/academy/iterative-refinement",
   },
 ];
 
@@ -93,8 +97,8 @@ export default function AcademyPage() {
                       </GlassCardDescription>
                     </GlassCardContent>
                     <div className="p-4 pt-2 mt-auto">
-                       <Button variant="outline" size="sm" className="w-full" disabled>
-                          Read More (Coming Soon)
+                       <Button variant="outline" size="sm" className="w-full" asChild>
+                          <Link href={topic.href}>Learn More</Link>
                        </Button>
                     </div>
                   </GlassCard>
@@ -134,9 +138,6 @@ export default function AcademyPage() {
                   </ul>
                 </div>
               </div>
-              <p className="text-lg font-semibold text-primary mt-6 text-center">
-                More detailed articles, video tutorials, and interactive examples are on the way!
-              </p>
             </GlassCardContent>
           </GlassCard>
 
