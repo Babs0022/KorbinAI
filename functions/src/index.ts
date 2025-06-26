@@ -181,6 +181,7 @@ async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): 
       amount,
       currency,
       status: "success",
+      paymentMethod: "paystack", // Identify the payment method
       paystackReference: reference,
       paidAt: admin.firestore.Timestamp.fromDate(paidAtDate),
       createdAt: admin.firestore.FieldValue.serverTimestamp(), // Should only be set on creation
@@ -250,112 +251,122 @@ if (!NOWPAYMENTS_IPN_SECRET) {
  * This function expects an 'order_id' in the format: 'userId_planId_billingCycle'
  * e.g., 'aBcDeFg123_premium_monthly'
  */
-export const nowpaymentsWebhookHandler = onRequest({ region: "us-central1" }, async (req, res) => {
-    if (!NOWPAYMENTS_IPN_SECRET) {
-        logger.error("[NOWPayments] Handler called, but IPN secret is not configured.");
-        res.status(500).send("IPN secret is not configured on the server.");
-        return;
-    }
+export const nowpaymentsWebhookHandler = onRequest({ region: "us-central1" }, (req, res) => {
+    corsHandler(req, res, async () => {
+        // --- Enhanced Logging: Log all incoming requests for debugging ---
+        logger.info("[NOWPayments] Webhook invoked.", {
+            headers: req.headers,
+            body: req.body, // Log the body to see the raw payload from NOWPayments
+        });
 
-    const signature = req.headers["x-nowpayments-sig"] as string;
-    if (!signature) {
-        logger.warn("[NOWPayments] Received request without signature.");
-        res.status(401).send("Missing signature.");
-        return;
-    }
-    
-    // NOWPayments requires the body to be stringified with sorted keys for signature verification
-    const requestBodyString = JSON.stringify(req.body, Object.keys(req.body).sort());
-    
-    try {
-        const hmac = crypto.createHmac("sha512", NOWPAYMENTS_IPN_SECRET);
-        const expectedSignature = hmac.update(requestBodyString).digest("hex");
-
-        if (signature !== expectedSignature) {
-            logger.warn("[NOWPayments] Invalid signature received.", { received: signature });
-            res.status(401).send("Invalid signature.");
-            return;
-        }
-    } catch (error) {
-        logger.error("[NOWPayments] Error during signature verification:", error);
-        res.status(500).send("Signature verification failed.");
-        return;
-    }
-
-    const event = req.body;
-    logger.info(`[NOWPayments] Received valid IPN for payment ID: ${event.payment_id}, status: ${event.payment_status}`);
-    
-    // We only care about successfully completed payments
-    if (event.payment_status !== "finished" && event.payment_status !== "paid") {
-      logger.info(`[NOWPayments] Ignoring unhandled payment status: ${event.payment_status}`);
-      res.status(200).send("Webhook received (unhandled status).");
-      return;
-    }
-
-    const orderId = event.order_id;
-    if (!orderId || typeof orderId !== "string" || orderId.split("_").length !== 3) {
-      logger.error(`[NOWPayments] Invalid or missing order_id format in payload: ${orderId}`);
-      res.status(400).send("Invalid order_id format.");
-      return;
-    }
-    
-    const [userId, planId, billingCycle] = orderId.split("_");
-    
-    logger.info(`[NOWPayments] Processing successful payment for User ID: ${userId}, Plan: ${planId}, Cycle: ${billingCycle}`);
-
-    try {
-        const userRef = await admin.auth().getUser(userId);
-        if (!userRef) {
-            logger.error(`[NOWPayments] User with ID ${userId} not found in Firebase Auth.`);
-            res.status(404).send("User not found.");
+        if (!NOWPAYMENTS_IPN_SECRET) {
+            logger.error("[NOWPayments] Handler called, but IPN secret is not configured.");
+            res.status(500).send("IPN secret is not configured on the server.");
             return;
         }
 
-        const paidAtDate = new Date(event.created_at || Date.now());
-        const currentPeriodEndDate = new Date(paidAtDate.getTime());
+        const signature = req.headers["x-nowpayments-sig"] as string;
+        if (!signature) {
+            logger.warn("[NOWPayments] Received request without signature.");
+            res.status(401).send("Missing signature.");
+            return;
+        }
         
-        if (billingCycle === 'annually') {
-            currentPeriodEndDate.setFullYear(currentPeriodEndDate.getFullYear() + 1);
-        } else { // default to monthly
-            currentPeriodEndDate.setMonth(currentPeriodEndDate.getMonth() + 1);
+        const requestBodyString = JSON.stringify(req.body, Object.keys(req.body).sort());
+        
+        try {
+            const hmac = crypto.createHmac("sha512", NOWPAYMENTS_IPN_SECRET);
+            const expectedSignature = hmac.update(requestBodyString).digest("hex");
+
+            if (signature !== expectedSignature) {
+                logger.warn("[NOWPayments] Invalid signature.", {
+                    received: signature,
+                    expected: expectedSignature, // Log what we expected for easier debugging
+                });
+                res.status(401).send("Invalid signature.");
+                return;
+            }
+        } catch (error) {
+            logger.error("[NOWPayments] Error during signature verification:", error);
+            res.status(500).send("Signature verification failed.");
+            return;
         }
 
-        const subscriptionData = {
-          userId,
-          planId,
-          email: userRef.email, // Get email from the user record
-          status: "active",
-          paymentMethod: "crypto",
-          currentPeriodStart: admin.firestore.Timestamp.fromDate(paidAtDate),
-          currentPeriodEnd: admin.firestore.Timestamp.fromDate(currentPeriodEndDate),
-          nowpaymentsPaymentId: event.payment_id,
-          amountPaid: event.price_amount,
-          currency: event.price_currency,
-          lastEventTimestamp: admin.firestore.FieldValue.serverTimestamp(),
-        };
+        const event = req.body;
+        logger.info(`[NOWPayments] SIGNATURE VERIFIED. Processing valid IPN for payment ID: ${event.payment_id}, status: ${event.payment_status}`);
+        
+        // We only care about successfully completed payments
+        if (event.payment_status !== "finished" && event.payment_status !== "paid") {
+          logger.info(`[NOWPayments] Ignoring unhandled payment status: ${event.payment_status}`);
+          res.status(200).send("Webhook received (unhandled status).");
+          return;
+        }
 
-        await db.collection("userSubscriptions").doc(userId).set(subscriptionData, { merge: true });
+        const orderId = event.order_id;
+        if (!orderId || typeof orderId !== "string" || orderId.split("_").length !== 3) {
+          logger.error(`[NOWPayments] Invalid or missing order_id format in payload: ${orderId}`);
+          res.status(400).send("Invalid order_id format.");
+          return;
+        }
+        
+        const [userId, planId, billingCycle] = orderId.split("_");
+        
+        logger.info(`[NOWPayments] Processing successful payment for User ID: ${userId}, Plan: ${planId}, Cycle: ${billingCycle}`);
 
-        const transactionRef = db.collection("transactions").doc(String(event.payment_id));
-        await transactionRef.set({
-          userId,
-          planId,
-          email: userRef.email,
-          amount: event.price_amount,
-          currency: event.price_currency,
-          status: "success",
-          paymentMethod: "crypto",
-          nowpaymentsPaymentId: event.payment_id,
-          paidAt: admin.firestore.Timestamp.fromDate(paidAtDate),
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
+        try {
+            const userRef = await admin.auth().getUser(userId);
+            if (!userRef) {
+                logger.error(`[NOWPayments] User with ID ${userId} not found in Firebase Auth.`);
+                res.status(404).send("User not found.");
+                return;
+            }
 
-        logger.info(`[NOWPayments] SUCCESS: Updated crypto subscription for user ${userId}.`);
-        res.status(200).send("Webhook processed successfully.");
+            const paidAtDate = new Date(event.created_at || Date.now());
+            const currentPeriodEndDate = new Date(paidAtDate.getTime());
+            
+            if (billingCycle === 'annually') {
+                currentPeriodEndDate.setFullYear(currentPeriodEndDate.getFullYear() + 1);
+            } else { // default to monthly
+                currentPeriodEndDate.setMonth(currentPeriodEndDate.getMonth() + 1);
+            }
 
-    } catch (error) {
-        logger.error(`[NOWPayments] FIRESTORE/AUTH ERROR: Failed to write subscription data for order ${orderId}:`, error);
-        res.status(500).send("Internal server error while updating subscription.");
-    }
+            const subscriptionData = {
+              userId,
+              planId,
+              email: userRef.email, // Get email from the user record
+              status: "active",
+              paymentMethod: "crypto",
+              currentPeriodStart: admin.firestore.Timestamp.fromDate(paidAtDate),
+              currentPeriodEnd: admin.firestore.Timestamp.fromDate(currentPeriodEndDate),
+              nowpaymentsPaymentId: event.payment_id,
+              amountPaid: event.price_amount,
+              currency: event.price_currency,
+              lastEventTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+            };
+
+            await db.collection("userSubscriptions").doc(userId).set(subscriptionData, { merge: true });
+
+            const transactionRef = db.collection("transactions").doc(String(event.payment_id));
+            await transactionRef.set({
+              userId,
+              planId,
+              email: userRef.email,
+              amount: event.price_amount,
+              currency: event.price_currency,
+              status: "success",
+              paymentMethod: "crypto",
+              nowpaymentsPaymentId: event.payment_id,
+              paidAt: admin.firestore.Timestamp.fromDate(paidAtDate),
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+
+            logger.info(`[NOWPayments] SUCCESS: Updated crypto subscription for user ${userId}. Transaction logged.`);
+            res.status(200).send("Webhook processed successfully.");
+
+        } catch (error) {
+            logger.error(`[NOWPayments] FIRESTORE/AUTH ERROR: Failed to write subscription data for order ${orderId}:`, error);
+            res.status(500).send("Internal server error while updating subscription.");
+        }
+    });
 });
