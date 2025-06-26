@@ -29,7 +29,7 @@ const modelGroups = [
   },
   {
     groupName: 'Text Models (Anthropic)',
-    models: ["claude-3-opus", "claude-3-sonnet", "claude-3-haiku"]
+    models: ["claude-3.5-sonnet", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku"]
   },
   {
     groupName: 'Text Models (Other)',

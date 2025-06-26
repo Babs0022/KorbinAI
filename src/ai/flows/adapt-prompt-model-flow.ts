@@ -24,6 +24,7 @@ const AIModelEnumSchema = z.enum([
   "gemini-1.5-pro",
   "gemini-1.5-flash",
   "gemini-1.0-pro",
+  "claude-3.5-sonnet",
   "claude-3-opus",
   "claude-3-sonnet",
   "claude-3-haiku",
@@ -78,9 +79,9 @@ Consider these model-specific nuances:
   - The Gemini family is highly capable with multi-modal inputs (text, image, video).
   - "Flash" versions are optimized for speed and high-volume tasks, while "Pro" versions offer maximum reasoning power.
   - Benefit from well-structured prompts. Use clear headings and lists.
-- **Claude Models (Opus, Sonnet, Haiku):**
-  - The Claude 3 family varies in speed and power (Opus > Sonnet > Haiku). Haiku is best for near-instant responsiveness.
-  - Excels when instructions or examples are wrapped in XML tags, e.g., <example>...</example> or <document>...</document>. Best for long-context tasks.
+- **Claude Models (3.5 Sonnet, 3 Opus, 3 Sonnet, 3 Haiku):**
+  - **Claude 3.5 Sonnet:** The newest, fastest model in the family. It's twice as fast as Claude 3 Opus with near-equivalent intelligence, and excels at vision tasks, complex instruction following, and generating natural-sounding code and text.
+  - **Claude 3 Opus/Sonnet/Haiku:** This family varies in speed and power (Opus > Sonnet > Haiku). They excel when instructions are wrapped in XML tags (e.g., <example>...</example>) and for long-context tasks.
 - **Grok 3:**
   - Known for its potential access to real-time information and a more edgy or humorous tone.
   - Tailor prompts to leverage this by asking for timely information or specifying a particular witty persona.
@@ -111,7 +112,7 @@ If the Original Prompt seems fundamentally unsuited for the Target AI Model's pr
 
 Return the adapted prompt and 2-4 unique, actionable tips.
 Determine the 'modelType' based on the 'targetModel':
-- gpt-4.5, gpt-4o, gpt-4, gpt-3.5-turbo, gemini-2.5-pro, gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-pro, gemini-1.5-flash, gemini-1.0-pro, claude-3-opus, claude-3-sonnet, claude-3-haiku, llama-3-70b, grok-3, deepseek-r1 are 'text' models.
+- gpt-4.5, gpt-4o, gpt-4, gpt-3.5-turbo, gemini-2.5-pro, gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-pro, gemini-1.5-flash, gemini-1.0-pro, claude-3.5-sonnet, claude-3-opus, claude-3-sonnet, claude-3-haiku, llama-3-70b, grok-3, deepseek-r1 are 'text' models.
 - dall-e-3, midjourney, stable-diffusion-3, stable-diffusion are 'image' models.
 - If unsure, use 'unknown'.
 `,
