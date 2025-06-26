@@ -4,7 +4,7 @@
 import type { User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc, updateDoc } from 'firebase/firestore';
 import type { ReactNode} from 'react';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
@@ -60,17 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (teamDocSnap.exists()) {
         const teamData = teamDocSnap.data();
-        const member = teamData.members?.find((m: any) => m.uid === user.uid || m.email === user.email);
+        const member = teamData.members?.[user.uid];
         if (member) {
           setTeamRole(member.role);
-          // If member UID was null, update it now that they've logged in
-          if (!member.uid) {
-             const updatedMembers = teamData.members.map((m: any) => 
-                m.email === user.email ? { ...m, uid: user.uid, displayName: user.displayName, photoURL: user.photoURL } : m
-             );
-             await updateDoc(teamDocRef, { members: updatedMembers });
-          }
         } else {
+          // This logic can be expanded to handle pending invites
           setTeamRole(null);
         }
       }
@@ -153,3 +147,5 @@ export function useAuth() {
   }
   return context;
 }
+
+    

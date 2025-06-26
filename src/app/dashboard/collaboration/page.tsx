@@ -26,10 +26,8 @@ import {
   onSnapshot,
   serverTimestamp,
   updateDoc,
-  arrayUnion,
   Timestamp,
   deleteDoc,
-  arrayRemove
 } from 'firebase/firestore';
 import {
   Dialog,
@@ -47,7 +45,7 @@ import { Textarea } from '@/components/ui/textarea';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 
 interface TeamMember {
-  uid: string | null; // UID might not be known until they sign up
+  uid: string;
   email: string;
   role: 'admin' | 'editor' | 'viewer';
   displayName?: string;
@@ -58,7 +56,7 @@ interface Team {
   id: string;
   name: string;
   ownerId: string;
-  members: TeamMember[];
+  members: Record<string, TeamMember>; // Changed to a map
 }
 
 export default function CollaborationPage() {
@@ -149,13 +147,15 @@ export default function CollaborationPage() {
         name: newTeamName,
         ownerId: currentUser.uid,
         createdAt: serverTimestamp(),
-        members: [{
-          uid: currentUser.uid,
-          email: currentUser.email,
-          role: 'admin',
-          displayName: currentUser.displayName,
-          photoURL: currentUser.photoURL,
-        }]
+        members: {
+            [currentUser.uid]: {
+                uid: currentUser.uid,
+                email: currentUser.email,
+                role: 'admin',
+                displayName: currentUser.displayName,
+                photoURL: currentUser.photoURL,
+            }
+        }
       };
       await setDoc(newTeamRef, newTeamData);
 
@@ -165,7 +165,6 @@ export default function CollaborationPage() {
       toast({ title: "Team Created!", description: `Welcome to ${newTeamName}!` });
       setShowCreateTeamDialog(false);
       setNewTeamName('');
-      // AuthContext will automatically pick up the change
     } catch (error) {
       console.error("Error creating team:", error);
       toast({ title: "Error", description: "Could not create team. Please try again.", variant: "destructive" });
@@ -176,35 +175,14 @@ export default function CollaborationPage() {
 
   const handleInviteMember = async (e: FormEvent) => {
     e.preventDefault();
-    if (!inviteEmail.trim() || !team) return;
-
-    if (team.members.some(m => m.email === inviteEmail)) {
-        toast({ title: "Already a Member", description: "This user is already part of the team.", variant: "default" });
-        return;
-    }
-
-    setIsInviting(true);
-    try {
-      const teamDocRef = doc(db, 'teams', team.id);
-      const newMember: TeamMember = {
-        uid: null, // Will be filled when they accept
-        email: inviteEmail,
-        role: inviteRole,
-      };
-      await updateDoc(teamDocRef, {
-        members: arrayUnion(newMember)
-      });
-
-      toast({ title: "Invitation Sent!", description: `${inviteEmail} has been invited to the team as a ${inviteRole}.` });
-      setShowInviteDialog(false);
-      setInviteEmail('');
-      setInviteRole('viewer');
-    } catch (error) {
-      console.error("Error inviting member:", error);
-      toast({ title: "Error", description: "Could not invite member. Please try again.", variant: "destructive" });
-    } finally {
-      setIsInviting(false);
-    }
+    // This functionality is complex and requires a backend or Cloud Function to securely
+    // map an email to a UID. For now, this is a placeholder.
+    toast({
+        title: "Feature In Development",
+        description: "Inviting members by email is coming soon in a future update!",
+        variant: "default"
+    });
+    setShowInviteDialog(false);
   };
 
   const handleCreateSharedPrompt = async (e: FormEvent) => {
@@ -426,7 +404,7 @@ export default function CollaborationPage() {
                     </GlassCardHeader>
                     <GlassCardContent>
                       <div className="space-y-4">
-                        {team.members.map((member) => (
+                        {Object.values(team.members).map((member) => (
                           <div key={member.email} className="flex items-center space-x-3">
                             <Avatar>
                               <AvatarImage src={member.photoURL} alt={member.displayName} data-ai-hint="user avatar" />
@@ -455,3 +433,5 @@ export default function CollaborationPage() {
     </div>
   );
 }
+
+    
