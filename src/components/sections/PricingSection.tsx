@@ -104,10 +104,10 @@ export function PricingSection() {
           <Container>
             <div className="text-center mb-12">
               <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                Free for Everyone
+                Free for Everyone During Beta
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-                Get started with our powerful suite of prompt engineering tools, completely free. Paid plans are coming soon for teams.
+                Get started with our powerful suite of prompt engineering tools, completely free. Paid plans for advanced team features are coming soon.
               </p>
             </div>
             
@@ -127,7 +127,7 @@ export function PricingSection() {
                   {tier.emphasized && (
                     <div className="absolute top-0 right-4 -mt-3">
                       <div className="flex h-8 items-center justify-center rounded-full bg-primary px-4 text-xs font-bold uppercase text-primary-foreground shadow-xl">
-                        Free Forever
+                        Free During Beta
                       </div>
                     </div>
                   )}

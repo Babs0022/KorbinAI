@@ -6,7 +6,7 @@ import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Shield, PlusCircle, Loader2, Trash2, Settings, Eye, User, Tag, Copy, Send } from 'lucide-react';
+import { ArrowLeft, Users, Shield, PlusCircle, Loader2, Trash2, Settings, Eye, User, Tag, Copy, Send, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -73,7 +73,7 @@ interface ChatMessage {
 }
 
 export default function CollaborationPage() {
-  const { currentUser, teamId, teamRole, loading: authLoading, displayName, avatarUrl } = useAuth();
+  const { currentUser, teamId, teamRole, loading: authLoading, displayName, avatarUrl, subscription, subscriptionLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -108,6 +108,7 @@ export default function CollaborationPage() {
 
   const canManageTeam = useMemo(() => teamRole === 'admin', [teamRole]);
   const canEditPrompts = useMemo(() => teamRole === 'admin' || teamRole === 'editor', [teamRole]);
+  const canCreateTeam = useMemo(() => subscription?.planId === 'unlimited', [subscription]);
 
   useEffect(() => {
     if (chatScrollAreaRef.current) {
@@ -122,7 +123,7 @@ export default function CollaborationPage() {
   }, [team]);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || subscriptionLoading) return;
     if (!currentUser) {
       router.push('/login');
       return;
@@ -181,11 +182,11 @@ export default function CollaborationPage() {
       setIsLoading(false);
       setTeam(null);
     }
-  }, [currentUser, teamId, authLoading, router, toast]);
+  }, [currentUser, teamId, authLoading, router, toast, subscriptionLoading]);
 
   const handleCreateTeam = async (e: FormEvent) => {
     e.preventDefault();
-    if (!currentUser || !newTeamName.trim()) return;
+    if (!currentUser || !newTeamName.trim() || !canCreateTeam) return;
 
     setIsCreatingTeam(true);
     try {
@@ -358,7 +359,7 @@ export default function CollaborationPage() {
   };
 
 
-  if (isLoading || authLoading) {
+  if (isLoading || authLoading || subscriptionLoading) {
     return <div className="flex h-screen w-screen items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
 
@@ -388,29 +389,40 @@ export default function CollaborationPage() {
                 </GlassCardDescription>
               </GlassCardHeader>
               <GlassCardContent>
-                <Dialog open={showCreateTeamDialog} onOpenChange={setShowCreateTeamDialog}>
-                    <DialogTrigger asChild>
-                        <Button size="lg"><PlusCircle className="mr-2 h-5 w-5" />Create Your Team</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Create a New Team</DialogTitle>
-                            <DialogDescription>Give your team a name to get started.</DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleCreateTeam}>
-                            <div className="py-4">
-                                <Label htmlFor="teamName">Team Name</Label>
-                                <Input id="teamName" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} placeholder="e.g., Marketing Crew" required />
-                            </div>
-                            <DialogFooter>
-                                <Button type="submit" disabled={isCreatingTeam}>
-                                    {isCreatingTeam ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                                    Create Team
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                {!canCreateTeam ? (
+                    <div className="flex flex-col items-center gap-4">
+                        <p className="text-muted-foreground">Team creation is an upcoming premium feature.</p>
+                        <Button size="lg" asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                            <Link href="/#pricing">
+                                <Lock className="mr-2 h-4 w-4" /> Learn More About Future Plans
+                            </Link>
+                        </Button>
+                    </div>
+                ) : (
+                    <Dialog open={showCreateTeamDialog} onOpenChange={setShowCreateTeamDialog}>
+                        <DialogTrigger asChild>
+                            <Button size="lg"><PlusCircle className="mr-2 h-5 w-5" />Create Your Team</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Create a New Team</DialogTitle>
+                                <DialogDescription>Give your team a name to get started.</DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleCreateTeam}>
+                                <div className="py-4">
+                                    <Label htmlFor="teamName">Team Name</Label>
+                                    <Input id="teamName" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} placeholder="e.g., Marketing Crew" required />
+                                </div>
+                                <DialogFooter>
+                                    <Button type="submit" disabled={isCreatingTeam}>
+                                        {isCreatingTeam ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                                        Create Team
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                )}
               </GlassCardContent>
             </GlassCard>
           ) : (
