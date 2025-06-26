@@ -1,14 +1,13 @@
 
 "use client";
 
-import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
+import { GlassCard, GlassCardContent } from '@/components/shared/GlassCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { UserCircle, Edit3, Loader2, BadgeInfo, Star } from 'lucide-react';
+import { Edit3, Loader2, BadgeInfo, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
 
 // Helper to format planId to a display name
 const formatPlanName = (planId: string) => {
@@ -33,7 +32,7 @@ export function AccountInfoCard() {
   if (isLoading) {
     return (
       <GlassCard className="w-full">
-        <GlassCardContent className="flex justify-center items-center h-48">
+        <GlassCardContent className="flex justify-center items-center h-48 pt-6">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </GlassCardContent>
       </GlassCard>
@@ -43,11 +42,7 @@ export function AccountInfoCard() {
   if (!currentUser) {
     return (
       <GlassCard className="w-full">
-         <GlassCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <GlassCardTitle className="text-xl font-medium font-headline">My Account</GlassCardTitle>
-          <UserCircle className="h-6 w-6 text-muted-foreground" />
-        </GlassCardHeader>
-        <GlassCardContent>
+        <GlassCardContent className="pt-6">
           <p className="text-muted-foreground">Please log in to view account details.</p>
           <Button asChild className="w-full mt-4"><Link href="/login">Login</Link></Button>
         </GlassCardContent>
@@ -60,12 +55,8 @@ export function AccountInfoCard() {
 
   return (
     <GlassCard className="w-full">
-      <GlassCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <GlassCardTitle className="text-xl font-medium font-headline">My Account</GlassCardTitle>
-        <UserCircle className="h-6 w-6 text-muted-foreground" />
-      </GlassCardHeader>
-      <GlassCardContent>
-        <div className="flex items-center space-x-4 py-4">
+      <GlassCardContent className="pt-6">
+        <div className="flex items-center space-x-4">
           <Avatar className="h-20 w-20">
             <AvatarImage src={avatarUrl} alt={displayName} data-ai-hint="user profile" />
             <AvatarFallback>{userInitials}</AvatarFallback>
