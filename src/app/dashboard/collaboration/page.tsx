@@ -6,7 +6,7 @@ import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Shield, PlusCircle, Search, Loader2, Send, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Users, Shield, PlusCircle, Loader2, Trash2, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,7 +19,6 @@ import { db } from '@/lib/firebase';
 import {
   doc,
   setDoc,
-  getDoc,
   addDoc,
   collection,
   query,
@@ -37,7 +36,6 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from '@/components/ui/label';
@@ -57,7 +55,7 @@ interface Team {
   id: string;
   name: string;
   ownerId: string;
-  members: Record<string, TeamMember>; // Changed to a map
+  members: Record<string, TeamMember>;
 }
 
 export default function CollaborationPage() {
@@ -83,10 +81,19 @@ export default function CollaborationPage() {
   const [newPromptGoal, setNewPromptGoal] = useState('');
   const [isCreatingPrompt, setIsCreatingPrompt] = useState(false);
 
+  const [showManageTeamDialog, setShowManageTeamDialog] = useState(false);
+  const [editableTeamName, setEditableTeamName] = useState('');
+  const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
+
   const canManageTeam = useMemo(() => teamRole === 'admin', [teamRole]);
   const canEditPrompts = useMemo(() => teamRole === 'admin' || teamRole === 'editor', [teamRole]);
 
-  // Fetch team details and listen for real-time updates on prompts
+  useEffect(() => {
+    if (team) {
+      setEditableTeamName(team.name);
+    }
+  }, [team]);
+
   useEffect(() => {
     if (authLoading) return;
     if (!currentUser) {
@@ -161,7 +168,6 @@ export default function CollaborationPage() {
       await setDoc(newTeamRef, newTeamData);
 
       const userDocRef = doc(db, 'users', currentUser.uid);
-      // Use set with merge to safely create or update the document.
       await setDoc(userDocRef, { teamId: newTeamRef.id }, { merge: true });
 
       toast({ title: "Team Created!", description: `Welcome to ${newTeamName}!` });
@@ -175,10 +181,31 @@ export default function CollaborationPage() {
     }
   };
 
+  const handleUpdateTeamName = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!team || !canManageTeam || !editableTeamName.trim()) {
+      toast({ title: "Error", description: "Invalid team name or insufficient permissions.", variant: "destructive" });
+      return;
+    }
+
+    setIsUpdatingTeam(true);
+    try {
+      const teamDocRef = doc(db, 'teams', team.id);
+      await updateDoc(teamDocRef, {
+        name: editableTeamName.trim()
+      });
+      toast({ title: "Team Updated", description: "Your team's name has been changed." });
+      setShowManageTeamDialog(false);
+    } catch (error) {
+      console.error("Error updating team name:", error);
+      toast({ title: "Update Failed", description: "Could not update team name.", variant: "destructive" });
+    } finally {
+      setIsUpdatingTeam(false);
+    }
+  };
+
   const handleInviteMember = async (e: FormEvent) => {
     e.preventDefault();
-    // This functionality is complex and requires a backend or Cloud Function to securely
-    // map an email to a UID. For now, this is a placeholder.
     toast({
         title: "Feature In Development",
         description: "Inviting members by email is coming soon in a future update!",
@@ -197,7 +224,7 @@ export default function CollaborationPage() {
       await addDoc(promptsColRef, {
         name: newPromptName,
         goal: newPromptGoal,
-        optimizedPrompt: `As a ${newPromptGoal}, I need to... (Start refining here)`, // Basic prompt
+        optimizedPrompt: `As a ${newPromptGoal}, I need to... (Start refining here)`,
         tags: ['new', 'shared'],
         createdBy: currentUser?.uid,
         timestamp: serverTimestamp(),
@@ -224,7 +251,6 @@ export default function CollaborationPage() {
           toast({title: "Error", description: "Could not delete shared prompt.", variant: "destructive"});
       }
   };
-
 
   if (isLoading || authLoading) {
     return <div className="flex h-screen w-screen items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -285,10 +311,39 @@ export default function CollaborationPage() {
             <>
               <GlassCard className="mb-8">
                 <GlassCardHeader>
-                  <GlassCardTitle className="font-headline text-3xl flex items-center">
-                    <Users className="mr-3 h-8 w-8 text-primary" />
-                    {team.name}
-                  </GlassCardTitle>
+                  <div className="flex justify-between items-center flex-wrap gap-2">
+                    <GlassCardTitle className="font-headline text-3xl flex items-center">
+                      <Users className="mr-3 h-8 w-8 text-primary" />
+                      {team.name}
+                    </GlassCardTitle>
+                    {canManageTeam && (
+                      <Dialog open={showManageTeamDialog} onOpenChange={setShowManageTeamDialog}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Settings className="mr-2 h-4 w-4"/> Manage Team
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Manage Team Settings</DialogTitle>
+                            <DialogDescription>Update your team's details.</DialogDescription>
+                          </DialogHeader>
+                          <form onSubmit={handleUpdateTeamName} className="space-y-4 py-4">
+                            <div>
+                              <Label htmlFor="teamNameManage">Team Name</Label>
+                              <Input id="teamNameManage" value={editableTeamName} onChange={(e) => setEditableTeamName(e.target.value)} required />
+                            </div>
+                            <DialogFooter>
+                              <Button type="submit" disabled={isUpdatingTeam}>
+                                {isUpdatingTeam ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                Save Changes
+                              </Button>
+                            </DialogFooter>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
+                    )}
+                  </div>
                   <GlassCardDescription className="mt-2 text-lg">
                     A shared workspace to create, manage, and refine prompts as a team.
                   </GlassCardDescription>

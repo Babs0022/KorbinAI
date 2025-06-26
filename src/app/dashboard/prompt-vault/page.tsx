@@ -7,14 +7,14 @@ import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Search, Archive, ArrowLeft, Copy, Eye, Tag, ArrowDownUp } from 'lucide-react';
+import { Loader2, Search, Archive, ArrowLeft, Copy, Eye, Tag, ArrowDownUp, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { PromptHistoryItem, type PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -43,7 +43,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 type SortOption = "timestamp_desc" | "timestamp_asc" | "name_asc" | "name_desc";
 
 export default function PromptVaultPage() {
-  const { currentUser, loading: authLoading } = useAuth();
+  const { currentUser, teamId, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -53,6 +53,8 @@ export default function PromptVaultPage() {
   const [sortOption, setSortOption] = useState<SortOption>("timestamp_desc");
   const [promptToDelete, setPromptToDelete] = useState<PromptHistory | null>(null);
   const [viewingPrompt, setViewingPrompt] = useState<PromptHistory | null>(null);
+  const [promptToShare, setPromptToShare] = useState<PromptHistory | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
 
   const fetchPrompts = useCallback(async () => {
     if (!currentUser) {
@@ -163,6 +165,38 @@ export default function PromptVaultPage() {
     }
   }, [promptToDelete, currentUser, toast]);
 
+  const openShareDialog = useCallback((prompt: PromptHistory) => {
+    setPromptToShare(prompt);
+  }, []);
+
+  const handleSharePrompt = useCallback(async () => {
+    if (!promptToShare || !currentUser || !teamId) return;
+
+    setIsSharing(true);
+    try {
+      const { id, ...promptData } = promptToShare; 
+      const sharedPromptData = {
+        ...promptData,
+        sharedBy: {
+          uid: currentUser.uid,
+          displayName: currentUser.displayName,
+        },
+        timestamp: serverTimestamp(),
+      };
+      
+      const sharedPromptsColRef = collection(db, 'teams', teamId, 'sharedPrompts');
+      await addDoc(sharedPromptsColRef, sharedPromptData);
+
+      toast({ title: "Prompt Shared!", description: `"${promptToShare.name}" has been shared with your team.`});
+    } catch (error) {
+      console.error("Error sharing prompt:", error);
+      toast({ title: "Sharing Failed", description: "Could not share the prompt. Please try again.", variant: "destructive"});
+    } finally {
+      setIsSharing(false);
+      setPromptToShare(null);
+    }
+  }, [promptToShare, currentUser, teamId, toast]);
+
   const sortedAndFilteredPrompts = useMemo(() => {
     let filtered = prompts.filter(prompt => {
       const lowerSearchTerm = searchTerm.toLowerCase();
@@ -187,7 +221,6 @@ export default function PromptVaultPage() {
         return filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     }
   }, [prompts, searchTerm, sortOption]);
-
 
   if (authLoading || (!currentUser && authLoading)) {
     return (
@@ -273,6 +306,7 @@ export default function PromptVaultPage() {
                       onEdit={handleEditPrompt}
                       onExport={handleExportPrompt}
                       onDelete={() => openDeleteDialog(prompt)}
+                      onShare={teamId ? openShareDialog : undefined}
                     />
                   ))}
                 </div>
@@ -309,6 +343,26 @@ export default function PromptVaultPage() {
               <AlertDialogCancel onClick={() => setPromptToDelete(null)}>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeletePrompt} className="bg-destructive hover:bg-destructive/90">
                 Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
+      {promptToShare && (
+        <AlertDialog open={!!promptToShare} onOpenChange={() => setPromptToShare(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Share Prompt with Team?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will share a copy of &quot;{promptToShare.name}&quot; to your team's shared vault. Are you sure?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isSharing}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleSharePrompt} disabled={isSharing} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                {isSharing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4"/>}
+                Yes, Share
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
