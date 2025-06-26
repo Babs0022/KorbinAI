@@ -90,20 +90,27 @@ export function PromptWorkspace() {
 
   useEffect(() => {
     const goalFromParams = searchParams.get('goal');
-    const imageFromParams = searchParams.get('imageDataUri');
+    const hasImageFlag = searchParams.get('image') === 'true';
+    let imageFromStorage: string | null = null;
+
+    if (hasImageFlag) {
+        imageFromStorage = sessionStorage.getItem('imageDataUri');
+        sessionStorage.removeItem('imageDataUri');
+    }
 
     if (goalFromParams) {
       setGoal(goalFromParams);
-      if (imageFromParams) {
-        setImageDataUri(imageFromParams);
+      if (imageFromStorage) {
+        setImageDataUri(imageFromStorage);
       }
       setWorkspaceState('loading_questions');
-      fetchAndSetQuestions(goalFromParams, imageFromParams);
+      fetchAndSetQuestions(goalFromParams, imageFromStorage);
     } else {
       toast({ title: "No Goal Specified", description: "Redirecting to dashboard to start a new prompt.", variant: "destructive" });
       router.push('/dashboard');
     }
-  }, [searchParams, router, toast, fetchAndSetQuestions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   const handleSurveyChange = (id: string, type: SurveyQuestion['type'], value: string) => {
@@ -189,6 +196,12 @@ export function PromptWorkspace() {
             </GlassCardHeader>
             <GlassCardContent>
               <form onSubmit={handleSurveySubmit} className="space-y-4">
+                {imageDataUri && (
+                  <div className="mb-4">
+                    <Label>Image Context:</Label>
+                    <img src={imageDataUri} alt="User-provided context" className="mt-2 rounded-lg border max-h-48 w-auto" />
+                  </div>
+                )}
                 {surveyQuestions.map(q => (
                   <div key={q.id}>
                     <Label>{q.text}</Label>

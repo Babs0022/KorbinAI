@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Mic, Image as ImageIcon, Loader2, Send } from 'lucide-react';
+import { Mic, Image as ImageIcon, Loader2, Send, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -25,23 +25,19 @@ export function PromptInputForm() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
-  const [isFocused, setIsFocused] = useState(false); // New state for focus
+  const [isFocused, setIsFocused] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null); // Ref for autosizing
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Effect for autosizing the textarea
   useEffect(() => {
     if (textareaRef.current) {
-      // Reset height to shrink when text is deleted
       textareaRef.current.style.height = 'auto';
-      // Set height to scrollHeight to expand
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
-  }, [goal]); // Rerun whenever the goal text changes
+  }, [goal]);
 
   useEffect(() => {
-    // Check for SpeechRecognition API on the client
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       setIsSpeechSupported(true);
@@ -93,17 +89,20 @@ export function PromptInputForm() {
     }
     if (isRecording) {
       recognitionRef.current?.stop();
-      setIsRecording(false);
     } else {
-      setGoal(''); // Clear previous goal before starting new recording
+      setGoal('');
       recognitionRef.current?.start();
-      setIsRecording(true);
     }
+    setIsRecording(!isRecording);
   };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast({ title: "Invalid File Type", description: "Please select an image file.", variant: "destructive" });
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
@@ -114,8 +113,16 @@ export function PromptInputForm() {
     }
   };
 
+  const handleRemoveImage = () => {
+    setImageDataUri(null);
+    if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
+    toast({ title: "Image Removed", description: "The image context has been cleared." });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent default form submission on enter
+    e.preventDefault();
     if (!goal.trim()) {
       toast({ title: "Goal Required", description: "Please describe what you want to create.", variant: "destructive" });
       return;
@@ -123,11 +130,17 @@ export function PromptInputForm() {
     setIsProcessing(true);
     const params = new URLSearchParams();
     params.set('goal', goal);
+
     if (imageDataUri) {
       try {
-        params.set('imageDataUri', imageDataUri);
-      } catch (e) {
-         toast({ title: "Image Too Large", description: "The selected image is too large to process this way. Please try a smaller image.", variant: "destructive" });
+        sessionStorage.setItem('imageDataUri', imageDataUri);
+        params.set('image', 'true');
+      } catch (error) {
+         let description = "The selected image is too large to process. Please try a smaller one.";
+         if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+             description = "Cannot store image as it exceeds browser storage limits. Please use a smaller file.";
+         }
+         toast({ title: "Image Too Large", description, variant: "destructive" });
          setIsProcessing(false);
          return;
       }
@@ -135,12 +148,9 @@ export function PromptInputForm() {
     router.push(`/create-prompt?${params.toString()}`);
   };
 
-  // Prevent Enter from submitting the form, allowing for new lines instead
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      // To submit on Enter, you would call handleSubmit here.
-      // But the requirement is to allow new lines.
     }
   };
 
@@ -151,6 +161,23 @@ export function PromptInputForm() {
         ? "ring-2 ring-primary shadow-lg shadow-primary/20" 
         : "ring-0 shadow-none"
     )}>
+      {imageDataUri && (
+        <div className="absolute top-3 left-3 z-10">
+            <div className="relative">
+                <img src={imageDataUri} alt="Image preview" className="h-16 w-16 object-cover rounded-lg border-2 border-primary/50" />
+                <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    onClick={handleRemoveImage}
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md"
+                    aria-label="Remove image"
+                >
+                    <X className="h-4 w-4" />
+                </Button>
+            </div>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="relative">
         <Textarea
           ref={textareaRef}
@@ -161,7 +188,10 @@ export function PromptInputForm() {
           onBlur={() => setIsFocused(false)}
           onKeyDown={handleKeyDown}
           placeholder="e.g., Write a marketing email for a new SaaS product..."
-          className="w-full min-h-[72px] max-h-[300px] text-lg p-4 pr-36 rounded-2xl bg-muted/50 border-transparent focus-visible:ring-0 resize-none overflow-y-auto"
+          className={cn(
+            "w-full min-h-[72px] max-h-[300px] text-lg p-4 pr-36 rounded-2xl bg-muted/50 border-transparent focus-visible:ring-0 resize-none overflow-y-auto",
+            imageDataUri ? "pl-24" : "pl-4"
+          )}
           disabled={isProcessing}
           aria-label="Prompt goal input"
         />
