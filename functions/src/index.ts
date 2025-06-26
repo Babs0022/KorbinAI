@@ -234,3 +234,127 @@ export const paystackWebhookHandler = onRequest({ region: "us-central1" }, (req,
         }
     });
 });
+
+// --- Coinbase Commerce Webhook Handler (Placeholder) ---
+// TODO: Uncomment and configure once you have Coinbase Commerce API keys.
+/*
+import * as coinbase from "coinbase-commerce-node";
+const { Webhook } = coinbase;
+
+const COINBASE_WEBHOOK_SECRET = process.env.COINBASE_WEBHOOK_SECRET;
+
+export const coinbaseWebhookHandler = onRequest({ region: "us-central1" }, (req, res) => {
+    corsHandler(req, res, async () => {
+        if (!COINBASE_WEBHOOK_SECRET) {
+            logger.error("[Coinbase] Webhook handler called, but COINBASE_WEBHOOK_SECRET is not configured.");
+            res.status(500).send("Coinbase webhook secret is not configured.");
+            return;
+        }
+
+        const signature = req.headers["x-cc-webhook-signature"] as string;
+        const requestBodyString = req.rawBody?.toString();
+
+        if (!signature || !requestBodyString) {
+             logger.error("[Coinbase] Received request with missing signature or body.");
+             res.status(400).send("Request missing signature or body.");
+             return;
+        }
+
+        try {
+            // Verify the webhook signature to ensure it's from Coinbase
+            const event = Webhook.verifyEventBody(
+                requestBodyString,
+                signature,
+                COINBASE_WEBHOOK_SECRET
+            );
+
+            logger.info(`[Coinbase] Received valid event: ${event.type}`);
+
+            // We only care about confirmed charges
+            if (event.type === "charge:confirmed") {
+                const chargeData = event.data;
+                
+                // TODO: You MUST pass 'email' and 'planId' in the metadata when creating the charge/checkout in Coinbase
+                const { email, planId, billingCycle } = chargeData.metadata;
+
+                if (!email || !planId) {
+                    logger.error(`[Coinbase] CRITICAL: Missing email or planId in webhook metadata for charge ${chargeData.code}.`);
+                    res.status(400).send("Webhook missing required metadata.");
+                    return;
+                }
+                
+                // Acknowledge the event immediately
+                res.status(200).send({ message: "Webhook acknowledged, processing in background." });
+
+                // Process the successful payment asynchronously
+                await processCryptoPayment(email, planId, billingCycle, chargeData);
+
+            } else {
+                 logger.info(`[Coinbase] Unhandled event type received: ${event.type}`);
+                 res.status(200).send({ message: "Event received and acknowledged (unhandled type)." });
+            }
+
+        } catch (error) {
+            logger.error("[Coinbase] Invalid webhook signature or processing error:", error);
+            res.status(400).send("Webhook Error: Invalid signature or payload.");
+        }
+    });
+});
+
+async function processCryptoPayment(email: string, planId: string, billingCycle: string, chargeData: any): Promise<void> {
+    logger.info(`[Coinbase] Processing crypto payment for email: ${email}, planId: ${planId}`);
+    
+    let userRecord: admin.auth.UserRecord;
+    try {
+        userRecord = await admin.auth().getUserByEmail(email);
+        logger.info(`[Coinbase] Found user UID ${userRecord.uid} for email ${email}.`);
+    } catch (error) {
+        logger.error(`[Coinbase] CRITICAL: Could not find a user with email ${email}.`, { email, error });
+        return;
+    }
+    const userId = userRecord.uid;
+
+    try {
+        const paidAtDate = new Date(); // Coinbase events are near real-time
+        const currentPeriodEndDate = new Date(paidAtDate.getTime());
+        
+        if (billingCycle === 'annually') {
+            currentPeriodEndDate.setFullYear(currentPeriodEndDate.getFullYear() + 1);
+        } else {
+            currentPeriodEndDate.setMonth(currentPeriodEndDate.getMonth() + 1);
+        }
+
+        const subscriptionData = {
+          userId,
+          planId,
+          email,
+          status: "active",
+          currentPeriodStart: admin.firestore.Timestamp.fromDate(paidAtDate),
+          currentPeriodEnd: admin.firestore.Timestamp.fromDate(currentPeriodEndDate),
+          cryptoReference: chargeData.code, // Use Coinbase charge code as reference
+          amountPaid: `${chargeData.pricing.local.amount} ${chargeData.pricing.local.currency}`, // e.g., "100.00 USD"
+          lastEventTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+        };
+
+        await db.collection("userSubscriptions").doc(String(userId)).set(subscriptionData, { merge: true });
+        
+        const transactionRef = db.collection("transactions").doc(chargeData.code);
+        await transactionRef.set({
+          userId,
+          planId,
+          email,
+          amount: `${chargeData.pricing.local.amount} ${chargeData.pricing.local.currency}`,
+          status: "success",
+          cryptoReference: chargeData.code,
+          paidAt: admin.firestore.Timestamp.fromDate(paidAtDate),
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+
+        logger.info(`[Coinbase] SUCCESS: Updated subscription for user ${userId} (plan: ${planId}, ref: ${chargeData.code}).`);
+
+    } catch (error) {
+        logger.error(`[Coinbase] FIRESTORE ERROR: Failed to write subscription data for charge ${chargeData.code}:`, error);
+    }
+}
+*/

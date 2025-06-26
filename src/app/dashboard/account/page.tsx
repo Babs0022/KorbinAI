@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/dialog";
 import NextImage from 'next/image';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const predefinedIcons = Array.from({ length: 10 }, (_, i) => `https://avatar.iran.liara.run/public/${i + 1}`);
 const defaultPlaceholderUrl = "https://placehold.co/40x40.png";
@@ -451,24 +452,38 @@ export default function AccountPage() {
                                   </li>
                                 ))}
                               </ul>
-                              <Button
-                                asChild
-                                size="lg"
-                                className={cn(
-                                  "mt-6 w-full",
-                                  tier.emphasized ? "bg-primary hover:bg-primary/90 text-primary-foreground"
-                                    : "bg-accent hover:bg-accent/90 text-accent-foreground"
-                                )}
-                              >
-                                <a href={getPaymentLink(tier)} rel="noopener noreferrer">
-                                    {tier.cta}
-                                </a>
-                              </Button>
+                              <div className="mt-6 flex flex-col gap-2">
+                                <Button
+                                    asChild
+                                    size="lg"
+                                    className={cn(
+                                    "w-full",
+                                    tier.emphasized ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                                        : "bg-accent hover:bg-accent/90 text-accent-foreground"
+                                    )}
+                                >
+                                    <a href={getPaymentLink(tier)} rel="noopener noreferrer">
+                                        {tier.cta}
+                                    </a>
+                                </Button>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="outline" className="w-full" size="lg" disabled>
+                                                Pay with Crypto
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Crypto payments coming soon!</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                              </div>
                             </div>
                           ))}
                         </div>
                         <DialogFooter className="mt-auto pt-4 border-t">
-                           <p className="text-xs text-muted-foreground mr-auto">Payments are securely processed via Paystack. Ensure your payment email matches your account email.</p>
+                           <p className="text-xs text-muted-foreground mr-auto">Payments are securely processed. Ensure your payment email matches your account email.</p>
                           <DialogClose asChild>
                             <Button variant="outline">Cancel</Button>
                           </DialogClose>

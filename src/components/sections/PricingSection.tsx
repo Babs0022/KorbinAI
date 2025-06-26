@@ -8,10 +8,11 @@ import { GlassCard } from '@/components/shared/GlassCard';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 interface Tier {
   name: string;
@@ -94,7 +95,6 @@ const pricingTiers: Tier[] = [
 export function PricingSection() {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'annually'>('monthly');
     const { currentUser } = useAuth();
-    const router = useRouter();
 
     const getPaymentLink = (tier: Tier) => {
         let link = billingCycle === 'monthly' ? tier.paymentLink.monthly : tier.paymentLink.annually;
@@ -103,9 +103,7 @@ export function PricingSection() {
             return link;
         }
 
-        // Append user's email as a query parameter if they are logged in
         if (currentUser && currentUser.email) {
-            // Check if the link already has query params
             if (link.includes('?')) {
                 link += `&email=${encodeURIComponent(currentUser.email)}`;
             } else {
@@ -183,18 +181,34 @@ export function PricingSection() {
                         </li>
                     ))}
                   </ul>
-                  <Button
-                    asChild
-                    className={cn(
-                      "mt-8 w-full",
-                      tier.emphasized && tier.planId !== 'free' ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-accent hover:bg-accent/90 text-accent-foreground",
-                       tier.planId === 'free' ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground" : ""
+                  <div className="mt-8 flex flex-col gap-2">
+                    <Button
+                      asChild
+                      className={cn(
+                        "w-full",
+                        tier.emphasized && tier.planId !== 'free' ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-accent hover:bg-accent/90 text-accent-foreground",
+                         tier.planId === 'free' ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground" : ""
+                      )}
+                    >
+                      <a href={getPaymentLink(tier)} rel="noopener noreferrer">
+                          {tier.cta}
+                      </a>
+                    </Button>
+                    {tier.planId !== 'free' && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="outline" className="w-full" disabled>
+                                        Pay with Crypto
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                <p>Crypto payments coming soon!</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     )}
-                  >
-                    <a href={getPaymentLink(tier)} rel="noopener noreferrer">
-                        {tier.cta}
-                    </a>
-                  </Button>
+                  </div>
                 </GlassCard>
               ))}
             </div>
