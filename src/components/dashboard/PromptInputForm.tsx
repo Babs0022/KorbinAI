@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -113,7 +114,8 @@ export function PromptInputForm() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent default form submission on enter
     if (!goal.trim()) {
       toast({ title: "Goal Required", description: "Please describe what you want to create.", variant: "destructive" });
       return;
@@ -122,9 +124,6 @@ export function PromptInputForm() {
     const params = new URLSearchParams();
     params.set('goal', goal);
     if (imageDataUri) {
-      // The Data URI can be very long. A better approach for production would be to upload to a bucket
-      // and pass the URL, but for this implementation, we'll pass it as a query param.
-      // This may fail for very large images.
       try {
         params.set('imageDataUri', imageDataUri);
       } catch (e) {
@@ -136,57 +135,68 @@ export function PromptInputForm() {
     router.push(`/create-prompt?${params.toString()}`);
   };
 
+  // Prevent Enter from submitting the form, allowing for new lines instead
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      // To submit on Enter, you would call handleSubmit here.
+      // But the requirement is to allow new lines.
+    }
+  };
+
   return (
     <div className="relative w-full">
-      <Textarea
-        ref={textareaRef}
-        rows={1}
-        value={goal}
-        onChange={(e) => setGoal(e.target.value)}
-        placeholder="e.g., Write a marketing email for a new SaaS product..."
-        className="w-full min-h-[72px] max-h-[300px] text-lg p-4 pr-36 rounded-2xl bg-muted/50 border-border/50 focus-visible:ring-primary focus-visible:ring-2 resize-none overflow-y-auto"
-        disabled={isProcessing}
-        aria-label="Prompt goal input"
-      />
-      <div className="absolute bottom-3 right-3 flex items-center gap-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => fileInputRef.current?.click()}
-          className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
+      <form onSubmit={handleSubmit}>
+        <Textarea
+          ref={textareaRef}
+          rows={1}
+          value={goal}
+          onChange={(e) => setGoal(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="e.g., Write a marketing email for a new SaaS product..."
+          className="w-full min-h-[72px] max-h-[300px] text-lg p-4 pr-36 rounded-2xl bg-muted/50 border-border/50 focus-visible:ring-primary focus-visible:ring-2 focus-visible:shadow-lg focus-visible:shadow-primary/20 resize-none overflow-y-auto transition-shadow duration-200"
           disabled={isProcessing}
-          aria-label="Upload Image"
-        >
-          <ImageIcon className="h-5 w-5" />
-        </Button>
-        <Input id="image-upload-dashboard" type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={handleMicClick}
-          className={cn(
-            "h-9 w-9 text-muted-foreground hover:bg-primary/10 rounded-full",
-            isRecording ? "text-destructive bg-destructive/10" : "hover:text-primary"
-          )}
-          disabled={isProcessing || !isSpeechSupported}
-          aria-label={isRecording ? "Stop recording" : "Start recording"}
-        >
-          <Mic className="h-5 w-5" />
-        </Button>
-        <Button
-          type="button"
-          variant="default"
-          size="icon"
-          onClick={handleSubmit}
-          className="h-9 w-9 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
-          disabled={isProcessing || !goal.trim()}
-          aria-label="Submit goal"
-        >
-            <Send className="h-5 w-5" />
-        </Button>
-      </div>
+          aria-label="Prompt goal input"
+        />
+        <div className="absolute bottom-3 right-3 flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
+            disabled={isProcessing}
+            aria-label="Upload Image"
+          >
+            <ImageIcon className="h-5 w-5" />
+          </Button>
+          <Input id="image-upload-dashboard" type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleMicClick}
+            className={cn(
+              "h-9 w-9 text-muted-foreground hover:bg-primary/10 rounded-full",
+              isRecording ? "text-destructive bg-destructive/10" : "hover:text-primary"
+            )}
+            disabled={isProcessing || !isSpeechSupported}
+            aria-label={isRecording ? "Stop recording" : "Start recording"}
+          >
+            <Mic className="h-5 w-5" />
+          </Button>
+          <Button
+            type="submit"
+            variant="default"
+            size="icon"
+            className="h-9 w-9 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
+            disabled={isProcessing || !goal.trim()}
+            aria-label="Submit goal"
+          >
+              <Send className="h-5 w-5" />
+          </Button>
+        </div>
+      </form>
       {isProcessing && <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 animate-spin text-primary" />}
     </div>
   );
