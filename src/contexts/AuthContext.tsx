@@ -4,14 +4,16 @@
 import type { User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import type { ReactNode} from 'react';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
 interface Subscription {
   planId: string;
   status: string;
 }
+
+type TeamRole = 'admin' | 'editor' | 'viewer';
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
@@ -22,6 +24,8 @@ interface AuthContextType {
   displayName: string;
   displayEmail: string;
   avatarUrl:string;
+  teamId: string | null;
+  teamRole: TeamRole | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,9 +43,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [displayEmail, setDisplayEmail] = useState("user@example.com");
   const [avatarUrl, setAvatarUrl] = useState(defaultPlaceholderUrl);
   const [userInitials, setUserInitials] = useState("U");
+  
+  const [teamId, setTeamId] = useState<string | null>(null);
+  const [teamRole, setTeamRole] = useState<TeamRole | null>(null);
+
+  const fetchTeamInfo = useCallback(async (user: FirebaseUser) => {
+    const userDocRef = doc(db, 'users', user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists() && userDocSnap.data().teamId) {
+      const currentTeamId = userDocSnap.data().teamId;
+      setTeamId(currentTeamId);
+
+      const teamDocRef = doc(db, 'teams', currentTeamId);
+      const teamDocSnap = await getDoc(teamDocRef);
+
+      if (teamDocSnap.exists()) {
+        const teamData = teamDocSnap.data();
+        const member = teamData.members?.find((m: any) => m.uid === user.uid || m.email === user.email);
+        if (member) {
+          setTeamRole(member.role);
+          // If member UID was null, update it now that they've logged in
+          if (!member.uid) {
+             const updatedMembers = teamData.members.map((m: any) => 
+                m.email === user.email ? { ...m, uid: user.uid, displayName: user.displayName, photoURL: user.photoURL } : m
+             );
+             await updateDoc(teamDocRef, { members: updatedMembers });
+          }
+        } else {
+          setTeamRole(null);
+        }
+      }
+    } else {
+      setTeamId(null);
+      setTeamRole(null);
+    }
+  }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       setLoading(false);
 
@@ -56,38 +96,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ).toUpperCase()
         );
         
-        // Listen for subscription changes
+        await fetchTeamInfo(user);
+        
         setSubscriptionLoading(true);
         const subDocRef = doc(db, 'userSubscriptions', user.uid);
         const unsubscribeSub = onSnapshot(subDocRef, (docSnap) => {
           if (docSnap.exists() && docSnap.data().status === 'active') {
             setSubscription({ planId: docSnap.data().planId, status: docSnap.data().status });
           } else {
-            // No active subscription found, default to free
             setSubscription({ planId: 'free', status: 'active' });
           }
           setSubscriptionLoading(false);
         }, (error) => {
             console.error("Error fetching subscription:", error);
-            setSubscription({ planId: 'free', status: 'active' }); // Default to free on error
+            setSubscription({ planId: 'free', status: 'active' });
             setSubscriptionLoading(false);
         });
 
-        return () => unsubscribeSub(); // Cleanup subscription listener on user change
+        return () => unsubscribeSub();
 
       } else {
-        // No user, clear all data
         setDisplayName("User");
         setDisplayEmail("user@example.com");
         setAvatarUrl(defaultPlaceholderUrl);
         setUserInitials("U");
         setSubscription(null);
         setSubscriptionLoading(false);
+        setTeamId(null);
+        setTeamRole(null);
       }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [fetchTeamInfo]);
 
   const value = {
     currentUser,
@@ -97,7 +138,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     displayName,
     displayEmail,
     avatarUrl,
-    userInitials
+    userInitials,
+    teamId,
+    teamRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

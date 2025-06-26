@@ -46,6 +46,7 @@ export function SignupForm() {
             displayName: name,
             photoURL: newUser.photoURL || null, 
             createdAt: Timestamp.now(),
+            teamId: null, // Initialize teamId for new users
         };
         
         console.log("[SignupForm] Attempting to write user document to Firestore.");
