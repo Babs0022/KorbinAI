@@ -1,48 +1,59 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname
-  const hostname = request.headers.get('host')
+  const pathname = request.nextUrl.pathname;
+  const hostname = request.headers.get('host');
 
-  // In development, the host is probably localhost, so we can skip this logic.
-  if (process.env.NODE_ENV === 'development' || !hostname || hostname.includes('localhost')) {
-    return NextResponse.next()
+  // Define hostnames directly to avoid environment variable issues in production
+  const APP_HOSTNAME = 'app.brieflyai.xyz';
+  const ROOT_HOSTNAME = 'brieflyai.xyz';
+
+  // Skip all logic if it's a development environment or a preview deployment
+  // that doesn't use the custom domains.
+  if (hostname !== APP_HOSTNAME && hostname !== ROOT_HOSTNAME) {
+    return NextResponse.next();
   }
 
-  const APP_HOSTNAME = process.env.NEXT_PUBLIC_APP_HOSTNAME || 'app.brieflyai.xyz';
-  const ROOT_HOSTNAME = process.env.NEXT_PUBLIC_ROOT_HOSTNAME || 'brieflyai.xyz';
-
-  // These are paths that should ONLY exist on the app domain.
+  // Paths that should only exist on the app subdomain.
+  // This list is now more comprehensive.
   const appPaths = [
-    '/dashboard', 
-    '/login', 
-    '/signup', 
-    '/forgot-password', 
-    '/create-prompt', 
-    '/verify-email', 
-    '/onboarding'
+    '/dashboard',
+    '/login',
+    '/signup',
+    '/forgot-password',
+    '/create-prompt',
+    '/verify-email',
+    '/onboarding',
   ];
 
+  // Check if the current path is an app-specific path
   const isAppPath = appPaths.some(path => pathname.startsWith(path));
 
-  // If on the app domain and trying to access the root, redirect to dashboard.
-  if (hostname === APP_HOSTNAME && pathname === '/') {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  // Handle routing for the app subdomain
+  if (hostname === APP_HOSTNAME) {
+    // If someone lands on app.brieflyai.xyz/, redirect them to the dashboard
+    if (pathname === '/') {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    // If they are on the app domain but try to access a non-app page (e.g. landing page),
+    // redirect them to the root domain.
+    if (!isAppPath) {
+      return NextResponse.redirect(new URL(`https://${ROOT_HOSTNAME}${pathname}`));
+    }
   }
 
-  // If on the root domain but trying to access an app page, redirect to the app domain.
-  if (hostname === ROOT_HOSTNAME && isAppPath) {
-    return NextResponse.redirect(new URL(`https://${APP_HOSTNAME}${pathname}`))
-  }
-  
-  // If on the app domain but trying to access a page that isn't an app page (e.g. landing page sections),
-  // redirect to the root domain.
-  if (hostname === APP_HOSTNAME && !isAppPath) {
-     return NextResponse.redirect(new URL(`https://${ROOT_HOSTNAME}${pathname}`))
+  // Handle routing for the root domain
+  if (hostname === ROOT_HOSTNAME) {
+    // If someone tries to access an app page on the root domain,
+    // redirect them to the app subdomain.
+    if (isAppPath) {
+      return NextResponse.redirect(new URL(`https://${APP_HOSTNAME}${pathname}`));
+    }
   }
 
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
 export const config = {
