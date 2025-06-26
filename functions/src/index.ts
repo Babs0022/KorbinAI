@@ -97,7 +97,8 @@ interface PaystackPlan {
     interval?: 'monthly' | 'annually' | string;
 }
 
-interface PaystackChargeSuccessData {
+// This is the structure of the data object inside a successful transaction verification response
+interface VerifiedTransactionData {
     reference: string;
     customer?: PaystackCustomer;
     amount: number;
@@ -107,53 +108,64 @@ interface PaystackChargeSuccessData {
     plan_object?: PaystackPlan; // For subscription charges
 }
 
-// This function is now more robust and has detailed logging.
-async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): Promise<void> {
-  logger.info(`[Webhook] Processing 'charge.success' for reference: ${eventData.reference}`);
+// This function now verifies the transaction with Paystack before processing.
+async function processChargeSuccessEvent(eventData: { reference: string }): Promise<void> {
+  const { reference } = eventData;
+  logger.info(`[Webhook] Verifying transaction with reference: ${reference}`);
 
-  const { reference, customer, amount, currency, paid_at, plan, plan_object } = eventData;
+  try {
+    // Call Paystack's API to get the authoritative transaction details
+    const verifiedTx = await paystack.transaction.verify({ reference });
 
-  const email = customer?.email;
-  // **THE FIX**: Check both `plan_object` (from subscriptions) and `plan` (from payment pages) for the plan code.
-  const planCode = plan_object?.plan_code || plan?.plan_code;
-  const interval = plan_object?.interval || plan?.interval;
+    if (!verifiedTx.status || !verifiedTx.data) {
+        logger.error(`[Webhook] Transaction verification failed for reference: ${reference}. No data in response.`, { response: verifiedTx });
+        return;
+    }
+    
+    if (verifiedTx.data.status !== 'success') {
+        logger.warn(`[Webhook] Transaction status for reference ${reference} was not 'success'. Status: ${verifiedTx.data.status}. Ignoring.`);
+        return;
+    }
 
-  if (!email || !planCode) {
-    logger.error(`[Webhook] CRITICAL: Missing email or plan_code in payload for reference ${reference}. Cannot process.`, { email, planCode, data: eventData });
-    return;
-  }
-  logger.info(`[Webhook] Found Email: ${email} and Plan Code: ${planCode}.`);
+    // Now, use the verified data as the source of truth
+    const { customer, amount, currency, paid_at, plan, plan_object } = verifiedTx.data as VerifiedTransactionData;
+    
+    const email = customer?.email;
+    const planCode = plan_object?.plan_code || plan?.plan_code;
+    const interval = plan_object?.interval || plan?.interval;
 
-  const { planId } = findPlanDetailsByCode(planCode);
-
-  if (!planId) {
-      logger.error(`[Webhook] CRITICAL: Could not match plan code ${planCode} to a known plan.`);
+    if (!email || !planCode) {
+      logger.error(`[Webhook] CRITICAL: Missing email or plan_code in VERIFIED transaction for reference ${reference}. Cannot process.`, { email, planCode, data: verifiedTx.data });
       return;
-  }
-  logger.info(`[Webhook] Matched to Internal Plan ID: ${planId} with interval: ${interval}.`);
+    }
+    logger.info(`[Webhook] Verified transaction. Found Email: ${email} and Plan Code: ${planCode}.`);
 
-  let userRecord: admin.auth.UserRecord;
-  try {
-      userRecord = await admin.auth().getUserByEmail(email);
-      logger.info(`[Webhook] Found user UID ${userRecord.uid} for email ${email}.`);
-  } catch (error) {
-      logger.error(`[Webhook] CRITICAL: Could not find a user with email ${email}. A user must sign up in BrieflyAI with this email first.`, { email, error });
-      return; // Stop processing if no user can be found
-  }
+    const { planId } = findPlanDetailsByCode(planCode);
 
-  const userId = userRecord.uid;
+    if (!planId) {
+        logger.error(`[Webhook] CRITICAL: Could not match plan code ${planCode} from verified transaction to a known plan.`);
+        return;
+    }
+    logger.info(`[Webhook] Matched to Internal Plan ID: ${planId} with interval: ${interval}.`);
 
-  try {
+    let userRecord: admin.auth.UserRecord;
+    try {
+        userRecord = await admin.auth().getUserByEmail(email);
+        logger.info(`[Webhook] Found user UID ${userRecord.uid} for email ${email}.`);
+    } catch (error) {
+        logger.error(`[Webhook] CRITICAL: Could not find a user with email ${email}. A user must sign up in BrieflyAI with this email first.`, { email, error });
+        return; // Stop processing if no user can be found
+    }
+
+    const userId = userRecord.uid;
+
     const paidAtDate = new Date(paid_at || Date.now());
     const currentPeriodEndDate = new Date(paidAtDate.getTime());
     
-    // Set subscription end date based on the plan's interval.
     if (interval === 'annually') {
         currentPeriodEndDate.setFullYear(currentPeriodEndDate.getFullYear() + 1);
-        logger.info(`[Webhook] Setting annual subscription end date for user ${userId}: ${currentPeriodEndDate.toISOString()}`);
-    } else { // Default to monthly for 'monthly' or any other unexpected case
+    } else {
         currentPeriodEndDate.setMonth(currentPeriodEndDate.getMonth() + 1);
-        logger.info(`[Webhook] Setting monthly subscription end date for user ${userId}: ${currentPeriodEndDate.toISOString()}`);
     }
 
     const subscriptionData = {
@@ -169,10 +181,8 @@ async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): 
       lastEventTimestamp: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    logger.info(`[Webhook] Preparing to write subscription data for user ${userId}:`, subscriptionData);
     await db.collection("userSubscriptions").doc(String(userId)).set(subscriptionData, { merge: true });
     
-    // Also log the transaction itself for auditing purposes
     const transactionRef = db.collection("transactions").doc(reference);
     await transactionRef.set({
       userId,
@@ -181,17 +191,17 @@ async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): 
       amount,
       currency,
       status: "success",
-      paymentMethod: "paystack", // Identify the payment method
+      paymentMethod: "paystack",
       paystackReference: reference,
       paidAt: admin.firestore.Timestamp.fromDate(paidAtDate),
-      createdAt: admin.firestore.FieldValue.serverTimestamp(), // Should only be set on creation
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
 
     logger.info(`[Webhook] SUCCESS: Updated subscription for user ${userId} (plan: ${planId}, ref: ${reference}).`);
 
   } catch (error) {
-    logger.error(`[Webhook] FIRESTORE ERROR: Failed to write subscription/transaction data for reference ${reference}:`, error);
+    logger.error(`[Webhook] Error during transaction processing for reference ${reference}:`, error);
   }
 }
 
@@ -221,17 +231,18 @@ export const paystackWebhookHandler = onRequest({ region: "us-central1" }, (req,
         }
         
         const event = req.body;
-        logger.info(`[Webhook] Received valid event: ${event.event}`, { reference: event.data?.reference || "N/A" });
+        const reference = event.data?.reference;
+        logger.info(`[Webhook] Received valid event: ${event.event}`, { reference: reference || "N/A" });
         
-        // Handle both initial charge and recurring subscription charges with the same logic
-        if (event.event === "charge.success" || event.event === "subscription.charge.success") {
+        // Only proceed if we have a reference to verify
+        if (reference && (event.event === "charge.success" || event.event === "subscription.charge.success")) {
             // Acknowledge the event immediately to prevent Paystack from retrying.
             res.status(200).send({ message: "Webhook acknowledged, processing in background." });
-            // Process the event asynchronously.
-            await processChargeSuccessEvent(event.data as PaystackChargeSuccessData);
+            // Process the event asynchronously by passing just the reference.
+            await processChargeSuccessEvent({ reference });
         } else {
-            logger.info(`[Webhook] Unhandled event type received and acknowledged: ${event.event}`);
-            res.status(200).send({ message: "Event received and acknowledged (unhandled type)." });
+            logger.info(`[Webhook] Unhandled event type (${event.event}) or missing reference. Acknowledged.`);
+            res.status(200).send({ message: "Event received and acknowledged (unhandled or missing reference)." });
         }
     });
 });
