@@ -174,15 +174,26 @@ export default function PromptVaultPage() {
 
     setIsSharing(true);
     try {
-      const { id, ...promptData } = promptToShare; 
-      const sharedPromptData = {
-        ...promptData,
+      // Explicitly build the data object to avoid undefined fields.
+      const sharedPromptData: any = {
+        name: promptToShare.name,
+        goal: promptToShare.goal,
+        optimizedPrompt: promptToShare.optimizedPrompt,
+        tags: promptToShare.tags || [],
         sharedBy: {
           uid: currentUser.uid,
           displayName: currentUser.displayName,
         },
         timestamp: serverTimestamp(),
       };
+
+      // Only add qualityScore and targetModel if they exist and are valid.
+      if (typeof promptToShare.qualityScore === 'number') {
+        sharedPromptData.qualityScore = promptToShare.qualityScore;
+      }
+      if (typeof promptToShare.targetModel === 'string' && promptToShare.targetModel) {
+        sharedPromptData.targetModel = promptToShare.targetModel;
+      }
       
       const sharedPromptsColRef = collection(db, 'teams', teamId, 'sharedPrompts');
       await addDoc(sharedPromptsColRef, sharedPromptData);
