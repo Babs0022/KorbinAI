@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -12,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PromptInputForm } from '@/components/dashboard/PromptInputForm';
 import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
-import { AccountInfoCard } from '@/components/dashboard/AccountInfoCard';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 import { db } from '@/lib/firebase';
@@ -232,7 +230,6 @@ export default function DashboardPage() {
               <PromptInputForm />
             </div>
             <div className="lg:col-span-1 space-y-8">
-                <AccountInfoCard />
                 <RecentPromptsCard />
             </div>
           </div>
