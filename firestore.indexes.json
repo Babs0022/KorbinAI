@@ -3,7 +3,7 @@
   "indexes": [
     {
       "collectionGroup": "promptHistory",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "qualityScore",
@@ -17,7 +17,7 @@
     },
     {
       "collectionGroup": "promptHistory",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "timestamp",
@@ -27,7 +27,7 @@
     },
     {
       "collectionGroup": "sharedPrompts",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "timestamp",
