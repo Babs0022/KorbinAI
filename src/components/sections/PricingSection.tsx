@@ -181,7 +181,7 @@ export function PricingSection() {
                         </li>
                     ))}
                   </ul>
-                  <div className="mt-8 flex flex-col gap-2">
+                  <div className="mt-8">
                     <Button
                       asChild
                       className={cn(
@@ -194,20 +194,6 @@ export function PricingSection() {
                           {tier.cta}
                       </a>
                     </Button>
-                    {tier.planId !== 'free' && (
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="outline" className="w-full" disabled>
-                                        Pay with Crypto
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                <p>Crypto payments coming soon!</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    )}
                   </div>
                 </GlassCard>
               ))}

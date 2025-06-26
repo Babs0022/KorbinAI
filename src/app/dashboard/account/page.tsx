@@ -452,7 +452,7 @@ export default function AccountPage() {
                                   </li>
                                 ))}
                               </ul>
-                              <div className="mt-6 flex flex-col gap-2">
+                              <div className="mt-6">
                                 <Button
                                     asChild
                                     size="lg"
@@ -466,18 +466,6 @@ export default function AccountPage() {
                                         {tier.cta}
                                     </a>
                                 </Button>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button variant="outline" className="w-full" size="lg" disabled>
-                                                Pay with Crypto
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Crypto payments coming soon!</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
                               </div>
                             </div>
                           ))}
