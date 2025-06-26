@@ -6,7 +6,7 @@ import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Shield, PlusCircle, Loader2, Trash2, Settings, Eye, User, Tag } from 'lucide-react';
+import { ArrowLeft, Users, Shield, PlusCircle, Loader2, Trash2, Settings, Eye, User, Tag, Copy } from 'lucide-react';
 import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,6 +28,7 @@ import {
   Timestamp,
   deleteDoc,
   orderBy,
+  deleteField,
 } from 'firebase/firestore';
 import {
   Dialog,
@@ -41,6 +42,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from '@/components/ui/textarea';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 
@@ -72,7 +74,6 @@ export default function CollaborationPage() {
   const [newTeamName, setNewTeamName] = useState('');
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
 
-  const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('viewer');
   const [isInviting, setIsInviting] = useState(false);
@@ -85,6 +86,7 @@ export default function CollaborationPage() {
   const [showManageTeamDialog, setShowManageTeamDialog] = useState(false);
   const [editableTeamName, setEditableTeamName] = useState('');
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
+  const [isUpdatingMember, setIsUpdatingMember] = useState<string | null>(null);
   
   const [viewingSharedPrompt, setViewingSharedPrompt] = useState<PromptHistory | null>(null);
 
@@ -200,7 +202,6 @@ export default function CollaborationPage() {
         name: editableTeamName.trim()
       });
       toast({ title: "Team Updated", description: "Your team's name has been changed." });
-      setShowManageTeamDialog(false);
     } catch (error) {
       console.error("Error updating team name:", error);
       toast({ title: "Update Failed", description: "Could not update team name.", variant: "destructive" });
@@ -213,10 +214,48 @@ export default function CollaborationPage() {
     e.preventDefault();
     toast({
         title: "Feature In Development",
-        description: "Inviting members by email is coming soon in a future update!",
-        variant: "default"
+        description: "Inviting members by email is coming soon! This requires a backend service for secure user lookups, which is our next priority.",
+        variant: "default",
+        duration: 8000
     });
-    setShowInviteDialog(false);
+  };
+
+  const handleUpdateMemberRole = async (memberUid: string, newRole: 'editor' | 'viewer') => {
+    if (!team || !canManageTeam) return;
+    setIsUpdatingMember(memberUid);
+    try {
+      const teamDocRef = doc(db, 'teams', team.id);
+      await updateDoc(teamDocRef, {
+        [`members.${memberUid}.role`]: newRole
+      });
+      toast({ title: "Role Updated", description: `The member's role has been changed to ${newRole}.` });
+    } catch (error) {
+      toast({ title: "Error", description: "Could not update member role.", variant: "destructive" });
+      console.error("Error updating member role:", error);
+    } finally {
+      setIsUpdatingMember(null);
+    }
+  };
+
+  const handleRemoveMember = async (memberUid: string) => {
+    if (!team || !canManageTeam) return;
+    setIsUpdatingMember(memberUid);
+    try {
+      const teamDocRef = doc(db, 'teams', team.id);
+      await updateDoc(teamDocRef, {
+        [`members.${memberUid}`]: deleteField()
+      });
+      // Also need to remove teamId from the user's document
+      const userDocRef = doc(db, 'users', memberUid);
+      await updateDoc(userDocRef, { teamId: null });
+
+      toast({ title: "Member Removed", description: "The user has been removed from the team." });
+    } catch (error) {
+      toast({ title: "Error", description: "Could not remove member.", variant: "destructive" });
+      console.error("Error removing member:", error);
+    } finally {
+      setIsUpdatingMember(null);
+    }
   };
 
   const handleCreateSharedPrompt = async (e: FormEvent) => {
@@ -256,6 +295,13 @@ export default function CollaborationPage() {
           toast({title: "Error", description: "Could not delete shared prompt.", variant: "destructive"});
       }
   };
+  
+  const handleCopySharedPrompt = (text: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    toast({ title: "Prompt Copied!", description: "The shared prompt text has been copied." });
+  };
+
 
   if (isLoading || authLoading) {
     return <div className="flex h-screen w-screen items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -328,23 +374,85 @@ export default function CollaborationPage() {
                             <Settings className="mr-2 h-4 w-4"/> Manage Team
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="sm:max-w-xl">
                           <DialogHeader>
-                            <DialogTitle>Manage Team Settings</DialogTitle>
-                            <DialogDescription>Update your team's details.</DialogDescription>
+                            <DialogTitle>Manage Team</DialogTitle>
+                            <DialogDescription>Update settings and manage members for {team.name}.</DialogDescription>
                           </DialogHeader>
-                          <form onSubmit={handleUpdateTeamName} className="space-y-4 py-4">
-                            <div>
-                              <Label htmlFor="teamNameManage">Team Name</Label>
-                              <Input id="teamNameManage" value={editableTeamName} onChange={(e) => setEditableTeamName(e.target.value)} required />
-                            </div>
-                            <DialogFooter>
-                              <Button type="submit" disabled={isUpdatingTeam}>
-                                {isUpdatingTeam ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                Save Changes
-                              </Button>
-                            </DialogFooter>
-                          </form>
+                          <Tabs defaultValue="general" className="mt-4">
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="general">General</TabsTrigger>
+                                <TabsTrigger value="members">Members</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="general" className="py-4">
+                               <form onSubmit={handleUpdateTeamName} className="space-y-4">
+                                  <div>
+                                    <Label htmlFor="teamNameManage">Team Name</Label>
+                                    <Input id="teamNameManage" value={editableTeamName} onChange={(e) => setEditableTeamName(e.target.value)} required />
+                                  </div>
+                                  <Button type="submit" disabled={isUpdatingTeam}>
+                                    {isUpdatingTeam ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                    Save Changes
+                                  </Button>
+                                </form>
+                            </TabsContent>
+                            <TabsContent value="members" className="py-4">
+                                <div className="space-y-4">
+                                    <h4 className="font-medium">Current Members</h4>
+                                    {Object.values(team.members).map(member => (
+                                       <div key={member.uid} className="flex items-center justify-between p-2 rounded-md border">
+                                          <div className="flex items-center gap-3">
+                                              <Avatar>
+                                                  <AvatarImage src={member.photoURL} alt={member.displayName} data-ai-hint="user avatar"/>
+                                                  <AvatarFallback>{member.displayName?.charAt(0) || '?'}</AvatarFallback>
+                                              </Avatar>
+                                              <div>
+                                                  <p className="text-sm font-medium">{member.displayName}</p>
+                                                  <p className="text-xs text-muted-foreground">{member.email}</p>
+                                              </div>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                             {isUpdatingMember === member.uid ? (
+                                                <Loader2 className="h-5 w-5 animate-spin" />
+                                             ) : (
+                                                <>
+                                                    {team.ownerId === member.uid ? (
+                                                        <Badge variant="default"><Shield className="h-3 w-3 mr-1"/>Admin</Badge>
+                                                    ) : (
+                                                        <>
+                                                            <Select
+                                                                defaultValue={member.role}
+                                                                onValueChange={(value: 'editor' | 'viewer') => handleUpdateMemberRole(member.uid, value)}
+                                                            >
+                                                                <SelectTrigger className="w-[100px] h-8 text-xs"><SelectValue/></SelectTrigger>
+                                                                <SelectContent><SelectItem value="editor">Editor</SelectItem><SelectItem value="viewer">Viewer</SelectItem></SelectContent>
+                                                            </Select>
+                                                            <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => handleRemoveMember(member.uid)}>
+                                                                <Trash2 className="h-4 w-4"/>
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </>
+                                             )}
+                                          </div>
+                                       </div>
+                                    ))}
+                                </div>
+                                <div className="mt-8 border-t pt-4">
+                                  <h4 className="font-medium">Invite New Member</h4>
+                                   <form onSubmit={handleInviteMember} className="flex items-center gap-2 mt-2">
+                                      <Input type="email" placeholder="user@example.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} required />
+                                      <Select onValueChange={(value: 'editor' | 'viewer') => setInviteRole(value)} defaultValue="viewer">
+                                        <SelectTrigger className="w-[120px]"><SelectValue/></SelectTrigger>
+                                        <SelectContent><SelectItem value="editor">Editor</SelectItem><SelectItem value="viewer">Viewer</SelectItem></SelectContent>
+                                      </Select>
+                                      <Button type="submit" disabled={isInviting}>
+                                        {isInviting ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Invite'}
+                                      </Button>
+                                   </form>
+                                </div>
+                            </TabsContent>
+                          </Tabs>
                         </DialogContent>
                       </Dialog>
                     )}
@@ -430,64 +538,12 @@ export default function CollaborationPage() {
                 <div className="lg:col-span-1">
                   <GlassCard>
                     <GlassCardHeader>
-                      <div className="flex justify-between items-center">
-                        <GlassCardTitle>Team Members</GlassCardTitle>
-                         {canManageTeam && (
-                             <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline" size="sm">Invite</Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Invite New Member</DialogTitle>
-                                        <DialogDescription>Enter the email and select a role for the new member.</DialogDescription>
-                                    </DialogHeader>
-                                    <form onSubmit={handleInviteMember} className="space-y-4 py-4">
-                                        <div>
-                                            <Label htmlFor="inviteEmail">Email Address</Label>
-                                            <Input id="inviteEmail" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} required />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="inviteRole">Role</Label>
-                                            <Select onValueChange={(value: 'editor' | 'viewer') => setInviteRole(value)} defaultValue={inviteRole}>
-                                                <SelectTrigger id="inviteRole"><SelectValue /></SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="editor">Editor</SelectItem>
-                                                    <SelectItem value="viewer">Viewer</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <DialogFooter>
-                                            <Button type="submit" disabled={isInviting}>
-                                                {isInviting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                                Send Invite
-                                            </Button>
-                                        </DialogFooter>
-                                    </form>
-                                </DialogContent>
-                             </Dialog>
-                         )}
-                      </div>
-                      <GlassCardDescription>Manage roles and permissions.</GlassCardDescription>
+                        <GlassCardTitle>Team Activity</GlassCardTitle>
+                      <GlassCardDescription>A log of recent team actions.</GlassCardDescription>
                     </GlassCardHeader>
                     <GlassCardContent>
-                      <div className="space-y-4">
-                        {Object.values(team.members).map((member) => (
-                          <div key={member.email} className="flex items-center space-x-3">
-                            <Avatar>
-                              <AvatarImage src={member.photoURL} alt={member.displayName} data-ai-hint="user avatar" />
-                              <AvatarFallback>{member.displayName?.charAt(0) || member.email.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-grow">
-                              <p className="text-sm font-medium text-foreground">{member.displayName || member.email}</p>
-                              <p className="text-xs text-muted-foreground">{member.email}</p>
-                            </div>
-                            <Badge variant={member.role === 'admin' ? 'default' : 'outline'} className="flex items-center gap-1">
-                              <Shield className="h-3 w-3" />
-                              {member.role}
-                            </Badge>
-                          </div>
-                        ))}
+                      <div className="text-center py-10 text-muted-foreground text-sm">
+                        Activity feed coming soon!
                       </div>
                     </GlassCardContent>
                   </GlassCard>
@@ -539,6 +595,7 @@ export default function CollaborationPage() {
               </div>
             </div>
             <DialogFooter>
+              <Button variant="outline" onClick={() => handleCopySharedPrompt(viewingSharedPrompt.optimizedPrompt)}><Copy className="mr-2 h-4 w-4" />Copy Prompt</Button>
               <DialogClose asChild><Button variant="outline">Close</Button></DialogClose>
             </DialogFooter>
           </DialogContent>
