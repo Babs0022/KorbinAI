@@ -35,6 +35,56 @@ const db = admin.firestore();
 // Initialize the SDK once, but ensure the key is present.
 const paystack = new Paystack(PAYSTACK_SECRET_KEY);
 
+
+// --- Plan Details ---
+// This is the source of truth for mapping Paystack plan codes to internal plan IDs.
+// Updated with correct plan codes from the user's dashboard screenshot.
+const planDetails: Record<string, {
+  name: string;
+  monthly: { amount: number; plan_code: string; };
+  annually: { amount: number; plan_code: string; };
+}> = {
+  premium: {
+    name: "BrieflyAI Premium",
+    monthly: {
+      amount: 100 * 100, // NGN 100 in Kobo for testing
+      plan_code: "PLN_c7d9pwc77ezn3a8", // From screenshot
+    },
+    annually: {
+      amount: 172800 * 100, // NGN 172,800 in Kobo (10% discount)
+      plan_code: "PLN_ipOrfr3kbnjdOoh", // From screenshot
+    },
+  },
+  unlimited: {
+    name: "BrieflyAI Unlimited",
+    monthly: {
+      amount: 56000 * 100, // NGN 56,000 in Kobo
+      plan_code: "PLN_kb83pnnocije9fz", // From screenshot
+    },
+    annually: {
+        amount: 604800 * 100, // NGN 604,800 in Kobo (10% discount)
+        plan_code: "PLN_a90hrxjuodtw4ia", // From screenshot
+    }
+  },
+};
+
+/**
+ * Finds the internal plan ID (e.g., 'premium') and billing cycle from a Paystack plan code.
+ * @param {string} planCode The plan code from Paystack.
+ * @returns An object containing the planId and billingCycle, or null if not found.
+ */
+function findPlanDetailsByCode(planCode: string): { planId: string | null; billingCycle: 'monthly' | 'annually' | null } {
+    for (const [planId, details] of Object.entries(planDetails)) {
+        if (details.monthly.plan_code === planCode) {
+            return { planId, billingCycle: 'monthly' };
+        }
+        if (details.annually.plan_code === planCode) {
+            return { planId, billingCycle: 'annually' };
+        }
+    }
+    return { planId: null, billingCycle: null };
+}
+
 // --- Webhook Handler: paystackWebhookHandler ---
 // This is the ONLY function now. It handles payment verification and subscription updates.
 
@@ -66,26 +116,20 @@ async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): 
   const { reference, customer, amount, currency, paid_at, plan, plan_object } = eventData;
 
   const email = customer?.email;
-  // **THE FIX**: Use plan_name for matching, and interval for billing cycle.
-  const planName = plan_object?.name || plan?.name;
+  // **THE FIX**: Check both `plan_object` (from subscriptions) and `plan` (from payment pages) for the plan code.
+  const planCode = plan_object?.plan_code || plan?.plan_code;
   const interval = plan_object?.interval || plan?.interval;
 
-  if (!email || !planName) {
-    logger.error(`[Webhook] CRITICAL: Missing email or plan_name in payload for reference ${reference}. Cannot process.`, { email, planName, data: eventData });
+  if (!email || !planCode) {
+    logger.error(`[Webhook] CRITICAL: Missing email or plan_code in payload for reference ${reference}. Cannot process.`, { email, planCode, data: eventData });
     return;
   }
-  logger.info(`[Webhook] Found Email: ${email} and Plan Name: "${planName}".`);
+  logger.info(`[Webhook] Found Email: ${email} and Plan Code: ${planCode}.`);
 
-  let planId: string | null = null;
-  // Derive internal planId from the Paystack plan name
-  if (planName.toLowerCase().includes('premium')) {
-      planId = 'premium';
-  } else if (planName.toLowerCase().includes('unlimited')) {
-      planId = 'unlimited';
-  }
+  const { planId } = findPlanDetailsByCode(planCode);
 
   if (!planId) {
-      logger.error(`[Webhook] CRITICAL: Could not match plan name "${planName}" to a known internal plan (premium/unlimited).`);
+      logger.error(`[Webhook] CRITICAL: Could not match plan code ${planCode} to a known plan.`);
       return;
   }
   logger.info(`[Webhook] Matched to Internal Plan ID: ${planId} with interval: ${interval}.`);
