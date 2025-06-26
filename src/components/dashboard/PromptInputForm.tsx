@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -26,6 +25,7 @@ export function PromptInputForm() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  const [isFocused, setIsFocused] = useState(false); // New state for focus
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null); // Ref for autosizing
@@ -145,16 +145,23 @@ export function PromptInputForm() {
   };
 
   return (
-    <div className="relative w-full">
-      <form onSubmit={handleSubmit}>
+    <div className={cn(
+      "relative w-full rounded-2xl transition-all duration-300",
+      isFocused 
+        ? "ring-2 ring-primary shadow-lg shadow-primary/20" 
+        : "ring-0 shadow-none"
+    )}>
+      <form onSubmit={handleSubmit} className="relative">
         <Textarea
           ref={textareaRef}
           rows={1}
           value={goal}
           onChange={(e) => setGoal(e.target.value)}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           onKeyDown={handleKeyDown}
           placeholder="e.g., Write a marketing email for a new SaaS product..."
-          className="w-full min-h-[72px] max-h-[300px] text-lg p-4 pr-36 rounded-2xl bg-muted/50 border-border/50 focus:outline-none focus:ring-2 focus:ring-primary focus:shadow-lg focus:shadow-primary/20 resize-none overflow-y-auto transition-all duration-200"
+          className="w-full min-h-[72px] max-h-[300px] text-lg p-4 pr-36 rounded-2xl bg-muted/50 border-transparent focus-visible:ring-0 resize-none overflow-y-auto"
           disabled={isProcessing}
           aria-label="Prompt goal input"
         />
