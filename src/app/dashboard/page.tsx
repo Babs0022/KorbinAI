@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -6,7 +7,7 @@ import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Loader2, AlertTriangle, Users, BarChart3, Brain, ScrollText, Settings2, TestTubes, FileText, Lightbulb, Puzzle, School, Repeat } from 'lucide-react';
+import { Loader2, AlertTriangle, BarChart3, Brain, ScrollText, Settings2, TestTubes, FileText, Lightbulb, Puzzle, School, Repeat, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PromptInputForm } from '@/components/dashboard/PromptInputForm';
@@ -91,10 +92,10 @@ const featureCards: FeatureInfo[] = [
     enabled: true,
   },
   {
-    title: 'Collaboration Hub',
-    description: 'Share, manage, and collaborate on prompts with your team. (Coming Soon)',
-    href: '/dashboard/collaboration',
-    icon: Users,
+    title: 'Product Roadmap & Teams',
+    description: 'See our vision for team features, analytics, integrations, and what we are building next.',
+    href: '/dashboard/roadmap',
+    icon: Rocket,
     enabled: true,
   },
 ];
