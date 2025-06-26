@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -59,7 +60,7 @@ const pricingTiers: Tier[] = [
           annually: 'https://paystack.shop/pay/sq8pii8rod'
       },
       cryptoPaymentLink: {
-          monthly: 'https://nowpayments.io/payment/?iid=4743952085',
+          monthly: 'https://nowpayments.io/payment/?iid=4784489377',
           annually: 'https://nowpayments.io/payment/?iid=6096989784'
       },
       description: 'For power users & professionals who need advanced tools.',
