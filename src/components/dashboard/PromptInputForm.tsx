@@ -27,6 +27,17 @@ export function PromptInputForm() {
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null); // Ref for autosizing
+
+  // Effect for autosizing the textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      // Reset height to shrink when text is deleted
+      textareaRef.current.style.height = 'auto';
+      // Set height to scrollHeight to expand
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [goal]); // Rerun whenever the goal text changes
 
   useEffect(() => {
     // Check for SpeechRecognition API on the client
@@ -101,13 +112,6 @@ export function PromptInputForm() {
       reader.readAsDataURL(file);
     }
   };
-  
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      handleSubmit();
-    }
-  };
 
   const handleSubmit = () => {
     if (!goal.trim()) {
@@ -135,11 +139,12 @@ export function PromptInputForm() {
   return (
     <div className="relative w-full">
       <Textarea
+        ref={textareaRef}
+        rows={1}
         value={goal}
         onChange={(e) => setGoal(e.target.value)}
-        onKeyDown={handleKeyDown}
         placeholder="e.g., Write a marketing email for a new SaaS product..."
-        className="w-full min-h-[72px] text-lg p-4 pr-36 rounded-2xl bg-muted/50 border-border/50 focus-visible:ring-primary focus-visible:ring-2 resize-none"
+        className="w-full min-h-[72px] max-h-[300px] text-lg p-4 pr-36 rounded-2xl bg-muted/50 border-border/50 focus-visible:ring-primary focus-visible:ring-2 resize-none overflow-y-auto"
         disabled={isProcessing}
         aria-label="Prompt goal input"
       />
