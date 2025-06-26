@@ -5,11 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Chrome } from "lucide-react"; // Using Chrome icon as a placeholder for Google
 import { auth, db } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, type UserCredential } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, type UserCredential, getAdditionalUserInfo } from "firebase/auth";
 import { doc, setDoc, Timestamp, getDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { getAdditionalUserInfo } from "firebase/auth"; // Import for isNewUser check
 
 export function SocialLogins({ type }: { type: "login" | "signup" }) {
   const { toast } = useToast();
@@ -23,10 +22,9 @@ export function SocialLogins({ type }: { type: "login" | "signup" }) {
       const additionalInfo = getAdditionalUserInfo(result);
 
       if (user) {
+        // This is a new user signing up via Google
         if (additionalInfo?.isNewUser) {
-          // This is a new user, create their document in Firestore
           const userDocRef = doc(db, "users", user.uid);
-          // Check if document already exists (e.g. from a rapidly succeeding auth state change listener)
           const docSnap = await getDoc(userDocRef);
           if (!docSnap.exists()) {
              await setDoc(userDocRef, {
@@ -35,20 +33,21 @@ export function SocialLogins({ type }: { type: "login" | "signup" }) {
                 displayName: user.displayName || user.email?.split('@')[0] || "New User",
                 photoURL: user.photoURL || null,
                 createdAt: Timestamp.now(),
+                teamId: null,
              }, { merge: true });
           }
           toast({
-            title: "Account Created with Google!",
+            title: "Account Created!",
             description: "Welcome to BrieflyAI. Let's get you started.",
           });
-          router.push("/onboarding"); // Direct new social users to onboarding
+          router.push("/onboarding");
         } else {
-          // Existing user
+          // This is an existing user logging in
           toast({
-            title: "Google Sign-In Successful",
+            title: "Sign-In Successful",
             description: "Welcome back to BrieflyAI!",
           });
-          router.push("/dashboard"); // Direct existing users to dashboard
+          router.push("/dashboard");
         }
       } else {
         throw new Error("User object not found after Google sign-in.");

@@ -69,7 +69,12 @@ export function LoginForm() {
         description: errorMessage,
         variant: "destructive",
       });
-      setIsLoading(false);
+    } finally {
+        if (auth.currentUser?.emailVerified) {
+          // Only stop loading if we aren't redirecting
+        } else {
+          setIsLoading(false);
+        }
     }
   };
 
