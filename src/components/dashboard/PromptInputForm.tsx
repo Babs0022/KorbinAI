@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -153,7 +154,7 @@ export function PromptInputForm() {
           onChange={(e) => setGoal(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="e.g., Write a marketing email for a new SaaS product..."
-          className="w-full min-h-[72px] max-h-[300px] text-lg p-4 pr-36 rounded-2xl bg-muted/50 border-border/50 focus-visible:ring-primary focus-visible:ring-2 focus-visible:shadow-lg focus-visible:shadow-primary/20 resize-none overflow-y-auto transition-shadow duration-200"
+          className="w-full min-h-[72px] max-h-[300px] text-lg p-4 pr-36 rounded-2xl bg-muted/50 border-border/50 focus:outline-none focus:ring-2 focus:ring-primary focus:shadow-lg focus:shadow-primary/20 resize-none overflow-y-auto transition-all duration-200"
           disabled={isProcessing}
           aria-label="Prompt goal input"
         />
