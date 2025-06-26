@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Eye, Edit, Download, Trash2, Tag, Share2 } from 'lucide-react';
 import { GlassCard } from '../shared/GlassCard';
 import { Badge } from '../ui/badge';
-import type { PromptHistory } from './PromptHistoryItem';
+import type { PromptHistory } from './PromptHistoryItem.d';
 
 interface PromptHistoryItemProps {
   prompt: PromptHistory;
