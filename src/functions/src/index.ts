@@ -51,18 +51,18 @@ const planDetails: Record<string, {
       plan_code: "PLN_c7d9pwc77ezn3a8", // From screenshot
     },
     annually: {
-      amount: 172800 * 100, // NGN 172,800 in Kobo (10% discount)
-      plan_code: "PLN_ipOrfr3kbnjdOoh", // From screenshot
+      amount: 100 * 100, // NGN 100 in Kobo for testing
+      plan_code: "PLN_ipOrfr3kbnjdOoh", // From screenshot, assumes O is a letter not zero
     },
   },
   unlimited: {
     name: "BrieflyAI Unlimited",
     monthly: {
-      amount: 56000 * 100, // NGN 56,000 in Kobo
+      amount: 100 * 100, // NGN 100 in Kobo for testing
       plan_code: "PLN_kb83pnnocije9fz", // From screenshot
     },
     annually: {
-        amount: 604800 * 100, // NGN 604,800 in Kobo (10% discount)
+        amount: 100 * 100, // NGN 100 in Kobo for testing
         plan_code: "PLN_a90hrxjuodtw4ia", // From screenshot
     }
   },
@@ -86,8 +86,6 @@ function findPlanDetailsByCode(planCode: string): { planId: string | null; billi
 }
 
 // --- Webhook Handler: paystackWebhookHandler ---
-// This is the ONLY function now. It handles payment verification and subscription updates.
-
 interface PaystackCustomer {
     email?: string;
 }
