@@ -8,4 +8,8 @@ export interface PromptHistory {
   tags?: string[];
   qualityScore?: number; // Optional: For analytics
   targetModel?: string;  // Optional: For analytics
+  sharedBy?: { // Add this optional field
+    uid: string;
+    displayName?: string;
+  };
 }

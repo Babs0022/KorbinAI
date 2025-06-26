@@ -6,7 +6,7 @@ import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Shield, PlusCircle, Loader2, Trash2, Settings } from 'lucide-react';
+import { ArrowLeft, Users, Shield, PlusCircle, Loader2, Trash2, Settings, Eye, User, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -36,7 +36,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -84,6 +84,9 @@ export default function CollaborationPage() {
   const [showManageTeamDialog, setShowManageTeamDialog] = useState(false);
   const [editableTeamName, setEditableTeamName] = useState('');
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
+  
+  const [viewingSharedPrompt, setViewingSharedPrompt] = useState<PromptHistory | null>(null);
+
 
   const canManageTeam = useMemo(() => teamRole === 'admin', [teamRole]);
   const canEditPrompts = useMemo(() => teamRole === 'admin' || teamRole === 'editor', [teamRole]);
@@ -129,6 +132,7 @@ export default function CollaborationPage() {
              optimizedPrompt: data.optimizedPrompt || '',
              timestamp: timestampStr,
              tags: data.tags || [],
+             sharedBy: data.sharedBy || null,
            } as PromptHistory;
         });
         setSharedPrompts(fetchedPrompts);
@@ -396,13 +400,19 @@ export default function CollaborationPage() {
                                     <h4 className="font-semibold text-md text-foreground">{prompt.name}</h4>
                                     <p className="text-xs text-muted-foreground mt-1">
                                       Last updated: {new Date(prompt.timestamp).toLocaleDateString()}
+                                      {prompt.sharedBy?.displayName && <span className="ml-2">by {prompt.sharedBy.displayName}</span>}
                                     </p>
                                 </div>
-                                {canEditPrompts && (
-                                    <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 h-8 w-8" onClick={() => handleDeletePrompt(prompt.id)}>
-                                        <Trash2 className="h-4 w-4"/>
+                                <div className="flex items-center flex-shrink-0">
+                                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8" onClick={() => setViewingSharedPrompt(prompt)}>
+                                        <Eye className="h-4 w-4"/>
                                     </Button>
-                                )}
+                                    {canEditPrompts && (
+                                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 h-8 w-8" onClick={() => handleDeletePrompt(prompt.id)}>
+                                            <Trash2 className="h-4 w-4"/>
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                             <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{prompt.goal}</p>
                           </GlassCard>
@@ -487,6 +497,52 @@ export default function CollaborationPage() {
         </Container>
       </main>
       <MinimalFooter />
+
+      {viewingSharedPrompt && (
+        <Dialog open={!!viewingSharedPrompt} onOpenChange={(isOpen) => { if (!isOpen) setViewingSharedPrompt(null); }}>
+          <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-headline">{viewingSharedPrompt.name}</DialogTitle>
+              <DialogDescription>Review the shared prompt details.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4 overflow-y-auto px-1 flex-grow">
+              <div>
+                <Label htmlFor="viewGoal" className="text-sm font-semibold text-foreground">Original Goal</Label>
+                <p id="viewGoal" className="mt-1 text-sm text-muted-foreground p-3 bg-muted/50 rounded-md border whitespace-pre-wrap">
+                  {viewingSharedPrompt.goal}
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="viewOptimizedPrompt" className="text-sm font-semibold text-foreground">Optimized Prompt</Label>
+                <Textarea id="viewOptimizedPrompt" value={viewingSharedPrompt.optimizedPrompt} readOnly rows={10} className="text-sm leading-relaxed font-code bg-muted/50 border whitespace-pre-wrap" />
+              </div>
+              {viewingSharedPrompt.tags && viewingSharedPrompt.tags.length > 0 && (
+                <div>
+                  <Label className="text-sm font-semibold text-foreground flex items-center"><Tag className="mr-2 h-4 w-4"/>Tags</Label>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {viewingSharedPrompt.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+                  </div>
+                </div>
+              )}
+              {viewingSharedPrompt.sharedBy?.displayName && (
+                  <div>
+                      <Label className="text-sm font-semibold text-foreground flex items-center"><User className="mr-2 h-4 w-4"/>Shared By</Label>
+                      <p className="mt-1 text-sm text-muted-foreground">{viewingSharedPrompt.sharedBy.displayName}</p>
+                  </div>
+              )}
+              <div>
+                <Label className="text-sm font-semibold text-foreground">Last Updated</Label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {new Date(viewingSharedPrompt.timestamp).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild><Button variant="outline">Close</Button></DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
