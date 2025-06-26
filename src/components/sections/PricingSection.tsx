@@ -59,9 +59,9 @@ const pricingTiers: Tier[] = [
           monthly: 'https://paystack.shop/pay/adn4uwot-5',
           annually: 'https://paystack.shop/pay/sq8pii8rod'
       },
-      cryptoPaymentLink: { // Replace '#' with your actual NOWPayments links
-          monthly: '#',
-          annually: '#'
+      cryptoPaymentLink: {
+          monthly: 'https://nowpayments.io/payment/?iid=4421712487',
+          annually: 'https://nowpayments.io/payment/?iid=6096989784'
       },
       description: 'For power users & professionals who need advanced tools.',
       features: [
@@ -84,9 +84,9 @@ const pricingTiers: Tier[] = [
           monthly: 'https://paystack.shop/pay/cnfqzc7xw1',
           annually: 'https://paystack.shop/pay/w7iln7hu8e'
       },
-      cryptoPaymentLink: { // Replace '#' with your actual NOWPayments links
-          monthly: '#',
-          annually: '#'
+      cryptoPaymentLink: {
+          monthly: 'https://nowpayments.io/payment/?iid=5138480737',
+          annually: 'https://nowpayments.io/payment/?iid=5491712168'
       },
       description: 'For teams & businesses that demand unlimited scale.',
       features: [
