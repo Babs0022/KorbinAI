@@ -4,9 +4,9 @@
 import type { User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, onSnapshot, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import type { ReactNode} from 'react';
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 interface Subscription {
   planId: string;
@@ -47,82 +47,98 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [teamId, setTeamId] = useState<string | null>(null);
   const [teamRole, setTeamRole] = useState<TeamRole | null>(null);
 
-  const fetchTeamInfo = useCallback(async (user: FirebaseUser) => {
-    const userDocRef = doc(db, 'users', user.uid);
-    const userDocSnap = await getDoc(userDocRef);
-
-    if (userDocSnap.exists() && userDocSnap.data().teamId) {
-      const currentTeamId = userDocSnap.data().teamId;
-      setTeamId(currentTeamId);
-
-      const teamDocRef = doc(db, 'teams', currentTeamId);
-      const teamDocSnap = await getDoc(teamDocRef);
-
-      if (teamDocSnap.exists()) {
-        const teamData = teamDocSnap.data();
-        const member = teamData.members?.[user.uid];
-        if (member) {
-          setTeamRole(member.role);
-        } else {
-          // This logic can be expanded to handle pending invites
-          setTeamRole(null);
-        }
-      }
-    } else {
-      setTeamId(null);
-      setTeamRole(null);
-    }
-  }, []);
-
+  // Effect 1: Listen for authentication state changes (login/logout)
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
-      setLoading(false);
-
-      if (user) {
-        setDisplayName(user.displayName || user.email?.split('@')[0] || "User");
-        setDisplayEmail(user.email || "user@example.com");
-        setAvatarUrl(user.photoURL || defaultPlaceholderUrl); 
-        setUserInitials(
-          (user.displayName?.split(" ").map(n => n[0]).join("") || 
-           user.email?.charAt(0) || 
-           "U"
-          ).toUpperCase()
-        );
-        
-        await fetchTeamInfo(user);
-        
-        setSubscriptionLoading(true);
-        const subDocRef = doc(db, 'userSubscriptions', user.uid);
-        const unsubscribeSub = onSnapshot(subDocRef, (docSnap) => {
-          if (docSnap.exists() && docSnap.data().status === 'active') {
-            setSubscription({ planId: docSnap.data().planId, status: docSnap.data().status });
-          } else {
-            setSubscription({ planId: 'free', status: 'active' });
-          }
-          setSubscriptionLoading(false);
-        }, (error) => {
-            console.error("Error fetching subscription:", error);
-            setSubscription({ planId: 'free', status: 'active' });
-            setSubscriptionLoading(false);
-        });
-
-        return () => unsubscribeSub();
-
-      } else {
+      if (!user) {
+        // Clear all user-specific data on logout
+        setSubscription(null);
+        setSubscriptionLoading(false);
+        setTeamId(null);
+        setTeamRole(null);
         setDisplayName("User");
         setDisplayEmail("user@example.com");
         setAvatarUrl(defaultPlaceholderUrl);
         setUserInitials("U");
-        setSubscription(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  // Effect 2: Listen for changes to the user document (e.g., teamId added)
+  // and subscription status, only when a user is logged in.
+  useEffect(() => {
+    if (!currentUser) return;
+
+    // Set user display info immediately
+    setDisplayName(currentUser.displayName || currentUser.email?.split('@')[0] || "User");
+    setDisplayEmail(currentUser.email || "user@example.com");
+    setAvatarUrl(currentUser.photoURL || defaultPlaceholderUrl);
+    setUserInitials(
+      (currentUser.displayName?.split(" ").map(n => n[0]).join("") || 
+       currentUser.email?.charAt(0) || 
+       "U"
+      ).toUpperCase()
+    );
+
+    // --- Listener for User Document (to get teamId) ---
+    const userDocRef = doc(db, 'users', currentUser.uid);
+    const unsubscribeUserDoc = onSnapshot(userDocRef, (userDocSnap) => {
+      const newTeamId = userDocSnap.exists() ? userDocSnap.data().teamId : null;
+      setTeamId(newTeamId); // This will trigger the team role listener effect
+    });
+
+    // --- Listener for Subscription Document ---
+    setSubscriptionLoading(true);
+    const subDocRef = doc(db, 'userSubscriptions', currentUser.uid);
+    const unsubscribeSub = onSnapshot(subDocRef, (docSnap) => {
+      if (docSnap.exists() && docSnap.data().status === 'active') {
+        setSubscription({ planId: docSnap.data().planId, status: docSnap.data().status });
+      } else {
+        setSubscription({ planId: 'free', status: 'active' });
+      }
+      setSubscriptionLoading(false);
+    }, (error) => {
+        console.error("Error fetching subscription:", error);
+        setSubscription({ planId: 'free', status: 'active' });
         setSubscriptionLoading(false);
+    });
+
+    // Cleanup listeners when the user logs out (currentUser becomes null)
+    return () => {
+      unsubscribeUserDoc();
+      unsubscribeSub();
+    };
+  }, [currentUser]);
+
+  // Effect 3: Listen for changes to the team document, but only when teamId is known.
+  useEffect(() => {
+    if (!teamId || !currentUser) {
+      setTeamRole(null);
+      return;
+    }
+
+    // --- Listener for Team Document (to get user's role) ---
+    const teamDocRef = doc(db, 'teams', teamId);
+    const unsubscribeTeamDoc = onSnapshot(teamDocRef, (teamDocSnap) => {
+      if (teamDocSnap.exists()) {
+        const teamData = teamDocSnap.data();
+        const member = teamData.members?.[currentUser.uid];
+        setTeamRole(member ? member.role : null);
+      } else {
+        // The team document was deleted, so reset team state
         setTeamId(null);
         setTeamRole(null);
       }
     });
 
-    return () => unsubscribe();
-  }, [fetchTeamInfo]);
+    // Cleanup listener when teamId changes or user logs out
+    return () => unsubscribeTeamDoc();
+
+  }, [teamId, currentUser]);
 
   const value = {
     currentUser,
@@ -147,5 +163,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    
