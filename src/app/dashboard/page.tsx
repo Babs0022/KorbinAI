@@ -222,10 +222,10 @@ export default function DashboardPage() {
       <DashboardHeader />
       <main className="flex-1 flex flex-col bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8 md:py-12">
         <Container>
-           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 pt-8 md:pt-12">
             <div className="lg:col-span-2">
               <h1 className="font-headline text-3xl font-bold text-foreground mb-4">
-                 Hey there, What can I help you create?
+                 What can I help you create?
               </h1>
               <PromptInputForm />
             </div>
