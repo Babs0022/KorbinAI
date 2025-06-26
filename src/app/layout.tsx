@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'BrieflyAI - Optimize Your Prompts',
   description: 'AI-powered prompt optimization for founders, marketers, and students. Achieve clarity and impact with BrieflyAI.',
   manifest: '/manifest.json',
-  themeColor: '#4B0082', // Set to primary color for better PWA themeing
+  themeColor: '#804dff', // Set to dark mode accent color for better PWA themeing
   icons: {
     icon: '/logo.svg',
     shortcut: '/logo.svg',
