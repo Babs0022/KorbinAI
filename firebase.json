@@ -30,7 +30,6 @@
     "source": "dataconnect"
   },
   "hosting": {
-    "target": "app",
     "source": ".",
     "ignore": [
       "firebase.json",
