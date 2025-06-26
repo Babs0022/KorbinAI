@@ -94,7 +94,7 @@ export function PromptWorkspace() {
   }, [toast, handleDirectGenerate]);
   
   useEffect(() => {
-    if (isInitialized || subscriptionLoading) {
+    if (isInitialized) {
         return;
     }
     
@@ -113,16 +113,15 @@ export function PromptWorkspace() {
         
         setIsInitialized(true);
 
-        if (subscription?.planId === 'free') {
-            handleDirectGenerate(goalFromParams, imageFromStorage);
-        } else {
-            fetchAndSetQuestions(goalFromParams, imageFromStorage);
-        }
+        // Always fetch questions now, as all features are unlocked.
+        // This makes the survey-based ("advanced") flow the default for all users.
+        fetchAndSetQuestions(goalFromParams, imageFromStorage);
+        
     } else {
         toast({ title: "No Goal Specified", description: "Redirecting to dashboard to start a new prompt.", variant: "destructive" });
         router.push('/dashboard');
     }
-  }, [isInitialized, subscriptionLoading, subscription, searchParams, toast, router, handleDirectGenerate, fetchAndSetQuestions]);
+  }, [isInitialized, searchParams, toast, router, fetchAndSetQuestions]);
 
 
   const handleSurveyChange = (id: string, type: SurveyQuestion['type'], value: string) => {
