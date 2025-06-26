@@ -60,7 +60,7 @@ const pricingTiers: Tier[] = [
   {
     name: 'Premium',
     planId: 'premium',
-    price: { monthly: 'NGN 16,000', annually: 'NGN 172,800' },
+    price: { monthly: 'NGN 10', annually: 'NGN 10' }, // Test Price
     paymentLink: {
         monthly: 'https://paystack.shop/pay/adn4uwot-5',
         annually: 'https://paystack.shop/pay/sq8pii8rod'
@@ -79,7 +79,7 @@ const pricingTiers: Tier[] = [
   {
     name: 'Unlimited',
     planId: 'unlimited',
-    price: { monthly: 'NGN 56,000', annually: 'NGN 604,800' },
+    price: { monthly: 'NGN 10', annually: 'NGN 10' }, // Test Price
     paymentLink: {
         monthly: 'https://paystack.shop/pay/cnfqzc7xw1',
         annually: 'https://paystack.shop/pay/w7iln7hu8e'

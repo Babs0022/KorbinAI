@@ -46,22 +46,22 @@ const planDetails: Record<string, {
   premium: {
     name: "BrieflyAI Premium",
     monthly: {
-      amount: 16000 * 100, // NGN 16,000 in Kobo
-      plan_code: "PLN_adn4uwot-5", // Corrected as per user request
+      amount: 10 * 100, // Test Price: NGN 10 in Kobo
+      plan_code: "PLN_adn4uwot-5",
     },
     annually: {
-      amount: 172800 * 100, // NGN 172,800 in Kobo (10% discount)
+      amount: 10 * 100, // Test Price: NGN 10 in Kobo
       plan_code: "PLN_ip0rfr3kbnjd0oh",
     },
   },
   unlimited: {
     name: "BrieflyAI Unlimited",
     monthly: {
-      amount: 56000 * 100, // NGN 56,000 in Kobo
-      plan_code: "PLN_cnfqzc7xw1", // Corrected as per user request
+      amount: 10 * 100, // Test Price: NGN 10 in Kobo
+      plan_code: "PLN_cnfqzc7xw1",
     },
     annually: {
-        amount: 604800 * 100, // NGN 604,800 in Kobo (10% discount)
+        amount: 10 * 100, // Test Price: NGN 10 in Kobo
         plan_code: "PLN_a90hrxjuodtw4ia",
     }
   },
