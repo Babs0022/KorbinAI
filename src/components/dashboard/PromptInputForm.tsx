@@ -187,7 +187,7 @@ export function PromptInputForm() {
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           onKeyDown={handleKeyDown}
-          placeholder="e.g., Write a marketing email for a new SaaS product..."
+          placeholder="Write a marketing email for a new SaaS product..."
           className={cn(
             "w-full min-h-[72px] max-h-[300px] text-lg p-4 pr-36 rounded-2xl bg-muted/50 border-transparent focus-visible:ring-0 resize-none overflow-y-auto",
             imageDataUri ? "pl-24" : "pl-4"
