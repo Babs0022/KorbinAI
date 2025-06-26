@@ -129,8 +129,8 @@ export default function DashboardPage() {
       <DashboardHeader />
       <main className="flex-1 flex flex-col bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30">
         
-        {/* Section 1: This part is a self-contained screen-height section, centered vertically */}
-        <section className="h-[calc(100vh-4rem)] flex flex-col justify-center">
+        {/* Section 1: This section now has padding instead of a fixed screen height. */}
+        <section className="pt-24 pb-16 md:pt-32 md:pb-20">
           <Container>
             <div className="w-full max-w-4xl text-center mx-auto">
               <h1 className="font-headline text-3xl font-bold text-foreground mb-4">
@@ -143,7 +143,7 @@ export default function DashboardPage() {
 
         {/* Section 2: This is the next section you scroll to. */}
         <section className="bg-background/70 backdrop-blur-sm">
-          <Container className="py-16 md:py-24">
+          <Container className="py-16 md:py-20">
             <div className="w-full text-center">
               <h2 className="font-headline text-2xl font-bold text-foreground mb-8">
                 Explore Other Features
