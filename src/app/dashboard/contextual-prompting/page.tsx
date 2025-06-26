@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generatePromptFromContext, type GeneratePromptFromContextInput, type GeneratePromptFromContextOutput } from '@/ai/flows/contextual-prompt-flow';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { LoadingTips } from '@/components/shared/LoadingTips';
 
 export default function ContextualPromptingPage() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -122,7 +123,13 @@ export default function ContextualPromptingPage() {
             </GlassCardContent>
           </GlassCard>
 
-          {result && (
+          {isLoading && (
+            <GlassCard className="mt-8">
+              <LoadingTips loadingText="Generating prompt from your context..." />
+            </GlassCard>
+          )}
+
+          {result && !isLoading && (
             <GlassCard>
               <GlassCardHeader>
                 <GlassCardTitle className="font-headline text-xl">Generated Output</GlassCardTitle>

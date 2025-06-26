@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { adaptPromptForModel, type AdaptPromptForModelInput, type AdaptPromptForModelOutput, type AIModelEnum } from '@/ai/flows/adapt-prompt-model-flow';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { LoadingTips } from '@/components/shared/LoadingTips';
 
 const modelGroups = [
   {
@@ -179,7 +180,13 @@ export default function ModelSpecificPromptsPage() {
             </GlassCardContent>
           </GlassCard>
 
-          {result && (
+          {isLoading && (
+            <GlassCard className="mt-8">
+              <LoadingTips loadingText="Adapting your prompt for the selected model..." />
+            </GlassCard>
+          )}
+
+          {result && !isLoading && (
             <GlassCard>
               <GlassCardHeader>
                 <GlassCardTitle className="font-headline text-xl">Adaptation Results</GlassCardTitle>

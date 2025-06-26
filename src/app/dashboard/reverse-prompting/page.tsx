@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { reconstructPromptFromOutput, type ReconstructPromptInput, type ReconstructPromptOutput } from '@/ai/flows/reverse-prompt-flow';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { LoadingTips } from '@/components/shared/LoadingTips';
 
 export default function ReversePromptingPage() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -122,7 +123,13 @@ export default function ReversePromptingPage() {
             </GlassCardContent>
           </GlassCard>
 
-          {result && (
+          {isLoading && (
+            <GlassCard className="mt-8">
+              <LoadingTips loadingText="Reconstructing the original prompt..." />
+            </GlassCard>
+          )}
+
+          {result && !isLoading && (
             <GlassCard>
               <GlassCardHeader>
                 <GlassCardTitle className="font-headline text-xl">Reconstruction Results</GlassCardTitle>

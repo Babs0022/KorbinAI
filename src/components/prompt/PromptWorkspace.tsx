@@ -11,13 +11,18 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { generateSurveyQuestions, type SurveyQuestion, type GenerateSurveyQuestionsInput } from '@/ai/flows/generate-survey-questions-flow';
 import { optimizePrompt, type OptimizePromptInput, type OptimizePromptOutput } from '@/ai/flows/optimize-prompt';
-import { generatePromptMetadata } from '@/ai/flows/generate-prompt-metadata-flow';
+import { generatePromptMetadata, type GeneratePromptMetadataOutput } from '@/ai/flows/generate-prompt-metadata-flow';
 import { useToast } from '@/hooks/use-toast';
 import { Wand2, Loader2, ArrowLeft, HelpCircle } from 'lucide-react';
-import { OptimizedPromptCard, type OptimizedPromptResult } from '@/components/prompt/OptimizedPromptCard';
+import { OptimizedPromptCard } from '@/components/prompt/OptimizedPromptCard';
 import Link from 'next/link';
+import { LoadingTips } from '@/components/shared/LoadingTips';
 
 type WorkspaceState = 'loading_questions' | 'showing_questions' | 'loading_optimization' | 'showing_result' | 'error';
+
+interface OptimizedPromptResult extends OptimizePromptOutput, GeneratePromptMetadataOutput {
+  originalGoal: string;
+}
 
 export function PromptWorkspace() {
   const searchParams = useSearchParams();
@@ -166,12 +171,13 @@ export function PromptWorkspace() {
       case 'loading_optimization':
         return (
           <GlassCard>
-            <GlassCardContent className="flex flex-col items-center justify-center text-center h-64">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="mt-4 text-muted-foreground">
-                {workspaceState === 'loading_questions' ? 'Generating clarifying questions...' : 'Crafting your optimized prompt...'}
-              </p>
-            </GlassCardContent>
+            <LoadingTips
+              loadingText={
+                workspaceState === 'loading_questions'
+                  ? 'Generating clarifying questions...'
+                  : 'Crafting your optimized prompt...'
+              }
+            />
           </GlassCard>
         );
       case 'showing_questions':

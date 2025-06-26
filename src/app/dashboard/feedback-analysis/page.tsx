@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { analyzePromptText, type AnalyzePromptInput, type AnalyzePromptOutput } from '@/ai/flows/analyze-prompt-flow';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { LoadingTips } from '@/components/shared/LoadingTips';
 
 export default function FeedbackAnalysisPage() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -125,7 +126,13 @@ export default function FeedbackAnalysisPage() {
             </GlassCardContent>
           </GlassCard>
 
-          {analysisResult && (
+          {isLoading && (
+            <GlassCard className="mt-8">
+              <LoadingTips loadingText="Analyzing your prompt..." />
+            </GlassCard>
+          )}
+
+          {analysisResult && !isLoading && (
             <GlassCard>
               <GlassCardHeader>
                 <GlassCardTitle className="font-headline text-xl">Analysis Results</GlassCardTitle>

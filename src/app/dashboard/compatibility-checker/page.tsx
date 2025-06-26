@@ -16,6 +16,7 @@ import { adaptPromptForModel, type AdaptPromptForModelInput, type AdaptPromptFor
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { LoadingTips } from '@/components/shared/LoadingTips';
 
 const modelGroups = [
   {
@@ -196,7 +197,13 @@ export default function CompatibilityCheckerPage() {
             </GlassCardContent>
           </GlassCard>
 
-          {results && (
+          {isLoading && (
+            <GlassCard className="mt-8">
+              <LoadingTips loadingText="Running A/B Tests..." />
+            </GlassCard>
+          )}
+
+          {results && !isLoading && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
               {results.map((result, index) => (
                 <GlassCard key={index}>
