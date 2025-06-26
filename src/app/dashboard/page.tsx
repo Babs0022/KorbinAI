@@ -7,7 +7,7 @@ import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import { PromptHistoryItem, type PromptHistory } from '@/components/dashboard/PromptHistoryItem';
 import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, TestTubes, Maximize, AlertTriangle, Tag, Star, Users } from 'lucide-react';
+import { PlusCircle, Search, Loader2, Copy, Eye, Bell, Lightbulb, Archive, Settings2, School, Undo2, Puzzle, FileText, Wand2, BarChart3, TrendingUp, Brain, TestTubes, Maximize, AlertTriangle, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import {
@@ -37,9 +37,11 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs, deleteDoc, doc, Timestamp, limit } from 'firebase/firestore';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
-import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCard';
 import Container from '@/components/layout/Container';
 import { Badge } from '@/components/ui/badge';
+import { CreatePromptForm, type OptimizedPromptResult } from '@/components/prompt/CreatePromptForm';
+import { OptimizedPromptCard } from '@/components/prompt/OptimizedPromptCard';
+
 
 interface Announcement {
   id: string;
@@ -48,7 +50,7 @@ interface Announcement {
   timestamp: string;
 }
 
-const features: FeatureInfo[] = [ 
+const allFeatures: FeatureInfo[] = [ 
   {
     title: "Prompt Generator",
     description: "Input goals, answer surveys, and get optimized AI prompts.",
@@ -144,7 +146,7 @@ const features: FeatureInfo[] = [
 
 
 export default function DashboardPage() {
-  const { currentUser, loading: authLoading } = useAuth();
+  const { currentUser, loading: authLoading, displayName } = useAuth();
   const router = useRouter();
   const [allUserPrompts, setAllUserPrompts] = useState<PromptHistory[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -155,16 +157,18 @@ export default function DashboardPage() {
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
+  
+  const [optimizedOutput, setOptimizedOutput] = useState<OptimizedPromptResult | null>(null);
 
-  const [averagePromptScore, setAveragePromptScore] = useState<number | null>(null);
-  const [mostFrequentTag, setMostFrequentTag] = useState<string | null>(null);
+  const handlePromptOptimized = useCallback((output: OptimizedPromptResult) => {
+    setOptimizedOutput(output);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const fetchDashboardData = useCallback(async () => {
     if (!currentUser) {
       setIsLoadingData(false);
       setAllUserPrompts([]);
-      setAveragePromptScore(null);
-      setMostFrequentTag(null);
       return;
     }
     setIsLoadingData(true);
@@ -193,39 +197,10 @@ export default function DashboardPage() {
       });
       setAllUserPrompts(firestorePrompts);
 
-      const scoredPrompts = firestorePrompts.filter(p => typeof p.qualityScore === 'number' && p.qualityScore !== undefined);
-      if (scoredPrompts.length > 0) {
-        const sum = scoredPrompts.reduce((acc, p) => acc + (p.qualityScore || 0), 0);
-        setAveragePromptScore(parseFloat((sum / scoredPrompts.length).toFixed(1)));
-      } else {
-        setAveragePromptScore(null);
-      }
-
-      const tagCounts: Record<string, number> = {};
-      firestorePrompts.forEach(prompt => {
-        if (prompt.tags && prompt.tags.length > 0) {
-          prompt.tags.forEach(tag => {
-            const normalizedTag = tag.toLowerCase().trim();
-            if (normalizedTag) {
-                tagCounts[normalizedTag] = (tagCounts[normalizedTag] || 0) + 1;
-            }
-          });
-        }
-      });
-
-      if (Object.keys(tagCounts).length > 0) {
-        const sortedTags = Object.entries(tagCounts).sort(([,a],[,b]) => b-a);
-        setMostFrequentTag(sortedTags[0][0]); 
-      } else {
-        setMostFrequentTag(null);
-      }
-
     } catch (error) {
       console.error("Error loading dashboard data from Firestore:", error);
       toast({ title: "Error Loading Data", description: "Could not load dashboard data.", variant: "destructive"});
       setAllUserPrompts([]);
-      setAveragePromptScore(null);
-      setMostFrequentTag(null);
     } finally {
       setIsLoadingData(false);
     }
@@ -252,7 +227,6 @@ export default function DashboardPage() {
       setAnnouncements(fetchedAnnouncements);
     } catch (error) {
        console.error("Error loading announcements:", error);
-       // No toast here to avoid bothering users if announcements fail to load
        setAnnouncements([]);
     } finally {
         setIsLoadingAnnouncements(false);
@@ -268,14 +242,10 @@ export default function DashboardPage() {
     } else if (!authLoading && !currentUser) {
       setIsLoadingData(false);
       setAllUserPrompts([]);
-      setAveragePromptScore(null);
-      setMostFrequentTag(null);
       setIsLoadingAnnouncements(false);
     }
   }, [currentUser, authLoading, router, fetchDashboardData, fetchAnnouncements]);
   
-  const totalPromptsCount = useMemo(() => allUserPrompts.length, [allUserPrompts]);
-
   const handleViewPrompt = useCallback((prompt: PromptHistory) => {
     setViewingPrompt(prompt);
   }, []);
@@ -327,43 +297,11 @@ export default function DashboardPage() {
     if (!promptToDelete || !currentUser) return;
     try {
       await deleteDoc(doc(db, `users/${currentUser.uid}/promptHistory`, promptToDelete.id));
-      
-      setAllUserPrompts(prevPrompts => {
-        const updatedPrompts = prevPrompts.filter(p => p.id !== promptToDelete.id);
-        
-        const scoredPrompts = updatedPrompts.filter(p => typeof p.qualityScore === 'number' && p.qualityScore !== undefined);
-        if (scoredPrompts.length > 0) {
-          const sum = scoredPrompts.reduce((acc, p) => acc + (p.qualityScore || 0), 0);
-          setAveragePromptScore(parseFloat((sum / scoredPrompts.length).toFixed(1)));
-        } else {
-          setAveragePromptScore(null);
-        }
-
-        const tagCounts: Record<string, number> = {};
-        updatedPrompts.forEach(pItem => {
-          if (pItem.tags && pItem.tags.length > 0) {
-            pItem.tags.forEach(tag => {
-              const normalizedTag = tag.toLowerCase().trim();
-               if (normalizedTag) {
-                  tagCounts[normalizedTag] = (tagCounts[normalizedTag] || 0) + 1;
-              }
-            });
-          }
-        });
-        if (Object.keys(tagCounts).length > 0) {
-          const sortedTags = Object.entries(tagCounts).sort(([,a],[,b]) => b-a);
-          setMostFrequentTag(sortedTags[0][0]);
-        } else {
-          setMostFrequentTag(null);
-        }
-        return updatedPrompts;
-      });
-
       toast({ title: "Prompt Deleted", description: `Prompt "${promptToDelete.name}" has been deleted.`});
+      fetchDashboardData(); 
     } catch (error) {
       console.error("Error deleting prompt from Firestore:", error);
       toast({ title: "Error Deleting Prompt", description: "Could not delete prompt.", variant: "destructive"});
-      fetchDashboardData(); 
     } finally {
       setPromptToDelete(null);
     }
@@ -384,6 +322,8 @@ export default function DashboardPage() {
       );
     });
   }, [allUserPrompts, searchTerm]);
+
+  const featuresToShow = useMemo(() => allFeatures.filter(f => f.title !== "Prompt Generator"), []);
 
   if (authLoading || (isLoadingData && !currentUser)) { 
     return (
@@ -409,39 +349,41 @@ export default function DashboardPage() {
       <DashboardHeader />
       <main className="flex-1 bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 overflow-y-auto">
         <Container className="py-8">
-          <h1 className="font-headline text-3xl font-bold text-foreground mb-2">Welcome to BrieflyAI</h1>
+          
+          <h1 className="font-headline text-3xl font-bold text-foreground mb-2">
+            Hey {displayName}, what can I help you create?
+          </h1>
           <p className="text-muted-foreground mb-8">
-            Your central hub for creating, managing, and optimizing AI prompts.
+            Start by defining your goal below, or explore other features.
           </p>
 
-          <section className="mb-8">
-              <h2 className="font-headline text-xl font-semibold text-foreground mb-4">Your Prompting Snapshot</h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <AnalyticsSummaryCard 
-                  title="Total Prompts in Vault" 
-                  value={isLoadingData ? "..." : String(totalPromptsCount)} 
-                  icon={Archive} 
-                  description="Your saved prompts" 
+          <section className="mb-12">
+            {!optimizedOutput ? (
+              <CreatePromptForm onPromptOptimized={handlePromptOptimized} />
+            ) : (
+              <div>
+                <OptimizedPromptCard 
+                  optimizedPrompt={optimizedOutput.optimizedPrompt}
+                  originalGoal={optimizedOutput.originalGoal} 
+                  generatedName={optimizedOutput.suggestedName}
+                  generatedTags={optimizedOutput.suggestedTags}
                 />
-                <AnalyticsSummaryCard 
-                  title="Average Prompt Score" 
-                  value={isLoadingData ? "..." : (averagePromptScore !== null ? `${averagePromptScore}/10` : "N/A")} 
-                  icon={Star} 
-                  description="Average of your scored prompts" 
-                />
-                <AnalyticsSummaryCard 
-                  title="Most Frequent Tag" 
-                  value={isLoadingData ? "..." : (mostFrequentTag || "N/A")}
-                  icon={Tag} 
-                  description="Your most used prompt tag" 
-                />
+                <Button 
+                  variant="outline" 
+                  onClick={() => setOptimizedOutput(null)} 
+                  className="mt-6 mx-auto flex"
+                >
+                  <PlusCircle className="mr-2 h-4 w-4"/>
+                  Create Another Prompt
+                </Button>
               </div>
+            )}
           </section>
 
           <section className="mb-8">
-            <h2 className="font-headline text-xl font-semibold text-foreground mb-6">Explore Features</h2>
+            <h2 className="font-headline text-xl font-semibold text-foreground mb-6">Explore Other Features</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {features.map((feature) => (
+              {featuresToShow.map((feature) => (
                 <FeatureCard key={feature.title} feature={feature} />
               ))}
             </div>
@@ -499,13 +441,6 @@ export default function DashboardPage() {
                     <p className="text-muted-foreground mt-1 text-sm">
                       {searchTerm ? "Try adjusting your search terms." : "Create a new prompt to see it here!"}
                     </p>
-                    {!searchTerm && (
-                      <Button asChild className="mt-4">
-                        <Link href="/create-prompt">
-                          <PlusCircle className="mr-2 h-4 w-4"/> Create New Prompt
-                        </Link>
-                      </Button>
-                    )}
                   </div>
                 )}
               </GlassCardContent>
