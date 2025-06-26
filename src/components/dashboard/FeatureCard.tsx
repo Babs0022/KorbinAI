@@ -85,10 +85,8 @@ export function FeatureCard({ feature }: FeatureCardProps) {
               </Link>
             </Button>
           ) : (
-             <Button variant="default" size="sm" asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-              <Link href="/#pricing">
-                <Lock className="mr-2 h-4 w-4" /> Upgrade to {requiredPlan}
-              </Link>
+             <Button variant="default" size="sm" className="w-full bg-muted hover:bg-muted text-muted-foreground cursor-not-allowed" disabled>
+                <Lock className="mr-2 h-4 w-4" /> Beta Locked
             </Button>
           )
         ) : (
