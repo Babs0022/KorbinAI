@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -5,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Mic, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Mic, Image as ImageIcon, Loader2, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -96,7 +97,7 @@ export function PromptInputForm() {
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
         setImageDataUri(dataUrl);
-        toast({ title: "Image Selected", description: `Added ${file.name} for context. Enter your goal and press Enter.` });
+        toast({ title: "Image Selected", description: `Added ${file.name} for context. Enter your goal and submit.` });
       };
       reader.readAsDataURL(file);
     }
@@ -139,11 +140,11 @@ export function PromptInputForm() {
         onChange={(e) => setGoal(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="e.g., Write a marketing email for a new SaaS product..."
-        className="w-full min-h-[60px] text-lg p-4 pr-24 rounded-2xl bg-muted/50 border-border/50 focus-visible:ring-primary focus-visible:ring-2 resize-none"
+        className="w-full min-h-[60px] text-lg p-4 pr-36 rounded-2xl bg-muted/50 border-border/50 focus-visible:ring-primary focus-visible:ring-2 resize-none"
         disabled={isProcessing}
         aria-label="Prompt goal input"
       />
-      <div className="absolute bottom-3 right-3 flex items-center gap-2">
+      <div className="absolute bottom-3 right-3 flex items-center gap-1">
         <Button
           type="button"
           variant="ghost"
@@ -169,6 +170,17 @@ export function PromptInputForm() {
           aria-label={isRecording ? "Stop recording" : "Start recording"}
         >
           <Mic className="h-5 w-5" />
+        </Button>
+        <Button
+          type="button"
+          variant="default"
+          size="icon"
+          onClick={handleSubmit}
+          className="h-9 w-9 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
+          disabled={isProcessing || !goal.trim()}
+          aria-label="Submit goal"
+        >
+            <Send className="h-5 w-5" />
         </Button>
       </div>
       {isProcessing && <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 animate-spin text-primary" />}

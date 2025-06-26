@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -6,10 +7,99 @@ import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle, Users, BarChart3, Brain, ScrollText, Settings2, TestTubes, FileText, Lightbulb, Puzzle, School, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PromptInputForm } from '@/components/dashboard/PromptInputForm';
+import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
+
+const featureCards: FeatureInfo[] = [
+    {
+    title: 'Prompt Vault & History',
+    description: 'Save, search, and manage all your optimized prompts in one secure, centralized location.',
+    href: '/dashboard/prompt-vault',
+    icon: ScrollText,
+    enabled: true,
+  },
+  {
+    title: 'Refinement Hub',
+    description: 'Iteratively improve your saved prompts with direct edits and contextual AI suggestions.',
+    href: '/dashboard/refinement-hub',
+    icon: Settings2,
+    enabled: true,
+  },
+  {
+    title: 'Model-Specific Adapter',
+    description: 'Automatically tailor any prompt for optimal performance on specific AI models like GPT-4, Claude 3, and more.',
+    href: '/dashboard/model-specific-prompts',
+    icon: Puzzle,
+    enabled: true,
+  },
+   {
+    title: 'Real-Time Suggestions',
+    description: 'Get live, AI-powered feedback and suggestions to improve your prompts as you type.',
+    href: '/dashboard/real-time-suggestions',
+    icon: Lightbulb,
+    enabled: true,
+  },
+  {
+    title: 'A/B Testing',
+    description: 'Compare prompt variations across multiple AI models side-by-side to find the most effective one.',
+    href: '/dashboard/compatibility-checker',
+    icon: TestTubes,
+    enabled: true,
+  },
+  {
+    title: 'Prompt Feedback & Analysis',
+    description: 'Receive an instant quality score (1-10) and actionable, AI-driven feedback on any prompt.',
+    href: '/dashboard/feedback-analysis',
+    icon: BarChart3,
+    enabled: true,
+  },
+   {
+    title: 'Contextual Prompting',
+    description: 'Generate new prompts by providing existing content, documents, or ideas as context.',
+    href: '/dashboard/contextual-prompting',
+    icon: FileText,
+    enabled: true,
+  },
+  {
+    title: 'Reverse Prompting',
+    description: 'Paste AI-generated text to reverse-engineer the prompt that likely created it.',
+    href: '/dashboard/reverse-prompting',
+    icon: Repeat,
+    enabled: true,
+  },
+   {
+    title: 'Analytics Dashboard',
+    description: 'Track your prompt performance, usage trends, and average quality scores over time.',
+    href: '/dashboard/analytics',
+    icon: BarChart3,
+    enabled: true,
+  },
+  {
+    title: 'Automated Optimization Engine',
+    description: 'BrieflyAI learns from your prompt history and feedback to provide smarter suggestions over time.',
+    href: '/dashboard/learning-mode',
+    icon: Brain,
+    enabled: true,
+  },
+  {
+    title: 'Prompt Academy',
+    description: 'Access tutorials and best practices to master the art and science of prompt engineering.',
+    href: '/dashboard/academy',
+    icon: School,
+    enabled: true,
+  },
+  {
+    title: 'Collaboration Hub',
+    description: 'Share, manage, and collaborate on prompts with your team. (Coming Soon)',
+    href: '/dashboard/collaboration',
+    icon: Users,
+    enabled: true,
+  },
+];
+
 
 export default function DashboardPage() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -45,6 +135,17 @@ export default function DashboardPage() {
               Hey there, What can I help you create?
             </h1>
             <PromptInputForm />
+          </div>
+
+          <div className="w-full mt-16 text-center">
+             <h2 className="font-headline text-2xl font-bold text-foreground mb-8">
+                Explore Other Features
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {featureCards.map((feature) => (
+                    <FeatureCard key={feature.href} feature={feature} />
+                ))}
+            </div>
           </div>
         </Container>
       </main>
