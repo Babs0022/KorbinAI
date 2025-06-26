@@ -70,12 +70,7 @@ export function AccountInfoCard() {
             </Badge>
           </div>
         </div>
-        <div className="mt-4 space-y-2 text-sm">
-          <p className="text-xs text-muted-foreground">
-            Prompt usage and limits will be displayed here with an active subscription.
-          </p>
-        </div>
-        <Button variant="outline" className="mt-6 w-full" asChild>
+        <Button variant="outline" className="mt-4 w-full" asChild>
           <Link href="/dashboard/account">
             <Edit3 className="mr-2 h-4 w-4" /> Manage Account
           </Link>

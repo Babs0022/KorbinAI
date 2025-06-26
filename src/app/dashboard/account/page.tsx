@@ -39,7 +39,6 @@ import {
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import NextImage from 'next/image';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -337,7 +336,7 @@ export default function AccountPage() {
                                 ${selectedIconUrl === iconSrc ? 'border-primary ring-2 ring-primary scale-110' : 'border-transparent hover:border-primary/50'}`}
                               aria-label={`Select avatar ${iconSrc.substring(iconSrc.lastIndexOf('/') + 1)}`}
                             >
-                              <NextImage src={iconSrc} alt="Selectable avatar icon" layout="fill" objectFit="cover" data-ai-hint="avatar icon" />
+                              <img src={iconSrc} alt="Selectable avatar icon" className="h-full w-full object-cover" data-ai-hint="avatar icon" />
                             </button>
                           ))}
                         </div>
