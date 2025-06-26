@@ -127,26 +127,36 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <DashboardHeader />
-      <main className="flex-1 flex flex-col justify-center bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30">
-        <Container className="py-16 md:py-24">
-          <div className="w-full max-w-3xl text-center mx-auto">
-            <h1 className="font-headline text-3xl font-bold text-foreground mb-4">
-              Hey there, What can I help you create?
-            </h1>
-            <PromptInputForm />
-          </div>
+      <main className="flex-1 flex flex-col bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30">
+        
+        {/* Section 1: This part is a self-contained screen-height section, centered vertically */}
+        <section className="h-[calc(100vh-4rem)] flex flex-col justify-center">
+          <Container>
+            <div className="w-full max-w-4xl text-center mx-auto">
+              <h1 className="font-headline text-3xl font-bold text-foreground mb-4">
+                Hey there, What can I help you create?
+              </h1>
+              <PromptInputForm />
+            </div>
+          </Container>
+        </section>
 
-          <div className="w-full mt-16 text-center">
-             <h2 className="font-headline text-2xl font-bold text-foreground mb-8">
+        {/* Section 2: This is the next section you scroll to. */}
+        <section className="bg-background/70 backdrop-blur-sm">
+          <Container className="py-16 md:py-24">
+            <div className="w-full text-center">
+              <h2 className="font-headline text-2xl font-bold text-foreground mb-8">
                 Explore Other Features
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {featureCards.map((feature) => (
                     <FeatureCard key={feature.href} feature={feature} />
                 ))}
+              </div>
             </div>
-          </div>
-        </Container>
+          </Container>
+        </section>
+
       </main>
       <MinimalFooter />
     </div>
