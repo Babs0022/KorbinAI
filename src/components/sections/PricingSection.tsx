@@ -8,9 +8,10 @@ import { GlassCard } from '@/components/shared/GlassCard';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
@@ -19,6 +20,7 @@ interface Tier {
   planId: string;
   price: { monthly: string; annually: string };
   paymentLink: { monthly: string; annually: string };
+  cryptoPaymentLink: { monthly: string; annually: string };
   description: string;
   features: string[];
   missingFeatures?: string[];
@@ -32,6 +34,7 @@ const pricingTiers: Tier[] = [
       planId: 'free',
       price: { monthly: 'NGN 0', annually: 'NGN 0' },
       paymentLink: { monthly: '/signup', annually: '/signup' },
+      cryptoPaymentLink: { monthly: '#', annually: '#' },
       description: 'For individuals starting their journey with AI prompting.',
       features: [
         '15 Prompts per month',
@@ -56,6 +59,10 @@ const pricingTiers: Tier[] = [
           monthly: 'https://paystack.shop/pay/adn4uwot-5',
           annually: 'https://paystack.shop/pay/sq8pii8rod'
       },
+      cryptoPaymentLink: { // Replace '#' with your actual NOWPayments links
+          monthly: '#',
+          annually: '#'
+      },
       description: 'For power users & professionals who need advanced tools.',
       features: [
         '500 Prompts per month',
@@ -66,7 +73,7 @@ const pricingTiers: Tier[] = [
         'Prompt Refinement Hub & Analytics',
         'Priority email & chat support',
       ],
-      cta: 'Upgrade to Premium',
+      cta: 'Upgrade with Card',
       emphasized: true,
     },
     {
@@ -77,6 +84,10 @@ const pricingTiers: Tier[] = [
           monthly: 'https://paystack.shop/pay/cnfqzc7xw1',
           annually: 'https://paystack.shop/pay/w7iln7hu8e'
       },
+      cryptoPaymentLink: { // Replace '#' with your actual NOWPayments links
+          monthly: '#',
+          annually: '#'
+      },
       description: 'For teams & businesses that demand unlimited scale.',
       features: [
         'Unlimited Prompts & Vault Storage',
@@ -86,7 +97,7 @@ const pricingTiers: Tier[] = [
         'Centralized Billing & User Management',
         'Dedicated Onboarding & Support',
       ],
-      cta: 'Go Unlimited',
+      cta: 'Upgrade with Card',
       emphasized: false,
     },
 ];
@@ -95,6 +106,7 @@ const pricingTiers: Tier[] = [
 export function PricingSection() {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'annually'>('monthly');
     const { currentUser } = useAuth();
+    const { toast } = useToast();
 
     const getPaymentLink = (tier: Tier) => {
         let link = billingCycle === 'monthly' ? tier.paymentLink.monthly : tier.paymentLink.annually;
@@ -111,6 +123,28 @@ export function PricingSection() {
             }
         }
         return link;
+    };
+    
+    const handleCryptoPayment = (tier: Tier) => {
+      if (!currentUser) {
+        toast({
+          title: "Login Required",
+          description: "Please log in or create an account to pay with crypto.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const baseUrl = billingCycle === 'monthly' ? tier.cryptoPaymentLink.monthly : tier.cryptoPaymentLink.annually;
+
+      if (!baseUrl || baseUrl === '#') {
+        toast({ title: "Coming Soon", description: "Crypto payment links are not configured yet.", variant: "default"});
+        return;
+      }
+
+      const orderId = `${currentUser.uid}_${tier.planId}_${billingCycle}`;
+      const finalUrl = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}order_id=${encodeURIComponent(orderId)}`;
+      window.open(finalUrl, '_blank');
     };
 
     return (
@@ -181,26 +215,40 @@ export function PricingSection() {
                         </li>
                     ))}
                   </ul>
-                  <div className="mt-8">
-                    <Button
-                      asChild
-                      className={cn(
-                        "w-full",
-                        tier.emphasized && tier.planId !== 'free' ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-accent hover:bg-accent/90 text-accent-foreground",
-                         tier.planId === 'free' ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground" : ""
-                      )}
-                    >
-                      <a href={getPaymentLink(tier)} rel="noopener noreferrer">
-                          {tier.cta}
-                      </a>
+                  <div className="mt-8 flex flex-col gap-2">
+                     <Button
+                        asChild={tier.planId === 'free'} // only use asChild for the free plan link
+                        onClick={tier.planId !== 'free' ? () => window.open(getPaymentLink(tier), '_blank') : undefined}
+                        className={cn(
+                            "w-full",
+                             tier.emphasized && tier.planId !== 'free' ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-accent hover:bg-accent/90 text-accent-foreground",
+                            tier.planId === 'free' ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground" : ""
+                        )}
+                        >
+                        {tier.planId === 'free' ? <Link href="/signup">{tier.cta}</Link> : tier.cta}
                     </Button>
+                    {tier.planId !== 'free' && (
+                       <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                 <Button variant="outline" className="w-full" onClick={() => handleCryptoPayment(tier)}>
+                                    <Wallet className="mr-2 h-4 w-4" />
+                                    Pay with Crypto
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Pay with various cryptocurrencies via NOWPayments.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                       </TooltipProvider>
+                    )}
                   </div>
                 </GlassCard>
               ))}
             </div>
             <div className="text-center mt-8">
                 <p className="text-xs text-muted-foreground">
-                    Important: Please ensure the email you use for payment matches your BrieflyAI account email.
+                    Important: For card or crypto, please ensure the email you use for payment matches your BrieflyAI account email.
                 </p>
             </div>
           </Container>

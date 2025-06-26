@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon, ArrowLeft, CheckCircle2, Star } from 'lucide-react';
+import { User, Mail, KeyRound, CreditCard, Trash2, Loader2, ShieldAlert, Info, Image as ImageIcon, ArrowLeft, CheckCircle2, Star, Wallet } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -51,6 +51,7 @@ interface Tier {
   planId: string;
   price: { monthly: string; annually: string };
   paymentLink: { monthly: string; annually: string };
+  cryptoPaymentLink: { monthly: string; annually: string };
   description: string;
   features: string[];
   cta: string;
@@ -66,6 +67,10 @@ const pricingTiers: Tier[] = [
         monthly: 'https://paystack.shop/pay/adn4uwot-5',
         annually: 'https://paystack.shop/pay/sq8pii8rod'
     },
+     cryptoPaymentLink: { // Replace '#' with your actual NOWPayments links
+        monthly: '#',
+        annually: '#'
+    },
     description: 'Supercharge your AI interactions.',
     features: [
       '50 Prompts per month',
@@ -74,7 +79,7 @@ const pricingTiers: Tier[] = [
       'Contextual Prompting & Analysis',
       'Prompt Academy Access',
     ],
-    cta: 'Upgrade to Premium',
+    cta: 'Pay with Card',
     emphasized: true,
   },
   {
@@ -85,6 +90,10 @@ const pricingTiers: Tier[] = [
         monthly: 'https://paystack.shop/pay/cnfqzc7xw1',
         annually: 'https://paystack.shop/pay/w7iln7hu8e'
     },
+    cryptoPaymentLink: { // Replace '#' with your actual NOWPayments links
+        monthly: '#',
+        annually: '#'
+    },
     description: 'For power users who need it all.',
     features: [
       'Unlimited Prompts',
@@ -93,7 +102,7 @@ const pricingTiers: Tier[] = [
       'Unlimited Reverse Prompting',
       'Early access to new features',
     ],
-    cta: 'Upgrade to Unlimited',
+    cta: 'Pay with Card',
     emphasized: false,
   },
 ];
@@ -135,6 +144,21 @@ export default function AccountPage() {
       link += link.includes('?') ? `&email=${encodeURIComponent(currentUser.email)}` : `?email=${encodeURIComponent(currentUser.email)}`;
     }
     return link;
+  };
+  
+  const handleCryptoPayment = (tier: Tier) => {
+      if (!currentUser) return; // Should not happen in this component
+      
+      const baseUrl = modalBillingCycle === 'monthly' ? tier.cryptoPaymentLink.monthly : tier.cryptoPaymentLink.annually;
+
+      if (!baseUrl || baseUrl === '#') {
+        toast({ title: "Coming Soon", description: "Crypto payment links are not configured yet.", variant: "default"});
+        return;
+      }
+
+      const orderId = `${currentUser.uid}_${tier.planId}_${modalBillingCycle}`;
+      const finalUrl = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}order_id=${encodeURIComponent(orderId)}`;
+      window.open(finalUrl, '_blank');
   };
 
   const handleSaveProfile = async (e: FormEvent) => {
@@ -452,7 +476,7 @@ export default function AccountPage() {
                                   </li>
                                 ))}
                               </ul>
-                              <div className="mt-6">
+                              <div className="mt-6 flex flex-col gap-2">
                                 <Button
                                     asChild
                                     size="lg"
@@ -462,10 +486,18 @@ export default function AccountPage() {
                                         : "bg-accent hover:bg-accent/90 text-accent-foreground"
                                     )}
                                 >
-                                    <a href={getPaymentLink(tier)} rel="noopener noreferrer">
+                                    <a href={getPaymentLink(tier)} target="_blank" rel="noopener noreferrer">
                                         {tier.cta}
                                     </a>
                                 </Button>
+                                 <Button
+                                    variant="outline"
+                                    size="lg"
+                                    className="w-full"
+                                    onClick={() => handleCryptoPayment(tier)}
+                                  >
+                                    <Wallet className="mr-2 h-4 w-4"/> Pay with Crypto
+                                  </Button>
                               </div>
                             </div>
                           ))}
