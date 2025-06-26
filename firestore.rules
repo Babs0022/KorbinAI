@@ -1,84 +1,86 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // --- HELPER FUNCTIONS ---
-    // These functions are used in the rules below to keep them clean.
-    
-    // Gets the data for a specific team document.
     function getTeamData(teamId) {
       return get(/databases/$(database)/documents/teams/$(teamId)).data;
     }
     
-    // Checks if a user's UID is in the list of team members.
     function isTeamMember(teamId, userId) {
-      let teamData = getTeamData(teamId);
-      // Check if the user's ID exists as a key in the members map.
-      return userId in teamData.members;
+      // Check if the user ID exists as a key in the members map.
+      return getTeamData(teamId).members.keys().hasAny([userId]);
     }
     
-    // Gets a user's role ('admin', 'editor', 'viewer') from the team data.
     function getRole(teamId, userId) {
       return getTeamData(teamId).members[userId].role;
     }
 
     // --- USER DATA ---
     match /users/{userId} {
-      // Users can create their own profile during signup, and can read/update it later.
+      // Users can create their own profile, and can read/update it.
       allow create: if request.auth.uid == userId;
       allow read, update: if request.auth.uid == userId;
     }
 
-    // This rule handles all user subcollections like 'promptHistory' and 'userSettings'.
+    // This rule handles user subcollections like 'promptHistory' and 'userSettings'.
     match /users/{userId}/{document=**} {
        allow read, write: if request.auth.uid == userId;
     }
     
-    // --- PAYMENTS & SUBSCRIPTIONS (Controlled by backend functions) ---
+    // --- PAYMENTS & SUBSCRIPTIONS (Backend-controlled) ---
     match /userSubscriptions/{userId} {
       allow read: if request.auth.uid == userId;
-      allow write: if false; // Only backend can write
+      allow write: if false; 
     }
     
     match /transactions/{transactionId} {
-      allow read, write: if false; // Only backend can write
+      allow read, write: if false; 
     }
     
-    // --- PUBLIC & SEMI-PUBLIC DATA ---
+    // --- PUBLIC DATA ---
     match /newsletterSubscribers/{email} {
-      // Anyone can subscribe to the newsletter.
       allow create: if true;
     }
     
     match /appAnnouncements/{announcementId} {
-      // Any signed-in user can read app announcements.
       allow read: if request.auth != null;
     }
 
-    // --- TEAM DATA (Role-Based Access Control) ---
+    // --- TEAM DATA (Role-Based Access) ---
     match /teams/{teamId} {
       // Allow any authenticated user to create a team,
-      // but only if they correctly set themselves as the owner and an admin.
-      // This is a critical security check.
+      // but only if they correctly set themselves as the owner and admin.
       allow create: if request.auth != null &&
                       request.resource.data.ownerId == request.auth.uid &&
                       request.resource.data.members[request.auth.uid].role == 'admin';
                       
-      // Only team members can read the team document (e.g., to see the member list).
+      // Only team members can read the team document.
       allow read: if isTeamMember(teamId, request.auth.uid);
       
-      // Only admins can update the team document (e.g., to invite new members).
+      // Only admins can update the team document (e.g., to invite members).
       allow update: if getRole(teamId, request.auth.uid) == 'admin';
     }
 
     match /teams/{teamId}/sharedPrompts/{promptId} {
-      // Any team member can read the shared prompts.
+      // Any team member can read prompts.
       allow read: if isTeamMember(teamId, request.auth.uid);
 
-      // Only admins and editors can create and delete prompts. Viewers cannot.
+      // Only admins and editors can create and delete prompts.
       allow create, delete: if getRole(teamId, request.auth.uid) == 'admin' ||
                                 getRole(teamId, request.auth.uid) == 'editor';
+    }
+
+    match /teams/{teamId}/chatMessages/{messageId} {
+        // Any team member can read chat messages.
+        allow read: if isTeamMember(teamId, request.auth.uid);
+        // Any team member can create a message, but they must be the sender.
+        allow create: if isTeamMember(teamId, request.auth.uid) && 
+                       request.resource.data.senderId == request.auth.uid;
+        // Nobody can update or delete messages.
+        allow update, delete: if false;
     }
   }
 }

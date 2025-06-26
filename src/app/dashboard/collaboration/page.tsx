@@ -1,12 +1,12 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, type FormEvent } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, type FormEvent, useRef } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Shield, PlusCircle, Loader2, Trash2, Settings, Eye, User, Tag, Copy } from 'lucide-react';
+import { ArrowLeft, Users, Shield, PlusCircle, Loader2, Trash2, Settings, Eye, User, Tag, Copy, Send } from 'lucide-react';
 import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -45,6 +45,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from '@/components/ui/textarea';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface TeamMember {
   uid: string;
@@ -61,13 +63,23 @@ interface Team {
   members: Record<string, TeamMember>;
 }
 
+interface ChatMessage {
+  id: string;
+  text: string;
+  senderId: string;
+  senderName: string;
+  senderPhotoURL?: string;
+  timestamp: Timestamp;
+}
+
 export default function CollaborationPage() {
-  const { currentUser, teamId, teamRole, loading: authLoading } = useAuth();
+  const { currentUser, teamId, teamRole, loading: authLoading, displayName, avatarUrl } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
   const [team, setTeam] = useState<Team | null>(null);
   const [sharedPrompts, setSharedPrompts] = useState<PromptHistory[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const [showCreateTeamDialog, setShowCreateTeamDialog] = useState(false);
@@ -89,10 +101,19 @@ export default function CollaborationPage() {
   const [isUpdatingMember, setIsUpdatingMember] = useState<string | null>(null);
   
   const [viewingSharedPrompt, setViewingSharedPrompt] = useState<PromptHistory | null>(null);
-
+  
+  const [newMessage, setNewMessage] = useState('');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const chatScrollAreaRef = useRef<HTMLDivElement>(null);
 
   const canManageTeam = useMemo(() => teamRole === 'admin', [teamRole]);
   const canEditPrompts = useMemo(() => teamRole === 'admin' || teamRole === 'editor', [teamRole]);
+
+  useEffect(() => {
+    if (chatScrollAreaRef.current) {
+        chatScrollAreaRef.current.scrollTo({ top: chatScrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [chatMessages]);
 
   useEffect(() => {
     if (team) {
@@ -141,9 +162,20 @@ export default function CollaborationPage() {
         setSharedPrompts(fetchedPrompts);
       });
 
+      const chatQuery = query(collection(db, 'teams', teamId, 'chatMessages'), orderBy('timestamp', 'asc'));
+      const chatUnsubscribe = onSnapshot(chatQuery, (querySnapshot) => {
+        const fetchedMessages = querySnapshot.docs.map(docSnap => ({
+            id: docSnap.id,
+            ...docSnap.data()
+        } as ChatMessage));
+        setChatMessages(fetchedMessages);
+      });
+
+
       return () => {
         teamUnsubscribe();
         promptsUnsubscribe();
+        chatUnsubscribe();
       };
     } else {
       setIsLoading(false);
@@ -300,6 +332,29 @@ export default function CollaborationPage() {
     if (!text) return;
     navigator.clipboard.writeText(text);
     toast({ title: "Prompt Copied!", description: "The shared prompt text has been copied." });
+  };
+  
+  const handleSendMessage = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!team || !currentUser || !newMessage.trim()) return;
+    
+    setIsSendingMessage(true);
+    try {
+      const chatColRef = collection(db, 'teams', team.id, 'chatMessages');
+      await addDoc(chatColRef, {
+        text: newMessage.trim(),
+        senderId: currentUser.uid,
+        senderName: displayName,
+        senderPhotoURL: avatarUrl,
+        timestamp: serverTimestamp(),
+      });
+      setNewMessage('');
+    } catch (error) {
+      console.error("Error sending chat message:", error);
+      toast({ title: "Send Error", description: "Could not send message.", variant: "destructive" });
+    } finally {
+      setIsSendingMessage(false);
+    }
   };
 
 
@@ -458,7 +513,7 @@ export default function CollaborationPage() {
                     )}
                   </div>
                   <GlassCardDescription className="mt-2 text-lg">
-                    A shared workspace to create, manage, and refine prompts as a team.
+                    A shared workspace to create, manage, and discuss prompts as a team.
                   </GlassCardDescription>
                 </GlassCardHeader>
               </GlassCard>
@@ -536,14 +591,42 @@ export default function CollaborationPage() {
                   </GlassCard>
                 </div>
                 <div className="lg:col-span-1">
-                  <GlassCard>
+                  <GlassCard className="h-full flex flex-col">
                     <GlassCardHeader>
-                        <GlassCardTitle>Team Activity</GlassCardTitle>
-                      <GlassCardDescription>A log of recent team actions.</GlassCardDescription>
+                        <GlassCardTitle>Team Chat</GlassCardTitle>
+                      <GlassCardDescription>Discuss prompts and ideas.</GlassCardDescription>
                     </GlassCardHeader>
-                    <GlassCardContent>
-                      <div className="text-center py-10 text-muted-foreground text-sm">
-                        Activity feed coming soon!
+                    <GlassCardContent className="flex-grow flex flex-col p-0">
+                      <ScrollArea className="flex-grow p-4 space-y-4" ref={chatScrollAreaRef}>
+                         {chatMessages.length > 0 ? chatMessages.map(msg => (
+                            <div key={msg.id} className={cn("flex items-start gap-2.5", msg.senderId === currentUser?.uid && "justify-end")}>
+                                <Avatar className={cn("h-8 w-8", msg.senderId === currentUser?.uid && "order-2")}>
+                                    <AvatarImage src={msg.senderPhotoURL} alt={msg.senderName} />
+                                    <AvatarFallback>{msg.senderName?.charAt(0) || '?'}</AvatarFallback>
+                                </Avatar>
+                                <div className={cn("p-2.5 rounded-lg shadow-sm max-w-[80%]", msg.senderId === currentUser?.uid ? "bg-primary text-primary-foreground rounded-br-none" : "bg-muted text-muted-foreground rounded-bl-none")}>
+                                    <p className="text-xs font-semibold mb-1">{msg.senderId === currentUser?.uid ? 'You' : msg.senderName}</p>
+                                    <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                                </div>
+                            </div>
+                         )) : (
+                             <div className="text-center text-sm text-muted-foreground py-10">
+                                No messages yet. Say hello!
+                            </div>
+                         )}
+                      </ScrollArea>
+                      <div className="p-4 border-t mt-auto">
+                        <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                          <Input 
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder="Type a message..."
+                            disabled={isSendingMessage}
+                          />
+                          <Button type="submit" size="icon" disabled={isSendingMessage || !newMessage.trim()}>
+                            {isSendingMessage ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className="h-4 w-4"/>}
+                          </Button>
+                        </form>
                       </div>
                     </GlassCardContent>
                   </GlassCard>
