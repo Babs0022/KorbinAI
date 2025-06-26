@@ -13,8 +13,8 @@ import Link from 'next/link';
 import { PromptInputForm } from '@/components/dashboard/PromptInputForm';
 import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
 
-const featureCards: FeatureInfo[] = [
-    {
+const coreFeatures: FeatureInfo[] = [
+  {
     title: 'Prompt Vault & History',
     description: 'Save, search, and manage all your optimized prompts in one secure, centralized location.',
     href: '/dashboard/prompt-vault',
@@ -29,7 +29,7 @@ const featureCards: FeatureInfo[] = [
     enabled: true,
     isPremium: true,
   },
-   {
+  {
     title: 'Team Collaboration Hub',
     description: 'Share, manage, and collaborate on prompts with your team in a shared workspace.',
     href: '/dashboard/collaboration',
@@ -37,27 +37,14 @@ const featureCards: FeatureInfo[] = [
     enabled: true,
     isUnlimited: true,
   },
+];
+
+const utilityFeatures: FeatureInfo[] = [
   {
-    title: 'Model-Specific Adapter',
-    description: 'Automatically tailor any prompt for optimal performance on specific AI models like GPT-4, Claude 3, and more.',
-    href: '/dashboard/model-specific-prompts',
-    icon: Puzzle,
-    enabled: true,
-    isPremium: true,
-  },
-   {
     title: 'Real-Time Suggestions',
     description: 'Get live, AI-powered feedback and suggestions to improve your prompts as you type.',
     href: '/dashboard/real-time-suggestions',
     icon: Lightbulb,
-    enabled: true,
-    isPremium: true,
-  },
-  {
-    title: 'A/B Testing',
-    description: 'Compare prompt variations across multiple AI models side-by-side to find the most effective one.',
-    href: '/dashboard/compatibility-checker',
-    icon: TestTubes,
     enabled: true,
     isPremium: true,
   },
@@ -69,7 +56,7 @@ const featureCards: FeatureInfo[] = [
     enabled: true,
     isPremium: true,
   },
-   {
+  {
     title: 'Contextual Prompting',
     description: 'Generate new prompts by providing existing content, documents, or ideas as context.',
     href: '/dashboard/contextual-prompting',
@@ -85,20 +72,32 @@ const featureCards: FeatureInfo[] = [
     enabled: true,
     isPremium: true,
   },
-   {
+  {
+    title: 'Model-Specific Adapter',
+    description: 'Automatically tailor any prompt for optimal performance on specific AI models like GPT-4, Claude 3, and more.',
+    href: '/dashboard/model-specific-prompts',
+    icon: Puzzle,
+    enabled: true,
+    isPremium: true,
+  },
+  {
+    title: 'A/B Testing',
+    description: 'Compare prompt variations across multiple AI models side-by-side to find the most effective one.',
+    href: '/dashboard/compatibility-checker',
+    icon: TestTubes,
+    enabled: true,
+    isPremium: true,
+  },
+];
+
+const learningFeatures: FeatureInfo[] = [
+  {
     title: 'Analytics Dashboard',
     description: 'Track your prompt performance, usage trends, and average quality scores over time.',
     href: '/dashboard/analytics',
     icon: BarChart3,
     enabled: true,
     isPremium: true,
-  },
-  {
-    title: 'Automated Optimization Engine',
-    description: 'BrieflyAI learns from your prompt history and feedback to provide smarter suggestions over time.',
-    href: '/dashboard/refinement-hub',
-    icon: Brain,
-    enabled: true,
   },
   {
     title: 'Prompt Academy',
@@ -108,13 +107,21 @@ const featureCards: FeatureInfo[] = [
     enabled: true,
   },
   {
-    title: 'Product Roadmap & Teams',
+    title: 'Automated Optimization Engine',
+    description: 'BrieflyAI learns from your prompt history and feedback to provide smarter suggestions over time.',
+    href: '/dashboard/learning-mode',
+    icon: Brain,
+    enabled: true,
+  },
+  {
+    title: 'Product Roadmap',
     description: 'See our vision for team features, analytics, integrations, and what we are building next.',
     href: '/dashboard/roadmap',
     icon: Rocket,
     enabled: true,
   },
 ];
+
 
 export default function DashboardPage() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -155,16 +162,39 @@ export default function DashboardPage() {
            </div>
 
           <section className="bg-background/70 backdrop-blur-sm rounded-xl p-6 md:p-8">
-            <div className="w-full text-center">
-              <h2 className="font-headline text-2xl font-bold text-foreground mb-8">
-                Explore Features
+            <div className="w-full text-center mb-12">
+              <h2 className="font-headline text-2xl font-bold text-foreground">
+                Explore Your Prompt Engineering Toolkit
               </h2>
+            </div>
+            
+            <section className="mb-12">
+              <h3 className="font-headline text-xl font-semibold text-foreground mb-6 text-left border-b pb-2">Core Tools</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {featureCards.map((feature) => (
+                {coreFeatures.map((feature) => (
                   <FeatureCard key={feature.title} feature={feature} />
                 ))}
               </div>
-            </div>
+            </section>
+
+            <section className="mb-12">
+              <h3 className="font-headline text-xl font-semibold text-foreground mb-6 text-left border-b pb-2">Advanced Utilities</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {utilityFeatures.map((feature) => (
+                  <FeatureCard key={feature.title} feature={feature} />
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h3 className="font-headline text-xl font-semibold text-foreground mb-6 text-left border-b pb-2">Insights & Learning</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {learningFeatures.map((feature) => (
+                  <FeatureCard key={feature.title} feature={feature} />
+                ))}
+              </div>
+            </section>
+            
           </section>
         </Container>
       </main>
