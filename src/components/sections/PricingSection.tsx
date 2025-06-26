@@ -35,70 +35,22 @@ const pricingTiers: Tier[] = [
       price: { monthly: 'NGN 0', annually: 'NGN 0' },
       paymentLink: { monthly: '/signup', annually: '/signup' },
       cryptoPaymentLink: { monthly: '#', annually: '#' },
-      description: 'For individuals starting their journey with AI prompting.',
+      description: 'For individuals and teams starting their journey with AI prompting.',
       features: [
-        '15 Prompts per month',
-        'Basic Prompt Generator',
-        'Save up to 5 prompts in Vault',
-        'Standard email support',
-      ],
-      missingFeatures: [
-        'Contextual Prompting (Image, PDF, URL)',
-        'Model-Specific Adaptation & Compatibility Checker',
+        'Unlimited Prompts',
+        'Full Prompt Vault & History',
+        'Advanced Prompt Generation',
+        'Contextual Prompting & Analysis',
+        'Model-Specific Adaptation & A/B Testing',
         'Prompt Refinement Hub & Analytics',
-        'Team Collaboration Features',
+        'Prompt Academy Access',
+      ],
+       missingFeatures: [
+        'Team Collaboration Hub',
+        'Shared Prompt Vaults & Templates',
       ],
       cta: 'Start for Free',
-      emphasized: false,
-    },
-    {
-      name: 'BrieflyAI Premium',
-      planId: 'premium',
-      price: { monthly: 'NGN 100', annually: 'NGN 100' }, // Test Price
-      paymentLink: {
-          monthly: 'https://paystack.shop/pay/adn4uwot-5',
-          annually: 'https://paystack.shop/pay/sq8pii8rod'
-      },
-      cryptoPaymentLink: {
-          monthly: 'https://nowpayments.io/payment/?iid=5567916183',
-          annually: 'https://nowpayments.io/payment/?iid=6096989784'
-      },
-      description: 'For power users & professionals who need advanced tools.',
-      features: [
-        '500 Prompts per month',
-        'All Free features, plus:',
-        'Advanced Prompt Generator',
-        'Contextual Prompting (Image upload)',
-        'Model-Specific Adaptation & Compatibility Checker',
-        'Prompt Refinement Hub & Analytics',
-        'Priority email & chat support',
-      ],
-      cta: 'Upgrade with Card',
       emphasized: true,
-    },
-    {
-      name: 'BrieflyAI Unlimited',
-      planId: 'unlimited',
-      price: { monthly: 'NGN 100', annually: 'NGN 100' }, // Test Price
-      paymentLink: {
-          monthly: 'https://paystack.shop/pay/cnfqzc7xw1',
-          annually: 'https://paystack.shop/pay/w7iln7hu8e'
-      },
-      cryptoPaymentLink: {
-          monthly: 'https://nowpayments.io/payment/?iid=5138480737',
-          annually: 'https://nowpayments.io/payment/?iid=5491712168'
-      },
-      description: 'For teams & businesses that demand unlimited scale.',
-      features: [
-        'Unlimited Prompts & Vault Storage',
-        'All Premium features, plus:',
-        'Team Collaboration Workspace (up to 5 users)',
-        'Shared Prompt Vaults & Templates',
-        'Centralized Billing & User Management',
-        'Dedicated Onboarding & Support',
-      ],
-      cta: 'Upgrade with Card',
-      emphasized: false,
     },
 ];
 
@@ -152,29 +104,18 @@ export function PricingSection() {
           <Container>
             <div className="text-center mb-12">
               <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                Choose the Plan That's Right For You
+                Free for Everyone
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-                Simple, transparent pricing in Nigerian Naira (NGN). No hidden fees. Cancel anytime.
+                Get started with our powerful suite of prompt engineering tools, completely free. Paid plans are coming soon for teams.
               </p>
             </div>
             
             <div className="flex justify-center items-center space-x-4 mb-8">
-              <Label htmlFor="billing-cycle" className={cn("text-muted-foreground", billingCycle === 'monthly' && 'text-foreground font-medium')}>
-                Monthly
-              </Label>
-              <Switch
-                id="billing-cycle"
-                checked={billingCycle === 'annually'}
-                onCheckedChange={(checked) => setBillingCycle(checked ? 'annually' : 'monthly')}
-                aria-label="Toggle between monthly and annual billing"
-              />
-              <Label htmlFor="billing-cycle" className={cn("text-muted-foreground", billingCycle === 'annually' && 'text-foreground font-medium')}>
-                Annually <span className="text-accent font-semibold">(Save 10%!)</span>
-              </Label>
+              {/* Hide the billing cycle switch for now */}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-8 max-w-md mx-auto">
               {pricingTiers.map((tier) => (
                 <GlassCard
                   key={tier.planId}
@@ -186,17 +127,14 @@ export function PricingSection() {
                   {tier.emphasized && (
                     <div className="absolute top-0 right-4 -mt-3">
                       <div className="flex h-8 items-center justify-center rounded-full bg-primary px-4 text-xs font-bold uppercase text-primary-foreground shadow-xl">
-                        Most Popular
+                        Free Forever
                       </div>
                     </div>
                   )}
                   <h3 className="font-headline text-xl font-semibold text-foreground">{tier.name}</h3>
                   <p className="mt-4 flex items-baseline text-foreground">
                     <span className="text-4xl font-extrabold tracking-tight">
-                        {billingCycle === 'monthly' ? tier.price.monthly : tier.price.annually}
-                    </span>
-                    <span className="ml-1 text-md font-semibold text-muted-foreground">
-                        {tier.price.monthly !== 'NGN 0' && (billingCycle === 'monthly' ? '/mo' : '/yr')}
+                        {tier.price.monthly}
                     </span>
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground h-10">{tier.description}</p>
@@ -217,38 +155,21 @@ export function PricingSection() {
                   </ul>
                   <div className="mt-8 flex flex-col gap-2">
                      <Button
-                        asChild={tier.planId === 'free'} // only use asChild for the free plan link
-                        onClick={tier.planId !== 'free' ? () => window.open(getPaymentLink(tier), '_blank') : undefined}
+                        asChild
                         className={cn(
                             "w-full",
-                             tier.emphasized && tier.planId !== 'free' ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-accent hover:bg-accent/90 text-accent-foreground",
-                            tier.planId === 'free' ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground" : ""
+                             "bg-accent hover:bg-accent/90 text-accent-foreground"
                         )}
                         >
-                        {tier.planId === 'free' ? <Link href="/signup">{tier.cta}</Link> : tier.cta}
+                        <Link href="/signup">{tier.cta}</Link>
                     </Button>
-                    {tier.planId !== 'free' && (
-                       <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                 <Button variant="outline" className="w-full" onClick={() => handleCryptoPayment(tier)}>
-                                    <Wallet className="mr-2 h-4 w-4" />
-                                    Pay with Crypto
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Pay with various cryptocurrencies via NOWPayments.</p>
-                            </TooltipContent>
-                        </Tooltip>
-                       </TooltipProvider>
-                    )}
                   </div>
                 </GlassCard>
               ))}
             </div>
             <div className="text-center mt-8">
                 <p className="text-xs text-muted-foreground">
-                    Important: For card or crypto, please ensure the email you use for payment matches your BrieflyAI account email.
+                    Payments are not required at this time. All features except Team Collaboration are free to use.
                 </p>
             </div>
           </Container>

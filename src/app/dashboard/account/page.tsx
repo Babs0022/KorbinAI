@@ -57,54 +57,8 @@ interface Tier {
   emphasized: boolean;
 }
 
-const pricingTiers: Tier[] = [
-  {
-    name: 'Premium',
-    planId: 'premium',
-    price: { monthly: 'NGN 100', annually: 'NGN 100' }, // Test Price
-    paymentLink: {
-        monthly: 'https://paystack.shop/pay/adn4uwot-5',
-        annually: 'https://paystack.shop/pay/sq8pii8rod'
-    },
-     cryptoPaymentLink: {
-        monthly: 'https://nowpayments.io/payment/?iid=5567916183',
-        annually: 'https://nowpayments.io/payment/?iid=6096989784'
-    },
-    description: 'Supercharge your AI interactions.',
-    features: [
-      '50 Prompts per month',
-      'Prompt Vault & Refinement Hub',
-      'Model-Specific Adaptation',
-      'Contextual Prompting & Analysis',
-      'Prompt Academy Access',
-    ],
-    cta: 'Pay with Card',
-    emphasized: true,
-  },
-  {
-    name: 'Unlimited',
-    planId: 'unlimited',
-    price: { monthly: 'NGN 100', annually: 'NGN 100' }, // Test Price
-    paymentLink: {
-        monthly: 'https://paystack.shop/pay/cnfqzc7xw1',
-        annually: 'https://paystack.shop/pay/w7iln7hu8e'
-    },
-    cryptoPaymentLink: {
-        monthly: 'https://nowpayments.io/payment/?iid=5138480737',
-        annually: 'https://nowpayments.io/payment/?iid=5491712168'
-    },
-    description: 'For power users who need it all.',
-    features: [
-      'Unlimited Prompts',
-      'All Premium Features, Uncapped',
-      'Unlimited Real-Time Suggestions',
-      'Unlimited Reverse Prompting',
-      'Early access to new features',
-    ],
-    cta: 'Pay with Card',
-    emphasized: false,
-  },
-];
+// All paid plans are removed for now to focus on the free tier at launch.
+const pricingTiers: Tier[] = [];
 
 export default function AccountPage() {
   const authContext = useAuth();
@@ -413,104 +367,7 @@ export default function AccountPage() {
                 </GlassCardHeader>
                 <GlassCardContent>
                   <p className="text-sm mb-3">Current Plan: <span className="font-semibold text-primary">BrieflyAI Free Plan</span></p>
-                  <div className="mt-4 flex gap-2">
-                    <Dialog open={isChangePlanModalOpen} onOpenChange={setIsChangePlanModalOpen}>
-                      <DialogTrigger asChild>
-                        <Button variant="default" className="bg-primary text-primary-foreground hover:bg-primary/90">Change Plan</Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
-                        <DialogHeader>
-                          <DialogTitle className="font-headline text-2xl">Choose Your BrieflyAI Plan</DialogTitle>
-                          <DialogDescription>
-                            Select a plan that best suits your prompting needs. All prices in Nigerian Naira (NGN).
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex justify-center items-center space-x-4 py-4 border-b">
-                            <Label htmlFor="billing-cycle-modal" className={cn("text-muted-foreground", modalBillingCycle === 'monthly' && 'text-foreground font-medium')}>
-                                Monthly
-                            </Label>
-                            <Switch
-                                id="billing-cycle-modal"
-                                checked={modalBillingCycle === 'annually'}
-                                onCheckedChange={(checked) => setModalBillingCycle(checked ? 'annually' : 'monthly')}
-                                aria-label="Toggle between monthly and annual billing"
-                            />
-                            <Label htmlFor="billing-cycle-modal" className={cn("text-muted-foreground", modalBillingCycle === 'annually' && 'text-foreground font-medium')}>
-                                Annually <span className="text-accent font-semibold">(Save 10%!)</span>
-                            </Label>
-                        </div>
-                        <div className="py-4 grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto">
-                          {pricingTiers.map((tier) => (
-                            <div
-                              key={tier.name}
-                              className={cn(
-                                "flex flex-col rounded-lg border p-6 shadow-sm transition-all",
-                                tier.emphasized ? "border-2 border-primary bg-primary/5" : "bg-card",
-                                "hover:shadow-lg"
-                              )}
-                            >
-                              {tier.emphasized && (
-                                <div className="absolute top-0 right-0 -mt-3 -mr-3">
-                                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl">
-                                    <Star className="h-5 w-5" />
-                                  </div>
-                                </div>
-                              )}
-                              <h3 className="text-xl font-semibold font-headline text-foreground">{tier.name}</h3>
-                              <p className="mt-1 flex items-baseline">
-                                <span className="text-3xl font-bold text-foreground">
-                                  {modalBillingCycle === 'monthly' ? tier.price.monthly : tier.price.annually}
-                                </span>
-                                <span className="ml-1 text-sm text-muted-foreground">
-                                  {modalBillingCycle === 'monthly' ? '/mo' : '/yr'}
-                                </span>
-                              </p>
-                              <p className="mt-2 text-sm text-muted-foreground h-10">{tier.description}</p>
-
-                              <ul className="mt-4 space-y-2 text-sm flex-grow">
-                                {tier.features.map((feature) => (
-                                  <li key={feature} className="flex items-start">
-                                    <CheckCircle2 className="mr-2 h-4 w-4 text-accent flex-shrink-0 mt-0.5" />
-                                    <span className="text-muted-foreground" dangerouslySetInnerHTML={{ __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}></span>
-                                  </li>
-                                ))}
-                              </ul>
-                              <div className="mt-6 flex flex-col gap-2">
-                                <Button
-                                    asChild
-                                    size="lg"
-                                    className={cn(
-                                    "w-full",
-                                    tier.emphasized ? "bg-primary hover:bg-primary/90 text-primary-foreground"
-                                        : "bg-accent hover:bg-accent/90 text-accent-foreground"
-                                    )}
-                                >
-                                    <a href={getPaymentLink(tier)} target="_blank" rel="noopener noreferrer">
-                                        {tier.cta}
-                                    </a>
-                                </Button>
-                                 <Button
-                                    variant="outline"
-                                    size="lg"
-                                    className="w-full"
-                                    onClick={() => handleCryptoPayment(tier)}
-                                  >
-                                    <Wallet className="mr-2 h-4 w-4"/> Pay with Crypto
-                                  </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <DialogFooter className="mt-auto pt-4 border-t">
-                           <p className="text-xs text-muted-foreground mr-auto">Payments are securely processed. Ensure your payment email matches your account email.</p>
-                          <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
-                          </DialogClose>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                    <Button variant="ghost" disabled={true}>Cancel Subscription</Button>
-                  </div>
+                  <p className="text-xs text-muted-foreground">All features are currently available on the free plan. Paid plans coming soon!</p>
                 </GlassCardContent>
               </GlassCard>
 

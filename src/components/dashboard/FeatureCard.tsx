@@ -47,12 +47,13 @@ export function FeatureCard({ feature }: FeatureCardProps) {
   let hasAccess = true;
   let requiredPlan = '';
 
+  // Only the Team Hub feature requires a specific paid plan for now.
   if (feature.isUnlimited) {
     requiredPlan = 'Unlimited';
     hasAccess = subscription?.planId === 'unlimited';
-  } else if (feature.isPremium) {
-    requiredPlan = 'Premium';
-    hasAccess = subscription?.planId === 'premium' || subscription?.planId === 'unlimited';
+  } else {
+    // All other features, including premium ones, are now considered accessible for everyone.
+    hasAccess = true;
   }
 
   const isEnabled = feature.enabled && hasAccess;
