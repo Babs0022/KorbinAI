@@ -11,7 +11,7 @@ service cloud.firestore {
     
     function isTeamMember(teamId, userId) {
       // Check if the user ID exists as a key in the members map.
-      return getTeamData(teamId).members.keys().hasAny([userId]);
+      return userId in getTeamData(teamId).members;
     }
     
     function getRole(teamId, userId) {
@@ -20,9 +20,7 @@ service cloud.firestore {
 
     // --- USER DATA ---
     match /users/{userId} {
-      // Users can create their own profile, and can read/update it.
-      allow create: if request.auth.uid == userId;
-      allow read, update: if request.auth.uid == userId;
+      allow create, read, update: if request.auth.uid == userId;
     }
 
     // This rule handles user subcollections like 'promptHistory' and 'userSettings'.
@@ -51,35 +49,28 @@ service cloud.firestore {
 
     // --- TEAM DATA (Role-Based Access) ---
     match /teams/{teamId} {
-      // Allow any authenticated user to create a team,
-      // but only if they correctly set themselves as the owner and admin.
       allow create: if request.auth != null &&
                       request.resource.data.ownerId == request.auth.uid &&
                       request.resource.data.members[request.auth.uid].role == 'admin';
                       
-      // Only team members can read the team document.
       allow read: if isTeamMember(teamId, request.auth.uid);
       
-      // Only admins can update the team document (e.g., to invite members).
       allow update: if getRole(teamId, request.auth.uid) == 'admin';
     }
 
     match /teams/{teamId}/sharedPrompts/{promptId} {
-      // Any team member can read prompts.
       allow read: if isTeamMember(teamId, request.auth.uid);
 
-      // Only admins and editors can create and delete prompts.
       allow create, delete: if getRole(teamId, request.auth.uid) == 'admin' ||
                                 getRole(teamId, request.auth.uid) == 'editor';
     }
-
+    
+    // NEW: Rules for the team chat subcollection
     match /teams/{teamId}/chatMessages/{messageId} {
-        // Any team member can read chat messages.
-        allow read: if isTeamMember(teamId, request.auth.uid);
-        // Any team member can create a message, but they must be the sender.
-        allow create: if isTeamMember(teamId, request.auth.uid) && 
-                       request.resource.data.senderId == request.auth.uid;
-        // Nobody can update or delete messages.
+        // Any team member can read and send messages.
+        allow read, create: if isTeamMember(teamId, request.auth.uid);
+        
+        // Disallow editing or deleting messages for simplicity and integrity.
         allow update, delete: if false;
     }
   }
