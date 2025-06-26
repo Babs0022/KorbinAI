@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, type FormEvent } from 'react';
@@ -68,7 +67,7 @@ const pricingTiers: Tier[] = [
         annually: 'https://paystack.shop/pay/sq8pii8rod'
     },
      cryptoPaymentLink: {
-        monthly: 'https://nowpayments.io/payment/?iid=4421712487',
+        monthly: 'https://nowpayments.io/payment/?iid=4743952085',
         annually: 'https://nowpayments.io/payment/?iid=6096989784'
     },
     description: 'Supercharge your AI interactions.',
