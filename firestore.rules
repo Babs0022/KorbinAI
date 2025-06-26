@@ -1,78 +1,84 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // --- Helper Functions for Role-Based Access ---
-    function isTeamMember(teamId) {
-      return request.auth != null && 
-             exists(/databases/$(database)/documents/teams/$(teamId)) &&
-             get(/databases/$(database)/documents/teams/$(teamId)).data.members.filter(member => member.uid == request.auth.uid).size() > 0;
+
+    // --- HELPER FUNCTIONS ---
+    // These functions are used in the rules below to keep them clean.
+    
+    // Gets the data for a specific team document.
+    function getTeamData(teamId) {
+      return get(/databases/$(database)/documents/teams/$(teamId)).data;
     }
     
-    function getUserRoleInTeam(teamId) {
-        let members = get(/databases/$(database)/documents/teams/$(teamId)).data.members;
-        let matching_members = members.filter(member => member.uid == request.auth.uid);
-        return matching_members.size() > 0 ? matching_members[0].role : null;
+    // Checks if a user's UID is in the list of team members.
+    function isTeamMember(teamId, userId) {
+      let teamData = getTeamData(teamId);
+      // Check if the user's ID exists as a key in the members map.
+      return userId in teamData.members;
+    }
+    
+    // Gets a user's role ('admin', 'editor', 'viewer') from the team data.
+    function getRole(teamId, userId) {
+      return getTeamData(teamId).members[userId].role;
     }
 
     // --- USER DATA ---
     match /users/{userId} {
-      // A user can create their own doc during signup and read/update it later.
-      allow create, read, update: if request.auth.uid == userId;
+      // Users can create their own profile during signup, and can read/update it later.
+      allow create: if request.auth.uid == userId;
+      allow read, update: if request.auth.uid == userId;
     }
-    
+
+    // This rule handles all user subcollections like 'promptHistory' and 'userSettings'.
     match /users/{userId}/{document=**} {
-       // A user can manage all documents in their own subcollections.
        allow read, write: if request.auth.uid == userId;
     }
     
+    // --- PAYMENTS & SUBSCRIPTIONS (Controlled by backend functions) ---
     match /userSubscriptions/{userId} {
-      // A user can read their own subscription status. Writes are handled by the backend.
       allow read: if request.auth.uid == userId;
-      allow write: if false; 
+      allow write: if false; // Only backend can write
     }
     
     match /transactions/{transactionId} {
-      // Transactions are backend-only.
-      allow read, write: if false; 
+      allow read, write: if false; // Only backend can write
     }
     
-    // --- PUBLIC & SHARED DATA ---
+    // --- PUBLIC & SEMI-PUBLIC DATA ---
     match /newsletterSubscribers/{email} {
       // Anyone can subscribe to the newsletter.
-      allow write: if true;
-      allow read: if false;
+      allow create: if true;
     }
     
     match /appAnnouncements/{announcementId} {
       // Any signed-in user can read app announcements.
       allow read: if request.auth != null;
-      allow write: if false;
     }
 
-    // --- TEAM DATA ---
+    // --- TEAM DATA (Role-Based Access Control) ---
     match /teams/{teamId} {
-      // A user can create a team if they correctly set themselves as owner & admin.
-      allow create: if request.auth != null
-                    && request.resource.data.ownerId == request.auth.uid
-                    && request.resource.data.members[0].uid == request.auth.uid
-                    && request.resource.data.members[0].role == 'admin';
-                    
-      // A team member can read their team's document.
-      allow read: if isTeamMember(teamId);
-                    
-      // Only an admin can update the team document (e.g., invite/remove members).
-      allow update: if getUserRoleInTeam(teamId) == 'admin';
-    }
-    
-    match /teams/{teamId}/sharedPrompts/{promptId} {
-      // Any team member can read shared prompts.
-      allow read: if isTeamMember(teamId);
+      // Allow any authenticated user to create a team,
+      // but only if they correctly set themselves as the owner and an admin.
+      // This is a critical security check.
+      allow create: if request.auth != null &&
+                      request.resource.data.ownerId == request.auth.uid &&
+                      request.resource.data.members[request.auth.uid].role == 'admin';
+                      
+      // Only team members can read the team document (e.g., to see the member list).
+      allow read: if isTeamMember(teamId, request.auth.uid);
       
-      // Admins and editors can create, update, and delete shared prompts.
-      allow write: if getUserRoleInTeam(teamId) == 'admin' || getUserRoleInTeam(teamId) == 'editor';
+      // Only admins can update the team document (e.g., to invite new members).
+      allow update: if getRole(teamId, request.auth.uid) == 'admin';
+    }
+
+    match /teams/{teamId}/sharedPrompts/{promptId} {
+      // Any team member can read the shared prompts.
+      allow read: if isTeamMember(teamId, request.auth.uid);
+
+      // Only admins and editors can create and delete prompts. Viewers cannot.
+      allow create, delete: if getRole(teamId, request.auth.uid) == 'admin' ||
+                                getRole(teamId, request.auth.uid) == 'editor';
     }
   }
 }
