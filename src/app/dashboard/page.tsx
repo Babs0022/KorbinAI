@@ -127,8 +127,8 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <DashboardHeader />
-      <main className="flex-1 flex flex-col bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30">
-        <Container className="py-16 md:py-24 flex flex-col flex-grow">
+      <main className="flex-1 flex flex-col justify-center bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30">
+        <Container className="py-16 md:py-24">
           <div className="w-full max-w-3xl text-center mx-auto">
             <h1 className="font-headline text-3xl font-bold text-foreground mb-4">
               Hey there, What can I help you create?
