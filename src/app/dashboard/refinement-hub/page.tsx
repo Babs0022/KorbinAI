@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
-import { Loader2, Save, Edit3, ArrowLeft, Settings2, AlertTriangle, Info, Tag, Wand2, Lightbulb, ArrowDownUp } from 'lucide-react';
+import { Loader2, Save, Edit3, ArrowLeft, Settings2, AlertTriangle, Info, Tag, Wand2, Lightbulb, ArrowDownUp, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -53,6 +53,7 @@ export default function RefinementHubPage() {
 
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [aiInsights, setAiInsights] = useState<string[]>([]);
+  const [evolvedPrompt, setEvolvedPrompt] = useState<string | null>(null);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   const fetchPrompts = useCallback(async () => {
@@ -127,6 +128,7 @@ export default function RefinementHubPage() {
     setEditableTargetModel(prompt.targetModel);
     setAiSuggestions([]); 
     setAiInsights([]);
+    setEvolvedPrompt(null);
   };
 
   const handleSaveChanges = async (event: FormEvent) => {
@@ -190,6 +192,7 @@ export default function RefinementHubPage() {
     setIsLoadingSuggestions(true);
     setAiSuggestions([]);
     setAiInsights([]);
+    setEvolvedPrompt(null);
 
     let historicalPromptsForFlow: HistoricalPromptForFlow[] = [];
     try {
@@ -233,6 +236,9 @@ export default function RefinementHubPage() {
       if (result.suggestions && result.suggestions.length > 0) {
         setAiSuggestions(result.suggestions);
         setAiInsights(result.insights || []);
+        if (result.evolvedPrompt && result.evolvedPrompt.trim() !== editableOptimizedPrompt.trim()) {
+          setEvolvedPrompt(result.evolvedPrompt);
+        }
         toast({ title: "AI Suggestions Ready!", description: "Check below for tips to improve your prompt." });
       } else {
         toast({ title: "No Specific Suggestions", description: "The AI didn't have specific new suggestions for this prompt at the moment.", variant: "default" });
@@ -337,10 +343,10 @@ export default function RefinementHubPage() {
                 <GlassCardHeader>
                   <GlassCardTitle className="font-headline text-xl flex items-center">
                     <Settings2 className="mr-3 h-6 w-6 text-primary" />
-                    Prompt Refinement Editor
+                    Refinement & Optimization Hub
                   </GlassCardTitle>
                   <GlassCardDescription>
-                    Select a prompt to edit its name, goal, optimized text, and tags. Use AI to get contextual suggestions!
+                    Select a prompt to edit it. Use the AI engine to get contextual refinement suggestions or a fully evolved, ready-to-use version of your prompt.
                   </GlassCardDescription>
                 </GlassCardHeader>
                 <GlassCardContent>
@@ -432,7 +438,7 @@ export default function RefinementHubPage() {
                     </div>
                   )}
 
-                  {selectedPrompt && (isLoadingSuggestions || aiSuggestions.length > 0 || aiInsights.length > 0) && (
+                  {selectedPrompt && (isLoadingSuggestions || evolvedPrompt || aiSuggestions.length > 0 || aiInsights.length > 0) && (
                     <div className="mt-8 border-t border-border/50 pt-6">
                       <h4 className="font-headline text-lg font-semibold text-foreground mb-3 flex items-center">
                         <Lightbulb className="mr-2 h-5 w-5 text-yellow-500" />
@@ -445,6 +451,34 @@ export default function RefinementHubPage() {
                         </div>
                       ) : (
                         <>
+                          {evolvedPrompt && (
+                              <div className="mb-6 p-4 border rounded-md bg-green-500/10 border-green-500/30">
+                                <h5 className="font-semibold text-md text-green-700 dark:text-green-400 mb-2 flex items-center">
+                                  <Sparkles className="mr-2 h-5 w-5"/> AI Evolved Prompt
+                                </h5>
+                                <p className="text-sm text-green-600 dark:text-green-400/80 mb-3">
+                                  Based on our analysis, here's a ready-to-use, improved version of your prompt.
+                                </p>
+                                <Textarea
+                                  value={evolvedPrompt}
+                                  readOnly
+                                  rows={8}
+                                  className="text-sm font-code bg-background"
+                                />
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="mt-3 bg-green-600 hover:bg-green-700 text-white"
+                                  onClick={() => {
+                                    setEditableOptimizedPrompt(evolvedPrompt);
+                                    toast({ title: "Prompt Updated!", description: "The AI evolved version has been applied to the editor." });
+                                    setEvolvedPrompt(null);
+                                  }}
+                                >
+                                  Use This Version
+                                </Button>
+                              </div>
+                          )}
                           {aiSuggestions.length > 0 && (
                             <div className="mb-4">
                               <p className="text-sm font-medium text-foreground mb-1">Suggestions:</p>
@@ -471,7 +505,7 @@ export default function RefinementHubPage() {
                               </ul>
                             </div>
                           )}
-                          {aiSuggestions.length === 0 && aiInsights.length === 0 && !isLoadingSuggestions && (
+                          {aiSuggestions.length === 0 && aiInsights.length === 0 && !isLoadingSuggestions && !evolvedPrompt && (
                               <p className="text-sm text-muted-foreground">No specific suggestions or insights at this time.</p>
                           )}
                         </>

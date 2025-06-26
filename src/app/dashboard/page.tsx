@@ -22,8 +22,8 @@ const featureCards: FeatureInfo[] = [
     enabled: true,
   },
   {
-    title: 'Refinement Hub',
-    description: 'Iteratively improve your saved prompts with direct edits and contextual AI suggestions.',
+    title: 'Refinement & Optimization Hub',
+    description: 'Iteratively improve saved prompts. Our engine learns from your history to provide contextual AI suggestions and automatically evolved prompts.',
     href: '/dashboard/refinement-hub',
     icon: Settings2,
     enabled: true,
@@ -96,7 +96,7 @@ const featureCards: FeatureInfo[] = [
   {
     title: 'Automated Optimization Engine',
     description: 'BrieflyAI learns from your prompt history and feedback to provide smarter suggestions over time.',
-    href: '/dashboard/learning-mode',
+    href: '/dashboard/refinement-hub',
     icon: Brain,
     enabled: true,
   },
@@ -161,7 +161,7 @@ export default function DashboardPage() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {featureCards.map((feature) => (
-                    <FeatureCard key={feature.href} feature={feature} />
+                  <FeatureCard key={feature.href} feature={feature} />
                 ))}
               </div>
             </div>

@@ -29,6 +29,7 @@ export type GetContextualRefinementSuggestionsInput = z.infer<typeof GetContextu
 const GetContextualRefinementSuggestionsOutputSchema = z.object({
   suggestions: z.array(z.string()).describe('An array of 2-4 actionable suggestions to improve the prompt, considering historical context. Each suggestion should be a complete sentence.'),
   insights: z.array(z.string()).optional().describe('Optional brief insights explaining why certain suggestions were made, possibly referencing historical data patterns.'),
+  evolvedPrompt: z.string().optional().describe('A fully rewritten version of the prompt, automatically applying the best suggestions and leveraging insights from historical data. This is a ready-to-use, improved version.'),
 });
 export type GetContextualRefinementSuggestionsOutput = z.infer<typeof GetContextualRefinementSuggestionsOutputSchema>;
 
@@ -68,14 +69,15 @@ Historical Prompt Text: "{{this.optimizedPrompt}}"
 Based on all this information, provide:
 1.  "suggestions": An array of 2-4 concise, actionable suggestions to improve the "Current Prompt Text". These suggestions should be highly relevant and, where possible, leverage insights from the historical prompts. For example, if the user often uses a certain structure or includes specific details in their high-scoring historical prompts, guide them similarly.
 2.  "insights": (Optional) An array of 1-2 brief insights explaining the reasoning behind a key suggestion, especially if it relates to patterns observed in historical prompts. Example: "Consider adding specific examples, as your historical prompts on 'marketing' scored well when examples were included."
+3.  "evolvedPrompt": A fully rewritten, "evolved" version of the prompt. Apply the most important suggestions you've identified directly to the "Current Prompt Text". The result should be a ready-to-use prompt that is a clear improvement, incorporating best practices seen in the user's successful historical prompts. If no significant improvements can be made, you can return the original prompt text.
 
-Focus your suggestions on aspects like:
+Focus your suggestions and evolution on aspects like:
 - Clarity, Specificity, Completeness, Persona, Output Format, Constraints, Actionability.
 - Aligning with successful patterns from historical prompts if applicable.
 - Addressing potential weaknesses in the current prompt when compared to stronger historical examples.
 
-Each suggestion should be a complete sentence. If the current prompt is already excellent, provide reinforcing suggestions or minor tweaks, potentially drawing parallels to their other strong prompts.
-If no historical prompts are provided, generate general refinement suggestions.
+Each suggestion should be a complete sentence. If the current prompt is already excellent, provide reinforcing suggestions or minor tweaks for the "suggestions" field and return the original prompt for "evolvedPrompt".
+If no historical prompts are provided, generate general refinement suggestions and an evolved prompt based on general best practices.
 `,
 });
 
@@ -89,7 +91,8 @@ const contextualRefinementSuggestionsFlow = ai.defineFlow(
     const {output} = await prompt(input);
     return { 
         suggestions: output?.suggestions || [],
-        insights: output?.insights || []
+        insights: output?.insights || [],
+        evolvedPrompt: output?.evolvedPrompt,
     };
   }
 );
