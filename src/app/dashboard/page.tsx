@@ -7,7 +7,7 @@ import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Loader2, AlertTriangle, BarChart3, Brain, ScrollText, Settings2, TestTubes, FileText, Lightbulb, Puzzle, School, Repeat, Rocket } from 'lucide-react';
+import { Loader2, AlertTriangle, BarChart3, Brain, ScrollText, Settings2, TestTubes, FileText, Lightbulb, Puzzle, School, Repeat, Rocket, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PromptInputForm } from '@/components/dashboard/PromptInputForm';
@@ -26,6 +26,13 @@ const featureCards: FeatureInfo[] = [
     description: 'Iteratively improve your saved prompts with direct edits and contextual AI suggestions.',
     href: '/dashboard/refinement-hub',
     icon: Settings2,
+    enabled: true,
+  },
+   {
+    title: 'Team Collaboration Hub',
+    description: 'Share, manage, and collaborate on prompts with your team in a shared workspace.',
+    href: '/dashboard/collaboration',
+    icon: Users,
     enabled: true,
   },
   {
