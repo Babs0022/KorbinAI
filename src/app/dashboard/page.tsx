@@ -192,8 +192,8 @@ export default function DashboardPage() {
       <DashboardHeader />
       <main className="flex-1 flex flex-col bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8 md:py-12">
         <Container>
-          <div className="mb-16 text-center">
-            <h1 className="font-headline text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <div className="mb-16 text-center space-y-4">
+            <h1 className="font-headline text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Welcome, {displayName}!
             </h1>
             <p className="text-lg text-muted-foreground">What can I help you create today?</p>
@@ -214,7 +214,7 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </div>
-            <div className="lg:col-span-1 space-y-8">
+            <div className="lg:col-span-1 flex flex-col gap-8">
                  <AnalyticsSummaryCard 
                     title="Total Prompts Created"
                     value={renderValue(totalPrompts)}
