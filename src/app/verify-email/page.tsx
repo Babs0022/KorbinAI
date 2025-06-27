@@ -21,15 +21,16 @@ function VerifyEmailContent() {
   const [email, setEmail] = useState<string | null>(null);
   const [isCheckingVerification, setIsCheckingVerification] = useState(false);
   const [isResendingEmail, setIsResendingEmail] = useState(false);
+  
+  const emailFromQuery = searchParams.get('email');
 
   useEffect(() => {
-    const emailFromQuery = searchParams.get('email');
     if (emailFromQuery) {
       setEmail(emailFromQuery);
     } else if (currentUser?.email) {
       setEmail(currentUser.email);
     }
-  }, [searchParams, currentUser]);
+  }, [emailFromQuery, currentUser]);
 
   const handleCheckVerification = async () => {
     if (!currentUser) {
@@ -95,7 +96,6 @@ function VerifyEmailContent() {
     }
   };
   
-  // If auth is still loading, or if there's no current user but an email was passed (e.g. direct navigation after signup)
   if (authLoading && !email) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[200px]">

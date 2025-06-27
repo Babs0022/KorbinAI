@@ -42,6 +42,10 @@ export function PromptWorkspace() {
   const [optimizedOutput, setOptimizedOutput] = useState<OptimizedPromptResult | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Extract values from searchParams outside of useEffect to use primitives in the dependency array
+  const goalFromParams = searchParams.get('goal');
+  const hasImageFlag = searchParams.get('image') === 'true';
+
   const handleDirectGenerate = useCallback(async (currentGoal: string, currentImageDataUri: string | null) => {
     setWorkspaceState('loading_optimization');
     try {
@@ -98,8 +102,6 @@ export function PromptWorkspace() {
         return;
     }
     
-    const goalFromParams = searchParams.get('goal');
-    const hasImageFlag = searchParams.get('image') === 'true';
     let imageFromStorage: string | null = null;
 
     if (hasImageFlag) {
@@ -113,15 +115,13 @@ export function PromptWorkspace() {
         
         setIsInitialized(true);
 
-        // Always fetch questions now, as all features are unlocked.
-        // This makes the survey-based ("advanced") flow the default for all users.
         fetchAndSetQuestions(goalFromParams, imageFromStorage);
         
     } else {
         toast({ title: "No Goal Specified", description: "Redirecting to dashboard to start a new prompt.", variant: "destructive" });
         router.push('/dashboard');
     }
-  }, [isInitialized, searchParams, toast, router, fetchAndSetQuestions]);
+  }, [isInitialized, goalFromParams, hasImageFlag, toast, router, fetchAndSetQuestions]);
 
 
   const handleSurveyChange = (id: string, type: SurveyQuestion['type'], value: string) => {
