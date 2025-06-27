@@ -1,3 +1,2 @@
-// This file is deprecated. The type definition has been consolidated into PromptHistoryItem.d.ts
-// to avoid redundancy and ensure a single source of truth for the PromptHistory type.
-// This file can be safely removed in a future cleanup.
+// This file is deprecated and has been cleaned up.
+// The PromptHistory type definition is now consolidated in PromptHistoryItem.d.ts.

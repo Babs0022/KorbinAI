@@ -38,7 +38,6 @@ const paystack = new Paystack(PAYSTACK_SECRET_KEY);
 
 // --- Plan Details ---
 // This is the source of truth for mapping Paystack plan codes to internal plan IDs.
-// Updated with correct plan codes from the user's dashboard screenshot.
 const planDetails: Record<string, {
   name: string;
   monthly: { amount: number; plan_code: string; };
@@ -47,23 +46,23 @@ const planDetails: Record<string, {
   premium: {
     name: "BrieflyAI Premium",
     monthly: {
-      amount: 100 * 100, // NGN 100 in Kobo for testing
-      plan_code: "PLN_c7d9pwc77ezn3a8", // From screenshot
+      amount: 16000 * 100, // NGN 16,000 in Kobo
+      plan_code: "PLN_c7d9pwc77ezn3a8", 
     },
     annually: {
-      amount: 100 * 100, // NGN 100 in Kobo for testing
-      plan_code: "PLN_ipOrfr3kbnjdOoh", // From screenshot, assumes O is a letter not zero
+      amount: 172800 * 100, // NGN 172,800 in Kobo
+      plan_code: "PLN_ipOrfr3kbnjdOoh", 
     },
   },
   unlimited: {
     name: "BrieflyAI Unlimited",
     monthly: {
-      amount: 100 * 100, // NGN 100 in Kobo for testing
-      plan_code: "PLN_kb83pnnocije9fz", // From screenshot
+      amount: 56000 * 100, // NGN 56,000 in Kobo
+      plan_code: "PLN_kb83pnnocije9fz", 
     },
     annually: {
-        amount: 100 * 100, // NGN 100 in Kobo for testing
-        plan_code: "PLN_a90hrxjuodtw4ia", // From screenshot
+        amount: 604800 * 100, // NGN 604,800 in Kobo
+        plan_code: "PLN_a90hrxjuodtw4ia", 
     }
   },
 };

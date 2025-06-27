@@ -1,1 +1,1 @@
-// This file has been removed as per the user's request.
+// This file has been removed as it is no longer needed.
