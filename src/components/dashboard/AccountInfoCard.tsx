@@ -5,13 +5,12 @@ import { GlassCard, GlassCardContent } from '@/components/shared/GlassCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit3, Loader2, BadgeInfo, Star } from 'lucide-react';
+import { Edit3, Loader2, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 
-// Helper to format planId to a display name
 const formatPlanName = (planId: string) => {
-  if (!planId) return "Free Plan";
+  if (!planId || planId === 'free') return "Free Plan";
   return `${planId.charAt(0).toUpperCase() + planId.slice(1)} Plan`;
 };
 
@@ -50,25 +49,34 @@ export function AccountInfoCard() {
     );
   }
 
-  const planName = formatPlanName(subscription?.planId || 'free');
+  const planName = formatPlanName(subscription?.planId);
   const isPaidPlan = subscription && subscription.planId !== 'free';
 
   return (
     <GlassCard className="w-full">
       <GlassCardContent className="pt-6">
         <div className="flex items-center space-x-4">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={avatarUrl} alt={displayName} data-ai-hint="user profile" />
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={avatarUrl} alt={displayName} data-ai-hint="user profile"/>
             <AvatarFallback>{userInitials}</AvatarFallback>
           </Avatar>
-          <div>
-            <h3 className="text-2xl font-semibold font-headline">{displayName}</h3>
-            <p className="text-sm text-muted-foreground">{displayEmail}</p>
-            <Badge variant={isPaidPlan ? 'default' : 'secondary'} className="mt-2 flex items-center gap-1">
-             {isPaidPlan ? <Star className="h-3 w-3"/> : <BadgeInfo className="h-3 w-3"/>}
-             {planName}
-            </Badge>
+          <div className="overflow-hidden">
+            <h3 className="text-xl font-semibold font-headline truncate">{displayName}</h3>
+            <p className="text-sm text-muted-foreground truncate">{displayEmail}</p>
           </div>
+        </div>
+         <div className="mt-4 space-y-2">
+            <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Plan:</span>
+                <Badge variant={isPaidPlan ? 'default' : 'secondary'} className="font-semibold">
+                    {isPaidPlan && <Star className="h-3 w-3 mr-1.5"/>}
+                    {planName}
+                </Badge>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Status:</span>
+                <span className="font-semibold text-foreground capitalize">{subscription?.status || 'Inactive'}</span>
+            </div>
         </div>
         <Button variant="outline" className="mt-4 w-full" asChild>
           <Link href="/dashboard/account">

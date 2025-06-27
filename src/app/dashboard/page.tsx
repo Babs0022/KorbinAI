@@ -1,33 +1,33 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Loader2, AlertTriangle, BarChart3, Brain, ScrollText, Settings2, TestTubes, FileText, Lightbulb, Puzzle, School, Repeat, Rocket, Users, Edit3 } from 'lucide-react';
+import { Loader2, AlertTriangle, BarChart3, Brain, ScrollText, Settings2, TestTubes, FileText, Lightbulb, Puzzle, School, Repeat, Rocket, Users, Edit3, Archive, Star, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PromptInputForm } from '@/components/dashboard/PromptInputForm';
 import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
+import { AccountInfoCard } from '@/components/dashboard/AccountInfoCard';
+import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCard';
 
 const coreFeatures: FeatureInfo[] = [
   {
     title: 'Prompt Vault & History',
     description: 'Save, search, and manage all your optimized prompts in one secure, centralized location.',
     href: '/dashboard/prompt-vault',
-    icon: ScrollText,
+    icon: Archive,
     enabled: true,
   },
   {
     title: 'Refinement & Optimization Hub',
-    description: 'Iteratively improve saved prompts. Our engine learns from your history to provide contextual AI suggestions and automatically evolved prompts.',
+    description: 'Iteratively improve saved prompts. Get AI suggestions based on your history to evolve your prompts.',
     href: '/dashboard/refinement-hub',
     icon: Settings2,
     enabled: true,
-    isPremium: true,
   },
   {
     title: 'Team Collaboration Hub',
@@ -39,14 +39,13 @@ const coreFeatures: FeatureInfo[] = [
   },
 ];
 
-const utilityFeatures: FeatureInfo[] = [
+const fullToolkit: FeatureInfo[] = [
   {
     title: 'Real-Time Suggestions',
     description: 'Get live, AI-powered feedback and suggestions to improve your prompts as you type.',
     href: '/dashboard/real-time-suggestions',
     icon: Lightbulb,
     enabled: true,
-    isPremium: true,
   },
   {
     title: 'Prompt Feedback & Analysis',
@@ -54,7 +53,6 @@ const utilityFeatures: FeatureInfo[] = [
     href: '/dashboard/feedback-analysis',
     icon: BarChart3,
     enabled: true,
-    isPremium: true,
   },
   {
     title: 'Contextual Prompting',
@@ -62,7 +60,6 @@ const utilityFeatures: FeatureInfo[] = [
     href: '/dashboard/contextual-prompting',
     icon: FileText,
     enabled: true,
-    isPremium: true,
   },
   {
     title: 'Reverse Prompting',
@@ -70,7 +67,6 @@ const utilityFeatures: FeatureInfo[] = [
     href: '/dashboard/reverse-prompting',
     icon: Repeat,
     enabled: true,
-    isPremium: true,
   },
   {
     title: 'Model-Specific Adapter',
@@ -78,7 +74,6 @@ const utilityFeatures: FeatureInfo[] = [
     href: '/dashboard/model-specific-prompts',
     icon: Puzzle,
     enabled: true,
-    isPremium: true,
   },
   {
     title: 'A/B Testing',
@@ -86,18 +81,13 @@ const utilityFeatures: FeatureInfo[] = [
     href: '/dashboard/compatibility-checker',
     icon: TestTubes,
     enabled: true,
-    isPremium: true,
   },
-];
-
-const learningFeatures: FeatureInfo[] = [
-  {
+    {
     title: 'Analytics Dashboard',
     description: 'Track your prompt performance, usage trends, and average quality scores over time.',
     href: '/dashboard/analytics',
     icon: BarChart3,
     enabled: true,
-    isPremium: true,
   },
   {
     title: 'Prompt Academy',
@@ -106,14 +96,7 @@ const learningFeatures: FeatureInfo[] = [
     icon: School,
     enabled: true,
   },
-  {
-    title: 'Automated Optimization Engine',
-    description: 'BrieflyAI learns from your prompt history and feedback to provide smarter suggestions over time.',
-    href: '/dashboard/learning-mode',
-    icon: Brain,
-    enabled: true,
-  },
-  {
+    {
     title: 'Product Roadmap',
     description: 'See our vision for team features, analytics, integrations, and what we are building next.',
     href: '/dashboard/roadmap',
@@ -152,49 +135,49 @@ export default function DashboardPage() {
       <DashboardHeader />
       <main className="flex-1 flex flex-col bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8 md:py-12">
         <Container>
-           <div className="pt-16 md:pt-20 mb-12 text-center">
-              <h1 className="font-headline text-3xl font-bold text-foreground mb-4">
-                 What can I help you create?
-              </h1>
-              <div className="max-w-3xl mx-auto">
-                <PromptInputForm />
-              </div>
-           </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            <div className="lg:col-span-2 space-y-8">
+                <div>
+                    <h2 className="font-headline text-2xl font-bold text-foreground mb-4">Core Tools</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {coreFeatures.map((feature) => (
+                        <FeatureCard key={feature.title} feature={feature} />
+                        ))}
+                    </div>
+                </div>
+            </div>
+            <div className="lg:col-span-1 space-y-8">
+                 <AccountInfoCard />
+                 <AnalyticsSummaryCard 
+                    title="Total Prompts Created"
+                    value="125"
+                    description="+15 this month"
+                    icon={Archive}
+                 />
+                 <AnalyticsSummaryCard 
+                    title="Average Quality Score"
+                    value="8.7/10"
+                    description="+0.5 from last month"
+                    icon={Star}
+                 />
+            </div>
+          </div>
 
           <section className="bg-background/70 backdrop-blur-sm rounded-xl p-6 md:p-8">
-            <div className="w-full text-center mb-12">
+            <div className="w-full text-left mb-6">
               <h2 className="font-headline text-2xl font-bold text-foreground">
-                Explore Your Prompt Engineering Toolkit
+                Explore Your Full Toolkit
               </h2>
+               <p className="text-muted-foreground mt-1">
+                Dive into our advanced utilities and learning resources.
+              </p>
             </div>
             
-            <section className="mb-12">
-              <h3 className="font-headline text-xl font-semibold text-foreground mb-6 text-left border-b pb-2">Core Tools</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {coreFeatures.map((feature) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {fullToolkit.map((feature) => (
                   <FeatureCard key={feature.title} feature={feature} />
                 ))}
-              </div>
-            </section>
-
-            <section className="mb-12">
-              <h3 className="font-headline text-xl font-semibold text-foreground mb-6 text-left border-b pb-2">Advanced Utilities</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {utilityFeatures.map((feature) => (
-                  <FeatureCard key={feature.title} feature={feature} />
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <h3 className="font-headline text-xl font-semibold text-foreground mb-6 text-left border-b pb-2">Insights & Learning</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {learningFeatures.map((feature) => (
-                  <FeatureCard key={feature.title} feature={feature} />
-                ))}
-              </div>
-            </section>
-            
+            </div>
           </section>
         </Container>
       </main>
