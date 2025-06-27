@@ -13,6 +13,7 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// This prevents Firebase from being initialized more than once, which is important in a Next.js environment.
 const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
 const auth: Auth = getAuth(app);
