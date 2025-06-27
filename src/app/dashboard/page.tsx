@@ -1,6 +1,7 @@
+
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
@@ -11,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
 import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCard';
+import { db } from '@/lib/firebase';
+import { collection, query, getDocs, Timestamp } from 'firebase/firestore';
 
 const coreFeatures: FeatureInfo[] = [
   {
@@ -108,6 +111,56 @@ export default function DashboardPage() {
   const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
 
+  const [totalPrompts, setTotalPrompts] = useState<number | null>(null);
+  const [avgQualityScore, setAvgQualityScore] = useState<number | null>(null);
+  const [promptsThisMonth, setPromptsThisMonth] = useState<number | null>(null);
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true);
+
+  useEffect(() => {
+    if (!currentUser) {
+        setIsLoadingAnalytics(false);
+        return;
+    }
+
+    const fetchAnalytics = async () => {
+        setIsLoadingAnalytics(true);
+        try {
+            const promptsCollectionRef = collection(db, `users/${currentUser.uid}/promptHistory`);
+            const q = query(promptsCollectionRef);
+            const querySnapshot = await getDocs(q);
+
+            const allPrompts = querySnapshot.docs.map(doc => doc.data());
+            
+            setTotalPrompts(allPrompts.length);
+
+            const scoredPrompts = allPrompts.filter(p => typeof p.qualityScore === 'number');
+            if (scoredPrompts.length > 0) {
+                const totalScore = scoredPrompts.reduce((acc, p) => acc + p.qualityScore, 0);
+                setAvgQualityScore(parseFloat((totalScore / scoredPrompts.length).toFixed(1)));
+            } else {
+                setAvgQualityScore(null);
+            }
+
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            
+            const thisMonthPrompts = allPrompts.filter(p => {
+                if (!p.timestamp) return false;
+                const timestamp = p.timestamp instanceof Timestamp ? p.timestamp.toDate() : new Date(p.timestamp);
+                return timestamp >= startOfMonth;
+            });
+            setPromptsThisMonth(thisMonthPrompts.length);
+
+        } catch (error) {
+            console.error("Failed to fetch dashboard analytics", error);
+        } finally {
+            setIsLoadingAnalytics(false);
+        }
+    };
+
+    fetchAnalytics();
+  }, [currentUser]);
+
   if (authLoading) { 
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
@@ -128,6 +181,11 @@ export default function DashboardPage() {
     );
   }
 
+  const renderValue = (value: number | null, suffix = '', emptyState = '0') => {
+    if (isLoadingAnalytics) return <Loader2 className="h-6 w-6 animate-spin text-primary" />;
+    return value !== null ? `${value}${suffix}` : emptyState;
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <DashboardHeader />
@@ -147,14 +205,14 @@ export default function DashboardPage() {
             <div className="lg:col-span-1 space-y-8">
                  <AnalyticsSummaryCard 
                     title="Total Prompts Created"
-                    value="125"
-                    description="+15 this month"
+                    value={renderValue(totalPrompts)}
+                    description={isLoadingAnalytics ? "..." : `+${promptsThisMonth ?? 0} this month`}
                     icon={Archive}
                  />
                  <AnalyticsSummaryCard 
                     title="Average Quality Score"
-                    value="8.7/10"
-                    description="+0.5 from last month"
+                    value={renderValue(avgQualityScore, '/10', 'N/A')}
+                    description="Based on scored prompts"
                     icon={Star}
                  />
             </div>

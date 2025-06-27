@@ -4,10 +4,11 @@
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 import type { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 
 interface AnalyticsSummaryCardProps {
   title: string;
-  value: string;
+  value: ReactNode;
   description?: string;
   icon: LucideIcon;
   className?: string;
