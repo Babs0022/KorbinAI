@@ -14,6 +14,7 @@ import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCar
 import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCard';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, Timestamp } from 'firebase/firestore';
+import { PromptInputForm } from '@/components/dashboard/PromptInputForm';
 
 const coreFeatures: FeatureInfo[] = [
   {
@@ -108,7 +109,7 @@ const fullToolkit: FeatureInfo[] = [
 
 
 export default function DashboardPage() {
-  const { currentUser, loading: authLoading } = useAuth();
+  const { currentUser, loading: authLoading, displayName } = useAuth();
   const router = useRouter();
 
   const [totalPrompts, setTotalPrompts] = useState<number | null>(null);
@@ -191,6 +192,17 @@ export default function DashboardPage() {
       <DashboardHeader />
       <main className="flex-1 flex flex-col bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8 md:py-12">
         <Container>
+          <div className="mb-12 text-center">
+            <h1 className="font-headline text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Welcome back, {displayName}!
+            </h1>
+            <p className="text-lg text-muted-foreground">What can we help you create today?</p>
+          </div>
+          
+          <div className="max-w-3xl mx-auto mb-16">
+            <PromptInputForm />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
             <div className="lg:col-span-2 space-y-8">
                 <div>
