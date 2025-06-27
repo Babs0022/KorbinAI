@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Mic, Image as ImageIcon, Loader2, Send, X } from 'lucide-react';
+import { Mic, Image as ImageIcon, Send, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +22,6 @@ export function PromptInputForm() {
   const { toast } = useToast();
   const [goal, setGoal] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -127,7 +126,6 @@ export function PromptInputForm() {
       toast({ title: "Goal Required", description: "Please describe what you want to create.", variant: "destructive" });
       return;
     }
-    setIsProcessing(true);
     const params = new URLSearchParams();
     params.set('goal', goal);
 
@@ -141,7 +139,6 @@ export function PromptInputForm() {
              description = "Cannot store image as it exceeds browser storage limits. Please use a smaller file.";
          }
          toast({ title: "Image Too Large", description, variant: "destructive" });
-         setIsProcessing(false);
          return;
       }
     }
@@ -151,6 +148,7 @@ export function PromptInputForm() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      handleSubmit(e);
     }
   };
 
@@ -192,7 +190,6 @@ export function PromptInputForm() {
             "w-full min-h-[72px] max-h-[300px] text-lg p-4 pr-36 rounded-2xl bg-muted/50 border-transparent focus-visible:ring-0 resize-none overflow-y-auto",
             imageDataUri ? "pl-24" : "pl-4"
           )}
-          disabled={isProcessing}
           aria-label="Prompt goal input"
         />
         <div className="absolute bottom-3 right-3 flex items-center gap-1">
@@ -202,7 +199,6 @@ export function PromptInputForm() {
             size="icon"
             onClick={() => fileInputRef.current?.click()}
             className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
-            disabled={isProcessing}
             aria-label="Upload Image"
           >
             <ImageIcon className="h-5 w-5" />
@@ -217,7 +213,7 @@ export function PromptInputForm() {
               "h-9 w-9 text-muted-foreground hover:bg-primary/10 rounded-full",
               isRecording ? "text-destructive bg-destructive/10" : "hover:text-primary"
             )}
-            disabled={isProcessing || !isSpeechSupported}
+            disabled={!isSpeechSupported}
             aria-label={isRecording ? "Stop recording" : "Start recording"}
           >
             <Mic className="h-5 w-5" />
@@ -227,14 +223,13 @@ export function PromptInputForm() {
             variant="default"
             size="icon"
             className="h-9 w-9 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
-            disabled={isProcessing || !goal.trim()}
+            disabled={!goal.trim()}
             aria-label="Submit goal"
           >
               <Send className="h-5 w-5" />
           </Button>
         </div>
       </form>
-      {isProcessing && <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 animate-spin text-primary" />}
     </div>
   );
 }
