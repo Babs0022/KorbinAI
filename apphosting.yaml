@@ -9,17 +9,17 @@ runConfig:
 env:
   # Firebase SDK configuration (client-side)
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: "YOUR_KEY_HERE"
+    value: AIzaSyBVHOI_nXcxs3JRyXhghG44u7WpLM0U4YA
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    value: "YOUR_KEY_HERE"
+    value: brieflyai.xyz
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    value: "YOUR_KEY_HERE"
+    value: brieflyai-gtgc2
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: "YOUR_KEY_HERE"
+    value: brieflyai-gtgc2.firebasestorage.app
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    value: "YOUR_KEY_HERE"
+    value: 429810342473
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    value: "YOUR_KEY_HERE"
+    value: 1:429810342473:web:b25b7915db5e6006f97d98
   
   # Gemini API Key (server-side for Genkit AI flows)
   - variable: GEMINI_API_KEY
