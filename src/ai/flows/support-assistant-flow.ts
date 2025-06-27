@@ -29,6 +29,8 @@ export async function askSupportAssistant(input: SupportAssistantInput): Promise
   return supportAssistantFlow(input);
 }
 
+const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'babseli933@gmail.com';
+
 const prompt = ai.definePrompt({
   name: 'supportAssistantPrompt',
   input: {schema: SupportAssistantInputSchema},
@@ -69,7 +71,7 @@ Current User's Question: "{{userQuery}}"
 Instructions:
 1. Understand the user's question based on the current query and conversation history.
 2. Try to answer the question using your knowledge of BrieflyAI features listed above.
-3. If the user's question is about one of the following topics, OR if you are unsure how to answer, OR if the question seems highly sensitive or complex, you MUST include the phrase "For this specific issue, it's best to contact our support team directly at babseli933@gmail.com." at the end of your response AND set the 'shouldContactSupport' field to true.
+3. If the user's question is about one of the following topics, OR if you are unsure how to answer, OR if the question seems highly sensitive or complex, you MUST include the phrase "For this specific issue, it's best to contact our support team directly at ${supportEmail}." at the end of your response AND set the 'shouldContactSupport' field to true.
    The topics requiring escalation to email support are:
     - Billing, payments, subscription problems, or refund requests.
     - Security concerns, account hacking, or unauthorized access suspicions.

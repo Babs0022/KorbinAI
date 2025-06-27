@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -15,6 +16,7 @@ export function Footer() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'babseli933@gmail.com';
 
   const handleSubscribe = async (e: FormEvent) => {
     e.preventDefault();
@@ -62,7 +64,7 @@ export function Footer() {
           <div className="md:justify-self-end">
             <h4 className="font-headline text-lg font-semibold">Connect</h4>
             <ul className="mt-2 space-y-1">
-              <li><a href="mailto:babseli933@gmail.com" className="text-sm text-muted-foreground hover:text-primary flex items-center"><Send size={16} className="mr-2" /> Email Support</a></li>
+              <li><a href={`mailto:${supportEmail}`} className="text-sm text-muted-foreground hover:text-primary flex items-center"><Send size={16} className="mr-2" /> Email Support</a></li>
               <li><a href="https://twitter.com/babsbuilds" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary flex items-center"><XLogoIcon className="mr-2 h-4 w-4" /> @babsbuilds</a></li>
             </ul>
           </div>

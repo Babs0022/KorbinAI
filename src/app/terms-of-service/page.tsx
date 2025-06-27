@@ -11,6 +11,7 @@ export default function TermsOfServicePage() {
   // Using a static date to prevent hydration mismatches.
   // This value should be updated manually when the terms change.
   const lastUpdatedDate = "June 12, 2025";
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'babseli933@gmail.com';
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -63,7 +64,7 @@ export default function TermsOfServicePage() {
               <p>We reserve the right to modify these Terms at any time. We will provide notice of such changes by posting the updated Terms on our website. Your continued use of the Service after such changes constitutes your acceptance of the new Terms.</p>
 
               <h2>13. Contact Us</h2>
-              <p>If you have any questions about these Terms, please contact us at babseli933@gmail.com.</p>
+              <p>If you have any questions about these Terms, please contact us at {supportEmail}.</p>
             </GlassCardContent>
           </GlassCard>
         </Container>

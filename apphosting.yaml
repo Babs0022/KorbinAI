@@ -24,3 +24,7 @@ env:
   # Gemini API Key (server-side for Genkit AI flows)
   - variable: GEMINI_API_KEY
     value: "YOUR_KEY_HERE"
+
+  # Support Email for contact links
+  - variable: NEXT_PUBLIC_SUPPORT_EMAIL
+    value: "babseli933@gmail.com"

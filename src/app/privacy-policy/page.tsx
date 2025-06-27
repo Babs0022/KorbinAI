@@ -11,6 +11,7 @@ export default function PrivacyPolicyPage() {
   // Using a static date to prevent hydration mismatches.
   // This value should be updated manually when the policy changes.
   const lastUpdatedDate = "June 12, 2025";
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'babseli933@gmail.com';
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -25,7 +26,7 @@ export default function PrivacyPolicyPage() {
               <p><em>Last Updated: {lastUpdatedDate}</em></p>
               
               <h2>1. Introduction</h2>
-              <p>Welcome to BrieflyAI ("we", "our", "us"). We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about this privacy notice, or our practices with regards to your personal information, please contact us at babseli933@gmail.com.</p>
+              <p>Welcome to BrieflyAI ("we", "our", "us"). We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about this privacy notice, or our practices with regards to your personal information, please contact us at {supportEmail}.</p>
 
               <h2>2. Information We Collect</h2>
               <p>We collect personal information that you voluntarily provide to us when you register on the BrieflyAI, express an interest in obtaining information about us or our products and Services, when you participate in activities on the BrieflyAI or otherwise when you contact us.</p>
@@ -63,7 +64,7 @@ export default function PrivacyPolicyPage() {
               <p>We may update this privacy notice from time to time. The updated version will be indicated by an updated "Last Updated" date and the updated version will be effective as soon as it is accessible.</p>
 
               <h2>9. How To Contact Us</h2>
-              <p>If you have questions or comments about this notice, you may email us at babseli933@gmail.com.</p>
+              <p>If you have questions or comments about this notice, you may email us at {supportEmail}.</p>
             </GlassCardContent>
           </GlassCard>
         </Container>
