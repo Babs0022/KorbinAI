@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -11,7 +10,6 @@ import { Loader2, AlertTriangle, BarChart3, Brain, ScrollText, Settings2, TestTu
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
-import { AccountInfoCard } from '@/components/dashboard/AccountInfoCard';
 import { AnalyticsSummaryCard } from '@/components/dashboard/AnalyticsSummaryCard';
 
 const coreFeatures: FeatureInfo[] = [
@@ -147,7 +145,6 @@ export default function DashboardPage() {
                 </div>
             </div>
             <div className="lg:col-span-1 space-y-8">
-                 <AccountInfoCard />
                  <AnalyticsSummaryCard 
                     title="Total Prompts Created"
                     value="125"
