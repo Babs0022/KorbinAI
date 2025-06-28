@@ -18,14 +18,18 @@ import { db } from '@/lib/firebase';
 import { collection, query, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format, startOfWeek, startOfDay, subDays, subWeeks, subMonths, isWithinInterval } from 'date-fns';
 
-interface MonthlyData {
-  month: string;
+type TimePeriod = 'daily' | 'weekly' | 'monthly';
+
+interface ChartDataPoint {
+  label: string;
   prompts: number;
   score: number | null;
 }
 
-const chartConfigMonthly = {
+const chartConfig = {
   prompts: {
     label: "Prompts Created",
     color: "hsl(var(--primary))",
@@ -36,9 +40,6 @@ const chartConfigMonthly = {
   }
 };
 
-const formatMonthYear = (date: Date): string => {
-  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-};
 
 export default function AnalyticsPage() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -48,6 +49,7 @@ export default function AnalyticsPage() {
   
   const [allUserPrompts, setAllUserPrompts] = useState<PromptHistory[]>([]);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('monthly');
 
   useEffect(() => {
     setIsClient(true);
@@ -77,7 +79,6 @@ export default function AnalyticsPage() {
            if (data.timestamp instanceof Timestamp) {
             timestampStr = data.timestamp.toDate().toISOString();
           } else if (typeof data.timestamp === 'object' && data.timestamp.seconds) {
-            // Fallback for potentially un-converted server timestamps in older data
             timestampStr = new Timestamp(data.timestamp.seconds, data.timestamp.nanoseconds).toDate().toISOString();
           }
           return {
@@ -125,64 +126,68 @@ export default function AnalyticsPage() {
     return Object.entries(modelCounts).sort(([,a],[,b]) => b-a)[0][0];
   }, [allUserPrompts]);
   
-  const monthlyChartData = useMemo<MonthlyData[]>(() => {
-    const dataByMonth: Record<string, { prompts: number; scores: number[]; scoreSum: number }> = {};
+  const chartData = useMemo<ChartDataPoint[]>(() => {
+    if (!isClient || allUserPrompts.length === 0) return [];
+
+    const now = new Date();
+    const dataByDate: Map<string, { prompts: number; scoreSum: number; scoreCount: number }> = new Map();
+    let interval: { start: Date; end: Date };
+    let labelFormat: string;
+    let dateKeyFn: (date: Date) => string;
+
+    if (timePeriod === 'daily') {
+        interval = { start: subDays(now, 29), end: now };
+        labelFormat = 'MMM d';
+        dateKeyFn = (date: Date) => format(startOfDay(date), 'yyyy-MM-dd');
+        for (let i = 0; i < 30; i++) dataByDate.set(dateKeyFn(subDays(now, i)), { prompts: 0, scoreSum: 0, scoreCount: 0 });
+    } else if (timePeriod === 'weekly') {
+        interval = { start: subWeeks(now, 11), end: now };
+        labelFormat = 'MMM d';
+        dateKeyFn = (date: Date) => format(startOfWeek(date, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+        for (let i = 0; i < 12; i++) dataByDate.set(dateKeyFn(subWeeks(now, i)), { prompts: 0, scoreSum: 0, scoreCount: 0 });
+    } else { // monthly
+        interval = { start: subMonths(now, 5), end: now };
+        labelFormat = 'MMM';
+        dateKeyFn = (date: Date) => format(date, 'yyyy-MM');
+        for (let i = 0; i < 6; i++) dataByDate.set(dateKeyFn(subMonths(now, i)), { prompts: 0, scoreSum: 0, scoreCount: 0 });
+    }
 
     allUserPrompts.forEach(prompt => {
-      const date = new Date(prompt.timestamp);
-      const monthYearKey = formatMonthYear(date);
-      
-      if (!dataByMonth[monthYearKey]) {
-        dataByMonth[monthYearKey] = { prompts: 0, scores: [], scoreSum: 0 };
-      }
-      dataByMonth[monthYearKey].prompts += 1;
-      if (typeof prompt.qualityScore === 'number') {
-        dataByMonth[monthYearKey].scores.push(prompt.qualityScore);
-        dataByMonth[monthYearKey].scoreSum += prompt.qualityScore;
-      }
+        const promptDate = new Date(prompt.timestamp);
+        if (isWithinInterval(promptDate, interval)) {
+            const key = dateKeyFn(promptDate);
+            const entry = dataByDate.get(key);
+            if (entry) {
+                entry.prompts += 1;
+                if (typeof prompt.qualityScore === 'number') {
+                    entry.scoreSum += prompt.qualityScore;
+                    entry.scoreCount += 1;
+                }
+            }
+        }
     });
 
-    const sortedMonths = Object.keys(dataByMonth).sort((a,b) => new Date(a).getTime() - new Date(b).getTime());
-    
-    // Ensure we have at least 6 months of data, even if empty, for a better looking chart
-    const chartEntries: MonthlyData[] = [];
-    const today = new Date();
-    const monthSet = new Set(sortedMonths);
+    return Array.from(dataByDate.entries())
+        .map(([dateKey, data]) => ({
+            date: new Date(dateKey),
+            label: format(new Date(dateKey), labelFormat),
+            prompts: data.prompts,
+            score: data.scoreCount > 0 ? parseFloat((data.scoreSum / data.scoreCount).toFixed(1)) : null,
+        }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      const monthKey = formatMonthYear(date);
-      if (dataByMonth[monthKey]) {
-        chartEntries.push({
-          month: monthKey.split(' ')[0], // Just month abbreviation
-          prompts: dataByMonth[monthKey].prompts,
-          score: dataByMonth[monthKey].scores.length > 0 
-                 ? parseFloat((dataByMonth[monthKey].scoreSum / dataByMonth[monthKey].scores.length).toFixed(1)) 
-                 : null,
-        });
-      } else {
-         chartEntries.push({ month: monthKey.split(' ')[0], prompts: 0, score: null });
-      }
-    }
-     // If there's historical data older than 6 months, make sure the chart still shows it.
-     // This logic prioritizes showing the latest 6 months if there's a lot of data.
-     // If there are fewer than 6 months of data, it will show all available months plus padding.
-     // For more sophisticated charting with many data points, consider pagination or more advanced aggregation.
-
-    return chartEntries.slice(-6); // Show up to last 6 months of activity
-
-  }, [allUserPrompts]);
+  }, [allUserPrompts, timePeriod, isClient]);
 
 
   const topPrompts = useMemo(() => {
     return allUserPrompts
       .filter(p => typeof p.qualityScore === 'number')
       .sort((a, b) => (b.qualityScore || 0) - (a.qualityScore || 0))
-      .slice(0, 3); // Top 3
+      .slice(0, 3);
   }, [allUserPrompts]);
 
 
-  if (authLoading || (!currentUser && !authLoading) || (isLoadingMetrics && !isClient)) {
+  if (authLoading || (isLoadingMetrics && !isClient)) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -266,28 +271,38 @@ export default function AnalyticsPage() {
               </GlassCard>
             </div>
           </section>
-
-          {isClient && (
+          
             <section className="mb-8">
               <GlassCard>
                 <GlassCardHeader>
-                  <GlassCardTitle className="font-headline text-xl">Prompt Activity & Quality</GlassCardTitle>
-                  <GlassCardDescription>Monthly trends for prompts created and average quality score.</GlassCardDescription>
+                  <div className="flex justify-between items-center flex-wrap gap-2">
+                    <div>
+                      <GlassCardTitle className="font-headline text-xl">Prompt Activity & Quality</GlassCardTitle>
+                      <GlassCardDescription>Trends for prompts created and average quality score.</GlassCardDescription>
+                    </div>
+                    <Tabs defaultValue="monthly" onValueChange={(value) => setTimePeriod(value as TimePeriod)} className="w-auto">
+                      <TabsList className="grid w-full grid-cols-3">
+                          <TabsTrigger value="daily">Daily</TabsTrigger>
+                          <TabsTrigger value="weekly">Weekly</TabsTrigger>
+                          <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
                 </GlassCardHeader>
                 <GlassCardContent className="h-[350px] w-full">
                   {isLoadingMetrics ? (
                      <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-                  ) : monthlyChartData.length > 0 ? (
+                  ) : chartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
-                       <ChartContainer config={chartConfigMonthly} className="h-full w-full">
+                       <ChartContainer config={chartConfig} className="h-full w-full">
                          <LineChart
                             accessibilityLayer
-                            data={monthlyChartData}
+                            data={chartData}
                             margin={{ top: 5, right: 20, left: -20, bottom: 5 }}
                           >
                             <CartesianGrid vertical={false} strokeDasharray="3 3" />
                             <XAxis
-                              dataKey="month"
+                              dataKey="label"
                               tickLine={false}
                               axisLine={false}
                               tickMargin={8}
@@ -333,7 +348,7 @@ export default function AnalyticsPage() {
                               stroke="var(--color-score)" 
                               strokeWidth={2} 
                               dot={true}
-                              connectNulls // Important for months with no score data
+                              connectNulls
                              />
                           </LineChart>
                         </ChartContainer>
@@ -347,8 +362,7 @@ export default function AnalyticsPage() {
                 </GlassCardContent>
               </GlassCard>
             </section>
-          )}
-
+          
           <section className="mb-8">
             <GlassCard>
               <GlassCardHeader>
