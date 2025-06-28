@@ -33,10 +33,10 @@ export function KeyFeaturesHighlightSection() {
       <Container>
         <div className="text-center mb-12 md:mb-16">
           <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            An Enterprise-Grade Prompting Platform
+            A Platform Engineered for Precision and Scale
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Go beyond basic prompting. Access a full suite of tools for precision, optimization, and collaboration.
+            Stop guessing and start engineering. Get a complete suite of tools to craft, analyze, manage, and collaborate on high-performance prompts.
           </p>
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
