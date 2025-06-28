@@ -3,60 +3,89 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Lock down by default
-    match /{document=**} {
-      allow read, write: if false;
+
+    // Helper function to check if a user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // Allow users to access their own data
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    match /userSubscriptions/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // Helper function to check if the user is the owner of the data
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
     
+    // User profile data (users can create their own doc and read it)
+    match /users/{userId} {
+      allow read, create: if isOwner(userId);
+      // Updates are currently handled by auth triggers or functions, not directly by client
+      allow update: if false;
+    }
+    
+    // User-specific subcollections (e.g., promptHistory, onboardingInfo)
+    match /users/{userId}/{collectionId}/{docId} {
+        allow read, write, delete: if isOwner(userId);
+    }
+    
+    // User settings
     match /userSettings/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
     }
 
-    // Allow anyone to read announcements
-    match /appAnnouncements/{announcementId} {
-      allow read: if true;
-    }
-    
-    // Team data security
-    match /teams/{teamId} {
-      // Members can read team data.
-      allow read: if request.auth != null && request.auth.uid in resource.data.members;
-      // Only the owner can write to the main team document.
-      allow write: if request.auth != null && resource.data.ownerId == request.auth.uid;
-    }
-    
-    match /teams/{teamId}/{collection}/{docId} {
-       // Only team members can access sub-collections
-      allow read, write: if request.auth != null && get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid] != null;
-    }
-    
-    match /teams/{teamId}/sharedPrompts/{promptId} {
-      // Admins and editors can create, update, delete prompts
-      allow create, update, delete: if request.auth != null && (get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid].role == 'admin' || get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid].role == 'editor');
-    }
-
-    match /teams/{teamId}/chatMessages/{messageId} {
-      // Team members can create messages
-      allow create: if request.auth != null && request.resource.data.senderId == request.auth.uid;
-    }
-
-    // Prevent client-side writes to sensitive collections handled by backend functions
+    // Newsletter subscriptions can be created by anyone, but not read.
     match /newsletterSubscribers/{email} {
+      allow read: if false;
       allow create: if true;
-      allow read, update, delete: if false;
     }
 
+    // App announcements are public read-only for authenticated users.
+    match /appAnnouncements/{announcementId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Should be written by an admin via a backend
+    }
+
+    // User subscriptions can only be read by the owner. Writes are handled by cloud functions.
+    match /userSubscriptions/{userId} {
+        allow read: if isOwner(userId);
+        allow write: if false;
+    }
+    
+    // Transactions can only be read by owner. Writes are handled by cloud functions.
     match /transactions/{transactionId} {
+      allow read: if isOwner(resource.data.userId);
       allow write: if false;
+    }
+    
+    // --- Team Collaboration Rules ---
+    match /teams/{teamId} {
+        // A user can read a team doc if they are a member.
+        allow read: if isAuthenticated() && request.auth.uid in resource.data.members;
+        
+        // A user can create a team if they are the owner listed in the new document.
+        allow create: if isAuthenticated() && request.auth.uid == request.resource.data.ownerId;
+        
+        // Only an admin of the team can update the team details (name, members, etc.).
+        allow update: if isAuthenticated() && resource.data.members[request.auth.uid].role == 'admin';
+
+        // Shared prompts within a team
+        match /sharedPrompts/{promptId} {
+            // Any team member can read shared prompts.
+            allow read: if isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members;
+            
+            // Admins and editors can create, update, and delete.
+            allow write: if isAuthenticated() && get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid].role in ['admin', 'editor'];
+        }
+
+        // Chat messages within a team
+        match /chatMessages/{messageId} {
+            // Any team member can read chat messages.
+            allow read: if isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members;
+            
+            // Any team member can create a message.
+            allow create: if isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members;
+            
+            // Nobody can update or delete messages from the client for message integrity.
+            allow update, delete: if false;
+        }
     }
   }
 }
