@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from '@/components/ui/button';
@@ -17,11 +16,12 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 interface OptimizedPromptCardProps {
   optimizedPrompt: string;
   originalGoal: string;
+  targetModel?: string;
   generatedName?: string;
   generatedTags?: string[];
 }
 
-export function OptimizedPromptCard({ optimizedPrompt, originalGoal, generatedName, generatedTags }: OptimizedPromptCardProps) {
+export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel, generatedName, generatedTags }: OptimizedPromptCardProps) {
   const [promptName, setPromptName] = useState('');
   const [promptTags, setPromptTags] = useState('');
   const [editedPromptText, setEditedPromptText] = useState(optimizedPrompt);
@@ -47,7 +47,7 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, generatedNa
   };
   
   const handleExport = () => {
-    const content = `Name: ${promptName}\nGoal: ${originalGoal}\nTags: ${promptTags}\n\nOptimized Prompt:\n${editedPromptText}`;
+    const content = `Name: ${promptName}\nGoal: ${originalGoal}\nTags: ${promptTags}\nTarget Model: ${targetModel || 'N/A'}\n\nOptimized Prompt:\n${editedPromptText}`;
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -73,11 +73,12 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, generatedNa
     try {
       const tagsArray = promptTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
       
-      const newPromptEntry: Omit<PromptHistory, 'id' | 'timestamp'> & { timestamp: any } = {
+      const newPromptEntry: Omit<PromptHistory, 'id' | 'timestamp'> &amp; { timestamp: any } = {
         name: promptName,
         goal: originalGoal,
         optimizedPrompt: editedPromptText, 
         tags: tagsArray,
+        targetModel: targetModel || undefined,
         timestamp: serverTimestamp(),
       };
 
@@ -115,7 +116,7 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, generatedNa
       <GlassCardHeader>
         <GlassCardTitle className="flex items-center font-headline text-xl">
           <CheckCircle className="mr-2 h-6 w-6 text-accent" />
-          Your Optimized Prompt
+          Your Optimized Prompt {targetModel && `for ${targetModel}`}
         </GlassCardTitle>
       </GlassCardHeader>
       <GlassCardContent>

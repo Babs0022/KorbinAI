@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, type FormEvent, type ChangeEvent, useCallback } from 'react';
@@ -14,42 +13,67 @@ import { generateSurveyQuestions, type SurveyQuestion, type GenerateSurveyQuesti
 import { optimizePrompt, type OptimizePromptInput, type OptimizePromptOutput } from '@/ai/flows/optimize-prompt';
 import { generatePromptMetadata, type GeneratePromptMetadataOutput } from '@/ai/flows/generate-prompt-metadata-flow';
 import { useToast } from '@/hooks/use-toast';
-import { Wand2, Loader2, ArrowLeft, HelpCircle } from 'lucide-react';
+import { Wand2, Loader2, ArrowLeft, HelpCircle, Cpu } from 'lucide-react';
 import { OptimizedPromptCard } from '@/components/prompt/OptimizedPromptCard';
 import Link from 'next/link';
 import { LoadingTips } from '@/components/shared/LoadingTips';
-import { useAuth } from '@/contexts/AuthContext';
 
-type WorkspaceState = 'initial_loading' | 'loading_questions' | 'showing_questions' | 'loading_optimization' | 'showing_result' | 'error';
+type WorkspaceState = 'initial_loading' | 'showing_model_selection' | 'loading_questions' | 'showing_questions' | 'loading_optimization' | 'showing_result' | 'error';
 
 interface OptimizedPromptResult extends OptimizePromptOutput, GeneratePromptMetadataOutput {
   originalGoal: string;
+  targetModel?: string;
 }
+
+const modelGroups = [
+  {
+    groupName: 'Text Models (OpenAI)',
+    models: ["gpt-4.5", "gpt-4o", "gpt-4", "gpt-3.5-turbo"]
+  },
+  {
+    groupName: 'Text Models (Google)',
+    models: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"]
+  },
+  {
+    groupName: 'Text Models (Anthropic)',
+    models: ["claude-3.5-sonnet", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku"]
+  },
+  {
+    groupName: 'Text Models (Other)',
+    models: ["grok-3", "llama-3-70b", "deepseek-r1"]
+  },
+  {
+    groupName: 'Image Models',
+    models: ["dall-e-3", "stable-diffusion-3", "stable-diffusion", "midjourney"]
+  }
+];
 
 export function PromptWorkspace() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
-  const { subscription, subscriptionLoading } = useAuth();
 
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState>('initial_loading');
   const [goal, setGoal] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
+  const [targetModel, setTargetModel] = useState<string>('');
 
   const [surveyQuestions, setSurveyQuestions] = useState<SurveyQuestion[]>([]);
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string | string[]>>({});
   
   const [optimizedOutput, setOptimizedOutput] = useState<OptimizedPromptResult | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  // Extract values from searchParams outside of useEffect to use primitives in the dependency array
+  
   const goalFromParams = searchParams.get('goal');
   const hasImageFlag = searchParams.get('image') === 'true';
 
-  const handleDirectGenerate = useCallback(async (currentGoal: string, currentImageDataUri: string | null) => {
+  const handleDirectGenerate = useCallback(async (currentGoal: string, currentImageDataUri: string | null, currentTargetModel: string) => {
     setWorkspaceState('loading_optimization');
     try {
-      const optimizeInput: OptimizePromptInput = { goal: currentGoal, answers: {} };
+      const optimizeInput: OptimizePromptInput = { 
+          goal: currentGoal, 
+          answers: {}, 
+          targetModel: currentTargetModel 
+      };
        if (currentImageDataUri) {
         optimizeInput.imageDataUri = currentImageDataUri;
       }
@@ -62,6 +86,7 @@ export function PromptWorkspace() {
       const finalResult: OptimizedPromptResult = {
         ...optimizationResult,
         originalGoal: currentGoal,
+        targetModel: currentTargetModel,
         suggestedName: metadataResult.suggestedName,
         suggestedTags: metadataResult.suggestedTags,
       };
@@ -75,10 +100,10 @@ export function PromptWorkspace() {
     }
   }, [toast]);
 
-  const fetchAndSetQuestions = useCallback(async (currentGoal: string, currentImageDataUri: string | null) => {
+  const fetchAndSetQuestions = useCallback(async (currentGoal: string, currentImageDataUri: string | null, currentTargetModel: string) => {
     setWorkspaceState('loading_questions');
     try {
-      const input: GenerateSurveyQuestionsInput = { goal: currentGoal };
+      const input: GenerateSurveyQuestionsInput = { goal: currentGoal, targetModel: currentTargetModel };
       if (currentImageDataUri) {
         input.imageDataUri = currentImageDataUri;
       }
@@ -88,7 +113,7 @@ export function PromptWorkspace() {
         setWorkspaceState('showing_questions');
       } else {
         toast({ title: "No specific questions needed", description: "Generating your prompt directly..." });
-        await handleDirectGenerate(currentGoal, currentImageDataUri);
+        await handleDirectGenerate(currentGoal, currentImageDataUri, currentTargetModel);
       }
     } catch (error) {
       console.error("Error fetching survey questions:", error);
@@ -98,31 +123,26 @@ export function PromptWorkspace() {
   }, [toast, handleDirectGenerate]);
   
   useEffect(() => {
-    if (isInitialized) {
-        return;
-    }
-    
     let imageFromStorage: string | null = null;
-
     if (hasImageFlag) {
         imageFromStorage = sessionStorage.getItem('imageDataUri');
-        sessionStorage.removeItem('imageDataUri');
+        sessionStorage.removeItem('imageDataUri'); // Clean up after use
     }
 
     if (goalFromParams) {
         setGoal(goalFromParams);
         if (imageFromStorage) setImageDataUri(imageFromStorage);
-        
-        setIsInitialized(true);
-
-        fetchAndSetQuestions(goalFromParams, imageFromStorage);
-        
+        setWorkspaceState('showing_model_selection'); // Start by showing model selection
     } else {
         toast({ title: "No Goal Specified", description: "Redirecting to dashboard to start a new prompt.", variant: "destructive" });
         router.push('/dashboard');
     }
-  }, [isInitialized, goalFromParams, hasImageFlag, toast, router, fetchAndSetQuestions]);
+  }, [goalFromParams, hasImageFlag, router, toast]);
 
+  const handleModelSelection = (model: string) => {
+    setTargetModel(model);
+    fetchAndSetQuestions(goal, imageDataUri, model);
+  };
 
   const handleSurveyChange = (id: string, type: SurveyQuestion['type'], value: string) => {
     setSurveyAnswers(prev => {
@@ -155,7 +175,11 @@ export function PromptWorkspace() {
         }
     }
 
-    const optimizeInput: OptimizePromptInput = { goal, answers: formattedAnswers };
+    const optimizeInput: OptimizePromptInput = { 
+        goal, 
+        answers: formattedAnswers, 
+        targetModel 
+    };
     if (imageDataUri) {
       optimizeInput.imageDataUri = imageDataUri;
     }
@@ -170,6 +194,7 @@ export function PromptWorkspace() {
       const finalResult: OptimizedPromptResult = {
         ...optimizationResult,
         originalGoal: goal,
+        targetModel,
         suggestedName: metadataResult.suggestedName,
         suggestedTags: metadataResult.suggestedTags,
       };
@@ -193,19 +218,51 @@ export function PromptWorkspace() {
             <LoadingTips
               loadingText={
                 workspaceState === 'loading_questions'
-                  ? 'Generating clarifying questions...'
+                  ? `Generating questions for ${targetModel}...`
                   : workspaceState === 'loading_optimization'
-                  ? 'Crafting your optimized prompt...'
+                  ? `Crafting your optimized prompt for ${targetModel}...`
                   : 'Initializing workspace...'
               }
             />
+          </GlassCard>
+        );
+      case 'showing_model_selection':
+        return (
+          <GlassCard>
+            <GlassCardHeader>
+              <GlassCardTitle className="flex items-center"><Cpu className="mr-2 h-5 w-5 text-accent"/>Select Your Target AI Model</GlassCardTitle>
+              <GlassCardDescription>Choosing a model helps us tailor questions and optimize the final prompt.</GlassCardDescription>
+            </GlassCardHeader>
+            <GlassCardContent>
+               <div className="space-y-4">
+                  {modelGroups.map((group) => (
+                    <div key={group.groupName}>
+                      <p className="mb-2 text-sm font-medium text-muted-foreground">{group.groupName}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {group.models.map((model) => (
+                          <Button
+                            key={model}
+                            type="button"
+                            variant={targetModel === model ? "default" : "outline"}
+                            size="sm"
+                            className="h-auto px-3 py-1.5 text-xs"
+                            onClick={() => handleModelSelection(model)}
+                          >
+                            {model.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+            </GlassCardContent>
           </GlassCard>
         );
       case 'showing_questions':
         return (
           <GlassCard>
             <GlassCardHeader>
-              <GlassCardTitle className="flex items-center"><HelpCircle className="mr-2 h-5 w-5 text-accent"/>Refine the Details</GlassCardTitle>
+              <GlassCardTitle className="flex items-center"><HelpCircle className="mr-2 h-5 w-5 text-accent"/>Refine for {targetModel}</GlassCardTitle>
               <GlassCardDescription>Answering these questions will help create a more effective prompt.</GlassCardDescription>
             </GlassCardHeader>
             <GlassCardContent>
@@ -256,7 +313,8 @@ export function PromptWorkspace() {
           <>
             <OptimizedPromptCard 
               optimizedPrompt={optimizedOutput.optimizedPrompt}
-              originalGoal={optimizedOutput.originalGoal} 
+              originalGoal={optimizedOutput.originalGoal}
+              targetModel={optimizedOutput.targetModel}
               generatedName={optimizedOutput.suggestedName}
               generatedTags={optimizedOutput.suggestedTags}
             />

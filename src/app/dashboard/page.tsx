@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -68,13 +67,6 @@ const fullToolkit: FeatureInfo[] = [
     description: 'Paste AI-generated text to reverse-engineer the prompt that likely created it.',
     href: '/dashboard/reverse-prompting',
     icon: Repeat,
-    enabled: true,
-  },
-  {
-    title: 'Model-Specific Adapter',
-    description: 'Automatically tailor any prompt for optimal performance on specific AI models like GPT-4, Claude 3, and more.',
-    href: '/dashboard/model-specific-prompts',
-    icon: Puzzle,
     enabled: true,
   },
   {
@@ -192,11 +184,11 @@ export default function DashboardPage() {
       <DashboardHeader />
       <main className="flex-1 flex flex-col bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8 md:py-12">
         <Container>
-          <div className="mb-16 text-center space-y-4">
+          <div className="mb-12 md:mb-16 text-center space-y-4">
             <h1 className="font-headline text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Welcome, {displayName}!
             </h1>
-            <p className="text-lg text-muted-foreground">What can I help you create today?</p>
+            <p className="text-lg text-muted-foreground">What can I help you create?</p>
           </div>
           
           <div className="max-w-3xl mx-auto mb-16">

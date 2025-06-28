@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A flow to dynamically generate survey questions based on a user's goal and an optional image.
@@ -25,6 +24,7 @@ export type SurveyQuestion = z.infer<typeof SurveyQuestionSchema>;
 const GenerateSurveyQuestionsInputSchema = z.object({
   goal: z.string().describe("The user's initial goal or task for the AI prompt."),
   imageDataUri: z.string().optional().describe("An optional image provided by the user, as a data URI."),
+  targetModel: z.string().optional().describe("The AI model the user wants to target. Use this to tailor questions."),
 });
 export type GenerateSurveyQuestionsInput = z.infer<typeof GenerateSurveyQuestionsInputSchema>;
 
@@ -50,6 +50,11 @@ Goal: "{{goal}}"
 {{#if imageDataUri}}
 Image Context:
 {{media url=imageDataUri}}
+{{/if}}
+
+{{#if targetModel}}
+Target AI Model: "{{targetModel}}"
+**IMPORTANT**: Tailor your questions to be especially relevant for this model. For example, for image models like Stable Diffusion, ask about style, artists, or negative prompts. For text models like Claude, you might ask about structuring the prompt with XML tags. For GPT, ask about personas or chain-of-thought.
 {{/if}}
 
 For each generated question, you MUST provide: "id", "text", "type" (text, radio, or checkbox), and "options" (only for radio/checkbox).
