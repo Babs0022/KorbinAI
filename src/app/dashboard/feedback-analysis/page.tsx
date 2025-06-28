@@ -6,7 +6,7 @@ import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BarChart3, Lightbulb, Loader2, ThumbsUp, ThumbsDown, CheckCircle, Info } from 'lucide-react';
+import { ArrowLeft, BarChart3, Lightbulb, Loader2, ThumbsDown, CheckCircle, Info, School } from 'lucide-react';
 import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { Label } from '@/components/ui/label';
@@ -174,6 +174,21 @@ export default function FeedbackAnalysisPage() {
                     ))}
                   </ul>
                 </div>
+                 {analysisResult.qualityScore < 7 && (
+                    <div className="mt-4 p-4 border rounded-lg bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-300">
+                        <h4 className="font-semibold text-md flex items-center mb-2">
+                            <School className="mr-2 h-5 w-5" />
+                            Want to improve your score?
+                        </h4>
+                        <p className="text-sm">
+                            Your prompt has room for improvement. Visit our{" "}
+                            <Link href="/dashboard/academy" className="font-bold underline hover:text-blue-600 dark:hover:text-blue-200">
+                                Prompt Academy
+                            </Link>
+                            {" "}to learn key techniques for crafting higher-quality prompts.
+                        </p>
+                    </div>
+                )}
               </GlassCardContent>
             </GlassCard>
           )}

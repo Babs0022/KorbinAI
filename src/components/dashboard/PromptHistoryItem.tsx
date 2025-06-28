@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Eye, Edit, Download, Trash2, Tag, Share2 } from 'lucide-react';
+import { Eye, Edit, Download, Trash2, Tag } from 'lucide-react';
 import { GlassCard } from '../shared/GlassCard';
 import { Badge } from '../ui/badge';
 import type { PromptHistory } from './PromptHistoryItem.d';
@@ -12,10 +12,9 @@ interface PromptHistoryItemProps {
   onEdit: (prompt: PromptHistory) => void;
   onExport: (prompt: PromptHistory) => void;
   onDelete: (promptId: string) => void;
-  onShare?: (prompt: PromptHistory) => void;
 }
 
-export const PromptHistoryItem = React.memo(function PromptHistoryItem({ prompt, onView, onEdit, onExport, onDelete, onShare }: PromptHistoryItemProps) {
+export const PromptHistoryItem = React.memo(function PromptHistoryItem({ prompt, onView, onEdit, onExport, onDelete }: PromptHistoryItemProps) {
   const formattedDate = new Date(prompt.timestamp).toLocaleDateString('en-US', {
     year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
   });
@@ -42,11 +41,6 @@ export const PromptHistoryItem = React.memo(function PromptHistoryItem({ prompt,
           <Button variant="ghost" size="icon" onClick={() => onEdit(prompt)} title="Edit in Generator">
             <Edit className="h-4 w-4" />
           </Button>
-          {onShare && (
-            <Button variant="ghost" size="icon" onClick={() => onShare(prompt)} title="Share to Team Vault">
-              <Share2 className="h-4 w-4 text-primary" />
-            </Button>
-          )}
           <Button variant="ghost" size="icon" onClick={() => onExport(prompt)} title="Export Text">
             <Download className="h-4 w-4" />
           </Button>

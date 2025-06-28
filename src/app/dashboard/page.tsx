@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -6,7 +7,7 @@ import { MinimalFooter } from '@/components/layout/MinimalFooter';
 import Container from '@/components/layout/Container';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Loader2, AlertTriangle, BarChart3, Brain, ScrollText, Settings2, TestTubes, FileText, Lightbulb, Puzzle, School, Repeat, Rocket, Users, Edit3, Archive, Star, Cpu } from 'lucide-react';
+import { Loader2, AlertTriangle, BarChart3, Repeat, Settings2, TestTubes, FileText, Lightbulb, School, Rocket, Archive, Star, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FeatureCard, type FeatureInfo } from '@/components/dashboard/FeatureCard';
@@ -15,7 +16,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, getDocs, Timestamp } from 'firebase/firestore';
 import { PromptInputForm } from '@/components/dashboard/PromptInputForm';
 
-const coreFeatures: FeatureInfo[] = [
+const features: FeatureInfo[] = [
   {
     title: 'Prompt Vault & History',
     description: 'Save, search, and manage all your optimized prompts in one secure, centralized location.',
@@ -31,21 +32,10 @@ const coreFeatures: FeatureInfo[] = [
     enabled: true,
   },
   {
-    title: 'Team Collaboration Hub',
-    description: 'Share, manage, and collaborate on prompts with your team in a shared workspace.',
-    href: '/dashboard/collaboration',
-    icon: Users,
-    enabled: true,
-    isUnlimited: true,
-  },
-];
-
-const fullToolkit: FeatureInfo[] = [
-  {
-    title: 'Real-Time Suggestions',
-    description: 'Get live, AI-powered feedback and suggestions to improve your prompts as you type.',
-    href: '/dashboard/real-time-suggestions',
-    icon: Lightbulb,
+    title: 'Reverse Prompting',
+    description: 'Paste AI-generated text to reverse-engineer the prompt that likely created it.',
+    href: '/dashboard/reverse-prompting',
+    icon: Repeat,
     enabled: true,
   },
   {
@@ -63,20 +53,13 @@ const fullToolkit: FeatureInfo[] = [
     enabled: true,
   },
   {
-    title: 'Reverse Prompting',
-    description: 'Paste AI-generated text to reverse-engineer the prompt that likely created it.',
-    href: '/dashboard/reverse-prompting',
-    icon: Repeat,
-    enabled: true,
-  },
-  {
     title: 'A/B Testing',
     description: 'Compare prompt variations across multiple AI models side-by-side to find the most effective one.',
     href: '/dashboard/compatibility-checker',
     icon: TestTubes,
     enabled: true,
   },
-    {
+  {
     title: 'Analytics Dashboard',
     description: 'Track your prompt performance, usage trends, and average quality scores over time.',
     href: '/dashboard/analytics',
@@ -197,22 +180,14 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
             <div className="lg:col-span-2 space-y-8">
-                <div>
-                    <h2 className="font-headline text-2xl font-bold text-foreground mb-4">Core Tools</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {coreFeatures.map((feature) => (
-                        <FeatureCard key={feature.title} feature={feature} />
-                        ))}
-                    </div>
-                </div>
-            </div>
-            <div className="lg:col-span-1 flex flex-col gap-8">
                  <AnalyticsSummaryCard 
-                    title="Total Prompts Created"
+                    title="Total Prompts in Vault"
                     value={renderValue(totalPrompts)}
                     description={isLoadingAnalytics ? "..." : `+${promptsThisMonth ?? 0} this month`}
                     icon={Archive}
                  />
+            </div>
+            <div className="lg:col-span-1 flex flex-col gap-8">
                  <AnalyticsSummaryCard 
                     title="Average Quality Score"
                     value={renderValue(avgQualityScore, '/10', 'N/A')}
@@ -225,15 +200,15 @@ export default function DashboardPage() {
           <section className="bg-background/70 backdrop-blur-sm rounded-xl p-6 md:p-8">
             <div className="w-full text-left mb-6">
               <h2 className="font-headline text-2xl font-bold text-foreground">
-                Explore Your Full Toolkit
+                Explore Your Toolkit
               </h2>
                <p className="text-muted-foreground mt-1">
                 Dive into our advanced utilities and learning resources.
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {fullToolkit.map((feature) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+                {features.map((feature) => (
                   <FeatureCard key={feature.title} feature={feature} />
                 ))}
             </div>

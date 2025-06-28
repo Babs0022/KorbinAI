@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, type FormEvent, type ChangeEvent, useCallback } from 'react';
@@ -12,6 +13,7 @@ import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCard
 import { generateSurveyQuestions, type SurveyQuestion, type GenerateSurveyQuestionsInput } from '@/ai/flows/generate-survey-questions-flow';
 import { optimizePrompt, type OptimizePromptInput, type OptimizePromptOutput } from '@/ai/flows/optimize-prompt';
 import { generatePromptMetadata, type GeneratePromptMetadataOutput } from '@/ai/flows/generate-prompt-metadata-flow';
+import { analyzePromptText } from '@/ai/flows/analyze-prompt-flow';
 import { useToast } from '@/hooks/use-toast';
 import { Wand2, Loader2, ArrowLeft, HelpCircle, Cpu } from 'lucide-react';
 import { OptimizedPromptCard } from '@/components/prompt/OptimizedPromptCard';
@@ -23,6 +25,7 @@ type WorkspaceState = 'initial_loading' | 'showing_model_selection' | 'loading_q
 interface OptimizedPromptResult extends OptimizePromptOutput, GeneratePromptMetadataOutput {
   originalGoal: string;
   targetModel?: string;
+  qualityScore?: number;
 }
 
 const modelGroups = [
@@ -82,6 +85,7 @@ export function PromptWorkspace() {
           optimizedPrompt: optimizationResult.optimizedPrompt,
           originalGoal: currentGoal,
       });
+      const analysisResult = await analyzePromptText({ promptText: optimizationResult.optimizedPrompt });
 
       const finalResult: OptimizedPromptResult = {
         ...optimizationResult,
@@ -89,6 +93,7 @@ export function PromptWorkspace() {
         targetModel: currentTargetModel,
         suggestedName: metadataResult.suggestedName,
         suggestedTags: metadataResult.suggestedTags,
+        qualityScore: analysisResult.qualityScore,
       };
 
       setOptimizedOutput(finalResult);
@@ -190,6 +195,7 @@ export function PromptWorkspace() {
           optimizedPrompt: optimizationResult.optimizedPrompt,
           originalGoal: goal,
       });
+      const analysisResult = await analyzePromptText({ promptText: optimizationResult.optimizedPrompt });
 
       const finalResult: OptimizedPromptResult = {
         ...optimizationResult,
@@ -197,6 +203,7 @@ export function PromptWorkspace() {
         targetModel,
         suggestedName: metadataResult.suggestedName,
         suggestedTags: metadataResult.suggestedTags,
+        qualityScore: analysisResult.qualityScore,
       };
       
       setOptimizedOutput(finalResult);
@@ -317,6 +324,7 @@ export function PromptWorkspace() {
               targetModel={optimizedOutput.targetModel}
               generatedName={optimizedOutput.suggestedName}
               generatedTags={optimizedOutput.suggestedTags}
+              qualityScore={optimizedOutput.qualityScore}
             />
              <Button variant="outline" asChild className="mt-6 mx-auto flex">
                 <Link href="/dashboard">

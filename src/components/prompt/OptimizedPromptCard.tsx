@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
-import { CheckCircle, Copy, Edit3, Download, Save, AlertTriangle, Loader2, Tag } from 'lucide-react';
+import { CheckCircle, Copy, Edit3, Download, Save, AlertTriangle, Loader2, Tag, BarChart3 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem.d';
@@ -20,9 +20,10 @@ interface OptimizedPromptCardProps {
   targetModel?: string;
   generatedName?: string;
   generatedTags?: string[];
+  qualityScore?: number;
 }
 
-export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel, generatedName, generatedTags }: OptimizedPromptCardProps) {
+export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel, generatedName, generatedTags, qualityScore }: OptimizedPromptCardProps) {
   const [promptName, setPromptName] = useState('');
   const [promptTags, setPromptTags] = useState('');
   const [editedPromptText, setEditedPromptText] = useState(optimizedPrompt);
@@ -39,7 +40,7 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
     // Reset state for new prompt
     setIsEditing(false);
     setIsAlreadySaved(false);
-  }, [originalGoal, optimizedPrompt, generatedName, generatedTags]);
+  }, [originalGoal, optimizedPrompt, generatedName, generatedTags, qualityScore]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(editedPromptText);
@@ -52,7 +53,7 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
   };
   
   const handleExport = () => {
-    const content = `Name: ${promptName}\nGoal: ${originalGoal}\nTags: ${promptTags}\nTarget Model: ${targetModel || 'N/A'}\n\nOptimized Prompt:\n${editedPromptText}`;
+    const content = `Name: ${promptName}\nGoal: ${originalGoal}\nTags: ${promptTags}\nTarget Model: ${targetModel || 'N/A'}\nQuality Score: ${qualityScore || 'N/A'}\n\nOptimized Prompt:\n${editedPromptText}`;
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -84,6 +85,7 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
         optimizedPrompt: editedPromptText, 
         tags: tagsArray,
         targetModel: targetModel || undefined,
+        qualityScore: qualityScore,
         timestamp: serverTimestamp(),
       };
 
@@ -97,6 +99,12 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
     } finally {
       setIsSavingToHistory(false);
     }
+  };
+  
+  const getScoreColor = (score: number) => {
+    if (score >= 8) return 'text-green-500';
+    if (score >= 5) return 'text-yellow-500';
+    return 'text-red-500';
   };
 
   if (!optimizedPrompt) {
@@ -120,10 +128,19 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
   return (
     <GlassCard className="mt-8">
       <GlassCardHeader>
-        <GlassCardTitle className="flex items-center font-headline text-xl">
-          <CheckCircle className="mr-2 h-6 w-6 text-accent" />
-          Your Optimized Prompt {targetModel && `for ${targetModel}`}
-        </GlassCardTitle>
+        <div className="flex justify-between items-center">
+            <GlassCardTitle className="flex items-center font-headline text-xl">
+              <CheckCircle className="mr-2 h-6 w-6 text-accent" />
+              Your Optimized Prompt {targetModel && `for ${targetModel}`}
+            </GlassCardTitle>
+            {typeof qualityScore === 'number' && (
+                <div className="flex items-center gap-2 p-2 rounded-md bg-accent/10">
+                    <BarChart3 className="h-5 w-5 text-accent"/>
+                    <span className="text-sm text-accent font-medium">Quality Score:</span>
+                    <span className={`text-lg font-bold ${getScoreColor(qualityScore)}`}>{qualityScore}/10</span>
+                </div>
+            )}
+        </div>
       </GlassCardHeader>
       <GlassCardContent>
         {isEditing ? (
