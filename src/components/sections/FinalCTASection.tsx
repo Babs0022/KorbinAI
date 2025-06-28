@@ -15,11 +15,10 @@ export function FinalCTASection() {
     <section className="py-16 md:py-24 bg-gradient-to-t from-indigo-50/30 via-background to-mint-50/30">
       <Container className="text-center">
         <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Ready to Elevate Your Prompts?
+          Start Engineering Better Prompts.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-          Join BrieflyAI today and experience the difference that truly optimized prompts can make.
-          Start for free, no credit card required.
+          Stop guessing. Get free access to the essential toolkit for high-performance AI prompts. No credit card required.
         </p>
         <Button 
           size="lg" 

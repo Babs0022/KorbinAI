@@ -293,19 +293,18 @@ export function InteractiveDemoSection() {
     <section id="interactive-demo" className="py-12 md:py-16 lg:py-24 bg-gradient-to-b from-background via-indigo-50/30 to-mint-50/30">
       <Container className="text-center">
         <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Experience BrieflyAI Live
+          See The Engine in Action
         </h2>
         <p className="mx-auto mt-3 sm:mt-4 max-w-xl sm:max-w-2xl text-md sm:text-lg text-muted-foreground">
-          Watch our interactive demo to see how easy it is to go from idea to perfectly optimized AI prompt, adapted for your chosen model and graded for quality.
+          See how BrieflyAI transforms a simple goal into a production-ready, model-specific prompt in seconds.
         </p>
         <div className="mt-8 sm:mt-10 p-1 rounded-xl bg-gradient-to-r from-primary to-accent shadow-lg w-full">
           <AnimatedDemo />
         </div>
         <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
-          Define Goal → Refine Details → Target Model → Get Optimized & Graded Prompt.
+          Define Goal → Add Context → Target Model → Get Optimized Prompt.
         </p>
       </Container>
     </section>
   );
 }
-

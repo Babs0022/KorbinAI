@@ -76,10 +76,10 @@ export function SocialProofSection() {
       <Container>
         <div className="text-center mb-12 md:mb-16">
           <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            See What Our Users Are Saying
+            From the Community
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-            Trusted by innovators, creators, and professionals worldwide.
+            BrieflyAI is shaped by feedback from real users. Here's what people are saying.
           </p>
         </div>
       </Container>

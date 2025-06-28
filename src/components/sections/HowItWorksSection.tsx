@@ -32,10 +32,10 @@ export function HowItWorksSection() {
       <Container>
         <div className="text-center mb-12">
           <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Simple Steps to Prompt Perfection
+            A Workflow for Production-Ready Prompts
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Our intuitive process makes prompt optimization effortless.
+            Our structured process turns your initial idea into a high-performance prompt, ready for any AI model.
           </p>
         </div>
         <div className="relative grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
@@ -63,9 +63,6 @@ export function HowItWorksSection() {
             </React.Fragment>
           ))}
         </div>
-         <p className="mt-8 text-center text-sm text-muted-foreground">
-            This animated flow demonstrates: Input goal → Adaptive survey → User answers → Optimized prompt.
-          </p>
       </Container>
     </section>
   );
