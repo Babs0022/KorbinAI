@@ -8,7 +8,7 @@ import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/
 import { CheckCircle, Copy, Edit3, Download, Save, AlertTriangle, Loader2, Tag } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem';
+import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem.d';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -73,7 +73,7 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
     try {
       const tagsArray = promptTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
       
-      const newPromptEntry: Omit<PromptHistory, 'id' | 'timestamp'> &amp; { timestamp: any } = {
+      const newPromptEntry: Omit<PromptHistory, 'id' | 'timestamp'> & { timestamp: any } = {
         name: promptName,
         goal: originalGoal,
         optimizedPrompt: editedPromptText, 
