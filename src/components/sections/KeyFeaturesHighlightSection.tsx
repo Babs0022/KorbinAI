@@ -1,27 +1,28 @@
+
 "use client";
 
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import Container from '@/components/layout/Container';
-import { Wand2, Settings, Share2 } from 'lucide-react';
+import { Settings, BarChart3, Share2 } from 'lucide-react';
 import React from 'react';
 
 const features = [
   {
     icon: <Settings className="h-10 w-10 text-primary" />,
-    title: 'Precision Engineering Suite',
-    description: 'Develop exceptionally clear prompts using contextual framing, role-playing techniques, and format specification. Eliminate ambiguity for consistent, high-quality AI outputs every time.',
+    title: 'Engineer Precise Prompts',
+    description: 'Go from vague ideas to detailed instructions. Use contextual framing, personas, and format specification to eliminate ambiguity and get the exact output you need.',
     bgColor: 'bg-indigo-500/10',
   },
   {
-    icon: <Wand2 className="h-10 w-10 text-accent" />,
-    title: 'Automated Optimization Engine',
-    description: 'Leverage advanced techniques like chain-of-thought prompting and automated parameter tuning. Our platform helps you decompose complex tasks and steer AI behavior for optimal results.',
+    icon: <BarChart3 className="h-10 w-10 text-accent" />,
+    title: 'Understand What Works',
+    description: 'Stop guessing. A/B test prompts, get quality scores, and use data-driven insights to make decisions that improve your results.',
     bgColor: 'bg-mint-500/10',
   },
   {
     icon: <Share2 className="h-10 w-10 text-primary" />,
-    title: 'Management & Collaboration Hub',
-    description: 'Utilize robust prompt management with versioning and A/B testing. Foster team collaboration with real-time sharing and monitor performance with cost-estimation tools.',
+    title: 'Save & Collaborate Seamlessly',
+    description: 'Never lose a great prompt with automatic version history in your vault. Share instantly with your team to get feedback and build better, together.',
     bgColor: 'bg-indigo-500/10',
   },
 ];
