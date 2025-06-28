@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -9,23 +10,23 @@ import { HelpCircle } from 'lucide-react';
 const faqs = [
   {
     question: "What is BrieflyAI?",
-    answer: "BrieflyAI is a Software-as-a-Service (SaaS) platform designed to help users create, manage, and optimize prompts for various AI models. Our tools guide you from a simple goal to a highly effective prompt, ensuring better results from your AI interactions.",
+    answer: "BrieflyAI is a toolkit for engineering high-performance AI prompts. It provides a structured workflow and advanced tools to help you get better, more reliable results from any AI model, faster.",
   },
   {
     question: "Who is this service for?",
-    answer: "BrieflyAI is for anyone who uses AI, including startup founders, marketers, content creators, students, researchers, and developers. If you want to get more precise and valuable outputs from AI, our platform is for you.",
+    answer: "It's for anyone who relies on AI for their work and wants to move beyond basic prompting. This includes developers, marketers, founders, researchers, and creators who need consistent, high-quality AI outputs.",
   },
   {
     question: "What AI models are supported?",
-    answer: "Our platform is model-agnostic, meaning you can craft prompts for virtually any text or image-based AI model, including those from OpenAI (like GPT-4), Anthropic (Claude), Google (Gemini), Midjourney, and more. Our 'Model-Specific Prompts' feature helps tailor your prompt's syntax for optimal performance on your chosen model.",
+    answer: "BrieflyAI is model-agnostic. You can build and optimize prompts for any modern AI, including text models like GPT-4, Claude 3, and Gemini, as well as image models like DALL-E 3 and Midjourney. Our tools help you adapt the prompt for your specific target.",
   },
   {
     question: "How is my data handled?",
     answer: "We take your privacy seriously. The prompts and goals you create are stored securely and are only accessible to you. When using our optimization features, the necessary prompt data is sent to our third-party AI providers for processing. For more details, please see our Privacy Policy.",
   },
   {
-    question: "Can I cancel my subscription at any time?",
-    answer: "Yes, you can cancel your subscription at any time through your account settings. You will retain access to your plan's features until the end of the current billing cycle. There are no long-term contracts or hidden fees.",
+    question: "Is BrieflyAI free to use?",
+    answer: "Yes. During our beta period, all of BrieflyAI's core features are available for free. We plan to introduce paid tiers for advanced team and enterprise features in the future, but the essential toolkit will remain accessible.",
   },
 ];
 
