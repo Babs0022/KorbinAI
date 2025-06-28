@@ -28,7 +28,7 @@
     --accent: 160 100% 50%; /* Vibrant Mint (was 70% lightness) */
     --accent-foreground: 274 100% 10%; /* Darkest Indigo on accent (mint) */
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 25 95% 53%; /* Warm Orange */
     --destructive-foreground: 0 0% 98%;
 
     --ring: 160 100% 50%; /* Vibrant Mint for focus rings (was 70% lightness) */
@@ -66,7 +66,7 @@
     --accent: 274 100% 65%; /* A vibrant purple for accent */
     --accent-foreground: 0 0% 98%; /* White text on accent */
 
-    --destructive: 0 70% 50%;
+    --destructive: 25 95% 53%; /* Warm Orange */
     --destructive-foreground: 0 0% 98%;
 
     --ring: 160 100% 60%; /* Slightly darker Mint for focus rings */
