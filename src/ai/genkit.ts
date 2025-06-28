@@ -8,19 +8,29 @@ try {
   const geminiApiKey = process.env.GEMINI_API_KEY;
   const googleApiKey = process.env.GOOGLE_API_KEY;
 
-  if (!geminiApiKey && !googleApiKey) {
+  const effectiveApiKey = geminiApiKey || googleApiKey;
+
+  // Stricter check for missing or placeholder key
+  const isInvalidKey = (key: string | undefined): boolean => {
+    if (!key || key.includes('YOUR_KEY_HERE')) return true;
+    return false;
+  };
+
+  if (isInvalidKey(effectiveApiKey)) {
+    const errorMsg = "CRITICAL: A valid GEMINI_API_KEY or GOOGLE_API_KEY is not configured correctly. AI features will be unavailable. Please set it in your environment variables (.env for local, apphosting.yaml for production).";
     console.error("********************************************************************************");
-    console.error("CRITICAL: NEITHER GEMINI_API_KEY NOR GOOGLE_API_KEY IS SET IN ENVIRONMENT VARIABLES.");
-    console.error("Genkit GoogleAI plugin will likely fail to initialize.");
-    console.error("Please ensure one of these is set in your .env file or deployment environment variables.");
+    console.error(errorMsg);
     console.error("********************************************************************************");
+    // In a production environment, throw an error to fail the deployment, preventing a broken app from going live.
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error(errorMsg);
+    }
   }
 
   aiInstance = genkit({
     plugins: [
       googleAI({
-        // The Google AI plugin will automatically look for GEMINI_API_KEY or GOOGLE_API_KEY
-        // in the environment variables if no apiKey is provided here.
+        // The Google AI plugin automatically looks for GEMINI_API_KEY or GOOGLE_API_KEY.
       }),
     ],
     model: 'googleai/gemini-2.0-flash', // Default model for text generation
