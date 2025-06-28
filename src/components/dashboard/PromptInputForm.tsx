@@ -58,14 +58,20 @@ export function PromptInputForm() {
         setIsRecording(false);
       };
 
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error', event);
+      recognition.onerror = (event: any) => { // Using `any` to safely access `event.error`
         let description = "An unknown error occurred with the microphone.";
+        
+        // Handle common, non-critical speech recognition events gracefully.
         if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
           description = "Microphone access was denied. Please allow it in your browser settings.";
         } else if (event.error === 'no-speech') {
           description = "No speech was detected. Please try again.";
+        } else if (event.error === 'aborted') {
+          // This event fires when recording is stopped manually. It's not an error.
+          setIsRecording(false);
+          return; // Don't show a toast for this.
         }
+        
         toast({ title: "Mic Error", description, variant: "destructive" });
         setIsRecording(false);
       };
@@ -87,7 +93,12 @@ export function PromptInputForm() {
       recognitionRef.current?.stop();
     } else {
       setGoal('');
-      recognitionRef.current?.start();
+      try {
+        recognitionRef.current?.start();
+      } catch (e) {
+        // This can happen if start() is called while it's already running.
+        console.warn("Speech recognition already started.", e);
+      }
     }
     setIsRecording(!isRecording);
   };
