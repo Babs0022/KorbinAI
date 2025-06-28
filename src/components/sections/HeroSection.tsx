@@ -26,7 +26,7 @@ export function HeroSection() {
               Go from idea to Production in <span className="text-accent">Minutes.</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
-              BrieflyAI is an enterprise-grade platform for crafting, testing, and managing high-quality AI prompts. Move from concept to deployment with confidence and speed.
+              Your personal toolkit for crafting production-ready prompts.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-transform hover:scale-105" disabled={authLoading}>
