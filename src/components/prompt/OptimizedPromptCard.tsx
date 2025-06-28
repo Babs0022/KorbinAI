@@ -65,10 +65,6 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
   };
 
   const handleSaveToHistory = async () => {
-    if (isAlreadySaved) {
-      toast({ title: "Already Saved", description: "This prompt has already been saved to your history." });
-      return;
-    }
     if (!currentUser) {
       toast({ title: "Login Required", description: "Please log in to save prompts to your history.", variant: "destructive" });
       return;
@@ -133,7 +129,10 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
         {isEditing ? (
           <Textarea
             value={editedPromptText}
-            onChange={(e) => setEditedPromptText(e.target.value)}
+            onChange={(e) => {
+              setEditedPromptText(e.target.value);
+              if (isAlreadySaved) setIsAlreadySaved(false);
+            }}
             rows={10}
             className="text-sm leading-relaxed font-code bg-muted/50 p-4 rounded-md border focus:ring-accent"
             aria-label="Editable optimized prompt"
@@ -149,7 +148,10 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
               <Input 
                 id="promptName" 
                 value={promptName} 
-                onChange={(e) => setPromptName(e.target.value)} 
+                onChange={(e) => {
+                  setPromptName(e.target.value);
+                  if (isAlreadySaved) setIsAlreadySaved(false);
+                }}
                 placeholder="Enter a descriptive name" 
                 className="mt-1"
               />
@@ -162,7 +164,10 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
               <Input 
                 id="promptTags" 
                 value={promptTags} 
-                onChange={(e) => setPromptTags(e.target.value)} 
+                onChange={(e) => {
+                  setPromptTags(e.target.value);
+                  if (isAlreadySaved) setIsAlreadySaved(false);
+                }}
                 placeholder="e.g., marketing, email, saas" 
                 className="mt-1"
               />
