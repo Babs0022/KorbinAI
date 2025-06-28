@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -46,15 +47,11 @@ export function PromptInputForm() {
       recognitionRef.current = recognition;
 
       recognition.onresult = (event) => {
-        let finalTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          }
+        let fullTranscript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          fullTranscript += event.results[i][0].transcript;
         }
-        if (finalTranscript) {
-          setGoal(prev => (prev ? prev.trim() + ' ' : '') + finalTranscript.trim());
-        }
+        setGoal(fullTranscript);
       };
 
       recognition.onend = () => {
