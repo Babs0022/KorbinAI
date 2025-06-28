@@ -20,6 +20,7 @@ interface AuthContextType {
   loading: boolean;
   subscription: Subscription | null;
   subscriptionLoading: boolean;
+  isAdmin: boolean;
   userInitials: string;
   displayName: string;
   displayEmail: string;
@@ -30,6 +31,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const defaultPlaceholderUrl = "https://placehold.co/40x40.png";
+const ADMIN_EMAIL = 'babseli933@gmail.com';
 
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -39,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
 
+  const [isAdmin, setIsAdmin] = useState(false);
   const [displayName, setDisplayName] = useState("User");
   const [displayEmail, setDisplayEmail] = useState("user@example.com");
   const [avatarUrl, setAvatarUrl] = useState(defaultPlaceholderUrl);
@@ -57,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSubscriptionLoading(false);
         setTeamId(null);
         setTeamRole(null);
+        setIsAdmin(false);
         setDisplayName("User");
         setDisplayEmail("user@example.com");
         setAvatarUrl(defaultPlaceholderUrl);
@@ -73,7 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!currentUser) return;
 
-    // Set user display info immediately
+    // Set admin status and user display info immediately
+    setIsAdmin(currentUser.email === ADMIN_EMAIL);
     setDisplayName(currentUser.displayName || currentUser.email?.split('@')[0] || "User");
     setDisplayEmail(currentUser.email || "user@example.com");
     setAvatarUrl(currentUser.photoURL || defaultPlaceholderUrl);
@@ -145,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     subscription,
     subscriptionLoading,
+    isAdmin,
     displayName,
     displayEmail,
     avatarUrl,

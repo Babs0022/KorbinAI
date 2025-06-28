@@ -73,7 +73,7 @@ interface ChatMessage {
 }
 
 export default function CollaborationPage() {
-  const { currentUser, teamId, teamRole, loading: authLoading, displayName, avatarUrl, subscription, subscriptionLoading } = useAuth();
+  const { currentUser, teamId, teamRole, loading: authLoading, displayName, avatarUrl, subscription, subscriptionLoading, isAdmin } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -108,7 +108,7 @@ export default function CollaborationPage() {
 
   const canManageTeam = useMemo(() => teamRole === 'admin', [teamRole]);
   const canEditPrompts = useMemo(() => teamRole === 'admin' || teamRole === 'editor', [teamRole]);
-  const canCreateTeam = useMemo(() => subscription?.planId === 'unlimited', [subscription]);
+  const canCreateTeam = useMemo(() => subscription?.planId === 'unlimited' || isAdmin, [subscription, isAdmin]);
 
   useEffect(() => {
     if (chatScrollAreaRef.current) {
