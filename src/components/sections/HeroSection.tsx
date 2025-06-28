@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -22,7 +21,7 @@ export function HeroSection() {
               The Future of AI Interaction is Here
             </div>
             <h1 className="font-headline text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-              Ship better prompts, <span className="text-primary">Faster.</span>
+              Ship better prompts, <span className="text-primary">Faster.</span>{' '}
               <br className="hidden md:block" />
               Go from idea to Production in <span className="text-accent">Minutes.</span>
             </h1>
