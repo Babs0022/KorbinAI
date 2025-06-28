@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
   const [editedPromptText, setEditedPromptText] = useState(optimizedPrompt);
   const [isEditing, setIsEditing] = useState(false);
   const [isSavingToHistory, setIsSavingToHistory] = useState(false);
+  const [isAlreadySaved, setIsAlreadySaved] = useState(false);
   const { toast } = useToast();
   const { currentUser } = useAuth();
 
@@ -34,6 +36,9 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
     setPromptName(generatedName || originalGoal.substring(0, 50) + (originalGoal.length > 50 ? '...' : ''));
     setPromptTags(generatedTags?.join(', ') || '');
     setEditedPromptText(optimizedPrompt);
+    // Reset state for new prompt
+    setIsEditing(false);
+    setIsAlreadySaved(false);
   }, [originalGoal, optimizedPrompt, generatedName, generatedTags]);
 
   const handleCopy = () => {
@@ -60,6 +65,10 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
   };
 
   const handleSaveToHistory = async () => {
+    if (isAlreadySaved) {
+      toast({ title: "Already Saved", description: "This prompt has already been saved to your history." });
+      return;
+    }
     if (!currentUser) {
       toast({ title: "Login Required", description: "Please log in to save prompts to your history.", variant: "destructive" });
       return;
@@ -85,6 +94,7 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
       await addDoc(collection(db, `users/${currentUser.uid}/promptHistory`), newPromptEntry);
       
       toast({ title: "Prompt Saved!", description: `"${promptName}" has been saved to your cloud history.` });
+      setIsAlreadySaved(true);
     } catch (error) {
       console.error("Error saving to Firestore:", error);
       toast({ title: "Save Failed", description: "Could not save prompt to cloud history. Please try again.", variant: "destructive" });
@@ -175,11 +185,17 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
             variant="default" 
             onClick={handleSaveToHistory} 
             size="sm" 
-            disabled={isSavingToHistory || !currentUser || !promptName.trim()}
+            disabled={isSavingToHistory || !currentUser || !promptName.trim() || isAlreadySaved}
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            {isSavingToHistory ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Save to History
+            {isSavingToHistory ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : isAlreadySaved ? (
+              <CheckCircle className="mr-2 h-4 w-4" />
+            ) : (
+              <Save className="mr-2 h-4 w-4" />
+            )}
+            {isAlreadySaved ? "Saved to History" : "Save to History"}
           </Button>
           <Button variant="outline" onClick={handleExport} size="sm">
             <Download className="mr-2 h-4 w-4" /> Export Details
