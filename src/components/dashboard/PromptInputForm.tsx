@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -47,29 +46,29 @@ export function PromptInputForm() {
       recognitionRef.current = recognition;
 
       recognition.onresult = (event) => {
-        let fullTranscript = '';
-        for (let i = 0; i < event.results.length; i++) {
-          fullTranscript += event.results[i][0].transcript;
-        }
-        setGoal(fullTranscript);
+        // Build the full transcript from the event results list
+        const transcript = Array.from(event.results)
+          .map((result) => result[0]) // Get the most confident transcript
+          .map((result) => result.transcript) // Get the string
+          .join(''); // Join all parts
+        
+        setGoal(transcript);
       };
 
       recognition.onend = () => {
         setIsRecording(false);
       };
 
-      recognition.onerror = (event: any) => { // Using `any` to safely access `event.error`
+      recognition.onerror = (event: any) => { 
         let description = "An unknown error occurred with the microphone.";
         
-        // Handle common, non-critical speech recognition events gracefully.
         if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
           description = "Microphone access was denied. Please allow it in your browser settings.";
         } else if (event.error === 'no-speech') {
           description = "No speech was detected. Please try again.";
         } else if (event.error === 'aborted') {
-          // This event fires when recording is stopped manually. It's not an error.
           setIsRecording(false);
-          return; // Don't show a toast for this.
+          return;
         }
         
         toast({ title: "Mic Error", description, variant: "destructive" });
@@ -96,7 +95,6 @@ export function PromptInputForm() {
       try {
         recognitionRef.current?.start();
       } catch (e) {
-        // This can happen if start() is called while it's already running.
         console.warn("Speech recognition already started.", e);
       }
     }
