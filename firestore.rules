@@ -1,98 +1,117 @@
 
 rules_version = '2';
 
+// By default, deny all reads and writes.
+// Access must be explicitly granted.
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper functions to improve readability
+
+    // Helper functions to make rules more readable
     function isSignedIn() {
       return request.auth != null;
     }
-    
+
     function isUser(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+      return request.auth.uid == userId;
+    }
+    
+    function userTeamId() {
+        return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId;
     }
 
-    function userHasRoleInTeam(teamId, roles) {
-        return get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid].role in roles;
+    function userRoleInTeam(teamId) {
+        return get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid].role;
+    }
+
+    //----------------------------------------------------------------------
+    //  Publicly readable data
+    //----------------------------------------------------------------------
+    match /appAnnouncements/{announcementId} {
+        allow read: if isSignedIn();
+        allow write: if false; // Only updatable via Firebase Console / Admin SDK
     }
     
-    function isTeamOwner(teamId) {
-        return get(/databases/$(database)/documents/teams/$(teamId)).data.ownerId == request.auth.uid;
-    }
-    
-    // --- User Data Collections ---
-    
-    // users/{userId}: Publicly readable basic info, but only the user can create/update.
+    //----------------------------------------------------------------------
+    //  User-specific data (private to each user)
+    //----------------------------------------------------------------------
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow create, update: if isUser(userId);
-      // No delete for user documents to prevent orphaned data.
-      allow delete: if false;
+      // Users can only read/update their own document.
+      allow read, update: if isUser(userId);
+      // Deny creation/deletion of user documents via client.
+      // Creation happens on signup (server-side). Deletion happens on account delete (server-side).
+      allow create, delete: if false; 
     }
     
-    // promptHistory: Strictly private to the user.
+    match /userSettings/{userId} {
+      // Users can only read/write their own settings document.
+      allow read, write: if isUser(userId);
+    }
+
+    match /userSubscriptions/{userId} {
+      // Users can only read their own subscription status.
+      // Writes are only handled by the backend Cloud Functions.
+      allow read: if isUser(userId);
+      allow write: if false;
+    }
+    
+    // Transactions are write-only from backend functions, read-only for the user who made them.
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false; 
+    }
+
+    // The user's prompt history is private to them.
     match /users/{userId}/promptHistory/{promptId} {
       allow read, write, delete: if isUser(userId);
     }
-    
-    // userSettings: Strictly private to the user.
-    match /userSettings/{userId} {
-        allow read, write: if isUser(userId);
-        allow delete: if false;
-    }
-    
-    // --- Subscription & Payment Data ---
 
-    // userSubscriptions: Only the user can read their own subscription.
-    // Written by a trusted server process (Cloud Function).
-    match /userSubscriptions/{userId} {
-      allow read: if isUser(userId);
-      allow write: if false; // Only backend can write
-    }
-    
-    // transactions: Only the user can read their own transactions.
-    // Written by a trusted server process (Cloud Function).
-    match /transactions/{transactionId} {
-      allow read: if isUser(get(/databases/$(database)/documents/transactions/$(transactionId)).data.userId);
-      allow write: if false; // Only backend can write
-    }
-    
-    // --- Team Collaboration ---
-
-    // teams/{teamId}: Members can read team info. Only owner/admin can update.
+    //----------------------------------------------------------------------
+    //  Team Collaboration Data
+    //----------------------------------------------------------------------
     match /teams/{teamId} {
-      allow create: if isSignedIn(); // Any signed-in user can create a team.
-      allow read: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members;
-      allow update: if isSignedIn() && userHasRoleInTeam(teamId, ['admin']);
-      allow delete: if isSignedIn() && isTeamOwner(teamId);
+      // Allow team members to read team data.
+      allow read: if isSignedIn() && teamId == userTeamId();
+      
+      // Only the team owner (admin) can update the team document itself (e.g., name).
+      // Member management (adding/removing/changing roles) happens on this document.
+      allow update: if isSignedIn() && userRoleInTeam(teamId) == 'admin';
+      
+      // Teams are created via backend logic, not directly by clients.
+      allow create: if false;
+      // TODO: Implement a secure team deletion flow if needed. For now, deny.
+      allow delete: if false; 
     }
 
-    // sharedPrompts: Members can read. Admins/Editors can write/delete.
     match /teams/{teamId}/sharedPrompts/{promptId} {
-      allow read: if isSignedIn() && userHasRoleInTeam(teamId, ['admin', 'editor', 'viewer']);
-      allow create, update, delete: if isSignedIn() && userHasRoleInTeam(teamId, ['admin', 'editor']);
-    }
-
-    // chatMessages: Members can read and create. Only sender can delete their own message.
-    match /teams/{teamId}/chatMessages/{messageId} {
-      allow read, create: if isSignedIn() && userHasRoleInTeam(teamId, ['admin', 'editor', 'viewer']);
-      allow update: if false;
-      allow delete: if isSignedIn() && resource.data.senderId == request.auth.uid;
+      // Any team member can view shared prompts.
+      allow read: if isSignedIn() && teamId == userTeamId();
+      
+      // Only admins or editors can create, update, or delete shared prompts.
+      allow write, delete: if isSignedIn() 
+                           && teamId == userTeamId() 
+                           && (userRoleInTeam(teamId) == 'admin' || userRoleInTeam(teamId) == 'editor');
     }
     
-    // --- Public & Semi-Public Data ---
+    match /teams/{teamId}/chatMessages/{messageId} {
+      // Any team member can read chat messages.
+      allow read: if isSignedIn() && teamId == userTeamId();
+      
+      // Any team member can create (send) a new chat message.
+      allow create: if isSignedIn() && teamId == userTeamId();
 
-    // appAnnouncements: Any signed-in user can read. Only backend/admin role can write.
-    match /appAnnouncements/{announcementId} {
-      allow read: if isSignedIn();
-      allow write: if false; // Managed via Firebase Console or a backend function
+      // Nobody can update or delete chat messages from the client.
+      allow update, delete: if false;
     }
-
-    // newsletterSubscribers: No client-side access.
-    // This should only be written to by a secure backend function.
+    
+    //----------------------------------------------------------------------
+    //  Other Collections (e.g., for newsletter subscribers)
+    //----------------------------------------------------------------------
+    
+    // No client should read the list of subscribers.
+    // Writes are allowed for anyone (public signup form), but we can add validation.
     match /newsletterSubscribers/{email} {
-        allow read, write: if false;
+      allow read: if false;
+      allow write: if true; // Allows public subscription.
     }
   }
 }
