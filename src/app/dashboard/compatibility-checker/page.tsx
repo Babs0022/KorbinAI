@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, type FormEvent } from 'react';
@@ -12,10 +11,9 @@ import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCard
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { adaptPromptForModel, type AdaptPromptForModelInput, type AdaptPromptForModelOutput, type AIModelEnum } from '@/ai/flows/adapt-prompt-model-flow';
+import { optimizePrompt, type OptimizePromptOutput } from '@/ai/flows/optimize-prompt';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
 import { LoadingTips } from '@/components/shared/LoadingTips';
 
 const modelGroups = [
@@ -41,6 +39,8 @@ const modelGroups = [
   }
 ];
 
+type TestResult = OptimizePromptOutput & { targetModel: string };
+
 export default function CompatibilityCheckerPage() {
   const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -49,7 +49,7 @@ export default function CompatibilityCheckerPage() {
   const [originalPrompt, setOriginalPrompt] = useState('');
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<(AdaptPromptForModelOutput & { targetModel: string })[] | null>(null);
+  const [results, setResults] = useState<TestResult[] | null>(null);
 
   const handleModelToggle = (model: string) => {
     setSelectedModels((prev) =>
@@ -74,16 +74,15 @@ export default function CompatibilityCheckerPage() {
     setResults(null);
     try {
       const testPromises = selectedModels.map(model => 
-        adaptPromptForModel({
-          originalPrompt,
-          targetModel: model as AIModelEnum,
+        optimizePrompt({
+          goal: originalPrompt,
+          targetModel: model,
         })
       );
       
-      const adaptationResults = await Promise.all(testPromises);
+      const optimizationResults = await Promise.all(testPromises);
 
-      // Combine results with their respective models for easier display
-      const combinedResults = adaptationResults.map((res, index) => ({
+      const combinedResults = optimizationResults.map((res, index) => ({
         ...res,
         targetModel: selectedModels[index],
       }));
@@ -205,43 +204,46 @@ export default function CompatibilityCheckerPage() {
 
           {results && !isLoading && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-              {results.map((result, index) => (
-                <GlassCard key={index}>
-                  <GlassCardHeader>
-                    <GlassCardTitle className="font-headline text-xl">
-                      {result.targetModel.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </GlassCardTitle>
-                    <GlassCardDescription>
-                      {result.modelType.charAt(0).toUpperCase() + result.modelType.slice(1)} Model
-                    </GlassCardDescription>
-                  </GlassCardHeader>
-                  <GlassCardContent className="space-y-6">
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <Label htmlFor={`adaptedPrompt-${index}`} className="text-base font-semibold">Adapted Prompt</Label>
-                        <Button variant="outline" size="sm" onClick={() => handleCopyToClipboard(result.adaptedPrompt)}>
-                          <Copy className="mr-2 h-3 w-3" /> Copy
-                        </Button>
+              {results.map((result, index) => {
+                const isImageModel = modelGroups.some(g => g.groupName.includes('Image') && g.models.includes(result.targetModel));
+                const modelType = isImageModel ? 'Image' : 'Text';
+
+                return (
+                  <GlassCard key={index}>
+                    <GlassCardHeader>
+                      <GlassCardTitle className="font-headline text-xl">
+                        {result.targetModel.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </GlassCardTitle>
+                      <GlassCardDescription>
+                        {modelType} Model
+                      </GlassCardDescription>
+                    </GlassCardHeader>
+                    <GlassCardContent className="space-y-6">
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <Label htmlFor={`adaptedPrompt-${index}`} className="text-base font-semibold">Adapted Prompt</Label>
+                          <Button variant="outline" size="sm" onClick={() => handleCopyToClipboard(result.optimizedPrompt)}>
+                            <Copy className="mr-2 h-3 w-3" /> Copy
+                          </Button>
+                        </div>
+                        <Textarea
+                          id={`adaptedPrompt-${index}`}
+                          value={result.optimizedPrompt}
+                          readOnly
+                          rows={8}
+                          className="mt-1 text-sm font-code bg-muted/30"
+                        />
                       </div>
-                      <Textarea
-                        id={`adaptedPrompt-${index}`}
-                        value={result.adaptedPrompt}
-                        readOnly
-                        rows={8}
-                        className="mt-1 text-sm font-code bg-muted/30"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-base font-semibold flex items-center"><Lightbulb className="mr-2 h-5 w-5 text-yellow-500"/>Tips</Label>
-                      <ul className="mt-2 list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground">
-                        {result.adaptationTips.map((tip, tipIndex) => (
-                          <li key={tipIndex}>{tip}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </GlassCardContent>
-                </GlassCard>
-              ))}
+                      <div>
+                        <Label className="text-base font-semibold flex items-center"><Lightbulb className="mr-2 h-5 w-5 text-yellow-500"/>Explanation</Label>
+                        <p className="mt-2 text-sm text-muted-foreground bg-muted/20 p-3 rounded-md border whitespace-pre-wrap">
+                          {result.explanation}
+                        </p>
+                      </div>
+                    </GlassCardContent>
+                  </GlassCard>
+                );
+              })}
             </div>
           )}
         </Container>
