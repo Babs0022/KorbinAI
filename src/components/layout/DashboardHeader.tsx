@@ -22,7 +22,6 @@ import { signOut } from 'firebase/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardSidebar } from './DashboardSidebar'; // Sidebar for mobile
 import { useState } from 'react';
-import { SupportAssistant } from '@/components/assistant/SupportAssistant';
 import { NotificationBell } from '@/components/dashboard/NotificationBell';
 
 export function DashboardHeader() {
@@ -141,7 +140,6 @@ export function DashboardHeader() {
           </nav>
         </div>
       </header>
-      {currentUser && <SupportAssistant />}
     </>
   );
 }
