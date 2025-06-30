@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -24,7 +23,7 @@ interface FeatureCardProps {
 }
 
 export function FeatureCard({ feature }: FeatureCardProps) {
-  const { subscription, subscriptionLoading, isAdmin } = useAuth();
+  const { subscription, subscriptionLoading } = useAuth();
   const Icon = feature.icon;
   
   if (subscriptionLoading) {
@@ -46,7 +45,7 @@ export function FeatureCard({ feature }: FeatureCardProps) {
 
   if (feature.isUnlimited) {
     requiredPlan = 'Unlimited';
-    hasAccess = subscription?.planId === 'unlimited' || isAdmin;
+    hasAccess = subscription?.planId === 'unlimited';
   } else {
     hasAccess = true;
   }
