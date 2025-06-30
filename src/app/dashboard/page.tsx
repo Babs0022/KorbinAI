@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -171,7 +170,6 @@ export default function DashboardPage() {
             <h1 className="font-headline text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Welcome, {displayName}!
             </h1>
-            <p className="text-lg text-muted-foreground">What can I help you create?</p>
           </div>
           
           <div className="max-w-3xl mx-auto mb-16">
