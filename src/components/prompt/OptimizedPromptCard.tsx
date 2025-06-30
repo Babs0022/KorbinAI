@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
-import { CheckCircle, Copy, Edit3, Download, Save, AlertTriangle, Loader2, Tag, BarChart3 } from 'lucide-react';
+import { CheckCircle, Copy, Edit3, Download, Save, AlertTriangle, Loader2, Tag, BarChart3, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { PromptHistory } from '@/components/dashboard/PromptHistoryItem.d';
@@ -30,6 +30,7 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
   const [isEditing, setIsEditing] = useState(false);
   const [isSavingToHistory, setIsSavingToHistory] = useState(false);
   const [isAlreadySaved, setIsAlreadySaved] = useState(false);
+  const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const { toast } = useToast();
   const { currentUser } = useAuth();
 
@@ -40,6 +41,7 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
     // Reset state for new prompt
     setIsEditing(false);
     setIsAlreadySaved(false);
+    setFeedback(null);
   }, [originalGoal, optimizedPrompt, generatedName, generatedTags, qualityScore]);
 
   const handleCopy = () => {
@@ -99,6 +101,15 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
     } finally {
       setIsSavingToHistory(false);
     }
+  };
+
+  const handleFeedback = (vote: 'up' | 'down') => {
+    setFeedback(vote);
+    toast({
+        title: "Feedback Received",
+        description: "Thank you for helping us improve!"
+    });
+    // This is where you could save the feedback to a database in the future.
   };
   
   const getScoreColor = (score: number) => {
@@ -222,6 +233,32 @@ export function OptimizedPromptCard({ optimizedPrompt, originalGoal, targetModel
           <Button variant="outline" onClick={handleExport} size="sm">
             <Download className="mr-2 h-4 w-4" /> Export Details
           </Button>
+        </div>
+        <div className="mt-6 pt-6 border-t border-border/50">
+            <p className="text-sm font-medium text-center text-muted-foreground mb-3">
+                Was this optimized prompt helpful?
+            </p>
+            <div className="flex justify-center gap-4">
+                <Button
+                    variant={feedback === 'up' ? 'default' : 'outline'}
+                    size="lg"
+                    onClick={() => handleFeedback('up')}
+                    disabled={!!feedback}
+                    className={`transition-all ${feedback === 'up' ? 'bg-green-600 hover:bg-green-700 text-white' : ''}`}
+                    aria-label="This prompt was helpful"
+                >
+                    <ThumbsUp className="mr-2 h-5 w-5" /> Yes
+                </Button>
+                <Button
+                    variant={feedback === 'down' ? 'destructive' : 'outline'}
+                    size="lg"
+                    onClick={() => handleFeedback('down')}
+                    disabled={!!feedback}
+                    aria-label="This prompt was not helpful"
+                >
+                    <ThumbsDown className="mr-2 h-5 w-5" /> No
+                </Button>
+            </div>
         </div>
       </GlassCardContent>
     </GlassCard>
