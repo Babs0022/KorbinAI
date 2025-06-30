@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -24,11 +23,10 @@ export function FinalCTASection() {
           size="lg" 
           asChild 
           className="mt-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-transform hover:scale-105"
-          disabled={authLoading}
         >
           <Link href={ctaHref}>
-            {authLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Get Started with BrieflyAI"}
-            {!authLoading && <ArrowRight className="ml-2 h-5 w-5" />}
+            Get Started with BrieflyAI
+            <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
         </Button>
       </Container>

@@ -29,10 +29,10 @@ export function HeroSection() {
               Your personal toolkit for crafting production-ready prompts.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-transform hover:scale-105" disabled={authLoading}>
+              <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-transform hover:scale-105">
                 <Link href={getStartedHref}>
-                  {authLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Get Started Free"}
-                  {!authLoading && <ArrowRight className="ml-2 h-5 w-5" />}
+                  Get Started Free
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild className="shadow-lg transition-transform hover:scale-105 border-border text-foreground bg-background/50 hover:bg-accent/10">
