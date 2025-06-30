@@ -58,7 +58,7 @@ export function PromptWorkspace() {
 
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState>('initial_loading');
   const [goal, setGoal] = useState('');
-  const [imageDataUri, setImageDataUri] = useState<string | null>(null);
+  const [imageDataUris, setImageDataUris] = useState<string[] | null>(null);
   const [targetModel, setTargetModel] = useState<string>('');
 
   const [surveyQuestions, setSurveyQuestions] = useState<SurveyQuestion[]>([]);
@@ -69,7 +69,7 @@ export function PromptWorkspace() {
   const goalFromParams = searchParams.get('goal');
   const hasImageFlag = searchParams.get('image') === 'true';
 
-  const handleDirectGenerate = useCallback(async (currentGoal: string, currentImageDataUri: string | null, currentTargetModel: string) => {
+  const handleDirectGenerate = useCallback(async (currentGoal: string, currentImageDataUris: string[] | null, currentTargetModel: string) => {
     setWorkspaceState('loading_optimization');
     try {
       const optimizeInput: OptimizePromptInput = { 
@@ -77,8 +77,8 @@ export function PromptWorkspace() {
           answers: {}, 
           targetModel: currentTargetModel 
       };
-       if (currentImageDataUri) {
-        optimizeInput.imageDataUri = currentImageDataUri;
+       if (currentImageDataUris) {
+        optimizeInput.imageDataUris = currentImageDataUris;
       }
       const optimizationResult = await optimizePrompt(optimizeInput);
       const metadataResult = await generatePromptMetadata({
@@ -105,12 +105,12 @@ export function PromptWorkspace() {
     }
   }, [toast]);
 
-  const fetchAndSetQuestions = useCallback(async (currentGoal: string, currentImageDataUri: string | null, currentTargetModel: string) => {
+  const fetchAndSetQuestions = useCallback(async (currentGoal: string, currentImageDataUris: string[] | null, currentTargetModel: string) => {
     setWorkspaceState('loading_questions');
     try {
       const input: GenerateSurveyQuestionsInput = { goal: currentGoal, targetModel: currentTargetModel };
-      if (currentImageDataUri) {
-        input.imageDataUri = currentImageDataUri;
+      if (currentImageDataUris) {
+        input.imageDataUris = currentImageDataUris;
       }
       const { questions } = await generateSurveyQuestions(input);
       if (questions.length > 0) {
@@ -118,7 +118,7 @@ export function PromptWorkspace() {
         setWorkspaceState('showing_questions');
       } else {
         toast({ title: "No specific questions needed", description: "Generating your prompt directly..." });
-        await handleDirectGenerate(currentGoal, currentImageDataUri, currentTargetModel);
+        await handleDirectGenerate(currentGoal, currentImageDataUris, currentTargetModel);
       }
     } catch (error) {
       console.error("Error fetching survey questions:", error);
@@ -128,15 +128,20 @@ export function PromptWorkspace() {
   }, [toast, handleDirectGenerate]);
   
   useEffect(() => {
-    let imageFromStorage: string | null = null;
+    let imagesFromStorage: string[] | null = null;
     if (hasImageFlag) {
-        imageFromStorage = sessionStorage.getItem('imageDataUri');
-        sessionStorage.removeItem('imageDataUri'); // Clean up after use
+        const storedData = sessionStorage.getItem('imageDataUris');
+        if (storedData) {
+            try {
+                imagesFromStorage = JSON.parse(storedData);
+            } catch (e) { console.error("Could not parse image data from session storage") }
+        }
+        sessionStorage.removeItem('imageDataUris'); // Clean up after use
     }
 
     if (goalFromParams) {
         setGoal(goalFromParams);
-        if (imageFromStorage) setImageDataUri(imageFromStorage);
+        if (imagesFromStorage) setImageDataUris(imagesFromStorage);
         setWorkspaceState('showing_model_selection'); // Start by showing model selection
     } else {
         toast({ title: "No Goal Specified", description: "Redirecting to dashboard to start a new prompt.", variant: "destructive" });
@@ -146,7 +151,7 @@ export function PromptWorkspace() {
 
   const handleModelSelection = (model: string) => {
     setTargetModel(model);
-    fetchAndSetQuestions(goal, imageDataUri, model);
+    fetchAndSetQuestions(goal, imageDataUris, model);
   };
 
   const handleSurveyChange = (id: string, type: SurveyQuestion['type'], value: string) => {
@@ -185,8 +190,8 @@ export function PromptWorkspace() {
         answers: formattedAnswers, 
         targetModel 
     };
-    if (imageDataUri) {
-      optimizeInput.imageDataUri = imageDataUri;
+    if (imageDataUris) {
+      optimizeInput.imageDataUris = imageDataUris;
     }
     
     try {
@@ -274,10 +279,14 @@ export function PromptWorkspace() {
             </GlassCardHeader>
             <GlassCardContent>
               <form onSubmit={handleSurveySubmit} className="space-y-4">
-                {imageDataUri && (
+                {imageDataUris && imageDataUris.length > 0 && (
                   <div className="mb-4">
                     <Label>Image Context:</Label>
-                    <img src={imageDataUri} alt="User-provided context" className="mt-2 rounded-lg border max-h-48 w-auto" />
+                    <div className="mt-2 flex flex-wrap gap-2">
+                        {imageDataUris.map((uri, index) => (
+                             <img key={index} src={uri} alt={`User-provided context ${index + 1}`} className="rounded-lg border max-h-32 w-auto" data-ai-hint="context preview"/>
+                        ))}
+                    </div>
                   </div>
                 )}
                 {surveyQuestions.map(q => (

@@ -1,3 +1,4 @@
+
 // src/ai/flows/optimize-prompt.ts
 'use server';
 /**
@@ -14,7 +15,7 @@ import {z} from 'genkit';
 const OptimizePromptInputSchema = z.object({
   goal: z.string().describe('The primary task or objective for the AI.'),
   answers: z.record(z.string()).optional().describe('A key-value map of survey questions to user answers, providing additional context.'),
-  imageDataUri: z.string().optional().describe("An image provided by the user, as a data URI. Use this for visual context."),
+  imageDataUris: z.array(z.string()).optional().describe("An optional list of images provided by the user, as data URIs. Use this for visual context."),
   targetModel: z.string().optional().describe("The target AI model for which the prompt should be adapted."),
 });
 export type OptimizePromptInput = z.infer<typeof OptimizePromptInputSchema>;
@@ -136,10 +137,12 @@ Use your deep expertise from this knowledge base to perform the adaptation.
 {{/each}}
 {{/if}}
 
-{{#if imageDataUri}}
+{{#if imageDataUris}}
 **Image Context:**
-The user has also provided an image.
-{{media url=imageDataUri}}
+The user has also provided one or more images.
+{{#each imageDataUris}}
+{{media url=this}}
+{{/each}}
 {{/if}}
 
 {{#if targetModel}}

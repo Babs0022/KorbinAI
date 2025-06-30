@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -21,7 +22,7 @@ export function PromptInputForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [goal, setGoal] = useState('');
-  const [imageDataUri, setImageDataUri] = useState<string | null>(null);
+  const [imageDataUris, setImageDataUris] = useState<string[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -102,28 +103,51 @@ export function PromptInputForm() {
   };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast({ title: "Invalid File Type", description: "Please select an image file.", variant: "destructive" });
-        return;
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const newImageDataUris: string[] = [];
+      const filePromises = Array.from(files).map(file => {
+        return new Promise<void>((resolve, reject) => {
+          if (!file.type.startsWith('image/')) {
+            toast({ title: "Invalid File Type", description: `Skipping ${file.name} as it is not an image.`, variant: "destructive" });
+            resolve();
+            return;
+          }
+           if (file.size > 4 * 1024 * 1024) { // Limit file size, e.g., 4MB
+            toast({ title: "File Too Large", description: `Skipping ${file.name} as it exceeds the 4MB limit.`, variant: "destructive" });
+            resolve();
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const dataUrl = e.target?.result as string;
+            newImageDataUris.push(dataUrl);
+            resolve();
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      });
+
+      Promise.all(filePromises).then(() => {
+        setImageDataUris(prev => [...prev, ...newImageDataUris]);
+        if(newImageDataUris.length > 0) {
+          toast({ title: "Images Selected", description: `Added ${newImageDataUris.length} new image(s) for context.` });
+        }
+      }).catch(error => {
+        console.error("Error reading files:", error);
+        toast({ title: "Error Reading Files", description: "There was a problem adding one or more images.", variant: "destructive" });
+      });
+
+       if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
-        setImageDataUri(dataUrl);
-        toast({ title: "Image Selected", description: `Added ${file.name} for context. Enter your goal and submit.` });
-      };
-      reader.readAsDataURL(file);
     }
   };
 
-  const handleRemoveImage = () => {
-    setImageDataUri(null);
-    if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-    }
-    toast({ title: "Image Removed", description: "The image context has been cleared." });
+  const handleRemoveImage = (indexToRemove: number) => {
+    setImageDataUris(prev => prev.filter((_, index) => index !== indexToRemove));
+    toast({ title: "Image Removed", description: "The image context has been removed." });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -135,16 +159,16 @@ export function PromptInputForm() {
     const params = new URLSearchParams();
     params.set('goal', goal);
 
-    if (imageDataUri) {
+    if (imageDataUris.length > 0) {
       try {
-        sessionStorage.setItem('imageDataUri', imageDataUri);
+        sessionStorage.setItem('imageDataUris', JSON.stringify(imageDataUris));
         params.set('image', 'true');
       } catch (error) {
-         let description = "The selected image is too large to process. Please try a smaller one.";
+         let description = "The selected images are too large to process. Please try smaller files.";
          if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-             description = "Cannot store image as it exceeds browser storage limits. Please use a smaller file.";
+             description = "Cannot store images as they exceed browser storage limits. Please use smaller files.";
          }
-         toast({ title: "Image Too Large", description, variant: "destructive" });
+         toast({ title: "Images Too Large", description, variant: "destructive" });
          return;
       }
     }
@@ -165,21 +189,25 @@ export function PromptInputForm() {
         ? "ring-2 ring-primary shadow-lg shadow-primary/20" 
         : "ring-0 shadow-none"
     )}>
-      {imageDataUri && (
-        <div className="absolute top-3 left-3 z-10">
-            <div className="relative">
-                <img src={imageDataUri} alt="Image preview" className="h-16 w-16 object-cover rounded-lg border-2 border-primary/50" />
+      {imageDataUris.length > 0 && (
+        <div className="absolute top-3 left-3 z-10 max-w-[calc(100%-150px)]">
+           <div className="flex gap-2 overflow-x-auto pb-2">
+            {imageDataUris.map((uri, index) => (
+              <div key={index} className="relative flex-shrink-0">
+                <img src={uri} alt={`Image preview ${index + 1}`} className="h-16 w-16 object-cover rounded-lg border-2 border-primary/50" data-ai-hint="upload preview"/>
                 <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    onClick={handleRemoveImage}
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md"
-                    aria-label="Remove image"
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => handleRemoveImage(index)}
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md"
+                  aria-label={`Remove image ${index + 1}`}
                 >
-                    <X className="h-4 w-4" />
+                  <X className="h-4 w-4" />
                 </Button>
-            </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
       <form onSubmit={handleSubmit} className="relative">
@@ -194,7 +222,7 @@ export function PromptInputForm() {
           placeholder="Ask Briefly"
           className={cn(
             "w-full min-h-[72px] max-h-[300px] text-lg p-4 pr-36 rounded-xl bg-muted/50 border-transparent focus-visible:ring-0 resize-none overflow-y-auto",
-            imageDataUri ? "pl-24" : "pl-4"
+            imageDataUris.length > 0 ? "pt-24" : "pt-4"
           )}
           aria-label="Prompt goal input"
         />
@@ -205,11 +233,11 @@ export function PromptInputForm() {
             size="icon"
             onClick={() => fileInputRef.current?.click()}
             className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
-            aria-label="Upload Image"
+            aria-label="Upload Images"
           >
             <ImageIcon className="h-5 w-5" />
           </Button>
-          <Input id="image-upload-dashboard" type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+          <Input id="image-upload-dashboard" type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" multiple />
           <Button
             type="button"
             variant="ghost"
