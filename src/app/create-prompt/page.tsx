@@ -1,8 +1,8 @@
+
 "use client";
 
 import React, { Suspense } from 'react';
-import { DashboardHeader } from '@/components/layout/DashboardHeader';
-import { MinimalFooter } from '@/components/layout/MinimalFooter';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import Container from '@/components/layout/Container';
 import { Loader2 } from 'lucide-react';
 import { PromptWorkspace } from '@/components/prompt/PromptWorkspace';
@@ -29,15 +29,13 @@ function CreatePromptPageContent() {
   }
   
   return (
-    <div className="flex min-h-screen flex-col">
-      <DashboardHeader />
+    <DashboardLayout>
       <main className="flex-grow bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8">
         <Container>
           <PromptWorkspace />
         </Container>
       </main>
-      <MinimalFooter />
-    </div>
+    </DashboardLayout>
   );
 }
 

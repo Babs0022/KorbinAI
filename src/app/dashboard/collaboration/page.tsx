@@ -1,8 +1,8 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, type FormEvent, useRef } from 'react';
-import { DashboardHeader } from '@/components/layout/DashboardHeader';
-import { MinimalFooter } from '@/components/layout/MinimalFooter';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Shield, PlusCircle, Loader2, Trash2, Settings, Eye, User, Tag, Copy, Send, Lock } from 'lucide-react';
@@ -363,8 +363,7 @@ export default function CollaborationPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <DashboardHeader />
+    <DashboardLayout>
       <main className="flex-grow bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8">
         <Container>
           <div className="mb-6">
@@ -647,7 +646,6 @@ export default function CollaborationPage() {
           )}
         </Container>
       </main>
-      <MinimalFooter />
 
       {viewingSharedPrompt && (
         <Dialog open={!!viewingSharedPrompt} onOpenChange={(isOpen) => { if (!isOpen) setViewingSharedPrompt(null); }}>
@@ -695,6 +693,6 @@ export default function CollaborationPage() {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </DashboardLayout>
   );
 }

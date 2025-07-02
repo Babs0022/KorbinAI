@@ -1,6 +1,5 @@
 
-import { MainHeader } from '@/components/layout/MainHeader';
-import { Footer } from '@/components/layout/Footer';
+import { MarketingLayout } from '@/components/layout/MarketingLayout';
 import { HeroSection } from '@/components/sections/HeroSection';
 import { KeyFeaturesHighlightSection } from '@/components/sections/KeyFeaturesHighlightSection';
 import { InteractiveDemoSection } from '@/components/sections/DemoVideoSection';
@@ -13,8 +12,7 @@ import { AboutFounderSection } from '@/components/sections/AboutFounderSection';
 
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <MainHeader />
+    <MarketingLayout>
       <main className="flex-grow">
         <HeroSection />
         <KeyFeaturesHighlightSection />
@@ -26,7 +24,6 @@ export default function HomePage() {
         <FAQSection />
         <FinalCTASection />
       </main>
-      <Footer />
-    </div>
+    </MarketingLayout>
   );
 }

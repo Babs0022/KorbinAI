@@ -2,8 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { DashboardHeader } from '@/components/layout/DashboardHeader';
-import { MinimalFooter } from '@/components/layout/MinimalFooter';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -207,8 +206,7 @@ export default function PromptVaultPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <DashboardHeader />
+    <DashboardLayout>
       <main className="flex-grow bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8">
         <Container>
           <div className="mb-6">
@@ -293,8 +291,7 @@ export default function PromptVaultPage() {
           </GlassCard>
         </Container>
       </main>
-      <MinimalFooter />
-
+      
       {promptToDelete && (
         <AlertDialog open={!!promptToDelete} onOpenChange={() => setPromptToDelete(null)}>
           <AlertDialogContent>
@@ -370,6 +367,6 @@ export default function PromptVaultPage() {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </DashboardLayout>
   );
 }

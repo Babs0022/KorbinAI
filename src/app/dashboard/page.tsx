@@ -1,8 +1,8 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { DashboardHeader } from '@/components/layout/DashboardHeader';
-import { MinimalFooter } from '@/components/layout/MinimalFooter';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import Container from '@/components/layout/Container';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -162,8 +162,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <DashboardHeader />
+    <DashboardLayout>
       <main className="flex-1 flex flex-col bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8 md:py-12">
         <Container>
           <div className="mb-12 md:mb-16 text-center space-y-4">
@@ -213,7 +212,6 @@ export default function DashboardPage() {
           </section>
         </Container>
       </main>
-      <MinimalFooter />
-    </div>
+    </DashboardLayout>
   );
 }

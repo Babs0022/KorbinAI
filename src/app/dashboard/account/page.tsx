@@ -2,8 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, type FormEvent } from 'react';
-import { DashboardHeader } from '@/components/layout/DashboardHeader';
-import { MinimalFooter } from '@/components/layout/MinimalFooter';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import Container from '@/components/layout/Container';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { Button } from '@/components/ui/button';
@@ -249,8 +248,7 @@ export default function AccountPage() {
   const isEmailPasswordUser = currentUser.providerData.some(p => p.providerId === EmailAuthProvider.PROVIDER_ID);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <DashboardHeader />
+    <DashboardLayout>
       <main className="flex-grow bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8">
         <Container>
           <div className="mb-6">
@@ -430,7 +428,6 @@ export default function AccountPage() {
           </div>
         </Container>
       </main>
-      <MinimalFooter />
-    </div>
+    </DashboardLayout>
   );
 }

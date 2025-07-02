@@ -2,8 +2,7 @@
 "use client";
 
 import React from 'react';
-import { MainHeader } from '@/components/layout/MainHeader';
-import { Footer } from '@/components/layout/Footer';
+import { MarketingLayout } from '@/components/layout/MarketingLayout';
 import Container from '@/components/layout/Container';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 
@@ -14,8 +13,7 @@ export default function TermsOfServicePage() {
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'babseli933@gmail.com';
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <MainHeader />
+    <MarketingLayout>
       <main className="flex-grow py-12 md:py-16">
         <Container>
           <GlassCard className="max-w-3xl mx-auto">
@@ -69,7 +67,6 @@ export default function TermsOfServicePage() {
           </GlassCard>
         </Container>
       </main>
-      <Footer />
-    </div>
+    </MarketingLayout>
   );
 }

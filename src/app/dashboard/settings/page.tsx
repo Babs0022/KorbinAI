@@ -2,8 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { DashboardHeader } from '@/components/layout/DashboardHeader';
-import { MinimalFooter } from '@/components/layout/MinimalFooter';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import Container from '@/components/layout/Container';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import { Button } from '@/components/ui/button';
@@ -162,8 +161,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <DashboardHeader />
+    <DashboardLayout>
       <main className="flex-grow bg-gradient-to-br from-background via-indigo-50/30 to-mint-50/30 py-8">
         <Container>
           <div className="mb-6">
@@ -253,7 +251,6 @@ export default function SettingsPage() {
           </div>
         </Container>
       </main>
-      <MinimalFooter />
-    </div>
+    </DashboardLayout>
   );
 }
