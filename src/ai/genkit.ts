@@ -1,2 +1,10 @@
-// This file has been cleared.
-// Genkit initialization will go here.
+'use server';
+
+import {genkit} from 'genkit';
+import {googleAI} from '@genkit-ai/googleai';
+
+export const ai = genkit({
+  plugins: [
+    googleAI(),
+  ],
+});
