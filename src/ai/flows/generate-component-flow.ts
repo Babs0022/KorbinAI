@@ -20,7 +20,7 @@ export type GenerateAppInput = z.infer<typeof GenerateAppInputSchema>;
 const FileOutputSchema = z.object({
     filePath: z.string().describe("The full, absolute path for the file, e.g., 'src/app/page.tsx' or 'src/components/sections/HeroSection.tsx'."),
     componentCode: z.string().describe("The full TSX/TS code for the file, including all necessary imports and content."),
-    instructions: z.string().describe("A brief, user-friendly explanation of this file's purpose and how it connects to other files."),
+    instructions: z.string().describe("A one-sentence, beginner-friendly explanation of this file's purpose. Assume the user has never coded before. For example: 'This is the main page of your app.' or 'This component defines the top section of your landing page.'"),
 });
 
 const GenerateAppOutputSchema = z.object({
@@ -42,7 +42,7 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert Next.js developer and architect. Your task is to generate the full file structure for a web application based on a user's description.
 You MUST return the output as a valid JSON object that adheres to the defined schema. The JSON object must contain an array of file objects and final instructions.
 
-- For each file, provide a complete file path (e.g., 'src/app/page.tsx'), the full code, and a brief instruction for the user.
+- For each file, provide a complete file path (e.g., 'src/app/page.tsx'), the full code, and a very simple, one-sentence instruction for a user who has never coded before. Do not explain how to create files or folders; just explain the file's purpose in one sentence.
 - Use TypeScript, Next.js App Router, Tailwind CSS, and components from shadcn/ui where appropriate.
 - Create separate, reusable components for different sections of a page and place them in 'src/components/sections/'.
 - Ensure all components are self-contained and import any dependencies they need.
