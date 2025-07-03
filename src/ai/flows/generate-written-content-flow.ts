@@ -10,7 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
-export const GenerateWrittenContentInputSchema = z.object({
+const GenerateWrittenContentInputSchema = z.object({
   contentType: z.string().describe("The type of content to generate (e.g., 'Blog Post', 'Email')."),
   tone: z.string().describe("The desired tone of voice (e.g., 'Professional', 'Casual', 'Witty')."),
   topic: z.string().describe('The main topic or message of the content.'),
@@ -19,7 +19,7 @@ export const GenerateWrittenContentInputSchema = z.object({
 });
 export type GenerateWrittenContentInput = z.infer<typeof GenerateWrittenContentInputSchema>;
 
-export const GenerateWrittenContentOutputSchema = z.object({
+const GenerateWrittenContentOutputSchema = z.object({
   generatedContent: z.string().describe('The complete, formatted written content.'),
 });
 export type GenerateWrittenContentOutput = z.infer<typeof GenerateWrittenContentOutputSchema>;
