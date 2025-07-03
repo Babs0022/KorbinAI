@@ -30,6 +30,7 @@ export async function generateComponent(input: GenerateComponentInput): Promise<
 
 const prompt = ai.definePrompt({
   name: 'generateComponentPrompt',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: GenerateComponentInputSchema},
   output: {schema: GenerateComponentOutputSchema},
   prompt: `You are an expert Next.js developer specializing in creating beautiful and functional React components.
