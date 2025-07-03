@@ -10,5 +10,4 @@ import './flows/generate-image-flow';
 import './flows/generate-content-suggestions-flow';
 import './flows/generate-prompt-format-suggestions-flow';
 import './flows/analyze-prompt-flow';
-
-
+import './flows/generate-json-schema-suggestions-flow';

@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, LoaderCircle, Copy, Check } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Copy, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -11,15 +12,26 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { generateStructuredData, type GenerateStructuredDataInput } from "@/ai/flows/generate-structured-data-flow";
+import { generateJsonSchemaSuggestions } from "@/ai/flows/generate-json-schema-suggestions-flow";
 
 export default function StructuredDataPage() {
   const searchParams = useSearchParams();
-  const [isLoading, setIsLoading] = useState(false);
-  const [generatedData, setGeneratedData] = useState("");
-  const [copied, setCopied] = useState(false);
+  
+  // Form State
   const [format, setFormat] = useState("json");
   const [description, setDescription] = useState("");
   const [schemaDefinition, setSchemaDefinition] = useState("");
+
+  // Generation State
+  const [isLoading, setIsLoading] = useState(false);
+  const [generatedData, setGeneratedData] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  // Suggestion State
+  const [suggestion, setSuggestion] = useState("");
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -28,6 +40,38 @@ export default function StructuredDataPage() {
       setDescription(urlDescription);
     }
   }, [searchParams]);
+
+  // Debounced effect for schema suggestions
+  useEffect(() => {
+    if (debounceTimeout) clearTimeout(debounceTimeout);
+    
+    // Only generate suggestions for JSON format and if description is long enough
+    if (format !== 'json' || description.trim().split(/\s+/).length < 4) {
+      setSuggestion("");
+      return;
+    }
+
+    setIsSuggesting(true);
+    const timeout = setTimeout(async () => {
+      try {
+        const result = await generateJsonSchemaSuggestions({ description });
+        setSuggestion(result.suggestedSchema || "");
+      } catch (error) {
+        console.error("Failed to get schema suggestions:", error);
+        setSuggestion("");
+      } finally {
+        setIsSuggesting(false);
+      }
+    }, 1000);
+
+    setDebounceTimeout(timeout);
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [description, format]);
+
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedData);
@@ -135,9 +179,12 @@ export default function StructuredDataPage() {
                 </div>
                 
                 <div className="space-y-2">
-                  <h3 className="text-lg font-medium text-white">
-                    JSON Schema/Example <span className="font-normal text-muted-foreground">(optional)</span>
-                  </h3>
+                   <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-medium text-white">
+                      JSON Schema/Example <span className="font-normal text-muted-foreground">(optional)</span>
+                    </h3>
+                    {isSuggesting && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                  </div>
                   <Textarea
                     id="schemaDefinition"
                     name="schemaDefinition"
@@ -147,6 +194,25 @@ export default function StructuredDataPage() {
                     onChange={(e) => setSchemaDefinition(e.target.value)}
                     disabled={format !== 'json'}
                   />
+                  {format === 'json' && suggestion && (
+                    <div className="mt-2 rounded-md border border-dashed border-primary/50 bg-secondary p-2">
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Sparkles className="h-4 w-4 text-primary" />
+                                <span className="font-semibold text-primary">Suggestion:</span>{" "}
+                                We can generate a schema for you.
+                            </p>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSchemaDefinition(suggestion)}
+                            >
+                                Use Schema
+                            </Button>
+                        </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
