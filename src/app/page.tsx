@@ -14,7 +14,7 @@ export default function HomePage() {
       icon: <Code2 className="h-8 w-8" />,
       title: "Structured Data",
       subtitle: "JSON for components, CSV lists",
-      href: "#",
+      href: "/structured-data",
     },
     {
       icon: <LayoutTemplate className="h-8 w-8" />,
