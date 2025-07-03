@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LayoutGrid, User, Settings, LogOut } from "lucide-react";
 
 export default function DashboardHeader() {
   const { user, logout, loading } = useAuth();
@@ -57,10 +58,26 @@ export default function DashboardHeader() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/account">Account Settings</Link>
+                  <Link href="/">
+                    <LayoutGrid />
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/account">
+                    <User />
+                    Account
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/settings">
+                    <Settings />
+                    Settings
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>
+                <DropdownMenuItem onSelect={logout} className="text-destructive focus:text-destructive">
+                  <LogOut />
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
