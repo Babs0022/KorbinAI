@@ -17,16 +17,10 @@ export default function HomePage() {
       href: "/written-content",
     },
     {
-      icon: <Code2 className="h-8 w-8" />,
-      title: "Structured Data",
-      subtitle: "JSON for components, CSV lists",
-      href: "/structured-data",
-    },
-    {
-      icon: <LayoutTemplate className="h-8 w-8" />,
-      title: "Web Page / App",
-      subtitle: "Full landing pages, dashboards, etc.",
-      href: "/component-wizard",
+      icon: <Bolt className="h-8 w-8" />,
+      title: "Prompt Generator",
+      subtitle: "Craft optimized prompts for any task",
+      href: "/prompt-generator",
     },
     {
       icon: <Image className="h-8 w-8" />,
@@ -35,10 +29,16 @@ export default function HomePage() {
       href: "/image-generator",
     },
     {
-      icon: <Bolt className="h-8 w-8" />,
-      title: "Prompt Generator",
-      subtitle: "Craft optimized prompts for any task",
-      href: "/prompt-generator",
+      icon: <LayoutTemplate className="h-8 w-8" />,
+      title: "Web Page / App",
+      subtitle: "Full landing pages, dashboards, etc.",
+      href: "/component-wizard",
+    },
+    {
+      icon: <Code2 className="h-8 w-8" />,
+      title: "Structured Data",
+      subtitle: "JSON for components, CSV lists",
+      href: "/structured-data",
     },
   ];
 
