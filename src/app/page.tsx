@@ -8,7 +8,7 @@ export default function HomePage() {
       icon: <Feather className="h-8 w-8" />,
       title: "Written Content",
       subtitle: "Blog posts, emails, social media updates",
-      href: "#",
+      href: "/written-content",
     },
     {
       icon: <Code2 className="h-8 w-8" />,
