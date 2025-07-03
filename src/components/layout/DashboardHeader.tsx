@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -23,6 +22,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DashboardSidebar } from './DashboardSidebar'; // Sidebar for mobile
 import { useState } from 'react';
 import { NotificationBell } from '@/components/dashboard/NotificationBell';
+import { InstallPwaButton } from '@/components/pwa/InstallPwaButton';
 
 export function DashboardHeader() {
   const router = useRouter();
@@ -92,6 +92,7 @@ export function DashboardHeader() {
             
             {currentUser ? (
               <>
+                <InstallPwaButton />
                 <NotificationBell />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
