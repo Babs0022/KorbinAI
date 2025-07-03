@@ -3,9 +3,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, LoaderCircle } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -17,13 +17,64 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { generateWrittenContent, GenerateWrittenContentInput } from "@/ai/flows/generate-written-content-flow";
+
 
 export default function WrittenContentPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [generatedContent, setGeneratedContent] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [tone, setTone] = useState("professional");
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCopy = () => {
+    navigator.clipboard.writeText(generatedContent);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Logic to handle form submission will be added later
+    setGeneratedContent("");
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const input: GenerateWrittenContentInput = {
+      contentType: formData.get("contentType") as string,
+      tone: tone,
+      topic: formData.get("topic") as string,
+      audience: (formData.get("audience") as string) || undefined,
+      keywords: (formData.get("keywords") as string) || undefined,
+    };
+
+    if (!input.topic) {
+        toast({
+            variant: "destructive",
+            title: "Topic is required",
+            description: "Please describe the main topic or message for your content.",
+        });
+        setIsLoading(false);
+        return;
+    }
+
+    try {
+      const result = await generateWrittenContent(input);
+      if (result.generatedContent) {
+        setGeneratedContent(result.generatedContent);
+      } else {
+        throw new Error("The AI did not return any content.");
+      }
+    } catch (error) {
+      console.error("Failed to generate content:", error);
+      toast({
+        variant: "destructive",
+        title: "Generation Failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -67,12 +118,12 @@ export default function WrittenContentPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="tone" className="text-base font-semibold">
+                  <Label className="text-base font-semibold">
                     Choose a tone of voice
                   </Label>
                    <RadioGroup
-                    id="tone"
-                    defaultValue="professional"
+                    value={tone}
+                    onValueChange={setTone}
                     className="grid grid-cols-2 gap-4 pt-2"
                   >
                     <div>
@@ -83,7 +134,7 @@ export default function WrittenContentPage() {
                     </div>
                      <div>
                       <RadioGroupItem value="casual" id="tone-casual" className="peer sr-only" />
-                      <Label htmlFor="tone-casual" className="flex h-full items-center justify-center rounded-md border-2 border-muted bg-popover px-4 py-2 hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                      <Label htmlFor="tone-casual" className="flex h-full items-center justify-center rounded-md border-2 border-muted bg-поover px-4 py-2 hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                         Casual
                       </Label>
                     </div>
@@ -146,6 +197,23 @@ export default function WrittenContentPage() {
             </form>
           </CardContent>
         </Card>
+
+        {generatedContent && (
+          <Card className="mt-12">
+            <CardHeader className="flex flex-row items-center justify-between p-4">
+              <CardTitle>Your Generated Content</CardTitle>
+              <Button variant="ghost" size="icon" onClick={handleCopy}>
+                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                <span className="sr-only">Copy Content</span>
+              </Button>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md border bg-muted/50 p-4">
+                {generatedContent}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </main>
   );
