@@ -50,7 +50,20 @@ const passwordFormSchema = z.object({
   path: ["confirmPassword"],
 });
 
-const avatars = Array.from({ length: 10 }, (_, i) => `https://placehold.co/100x100/333333/FFFFFF?text=Av${i + 1}`);
+const avatarBackgrounds = [
+    '00F0A0', // primary green
+    '3B82F6', // blue
+    'EF4444', // red
+    'F59E0B', // amber
+    '8B5CF6', // violet
+    '10B981', // emerald
+    'EC4899', // pink
+    '6366F1', // indigo
+    'F97316', // orange
+    '06B6D4', // cyan
+];
+const avatars = avatarBackgrounds.map(color => `https://placehold.co/100x100/${color}/FFFFFF.png`);
+
 
 export default function AccountManagementPage() {
   const { user, loading } = useAuth();
@@ -282,5 +295,3 @@ export default function AccountManagementPage() {
     </DashboardLayout>
   );
 }
-
-    
