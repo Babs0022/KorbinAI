@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -50,19 +49,11 @@ const passwordFormSchema = z.object({
   path: ["confirmPassword"],
 });
 
-const avatarBackgrounds = [
-    '00F0A0', // primary green
-    '3B82F6', // blue
-    'EF4444', // red
-    'F59E0B', // amber
-    '8B5CF6', // violet
-    '10B981', // emerald
-    'EC4899', // pink
-    '6366F1', // indigo
-    'F97316', // orange
-    '06B6D4', // cyan
+const avatarSeeds = [
+  "gizmo", "mittens", "shadow", "smokey", "tiger",
+  "tinkerbell", "toby", "trouble", "tucker", "zues"
 ];
-const avatars = avatarBackgrounds.map(color => `https://placehold.co/100x100/${color}/FFFFFF.png`);
+const avatars = avatarSeeds.map(seed => `https://api.dicebear.com/8.x/bottts-neutral/png?seed=${seed}&size=100`);
 
 
 export default function AccountManagementPage() {
@@ -89,7 +80,13 @@ export default function AccountManagementPage() {
   useEffect(() => {
     if (user) {
       profileForm.reset({ name: user.displayName || "" });
-      setSelectedAvatar(user.photoURL || avatars[0]);
+      // Set the selected avatar, defaulting to the first in the list if none is set.
+      const currentAvatar = user.photoURL;
+      if (currentAvatar && avatars.includes(currentAvatar)) {
+        setSelectedAvatar(currentAvatar);
+      } else {
+        setSelectedAvatar(avatars[0]);
+      }
     }
   }, [user, profileForm]);
 
@@ -199,7 +196,7 @@ export default function AccountManagementPage() {
                                             height={100}
                                             alt={`Avatar ${index + 1}`}
                                             className={cn("rounded-full transition-all", selectedAvatar === avatarUrl ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'opacity-70 hover:opacity-100')}
-                                            data-ai-hint="avatar abstract"
+                                            data-ai-hint="robot avatar"
                                         />
                                     </button>
                                 ))}
