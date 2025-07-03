@@ -39,16 +39,21 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: GenerateAppInputSchema},
   output: {schema: GenerateAppOutputSchema},
-  prompt: `You are an expert Next.js developer and architect. Your task is to generate the full file structure for a web application based on a user's description.
+  prompt: `You are an expert Next.js developer and architect. Your task is to generate the necessary files to create a new page or feature within an *existing* Next.js application.
+You will be modifying a project that already has its root configuration files (like package.json, next.config.ts, etc.) set up.
+Therefore, you MUST NOT generate any root-level configuration files. All file paths you generate must start within the 'src/' directory.
+
 You MUST return the output as a valid JSON object that adheres to the defined schema. The JSON object must contain an array of file objects and final instructions.
 
-- For each file, provide a complete file path (e.g., 'src/app/page.tsx'), the full code, and a very simple, one-sentence instruction for a user who has never coded before. Do not explain how to create files or folders; just explain the file's purpose in one sentence.
-- Use TypeScript, Next.js App Router, Tailwind CSS, and components from shadcn/ui where appropriate.
-- Create separate, reusable components for different sections of a page and place them in 'src/components/sections/'.
-- Ensure all components are self-contained and import any dependencies they need.
-- The main page route should always be 'src/app/page.tsx'.
-- Use placeholder images from \`https://placehold.co/<width>x<height>.png\` if images are needed. Add a data-ai-hint attribute to the image with one or two keywords for the image.
-- Do not add any explanations or introductory text. Output ONLY the raw JSON object.
+Key Instructions:
+1.  **File Paths:** All generated files must have an absolute path starting from the 'src/' directory (e.g., 'src/app/new-feature/page.tsx', 'src/components/ui/MyButton.tsx'). Do not generate files outside of 'src/'.
+2.  **File Content:** For each file, provide the full, complete TSX/TS code.
+3.  **User Instructions:** For each file, include a simple, one-sentence explanation of its purpose for a non-technical user.
+4.  **Technology Stack:** Use TypeScript, the Next.js App Router, Tailwind CSS, and components from shadcn/ui where appropriate. The project is already configured for these.
+5.  **Component Structure:** Create separate, reusable components for different sections of a page. Place new page components in 'src/components/sections/'.
+6.  **Main Route:** The primary page for this new feature should typically be located at a new route like 'src/app/new-page/page.tsx'. Use 'src/app/page.tsx' only if the user explicitly asks to replace the main homepage.
+7.  **Placeholders:** Use placeholder images from \`https://placehold.co/<width>x<height>.png\` where needed. Add a \`data-ai-hint\` attribute with one or two keywords for the image.
+8.  **Output Format:** Do not add any explanations or introductory text in your response. Output ONLY the raw JSON object.
 
 App Description: "{{description}}"
 Visual Style: "{{style}}"
@@ -56,7 +61,7 @@ Visual Style: "{{style}}"
 Specific Sections/Data to include: "{{dataPoints}}"
 {{/if}}
 
-Generate the JSON output for the entire application now.
+Generate the JSON output for the application files now.
 `,
 });
 
