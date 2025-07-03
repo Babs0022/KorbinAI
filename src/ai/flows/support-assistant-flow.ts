@@ -1,1 +1,1 @@
-// This flow has been removed as the support assistant feature was deleted.
+// This file has been cleared.
