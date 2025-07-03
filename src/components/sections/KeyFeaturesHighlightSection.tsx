@@ -3,26 +3,26 @@
 
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from '@/components/shared/GlassCard';
 import Container from '@/components/layout/Container';
-import { Settings, BarChart3, Share2 } from 'lucide-react';
+import { Lightbulb, Cpu, Settings2 } from 'lucide-react';
 import React from 'react';
 
 const features = [
   {
-    icon: <Settings className="h-10 w-10 text-primary" />,
-    title: 'Engineer Precise Prompts',
-    description: 'Go from vague ideas to detailed instructions. Use contextual framing, personas, and format specification to eliminate ambiguity and get the exact output you need.',
+    icon: <Lightbulb className="h-10 w-10 text-primary" />,
+    title: 'From Idea to Blueprint',
+    description: 'Describe what you want to build in plain English. BrieflyAI asks clarifying questions and transforms your idea into a detailed specification that any AI can understand and execute.',
     bgColor: 'bg-indigo-500/10',
   },
   {
-    icon: <BarChart3 className="h-10 w-10 text-accent" />,
-    title: 'Understand What Works',
-    description: 'Stop guessing. A/B test prompts, get quality scores, and use data-driven insights to make decisions that improve your results.',
+    icon: <Cpu className="h-10 w-10 text-accent" />,
+    title: 'Generate Code, Copy & Assets',
+    description: 'Get production-ready code snippets, persuasive copy for your landing page, or design concepts for your logo. BrieflyAI helps you create all the components of your project.',
     bgColor: 'bg-mint-500/10',
   },
   {
-    icon: <Share2 className="h-10 w-10 text-primary" />,
-    title: 'Save & Collaborate Seamlessly',
-    description: 'Never lose a great prompt with automatic version history in your vault. Share instantly with your team to get feedback and build better, together.',
+    icon: <Settings2 className="h-10 w-10 text-primary" />,
+    title: 'AI-Assisted Iteration',
+    description: 'Building is a process. Easily refine your creations by asking the AI to change a color scheme, add a feature, or rewrite text. BrieflyAI makes iteration simple.',
     bgColor: 'bg-indigo-500/10',
   },
 ];
@@ -33,10 +33,10 @@ export function KeyFeaturesHighlightSection() {
       <Container>
         <div className="text-center mb-12 md:mb-16">
           <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            An Intuitive Workspace for Prompt Engineering
+            A Better Way to Build with AI
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Your complete toolkit for repeatable, production-quality results. Test, version, and perfect your prompts with confidence.
+            From your first idea to your final product, BrieflyAI provides the structure and guidance you need to build with confidence.
           </p>
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">

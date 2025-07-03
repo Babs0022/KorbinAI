@@ -1,28 +1,29 @@
+
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 import Container from '@/components/layout/Container';
-import { MousePointerClick, ListChecks, MessageSquareText, Wand2, ArrowRight } from 'lucide-react';
+import { MousePointerClick, ListChecks, FileText, Wand2, ArrowRight } from 'lucide-react';
 import React from 'react';
 
 const steps = [
   {
     icon: <MousePointerClick className="h-10 w-10 text-primary" />,
-    title: '1. Input Your Goal',
-    description: 'Clearly define the task or objective you want your AI prompt to achieve.',
+    title: '1. Describe Your Vision',
+    description: 'Start with a simple description of what you want to build or create.',
   },
   {
     icon: <ListChecks className="h-10 w-10 text-primary" />,
-    title: '2. Answer Adaptive Survey',
-    description: 'BrieflyAI asks targeted questions to understand context, tone, and desired output.',
+    title: '2. Clarify Key Details',
+    description: 'Answer a few targeted questions to define features, style, and functionality.',
   },
   {
-    icon: <MessageSquareText className="h-10 w-10 text-primary" />,
-    title: '3. Provide Your Answers',
-    description: 'Your responses guide the AI in tailoring the prompt specifically to your needs.',
+    icon: <FileText className="h-10 w-10 text-primary" />,
+    title: '3. Get a Detailed Blueprint',
+    description: 'Receive a comprehensive specification that acts as a perfect instruction set for an AI developer.',
   },
   {
     icon: <Wand2 className="h-10 w-10 text-primary" />,
-    title: '4. Get Optimized Prompt',
-    description: 'Receive a fine-tuned prompt, ready to deliver superior AI-generated results.',
+    title: '4. Execute and Build',
+    description: 'Use the blueprint with your favorite AI model to generate code, text, or images and bring your project to life.',
   },
 ];
 
@@ -32,7 +33,7 @@ export function HowItWorksSection() {
       <Container>
         <div className="text-center mb-12">
           <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            A Workflow for Production-Ready Prompts
+            From Idea to Reality in Four Steps
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
             Our structured process turns your initial idea into a high-performance prompt, ready for any AI model.

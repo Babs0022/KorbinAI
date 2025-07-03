@@ -1,7 +1,8 @@
+
 {
     "name": "BrieflyAI",
     "short_name": "BrieflyAI",
-    "description": "AI-powered prompt optimization for founders, marketers, and students. Achieve clarity and impact with BrieflyAI.",
+    "description": "Your AI co-pilot for building and shipping products. BrieflyAI helps non-technical users turn ideas into code, copy, and designs.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#171a1c",

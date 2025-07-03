@@ -1,6 +1,7 @@
+
 # Firebase Studio
 
-This is a NextJS starter in Firebase Studio.
+BrieflyAI is your AI co-pilot for turning ideas into products. It's designed for non-technical creatives and developers who want to build and ship applications, websites, and other digital projects with the help of AI.
 
 To get started, take a look at src/app/page.tsx.
 

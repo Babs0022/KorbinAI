@@ -6,8 +6,8 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { AppFonts } from '@/components/shared/AppFonts';
 
 export const metadata: Metadata = {
-  title: 'BrieflyAI - Optimize Your Prompts',
-  description: 'AI-powered prompt optimization for founders, marketers, and students. Achieve clarity and impact with BrieflyAI.',
+  title: 'BrieflyAI - Build & Ship with AI',
+  description: 'BrieflyAI helps non-technical creatives and developers turn ideas into tangible products. Build apps, websites, and more with AI-guided assistance.',
   manifest: '/manifest.json',
   themeColor: '#804dff', // Set to dark mode accent color for better PWA themeing
   icons: {
