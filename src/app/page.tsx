@@ -20,7 +20,7 @@ export default function HomePage() {
       icon: <LayoutTemplate className="h-8 w-8" />,
       title: "Web Component",
       subtitle: "Forms, galleries, hero sections",
-      href: "#",
+      href: "/component-wizard",
     },
     {
       icon: <Image className="h-8 w-8" />,
