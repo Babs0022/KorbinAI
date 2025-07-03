@@ -11,7 +11,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
 // Define the input schema with Zod
-export const GeneratePromptInputSchema = z.object({
+const GeneratePromptInputSchema = z.object({
   taskDescription: z.string().describe('A plain English description of the task the user wants to accomplish.'),
   targetModel: z.string().optional().describe("The specific AI model this prompt is for (e.g., 'Gemini 1.5 Pro', 'Claude 3 Opus')."),
   outputFormat: z.string().optional().describe("The desired format for the AI's output (e.g., 'JSON', 'Markdown', 'a bulleted list')."),
@@ -19,7 +19,7 @@ export const GeneratePromptInputSchema = z.object({
 export type GeneratePromptInput = z.infer<typeof GeneratePromptInputSchema>;
 
 // Define the output schema with Zod
-export const GeneratePromptOutputSchema = z.object({
+const GeneratePromptOutputSchema = z.object({
   generatedPrompt: z.string().describe('The complete, optimized prompt ready to be used.'),
   explanation: z.string().describe('A brief explanation of why the prompt is structured the way it is.'),
 });
