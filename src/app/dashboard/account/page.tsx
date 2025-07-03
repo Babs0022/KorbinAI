@@ -186,6 +186,7 @@ export default function AccountManagementPage() {
                                             height={100}
                                             alt={`Avatar ${index + 1}`}
                                             className={cn("rounded-full transition-all", selectedAvatar === avatarUrl ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'opacity-70 hover:opacity-100')}
+                                            data-ai-hint="avatar abstract"
                                         />
                                     </button>
                                 ))}
@@ -282,3 +283,4 @@ export default function AccountManagementPage() {
   );
 }
 
+    
