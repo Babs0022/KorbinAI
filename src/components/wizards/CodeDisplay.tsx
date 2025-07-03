@@ -86,7 +86,7 @@ const RenderFileTree = ({ tree, level = 0 }: { tree: FileTree, level?: number })
             const aIsFile = 'filePath' in aNode;
             const bIsFile = 'filePath' in bNode;
             if (aIsFile && !bIsFile) return 1;
-            if (!aIsFile && bIsF) return -1;
+            if (!aIsFile && bIsFile) return -1;
             return aName.localeCompare(bName);
         })
         .map(([name, node]) => {
