@@ -5,21 +5,17 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAuthenticated = request.cookies.has('firebase-auth-setting-host');
 
-  const publicRoutes = ['/login', '/signup', '/forgot-password'];
-  const isPublicRoute = publicRoutes.includes(pathname);
+  const authRoutes = ['/login', '/signup', '/forgot-password'];
+  const isAuthRoute = authRoutes.includes(pathname);
 
-  // If the user is authenticated and trying to access a public route,
+  // If the user is authenticated and trying to access a login/signup page,
   // redirect them to the home page.
-  if (isAuthenticated && isPublicRoute) {
+  if (isAuthenticated && isAuthRoute) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // If the user is not authenticated and trying to access a protected route,
-  // redirect them to the login page.
-  if (!isAuthenticated && !isPublicRoute) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
+  // All other cases, including unauthenticated users visiting any page,
+  // are allowed to proceed.
   return NextResponse.next();
 }
 

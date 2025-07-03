@@ -7,7 +7,7 @@ import { Feather, Code2, LayoutTemplate, Image, Bolt, LoaderCircle } from "lucid
 import Link from "next/link";
 
 export default function HomePage() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   
   const creationOptions = [
     {
@@ -50,12 +50,8 @@ export default function HomePage() {
     );
   }
 
-  // The middleware should handle redirecting unauthenticated users,
-  // but this is a fallback.
-  if (!user) {
-    return null; 
-  }
-
+  // The dashboard is now public. The `DashboardHeader` will show a login
+  // button for unauthenticated users.
   return (
     <DashboardLayout>
       <main className="flex flex-col items-center justify-center p-4 md:p-8">
