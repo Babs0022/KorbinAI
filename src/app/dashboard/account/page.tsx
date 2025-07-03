@@ -53,7 +53,7 @@ const avatarSeeds = [
   "gizmo", "mittens", "shadow", "smokey", "tiger",
   "tinkerbell", "toby", "trouble", "tucker", "zues"
 ];
-const avatars = avatarSeeds.map(seed => `https://api.dicebear.com/8.x/bottts-neutral/png?seed=${seed}&size=100`);
+const avatars = avatarSeeds.map(seed => `https://api.dicebear.com/8.x/personas/png?seed=${seed}&size=100`);
 
 
 export default function AccountManagementPage() {
@@ -196,7 +196,7 @@ export default function AccountManagementPage() {
                                             height={100}
                                             alt={`Avatar ${index + 1}`}
                                             className={cn("rounded-full transition-all", selectedAvatar === avatarUrl ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'opacity-70 hover:opacity-100')}
-                                            data-ai-hint="robot avatar"
+                                            data-ai-hint="person avatar"
                                         />
                                     </button>
                                 ))}
