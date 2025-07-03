@@ -53,7 +53,7 @@ const avatarSeeds = [
   "gizmo", "mittens", "shadow", "smokey", "tiger",
   "tinkerbell", "toby", "trouble", "tucker", "zues"
 ];
-const avatars = avatarSeeds.map(seed => `https://api.dicebear.com/8.x/personas/png?seed=${seed}&size=100`);
+const avatars = avatarSeeds.map(seed => `https://api.dicebear.com/8.x/avataaars-neutral/png?seed=${seed}&size=100`);
 
 
 export default function AccountManagementPage() {
