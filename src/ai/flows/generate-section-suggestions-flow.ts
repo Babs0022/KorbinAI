@@ -10,12 +10,12 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
-export const GenerateSectionSuggestionsInputSchema = z.object({
+const GenerateSectionSuggestionsInputSchema = z.object({
   description: z.string().describe('A plain English description of the application or page to build.'),
 });
 export type GenerateSectionSuggestionsInput = z.infer<typeof GenerateSectionSuggestionsInputSchema>;
 
-export const GenerateSectionSuggestionsOutputSchema = z.object({
+const GenerateSectionSuggestionsOutputSchema = z.object({
   suggestions: z.array(z.string()).describe("An array of suggested sections (e.g., 'Hero', 'Features', 'FAQ', 'Contact Form')."),
 });
 export type GenerateSectionSuggestionsOutput = z.infer<typeof GenerateSectionSuggestionsOutputSchema>;
