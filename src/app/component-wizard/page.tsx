@@ -1,32 +1,80 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, LoaderCircle } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { generateSectionSuggestions } from "@/ai/flows/generate-section-suggestions-flow";
+import { cn } from "@/lib/utils";
 
 export default function ComponentWizardPage() {
   const router = useRouter();
   const [description, setDescription] = useState("");
   const [style, setStyle] = useState("minimalist");
-  const [dataPoints, setDataPoints] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // New state for suggestions
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(new Set());
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
+
+    if (description.trim().split(/\s+/).length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    setIsSuggesting(true);
+    const timeout = setTimeout(async () => {
+      try {
+        const result = await generateSectionSuggestions({ description });
+        setSuggestions(result.suggestions || []);
+      } catch (error) {
+        console.error("Failed to get suggestions:", error);
+        setSuggestions([]);
+      } finally {
+        setIsSuggesting(false);
+      }
+    }, 750); // 750ms debounce delay
+
+    setDebounceTimeout(timeout);
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [description]);
+
+  const handleToggleSuggestion = (suggestion: string) => {
+    setSelectedSuggestions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(suggestion)) {
+        newSet.delete(suggestion);
+      } else {
+        newSet.add(suggestion);
+      }
+      return newSet;
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!description) return; // Basic validation
+    if (!description) return;
     setIsLoading(true);
 
     const params = new URLSearchParams({
       description,
       style,
-      dataPoints,
+      dataPoints: Array.from(selectedSuggestions).join(", "),
     });
 
     router.push(`/component-wizard/result?${params.toString()}`);
@@ -70,7 +118,7 @@ export default function ComponentWizardPage() {
               </div>
 
               <div className="grid w-full items-center gap-4">
-                <Label htmlFor="visual-style" className="text-base font-semibold">
+                <Label className="text-base font-semibold">
                   What is the visual style of your brand?
                 </Label>
                 <RadioGroup
@@ -106,17 +154,40 @@ export default function ComponentWizardPage() {
                 </RadioGroup>
               </div>
 
-              <div className="grid w-full items-center gap-2">
-                <Label htmlFor="data-points" className="text-base font-semibold">
-                  Are there any specific sections or data points it should include? (optional)
-                </Label>
-                <Input
-                  id="data-points"
-                  placeholder="e.g., 'hero, features, testimonials, pricing' or 'user profile, order history'."
-                  className="text-base"
-                  value={dataPoints}
-                  onChange={(e) => setDataPoints(e.target.value)}
-                />
+              <div className="space-y-4 rounded-lg bg-background/50 p-4">
+                <div className="flex items-center gap-2">
+                  <Label className="text-base font-semibold">
+                    Suggested Sections
+                  </Label>
+                  {isSuggesting && <LoaderCircle className="h-4 w-4 animate-spin text-muted-foreground" />}
+                </div>
+
+                {suggestions.length > 0 ? (
+                  <div className="flex flex-wrap gap-3">
+                    {suggestions.map(suggestion => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => handleToggleSuggestion(suggestion)}
+                        className={cn(
+                          "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                          selectedSuggestions.has(suggestion)
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                        )}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  !isSuggesting && description.trim().split(/\s+/).length >= 3 && (
+                    <div className="flex items-center gap-3 rounded-lg border border-dashed border-border p-4">
+                      <Sparkles className="h-6 w-6 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">We'll suggest sections here once you provide a more detailed description above.</p>
+                    </div>
+                  )
+                )}
               </div>
 
               <div className="flex justify-end pt-4">
