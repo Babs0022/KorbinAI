@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Feather, Code2, LayoutTemplate, Image } from "lucide-react";
+import { Feather, Code2, LayoutTemplate, Image, Bolt } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
@@ -27,6 +27,12 @@ export default function HomePage() {
       title: "Image & Logo Ideas",
       subtitle: "Generate concepts and prompts",
       href: "#",
+    },
+    {
+      icon: <Bolt className="h-8 w-8" />,
+      title: "Prompt Generator",
+      subtitle: "Craft optimized prompts for any task",
+      href: "/prompt-generator",
     },
   ];
 
