@@ -1,21 +1,43 @@
-
 "use client";
 
 import type { ReactNode } from 'react';
-import { createContext, useContext } from 'react';
-
-// This context is cleared and ready for rebuilding.
-// You can add user state, auth methods, etc. here.
+import { createContext, useContext, useEffect, useState } from 'react';
+import {
+  onAuthStateChanged,
+  signOut as firebaseSignOut,
+  type User,
+} from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 interface AuthContextType {
-  // Define your auth context properties here
+  user: User | null;
+  loading: boolean;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const logout = async () => {
+    await firebaseSignOut(auth);
+  };
+
   const value = {
-    // Provide your context values here
+    user,
+    loading,
+    logout,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

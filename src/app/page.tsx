@@ -1,8 +1,14 @@
+"use client";
+
+import { useAuth } from "@/contexts/AuthContext";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Feather, Code2, LayoutTemplate, Image, Bolt } from "lucide-react";
+import { Feather, Code2, LayoutTemplate, Image, Bolt, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
+  const { user, loading } = useAuth();
+  
   const creationOptions = [
     {
       icon: <Feather className="h-8 w-8" />,
@@ -36,30 +42,46 @@ export default function HomePage() {
     },
   ];
 
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8">
-      <div className="w-full max-w-4xl text-center">
-        <h1 className="mb-12 text-4xl font-bold md:text-5xl">
-          What would you like to create today?
-        </h1>
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-          {creationOptions.map((option) => (
-            <Link href={option.href} key={option.title} className="group">
-              <Card className="flex h-full transform flex-col items-start p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/80 rounded-xl">
-                <div className="mb-4 text-primary">{option.icon}</div>
-                <CardHeader className="p-0">
-                  <CardTitle className="text-2xl font-semibold transition-colors duration-300 group-hover:text-primary">
-                    {option.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="mt-2 p-0">
-                  <p className="text-muted-foreground">{option.subtitle}</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
       </div>
-    </main>
+    );
+  }
+
+  // The middleware should handle redirecting unauthenticated users,
+  // but this is a fallback.
+  if (!user) {
+    return null; 
+  }
+
+  return (
+    <DashboardLayout>
+      <main className="flex flex-col items-center justify-center p-4 md:p-8">
+        <div className="w-full max-w-4xl text-center">
+          <h1 className="mb-12 text-4xl font-bold md:text-5xl">
+            What would you like to create today?
+          </h1>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+            {creationOptions.map((option) => (
+              <Link href={option.href} key={option.title} className="group">
+                <Card className="flex h-full transform flex-col items-start p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/80 rounded-xl">
+                  <div className="mb-4 text-primary">{option.icon}</div>
+                  <CardHeader className="p-0">
+                    <CardTitle className="text-2xl font-semibold transition-colors duration-300 group-hover:text-primary">
+                      {option.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="mt-2 p-0">
+                    <p className="text-muted-foreground">{option.subtitle}</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </main>
+    </DashboardLayout>
   );
 }

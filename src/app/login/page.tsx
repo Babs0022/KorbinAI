@@ -1,4 +1,10 @@
+import AuthLayout from '@/components/shared/AuthLayout';
+import LoginForm from '@/components/auth/LoginForm';
 
 export default function LoginPage() {
-  return <div>Login Page - To be rebuilt</div>;
+  return (
+    <AuthLayout>
+      <LoginForm />
+    </AuthLayout>
+  );
 }
