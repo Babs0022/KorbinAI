@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -256,7 +255,7 @@ export function PromptInputForm() {
             type="submit"
             variant="default"
             size="icon"
-            className="h-9 w-9 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full"
+            className="h-9 w-9 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg"
             disabled={!goal.trim()}
             aria-label="Submit goal"
           >
