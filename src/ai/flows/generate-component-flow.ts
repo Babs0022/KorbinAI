@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow for generating multi-file React applications based on user descriptions.
@@ -50,9 +51,11 @@ Pay close attention to the **Generation Mode**.
 
 **If the Generation Mode is 'new':**
 Your task is to generate ALL the necessary files to create a COMPLETE, standalone Next.js application from scratch.
-- **File Paths:** Generate all necessary files, including 'package.json', 'next.config.ts', 'tailwind.config.ts', 'src/app/layout.tsx', 'src/app/globals.css', and the main page at 'src/app/page.tsx'.
-- **Dependencies:** In 'package.json', include 'next', 'react', 'react-dom', 'tailwindcss'. You can also include 'lucide-react' and 'clsx'. DO NOT include devDependencies. Ensure the scripts include "dev": "next dev", "build": "next build", "start": "next start".
-- **Configuration:** Create valid 'next.config.ts' and 'tailwind.config.ts' files.
+- **File Paths:** This is critical. You must generate both root-level files and files inside the 'src' directory.
+    - **Root Files:** Paths like 'package.json', 'next.config.ts', and 'tailwind.config.ts' MUST NOT start with 'src/'.
+    - **Source Files:** All application code (pages, components, styles) MUST have paths starting with 'src/'. For example: 'src/app/page.tsx'.
+- **Dependencies:** The 'package.json' MUST include 'next', 'react', 'react-dom', 'tailwindcss'. You can also add 'lucide-react' for icons and 'clsx' for utility classes. DO NOT generate a 'devDependencies' section. The 'scripts' must include "dev", "build", and "start".
+- **Configuration:** Generate valid, standard 'next.config.ts' and 'tailwind.config.ts' files.
 - **Base Styles:** Provide 'src/app/globals.css' with Tailwind directives.
 - **Root Layout:** Create a 'src/app/layout.tsx' file.
 
@@ -66,7 +69,7 @@ Your task is to generate ONLY the files to create a new page or feature within a
 - **Output Format:** You MUST return the output as a valid JSON object that adheres to the defined schema. The JSON object must contain an array of file objects and final instructions. Do not add any explanations or introductory text in your response. Output ONLY the raw JSON object.
 - **File Content:** For each file, provide the full, complete TSX/TS/JSON code.
 - **User Instructions:** For each file, include a simple, one-sentence explanation of its purpose for a non-technical user.
-- **Technology Stack:** Use TypeScript, the Next.js App Router, and Tailwind CSS. If you generate shadcn/ui components, you must generate them from scratch as this is a new project.
+- **Technology Stack:** Use TypeScript, the Next.js App Router, and Tailwind CSS. For 'new' mode, do not assume shadcn/ui is installed; generate simple components.
 - **Component Structure:** Create separate, reusable components for different sections of a page. Place new components in 'src/components/sections/'.
 - **Placeholders:** Use placeholder images from \`https://placehold.co/<width>x<height>.png\` where needed. Add a \`data-ai-hint\` attribute with one or two keywords for the image.
 
