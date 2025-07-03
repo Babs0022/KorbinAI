@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, LoaderCircle, Copy, Check } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Copy, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,14 +19,66 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { generateWrittenContent, GenerateWrittenContentInput } from "@/ai/flows/generate-written-content-flow";
+import { generateContentSuggestions, GenerateContentSuggestionsOutput } from "@/ai/flows/generate-content-suggestions-flow";
+import { cn } from "@/lib/utils";
 
 
 export default function WrittenContentPage() {
+  // Form state
+  const [contentType, setContentType] = useState("blog-post");
+  const [tone, setTone] = useState("professional");
+  const [topic, setTopic] = useState("");
+  const [audience, setAudience] = useState("");
+  const [keywords, setKeywords] = useState("");
+  
+  // Generation state
   const [isLoading, setIsLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState("");
   const [copied, setCopied] = useState(false);
-  const [tone, setTone] = useState("professional");
+  
+  // Suggestion state
+  const [suggestions, setSuggestions] = useState<GenerateContentSuggestionsOutput>({ suggestedAudience: '', suggestedKeywords: [] });
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
+
   const { toast } = useToast();
+  
+  // Debounced effect for suggestions
+  useEffect(() => {
+    if (debounceTimeout) clearTimeout(debounceTimeout);
+    
+    if (topic.trim().split(/\s+/).length < 4) {
+      setSuggestions({ suggestedAudience: '', suggestedKeywords: [] });
+      return;
+    }
+
+    setIsSuggesting(true);
+    const timeout = setTimeout(async () => {
+      try {
+        const result = await generateContentSuggestions({ topic });
+        setSuggestions(result);
+      } catch (error) {
+        console.error("Failed to get suggestions:", error);
+        setSuggestions({ suggestedAudience: '', suggestedKeywords: [] });
+      } finally {
+        setIsSuggesting(false);
+      }
+    }, 1000);
+
+    setDebounceTimeout(timeout);
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [topic]);
+
+  const handleAddKeyword = (keyword: string) => {
+    setKeywords(prev => {
+      const kwSet = new Set(prev.split(',').map(k => k.trim()).filter(Boolean));
+      kwSet.add(keyword);
+      return Array.from(kwSet).join(', ');
+    });
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedContent);
@@ -39,13 +91,12 @@ export default function WrittenContentPage() {
     setGeneratedContent("");
     setIsLoading(true);
 
-    const formData = new FormData(e.currentTarget);
     const input: GenerateWrittenContentInput = {
-      contentType: formData.get("contentType") as string,
-      tone: tone,
-      topic: formData.get("topic") as string,
-      audience: (formData.get("audience") as string) || undefined,
-      keywords: (formData.get("keywords") as string) || undefined,
+      contentType,
+      tone,
+      topic,
+      audience,
+      keywords,
     };
 
     if (!input.topic) {
@@ -105,7 +156,7 @@ export default function WrittenContentPage() {
                   <h3 className="text-lg font-medium text-white">
                     What type of content do you need?
                   </h3>
-                  <Select name="contentType" defaultValue="blog-post">
+                  <Select name="contentType" value={contentType} onValueChange={setContentType}>
                     <SelectTrigger id="content-type" className="text-base">
                       <SelectValue placeholder="Select a content type" />
                     </SelectTrigger>
@@ -144,14 +195,19 @@ export default function WrittenContentPage() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-lg font-medium text-white">
-                  What is the main topic or message?
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-medium text-white">
+                    What is the main topic or message?
+                  </h3>
+                  {isSuggesting && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                </div>
                 <Textarea
                   id="topic"
                   name="topic"
                   placeholder="e.g., 'Announcing our new feature that helps users save time' or 'The benefits of using our product for small businesses'."
                   className="min-h-[120px] text-base"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
                   required
                 />
               </div>
@@ -161,13 +217,49 @@ export default function WrittenContentPage() {
                     <h3 className="text-lg font-medium text-white">
                       Who is the target audience? <span className="font-normal text-muted-foreground">(optional)</span>
                     </h3>
-                    <Input id="audience" name="audience" placeholder="e.g., 'Software developers' or 'Mothers in their 30s'" className="text-base" />
+                    <Input id="audience" name="audience" placeholder="e.g., 'Software developers' or 'Mothers in their 30s'" className="text-base" value={audience} onChange={(e) => setAudience(e.target.value)} />
+                    {suggestions.suggestedAudience && (
+                        <div className="mt-2 rounded-md border border-dashed border-primary/50 bg-secondary p-2">
+                            <div className="flex items-center justify-between gap-2">
+                                <p className="text-sm text-muted-foreground">
+                                    <span className="font-semibold text-primary">Suggestion:</span>{" "}
+                                    {suggestions.suggestedAudience}
+                                </p>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setAudience(suggestions.suggestedAudience)}
+                                >
+                                    Use
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </div>
                  <div className="space-y-2">
                     <h3 className="text-lg font-medium text-white">
                       Keywords to include <span className="font-normal text-muted-foreground">(comma-separated, optional)</span>
                     </h3>
-                    <Input id="keywords" name="keywords" placeholder="e.g., 'AI, productivity, automation'" className="text-base" />
+                    <Input id="keywords" name="keywords" placeholder="e.g., 'AI, productivity, automation'" className="text-base" value={keywords} onChange={(e) => setKeywords(e.target.value)} />
+                    {suggestions.suggestedKeywords.length > 0 && (
+                        <div className="mt-2 space-y-2">
+                            <div className="flex flex-wrap gap-2">
+                                {suggestions.suggestedKeywords.map(kw => (
+                                    <Button
+                                        key={kw}
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleAddKeyword(kw)}
+                                        className="text-xs"
+                                    >
+                                        <Sparkles className="mr-1 h-3 w-3 text-primary" /> {kw}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
               </div>
 

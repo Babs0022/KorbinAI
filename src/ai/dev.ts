@@ -7,3 +7,5 @@ import './flows/generate-written-content-flow';
 import './flows/generate-prompt-flow';
 import './flows/generate-structured-data-flow';
 import './flows/generate-image-flow';
+import './flows/generate-content-suggestions-flow';
+
