@@ -17,6 +17,7 @@ export default function ComponentWizardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const [generationMode, setGenerationMode] = useState("existing");
   const [description, setDescription] = useState("");
   const [style, setStyle] = useState("minimalist");
   const [dataPoints, setDataPoints] = useState("");
@@ -92,6 +93,7 @@ export default function ComponentWizardPage() {
     setIsLoading(true);
 
     const params = new URLSearchParams({
+      generationMode,
       description,
       style,
       dataPoints,
@@ -123,6 +125,30 @@ export default function ComponentWizardPage() {
         <Card className="w-full rounded-xl">
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-8">
+
+               <div className="grid w-full items-center gap-4">
+                <h3 className="text-lg font-medium text-white">What are you building?</h3>
+                <RadioGroup
+                  id="generation-mode"
+                  value={generationMode}
+                  onValueChange={setGenerationMode}
+                  className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+                >
+                  <div>
+                    <RadioGroupItem value="existing" id="mode-existing" className="peer sr-only" />
+                    <Label htmlFor="mode-existing" className="flex h-full flex-col items-center justify-center rounded-md border-2 border-accent bg-secondary p-4 text-center hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 [&:has([data-state=checked])]:border-primary">
+                      A new page for my existing app
+                    </Label>
+                  </div>
+                  <div>
+                    <RadioGroupItem value="new" id="mode-new" className="peer sr-only" />
+                    <Label htmlFor="mode-new" className="flex h-full flex-col items-center justify-center rounded-md border-2 border-accent bg-secondary p-4 text-center hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 [&:has([data-state=checked])]:border-primary">
+                      A complete, new application
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              
               <div className="grid w-full items-center gap-2">
                 <h3 className="text-lg font-medium text-white">
                   In plain English, describe what you want to build.

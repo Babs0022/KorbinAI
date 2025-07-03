@@ -14,18 +14,19 @@ const GenerateAppInputSchema = z.object({
   description: z.string().describe('A plain English description of the application or page to build.'),
   style: z.string().describe("The visual style of the brand (e.g., 'Minimalist & Modern', 'Playful & Creative')."),
   dataPoints: z.string().optional().describe('A comma-separated list of specific data points or sections the app should include.'),
+  generationMode: z.enum(['new', 'existing']).describe("Determines whether to generate a full new application or add to an existing one."),
 });
 export type GenerateAppInput = z.infer<typeof GenerateAppInputSchema>;
 
 const FileOutputSchema = z.object({
-    filePath: z.string().describe("The full, absolute path for the file, e.g., 'src/app/page.tsx' or 'src/components/sections/HeroSection.tsx'."),
-    componentCode: z.string().describe("The full TSX/TS code for the file, including all necessary imports and content."),
-    instructions: z.string().describe("A one-sentence, beginner-friendly explanation of this file's purpose. Assume the user has never coded before. For example: 'This is the main page of your app.' or 'This component defines the top section of your landing page.'"),
+    filePath: z.string().describe("The full, absolute path for the file, e.g., 'src/app/page.tsx' or 'package.json' for new apps."),
+    componentCode: z.string().describe("The full TSX/TS/JSON code for the file, including all necessary imports and content."),
+    instructions: z.string().describe("A one-sentence, beginner-friendly explanation of this file's purpose. Assume the user has never coded before. For example: 'This is the main page of your app.' or 'This file lists your project's dependencies.'"),
 });
 
 const GenerateAppOutputSchema = z.object({
   files: z.array(FileOutputSchema).describe("An array of all the files needed for the application."),
-  finalInstructions: z.string().describe("A final summary of what the user should do next, like running 'npm run dev' to see the page. Do not tell them to run npm install."),
+  finalInstructions: z.string().describe("A final summary of what the user should do next, like running 'npm install && npm run dev'. Do not tell them to just run npm install."),
 });
 export type GenerateAppOutput = z.infer<typeof GenerateAppOutputSchema>;
 
@@ -39,29 +40,45 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: GenerateAppInputSchema},
   output: {schema: GenerateAppOutputSchema},
-  prompt: `You are an expert Next.js developer and architect. Your task is to generate the necessary files to create a new page or feature within an *existing* Next.js application.
-You will be modifying a project that already has its root configuration files (like package.json, next.config.ts, etc.) set up.
-Therefore, you MUST NOT generate any root-level configuration files. All file paths you generate must start within the 'src/' directory.
+  prompt: `You are an expert Next.js developer and architect. Your task is to generate the files for a web application based on the user's request.
 
-You MUST return the output as a valid JSON object that adheres to the defined schema. The JSON object must contain an array of file objects and final instructions.
+Pay close attention to the **Generation Mode**.
 
-Key Instructions:
-1.  **File Paths:** All generated files must have an absolute path starting from the 'src/' directory (e.g., 'src/app/new-feature/page.tsx', 'src/components/ui/MyButton.tsx'). Do not generate files outside of 'src/'.
-2.  **File Content:** For each file, provide the full, complete TSX/TS code.
-3.  **User Instructions:** For each file, include a simple, one-sentence explanation of its purpose for a non-technical user.
-4.  **Technology Stack:** Use TypeScript, the Next.js App Router, Tailwind CSS, and components from shadcn/ui where appropriate. The project is already configured for these.
-5.  **Component Structure:** Create separate, reusable components for different sections of a page. Place new page components in 'src/components/sections/'.
-6.  **Main Route:** The primary page for this new feature should typically be located at a new route like 'src/app/new-page/page.tsx'. Use 'src/app/page.tsx' only if the user explicitly asks to replace the main homepage.
-7.  **Placeholders:** Use placeholder images from \`https://placehold.co/<width>x<height>.png\` where needed. Add a \`data-ai-hint\` attribute with one or two keywords for the image.
-8.  **Output Format:** Do not add any explanations or introductory text in your response. Output ONLY the raw JSON object.
+---
+### Generation Mode: {{generationMode}}
+---
 
+**If the Generation Mode is 'new':**
+Your task is to generate ALL the necessary files to create a COMPLETE, standalone Next.js application from scratch.
+- **File Paths:** Generate all necessary files, including 'package.json', 'next.config.ts', 'tailwind.config.ts', 'src/app/layout.tsx', 'src/app/globals.css', and the main page at 'src/app/page.tsx'.
+- **Dependencies:** In 'package.json', include 'next', 'react', 'react-dom', 'tailwindcss'. You can also include 'lucide-react' and 'clsx'. DO NOT include devDependencies. Ensure the scripts include "dev": "next dev", "build": "next build", "start": "next start".
+- **Configuration:** Create valid 'next.config.ts' and 'tailwind.config.ts' files.
+- **Base Styles:** Provide 'src/app/globals.css' with Tailwind directives.
+- **Root Layout:** Create a 'src/app/layout.tsx' file.
+
+**If the Generation Mode is 'existing':**
+Your task is to generate ONLY the files to create a new page or feature within an *existing* Next.js application.
+- **File Paths:** All generated files MUST have an absolute path starting from the 'src/' directory (e.g., 'src/app/new-feature/page.tsx'). DO NOT generate root-level files like 'package.json' or any configuration files.
+- **Main Route:** The primary page for this new feature should be at a new route like 'src/app/new-page/page.tsx'. Use 'src/app/page.tsx' only if the user explicitly asks to replace the homepage.
+
+---
+### General Instructions (Apply to Both Modes)
+- **Output Format:** You MUST return the output as a valid JSON object that adheres to the defined schema. The JSON object must contain an array of file objects and final instructions. Do not add any explanations or introductory text in your response. Output ONLY the raw JSON object.
+- **File Content:** For each file, provide the full, complete TSX/TS/JSON code.
+- **User Instructions:** For each file, include a simple, one-sentence explanation of its purpose for a non-technical user.
+- **Technology Stack:** Use TypeScript, the Next.js App Router, and Tailwind CSS. If you generate shadcn/ui components, you must generate them from scratch as this is a new project.
+- **Component Structure:** Create separate, reusable components for different sections of a page. Place new components in 'src/components/sections/'.
+- **Placeholders:** Use placeholder images from \`https://placehold.co/<width>x<height>.png\` where needed. Add a \`data-ai-hint\` attribute with one or two keywords for the image.
+
+---
+### User Request
 App Description: "{{description}}"
 Visual Style: "{{style}}"
 {{#if dataPoints}}
 Specific Sections/Data to include: "{{dataPoints}}"
 {{/if}}
 
-Generate the JSON output for the application files now.
+Generate the JSON output for the application files now based on the specified Generation Mode.
 `,
 });
 
