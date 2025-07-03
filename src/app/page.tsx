@@ -24,9 +24,9 @@ export default function HomePage() {
     },
     {
       icon: <Image className="h-8 w-8" />,
-      title: "Image & Logo Ideas",
-      subtitle: "Generate concepts and prompts",
-      href: "#",
+      title: "Image Generator",
+      subtitle: "Create unique images from text",
+      href: "/image-generator",
     },
     {
       icon: <Bolt className="h-8 w-8" />,
