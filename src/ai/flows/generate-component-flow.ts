@@ -34,18 +34,12 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateComponentOutputSchema},
   prompt: `You are an expert Next.js developer specializing in creating beautiful and functional React components.
 Your task is to generate the code for a single, self-contained React component file (.tsx) and a name for it.
-You MUST return the output as a valid JSON object that conforms to this Zod schema:
-\`\`\`json
-{
-  "componentName": "A PascalCase name for the component, e.g., ContactForm.",
-  "componentCode": "The full TSX code for the React component, including all necessary imports."
-}
-\`\`\`
+You MUST return the output as a valid JSON object. The JSON object must have two keys: 'componentName' and 'componentCode'.
 
 The component should use TypeScript, Tailwind CSS, and components from shadcn/ui where appropriate.
 Ensure the component is fully responsive and accessible.
 Use placeholder images from \`https://placehold.co/<width>x<height>.png\` if images are needed. Add a data-ai-hint attribute to the image with one or two keywords for the image.
-Do not add any explanations, introductory text, or markdown formatting around the JSON. Output only the raw JSON object.
+Do not add any explanations or introductory text. Output ONLY the raw JSON object.
 
 Component Description: "{{description}}"
 Visual Style: "{{style}}"
@@ -68,11 +62,11 @@ const generateComponentFlow = ai.defineFlow(
     const output = response.output;
 
     if (!output) {
-      console.error('AI response was empty or invalid.', { fullResponse: response });
+      console.error('AI response was empty or invalid. Raw text from model:', response.text);
       throw new Error('Failed to generate component because the AI response was empty or invalid.');
     }
     // Clean up the output to remove markdown code blocks if the AI includes them
-    const cleanedCode = output.componentCode.replace(/^```tsx\n/, '').replace(/\n```$/, '');
+    const cleanedCode = output.componentCode.replace(/^```tsx\n?/, '').replace(/\n?```$/, '');
     return {
       ...output,
       componentCode: cleanedCode,

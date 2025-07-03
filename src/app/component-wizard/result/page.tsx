@@ -17,10 +17,12 @@ async function GeneratedComponent({ searchParams }: { searchParams: GenerateComp
     return <CodeDisplay componentName={result.componentName} componentCode={result.componentCode} />;
   } catch (error) {
     console.error("Failed to generate component:", error);
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
     return (
       <div className="text-center text-destructive">
         <h2 className="text-2xl font-bold">Generation Failed</h2>
         <p className="mt-2">There was an error generating your component. Please try again.</p>
+        <p className="mt-4 rounded bg-muted/50 p-2 text-xs">Error details: {errorMessage}</p>
       </div>
     );
   }
