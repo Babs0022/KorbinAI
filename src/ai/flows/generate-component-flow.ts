@@ -10,14 +10,14 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
-export const GenerateComponentInputSchema = z.object({
+const GenerateComponentInputSchema = z.object({
   description: z.string().describe('A plain English description of the component to build.'),
   style: z.string().describe("The visual style of the brand (e.g., 'Minimalist & Modern', 'Playful & Creative')."),
   dataPoints: z.string().optional().describe('A comma-separated list of specific data points the component should display.'),
 });
 export type GenerateComponentInput = z.infer<typeof GenerateComponentInputSchema>;
 
-export const GenerateComponentOutputSchema = z.object({
+const GenerateComponentOutputSchema = z.object({
   componentName: z.string().describe('A PascalCase name for the component, e.g., ContactForm.'),
   componentCode: z.string().describe('The full TSX code for the React component, including all necessary imports.'),
 });
