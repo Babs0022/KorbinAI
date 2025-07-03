@@ -3,15 +3,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, LoaderCircle, Copy, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Copy, Check, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { generatePrompt, type GeneratePromptInput } from "@/ai/flows/generate-prompt-flow";
 import { generatePromptFormatSuggestions } from "@/ai/flows/generate-prompt-format-suggestions-flow";
+import { analyzePrompt, type AnalyzePromptOutput } from "@/ai/flows/analyze-prompt-flow";
 
 export default function PromptGeneratorPage() {
   // Form State
@@ -29,8 +29,16 @@ export default function PromptGeneratorPage() {
   const [formatSuggestions, setFormatSuggestions] = useState<string[]>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [toolSuggestion, setToolSuggestion] = useState<AnalyzePromptOutput | null>(null);
 
   const { toast } = useToast();
+
+  const toolMap: Record<string, { href: string; queryParam: string }> = {
+    'image-generator': { href: '/image-generator', queryParam: 'prompt' },
+    'written-content': { href: '/written-content', queryParam: 'topic' },
+    'component-wizard': { href: '/component-wizard', queryParam: 'description' },
+    'structured-data': { href: '/structured-data', queryParam: 'description' },
+  };
 
   useEffect(() => {
     if (debounceTimeout) clearTimeout(debounceTimeout);
@@ -71,6 +79,7 @@ export default function PromptGeneratorPage() {
     e.preventDefault();
     setGeneratedPrompt("");
     setExplanation("");
+    setToolSuggestion(null);
     setIsLoading(true);
 
     const input: GeneratePromptInput = {
@@ -94,6 +103,12 @@ export default function PromptGeneratorPage() {
       if (result.generatedPrompt) {
         setGeneratedPrompt(result.generatedPrompt);
         setExplanation(result.explanation);
+        
+        // After generating the prompt, analyze it for tool suggestions
+        const analysisResult = await analyzePrompt({ prompt: result.generatedPrompt });
+        if (analysisResult && analysisResult.tool !== 'none') {
+            setToolSuggestion(analysisResult);
+        }
       } else {
         throw new Error("The AI did not return a prompt.");
       }
@@ -211,6 +226,12 @@ export default function PromptGeneratorPage() {
           </CardContent>
         </Card>
 
+        {isLoading && !generatedPrompt && (
+          <div className="flex items-center justify-center pt-12">
+              <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+
         {generatedPrompt && (
           <div className="mt-12 space-y-8">
             <Card className="rounded-xl">
@@ -242,6 +263,31 @@ export default function PromptGeneratorPage() {
                  </div>
                </CardContent>
             </Card>
+
+            {toolSuggestion && toolSuggestion.tool !== 'none' && toolMap[toolSuggestion.tool] && (
+              <Card className="rounded-xl bg-primary/10 border border-dashed border-primary/50 animate-fade-in">
+                <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <Sparkles className="h-8 w-8 text-primary shrink-0" />
+                        <div className="text-center sm:text-left">
+                            <h3 className="text-lg font-semibold text-white">Let's Create!</h3>
+                            <p className="text-muted-foreground">{toolSuggestion.suggestion}</p>
+                        </div>
+                    </div>
+                    <Button size="lg" className="shrink-0" asChild>
+                      <Link
+                          href={{
+                              pathname: toolMap[toolSuggestion.tool].href,
+                              query: { [toolMap[toolSuggestion.tool].queryParam]: generatedPrompt },
+                          }}
+                      >
+                          Try It Now
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
       </div>

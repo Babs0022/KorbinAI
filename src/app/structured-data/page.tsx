@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, LoaderCircle, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,11 +13,21 @@ import { useToast } from "@/hooks/use-toast";
 import { generateStructuredData, type GenerateStructuredDataInput } from "@/ai/flows/generate-structured-data-flow";
 
 export default function StructuredDataPage() {
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [generatedData, setGeneratedData] = useState("");
   const [copied, setCopied] = useState(false);
   const [format, setFormat] = useState("json");
+  const [description, setDescription] = useState("");
+  const [schemaDefinition, setSchemaDefinition] = useState("");
   const { toast } = useToast();
+
+  useEffect(() => {
+    const urlDescription = searchParams.get('description');
+    if (urlDescription) {
+      setDescription(urlDescription);
+    }
+  }, [searchParams]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedData);
@@ -29,11 +40,10 @@ export default function StructuredDataPage() {
     setGeneratedData("");
     setIsLoading(true);
 
-    const formData = new FormData(e.currentTarget);
     const input: GenerateStructuredDataInput = {
-      description: formData.get("description") as string,
-      format: format,
-      schemaDefinition: (formData.get("schemaDefinition") as string) || undefined,
+      description,
+      format,
+      schemaDefinition: schemaDefinition || undefined,
     };
 
     if (!input.description) {
@@ -97,6 +107,8 @@ export default function StructuredDataPage() {
                   name="description"
                   placeholder="e.g., 'A list of 5 fantasy book characters with names, classes, and levels' or 'A CSV of 10 sample customers with first name, last name, and email'."
                   className="min-h-[120px] text-base"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   required
                 />
               </div>
@@ -131,6 +143,8 @@ export default function StructuredDataPage() {
                     name="schemaDefinition"
                     placeholder={`e.g., {\n  "name": "string",\n  "class": "string",\n  "level": "number"\n}`}
                     className="min-h-[100px] font-mono text-xs"
+                    value={schemaDefinition}
+                    onChange={(e) => setSchemaDefinition(e.target.value)}
                     disabled={format !== 'json'}
                   />
                 </div>

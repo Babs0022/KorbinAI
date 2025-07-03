@@ -1,9 +1,10 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import NextImage from "next/image";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,18 +14,26 @@ import { useToast } from "@/hooks/use-toast";
 import { generateImage, type GenerateImageInput } from "@/ai/flows/generate-image-flow";
 
 export default function ImageGeneratorPage() {
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState("");
+  const [prompt, setPrompt] = useState("");
   const { toast } = useToast();
+
+  useEffect(() => {
+    const urlPrompt = searchParams.get('prompt');
+    if (urlPrompt) {
+      setPrompt(urlPrompt);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setGeneratedImage("");
     setIsLoading(true);
 
-    const formData = new FormData(e.currentTarget);
     const input: GenerateImageInput = {
-      prompt: formData.get("prompt") as string,
+      prompt,
     };
 
     if (!input.prompt) {
@@ -88,6 +97,8 @@ export default function ImageGeneratorPage() {
                   name="prompt"
                   placeholder="e.g., 'A photorealistic image of a red panda wearing a tiny wizard hat, sitting in a magical forest.'"
                   className="min-h-[120px] text-base"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
                   required
                 />
               </div>

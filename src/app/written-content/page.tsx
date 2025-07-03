@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, LoaderCircle, Copy, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +25,8 @@ import { cn } from "@/lib/utils";
 
 
 export default function WrittenContentPage() {
+  const searchParams = useSearchParams();
+
   // Form state
   const [contentType, setContentType] = useState("blog-post");
   const [tone, setTone] = useState("professional");
@@ -43,6 +46,13 @@ export default function WrittenContentPage() {
 
   const { toast } = useToast();
   
+  useEffect(() => {
+    const urlTopic = searchParams.get('topic');
+    if (urlTopic) {
+      setTopic(urlTopic);
+    }
+  }, [searchParams]);
+
   // Debounced effect for suggestions
   useEffect(() => {
     if (debounceTimeout) clearTimeout(debounceTimeout);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 
 export default function ComponentWizardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [description, setDescription] = useState("");
   const [style, setStyle] = useState("minimalist");
   const [dataPoints, setDataPoints] = useState("");
@@ -23,6 +25,13 @@ export default function ComponentWizardPage() {
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(new Set());
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const urlDescription = searchParams.get('description');
+    if (urlDescription) {
+      setDescription(urlDescription);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     setDataPoints(Array.from(selectedSuggestions).join(", "));
