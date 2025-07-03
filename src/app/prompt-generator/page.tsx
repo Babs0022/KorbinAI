@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, LoaderCircle, Copy, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,13 +11,55 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { generatePrompt, type GeneratePromptInput } from "@/ai/flows/generate-prompt-flow";
+import { generatePromptFormatSuggestions } from "@/ai/flows/generate-prompt-format-suggestions-flow";
 
 export default function PromptGeneratorPage() {
+  // Form State
+  const [taskDescription, setTaskDescription] = useState("");
+  const [targetModel, setTargetModel] = useState("");
+  const [outputFormat, setOutputFormat] = useState("");
+
+  // Generation State
   const [isLoading, setIsLoading] = useState(false);
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [explanation, setExplanation] = useState("");
   const [copied, setCopied] = useState(false);
+
+  // Suggestion State
+  const [formatSuggestions, setFormatSuggestions] = useState<string[]>([]);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
+
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (debounceTimeout) clearTimeout(debounceTimeout);
+    
+    if (taskDescription.trim().split(/\s+/).length < 3) {
+      setFormatSuggestions([]);
+      return;
+    }
+
+    setIsSuggesting(true);
+    const timeout = setTimeout(async () => {
+      try {
+        const result = await generatePromptFormatSuggestions({ taskDescription });
+        setFormatSuggestions(result.suggestions || []);
+      } catch (error) {
+        console.error("Failed to get suggestions:", error);
+        setFormatSuggestions([]);
+      } finally {
+        setIsSuggesting(false);
+      }
+    }, 1000);
+
+    setDebounceTimeout(timeout);
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [taskDescription]);
+
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedPrompt);
@@ -30,11 +73,10 @@ export default function PromptGeneratorPage() {
     setExplanation("");
     setIsLoading(true);
 
-    const formData = new FormData(e.currentTarget);
     const input: GeneratePromptInput = {
-      taskDescription: formData.get("taskDescription") as string,
-      targetModel: (formData.get("targetModel") as string) || undefined,
-      outputFormat: (formData.get("outputFormat") as string) || undefined,
+      taskDescription,
+      targetModel: targetModel || undefined,
+      outputFormat: outputFormat || undefined,
     };
 
     if (!input.taskDescription) {
@@ -99,6 +141,8 @@ export default function PromptGeneratorPage() {
                   name="taskDescription"
                   placeholder="e.g., 'Write a tweet about our new product launch' or 'Summarize a long article about climate change'."
                   className="min-h-[120px] text-base"
+                  value={taskDescription}
+                  onChange={(e) => setTaskDescription(e.target.value)}
                   required
                 />
               </div>
@@ -108,13 +152,46 @@ export default function PromptGeneratorPage() {
                   <h3 className="text-lg font-medium text-white">
                     Target AI Model <span className="font-normal text-muted-foreground">(optional)</span>
                   </h3>
-                  <Input id="target-model" name="targetModel" placeholder="e.g., 'Gemini 1.5 Pro'" className="text-base" />
+                  <Input 
+                    id="target-model" 
+                    name="targetModel" 
+                    placeholder="e.g., 'Gemini 1.5 Pro'" 
+                    className="text-base" 
+                    value={targetModel}
+                    onChange={(e) => setTargetModel(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-medium text-white">
-                    Desired Output Format <span className="font-normal text-muted-foreground">(optional)</span>
-                  </h3>
-                  <Input id="output-format" name="outputFormat" placeholder="e.g., 'JSON with 'name' and 'summary' keys'" className="text-base" />
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-medium text-white">
+                      Desired Output Format <span className="font-normal text-muted-foreground">(optional)</span>
+                    </h3>
+                    {isSuggesting && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                  </div>
+                  <Input 
+                    id="output-format" 
+                    name="outputFormat" 
+                    placeholder="e.g., 'JSON with 'name' and 'summary' keys'" 
+                    className="text-base" 
+                    value={outputFormat}
+                    onChange={(e) => setOutputFormat(e.target.value)}
+                  />
+                   {formatSuggestions.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-2">
+                          {formatSuggestions.map(suggestion => (
+                              <Button
+                                  key={suggestion}
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setOutputFormat(suggestion)}
+                                  className="text-xs"
+                              >
+                                  <Sparkles className="mr-1 h-3 w-3 text-primary" /> {suggestion}
+                              </Button>
+                          ))}
+                      </div>
+                  )}
                 </div>
               </div>
 
