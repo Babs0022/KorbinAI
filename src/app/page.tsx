@@ -45,7 +45,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
           {creationOptions.map((option) => (
             <Link href={option.href} key={option.title} className="group">
-              <Card className="flex h-full transform flex-col items-start bg-card/50 p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/80 hover:bg-card">
+              <Card className="flex h-full transform flex-col items-start p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/80 rounded-xl">
                 <div className="mb-4 text-primary">{option.icon}</div>
                 <CardHeader className="p-0">
                   <CardTitle className="text-2xl font-semibold transition-colors duration-300 group-hover:text-primary">

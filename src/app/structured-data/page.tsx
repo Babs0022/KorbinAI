@@ -85,13 +85,13 @@ export default function StructuredDataPage() {
           </p>
         </div>
 
-        <Card className="w-full border-0 bg-card/50 sm:border">
-          <CardContent className="p-0 sm:p-8">
+        <Card className="w-full rounded-xl">
+          <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-base font-semibold">
+                <h3 className="text-lg font-medium text-white">
                   What data do you want to generate?
-                </Label>
+                </h3>
                 <Textarea
                   id="description"
                   name="description"
@@ -103,9 +103,9 @@ export default function StructuredDataPage() {
 
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 <div className="space-y-4">
-                  <Label className="text-base font-semibold">
+                  <h3 className="text-lg font-medium text-white">
                     Output Format
-                  </Label>
+                  </h3>
                   <RadioGroup
                     value={format}
                     onValueChange={setFormat}
@@ -123,9 +123,9 @@ export default function StructuredDataPage() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="schemaDefinition" className="text-base font-semibold">
-                    JSON Schema/Example <span className="text-muted-foreground">(optional)</span>
-                  </Label>
+                  <h3 className="text-lg font-medium text-white">
+                    JSON Schema/Example <span className="font-normal text-muted-foreground">(optional)</span>
+                  </h3>
                   <Textarea
                     id="schemaDefinition"
                     name="schemaDefinition"
@@ -153,7 +153,7 @@ export default function StructuredDataPage() {
         </Card>
 
         {generatedData && (
-          <Card className="mt-12">
+          <Card className="mt-12 rounded-xl">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Your Generated Data</CardTitle>
               <Button variant="ghost" size="icon" onClick={handleCopy}>
@@ -162,7 +162,7 @@ export default function StructuredDataPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <pre className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md border bg-muted/50 p-4">
+              <pre className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md bg-secondary p-4">
                 <code>{generatedData}</code>
               </pre>
             </CardContent>

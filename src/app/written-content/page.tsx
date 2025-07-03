@@ -97,14 +97,14 @@ export default function WrittenContentPage() {
           </p>
         </div>
 
-        <Card className="w-full border-0 bg-card/50 sm:border">
-          <CardContent className="p-0 sm:p-8">
+        <Card className="w-full rounded-xl">
+          <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="content-type" className="text-base font-semibold">
+                  <h3 className="text-lg font-medium text-white">
                     What type of content do you need?
-                  </Label>
+                  </h3>
                   <Select name="contentType" defaultValue="blog-post">
                     <SelectTrigger id="content-type" className="text-base">
                       <SelectValue placeholder="Select a content type" />
@@ -117,47 +117,36 @@ export default function WrittenContentPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-base font-semibold">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-white">
                     Choose a tone of voice
-                  </Label>
+                  </h3>
                    <RadioGroup
                     value={tone}
                     onValueChange={setTone}
                     className="grid grid-cols-2 gap-4 pt-2"
                   >
-                    <div>
-                      <RadioGroupItem value="professional" id="tone-professional" className="peer sr-only" />
-                      <Label htmlFor="tone-professional" className="flex h-full items-center justify-center rounded-md border-2 border-muted bg-popover px-4 py-2 hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                        Professional
-                      </Label>
-                    </div>
-                     <div>
-                      <RadioGroupItem value="casual" id="tone-casual" className="peer sr-only" />
-                      <Label htmlFor="tone-casual" className="flex h-full items-center justify-center rounded-md border-2 border-muted bg-поover px-4 py-2 hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                        Casual
-                      </Label>
-                    </div>
-                     <div>
-                      <RadioGroupItem value="witty" id="tone-witty" className="peer sr-only" />
-                      <Label htmlFor="tone-witty" className="flex h-full items-center justify-center rounded-md border-2 border-muted bg-popover px-4 py-2 hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                        Witty
-                      </Label>
-                    </div>
-                     <div>
-                      <RadioGroupItem value="persuasive" id="tone-persuasive" className="peer sr-only" />
-                      <Label htmlFor="tone-persuasive" className="flex h-full items-center justify-center rounded-md border-2 border-muted bg-popover px-4 py-2 hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                        Persuasive
-                      </Label>
-                    </div>
+                    {[
+                      { value: 'professional', label: 'Professional' },
+                      { value: 'casual', label: 'Casual' },
+                      { value: 'witty', label: 'Witty' },
+                      { value: 'persuasive', label: 'Persuasive' },
+                    ].map(({ value, label }) => (
+                      <div key={value}>
+                        <RadioGroupItem value={value} id={`tone-${value}`} className="peer sr-only" />
+                        <Label htmlFor={`tone-${value}`} className="flex h-full items-center justify-center rounded-md border-2 border-accent bg-secondary px-4 py-2 hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 [&:has([data-state=checked])]:border-primary">
+                          {label}
+                        </Label>
+                      </div>
+                    ))}
                   </RadioGroup>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="topic" className="text-base font-semibold">
+                <h3 className="text-lg font-medium text-white">
                   What is the main topic or message?
-                </Label>
+                </h3>
                 <Textarea
                   id="topic"
                   name="topic"
@@ -169,15 +158,15 @@ export default function WrittenContentPage() {
 
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                  <div className="space-y-2">
-                    <Label htmlFor="audience" className="text-base font-semibold">
-                      Who is the target audience? <span className="text-muted-foreground">(optional)</span>
-                    </Label>
+                    <h3 className="text-lg font-medium text-white">
+                      Who is the target audience? <span className="font-normal text-muted-foreground">(optional)</span>
+                    </h3>
                     <Input id="audience" name="audience" placeholder="e.g., 'Software developers' or 'Mothers in their 30s'" className="text-base" />
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="keywords" className="text-base font-semibold">
-                      Keywords to include <span className="text-muted-foreground">(comma-separated, optional)</span>
-                    </Label>
+                    <h3 className="text-lg font-medium text-white">
+                      Keywords to include <span className="font-normal text-muted-foreground">(comma-separated, optional)</span>
+                    </h3>
                     <Input id="keywords" name="keywords" placeholder="e.g., 'AI, productivity, automation'" className="text-base" />
                 </div>
               </div>
@@ -199,7 +188,7 @@ export default function WrittenContentPage() {
         </Card>
 
         {generatedContent && (
-          <Card className="mt-12">
+          <Card className="mt-12 rounded-xl">
             <CardHeader className="flex flex-row items-center justify-between p-4">
               <CardTitle>Your Generated Content</CardTitle>
               <Button variant="ghost" size="icon" onClick={handleCopy}>
@@ -208,7 +197,7 @@ export default function WrittenContentPage() {
               </Button>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md border bg-muted/50 p-4">
+              <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md bg-secondary p-4">
                 {generatedContent}
               </div>
             </CardContent>

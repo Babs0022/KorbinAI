@@ -87,13 +87,13 @@ export default function PromptGeneratorPage() {
           </p>
         </div>
 
-        <Card className="w-full border-0 bg-card/50 sm:border">
-          <CardContent className="p-0 sm:p-8">
+        <Card className="w-full rounded-xl">
+          <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="space-y-2">
-                <Label htmlFor="task-description" className="text-base font-semibold">
+                <h3 className="text-lg font-medium text-white">
                   What task do you want the AI to perform?
-                </Label>
+                </h3>
                 <Textarea
                   id="task-description"
                   name="taskDescription"
@@ -105,15 +105,15 @@ export default function PromptGeneratorPage() {
 
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="target-model" className="text-base font-semibold">
-                    Target AI Model <span className="text-muted-foreground">(optional)</span>
-                  </Label>
+                  <h3 className="text-lg font-medium text-white">
+                    Target AI Model <span className="font-normal text-muted-foreground">(optional)</span>
+                  </h3>
                   <Input id="target-model" name="targetModel" placeholder="e.g., 'Gemini 1.5 Pro'" className="text-base" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="output-format" className="text-base font-semibold">
-                    Desired Output Format <span className="text-muted-foreground">(optional)</span>
-                  </Label>
+                  <h3 className="text-lg font-medium text-white">
+                    Desired Output Format <span className="font-normal text-muted-foreground">(optional)</span>
+                  </h3>
                   <Input id="output-format" name="outputFormat" placeholder="e.g., 'JSON with 'name' and 'summary' keys'" className="text-base" />
                 </div>
               </div>
@@ -136,7 +136,7 @@ export default function PromptGeneratorPage() {
 
         {generatedPrompt && (
           <div className="mt-12 space-y-8">
-            <Card>
+            <Card className="rounded-xl">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Your Generated Prompt</CardTitle>
                 <Button variant="ghost" size="icon" onClick={handleCopy}>
@@ -145,13 +145,13 @@ export default function PromptGeneratorPage() {
                 </Button>
               </CardHeader>
               <CardContent>
-                <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md border bg-muted/50 p-4">
+                <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md bg-secondary p-4">
                   {generatedPrompt}
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card/50">
+            <Card className="rounded-xl">
                <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-xl">
                         <Sparkles className="h-5 w-5 text-primary" />

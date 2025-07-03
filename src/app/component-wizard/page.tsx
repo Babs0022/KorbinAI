@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, LoaderCircle, Sparkles } from "lucide-react";
+import { ArrowLeft, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { generateSectionSuggestions } from "@/ai/flows/generate-section-suggestions-flow";
 import { cn } from "@/lib/utils";
 
@@ -16,13 +17,16 @@ export default function ComponentWizardPage() {
   const router = useRouter();
   const [description, setDescription] = useState("");
   const [style, setStyle] = useState("minimalist");
+  const [dataPoints, setDataPoints] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  // New state for suggestions
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(new Set());
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setDataPoints(Array.from(selectedSuggestions).join(", "));
+  }, [selectedSuggestions]);
 
   useEffect(() => {
     if (debounceTimeout) {
@@ -45,7 +49,7 @@ export default function ComponentWizardPage() {
       } finally {
         setIsSuggesting(false);
       }
-    }, 750); // 750ms debounce delay
+    }, 750);
 
     setDebounceTimeout(timeout);
 
@@ -66,6 +70,13 @@ export default function ComponentWizardPage() {
     });
   };
 
+  const handleDataPointsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setDataPoints(value);
+    const newSelected = new Set(value.split(',').map(s => s.trim()).filter(Boolean));
+    setSelectedSuggestions(newSelected);
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!description) return;
@@ -74,7 +85,7 @@ export default function ComponentWizardPage() {
     const params = new URLSearchParams({
       description,
       style,
-      dataPoints: Array.from(selectedSuggestions).join(", "),
+      dataPoints,
     });
 
     router.push(`/component-wizard/result?${params.toString()}`);
@@ -92,24 +103,24 @@ export default function ComponentWizardPage() {
         </Link>
 
         <div className="text-center">
-          <h1 className="mb-2 text-4xl font-bold md:text-5xl">
+          <h1 className="mb-2 text-4xl font-bold text-white md:text-5xl">
             Let's build your Application
           </h1>
-          <p className="mb-12 text-lg text-muted-foreground">
+          <p className="mb-12 text-lg text-white/70">
             Describe the application, page, or feature you want to build.
           </p>
         </div>
 
-        <Card className="w-full border-0 bg-card/50 sm:border">
-          <CardContent className="p-0 sm:p-8">
+        <Card className="w-full rounded-xl">
+          <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="grid w-full items-center gap-2">
-                <Label htmlFor="component-description" className="text-base font-semibold">
+                <h3 className="text-lg font-medium text-white">
                   In plain English, describe what you want to build.
-                </Label>
+                </h3>
                 <Textarea
                   id="component-description"
-                  placeholder="e.g., 'A SaaS landing page with a hero, features, and pricing sections' or 'A dashboard for an e-commerce store.'"
+                  placeholder="e.g., 'A landing page for a new SaaS app' or 'A dashboard for an e-commerce store.'"
                   className="min-h-[120px] text-base"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -118,76 +129,70 @@ export default function ComponentWizardPage() {
               </div>
 
               <div className="grid w-full items-center gap-4">
-                <Label className="text-base font-semibold">
+                <h3 className="text-lg font-medium text-white">
                   What is the visual style of your brand?
-                </Label>
+                </h3>
                 <RadioGroup
                   id="visual-style"
                   value={style}
                   onValueChange={setStyle}
                   className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4"
                 >
-                  <div>
-                    <RadioGroupItem value="minimalist" id="style-minimalist" className="peer sr-only" />
-                    <Label htmlFor="style-minimalist" className="flex h-full flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                      Minimalist & Modern
-                    </Label>
-                  </div>
-                  <div>
-                    <RadioGroupItem value="playful" id="style-playful" className="peer sr-only" />
-                    <Label htmlFor="style-playful" className="flex h-full flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                      Playful & Creative
-                    </Label>
-                  </div>
-                  <div>
-                    <RadioGroupItem value="corporate" id="style-corporate" className="peer sr-only" />
-                    <Label htmlFor="style-corporate" className="flex h-full flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                      Corporate & Professional
-                    </Label>
-                  </div>
-                  <div>
-                    <RadioGroupItem value="futuristic" id="style-futuristic" className="peer sr-only" />
-                    <Label htmlFor="style-futuristic" className="flex h-full flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                      Bold & Futuristic
-                    </Label>
-                  </div>
+                  {[
+                    { value: 'minimalist', label: 'Minimalist & Modern' },
+                    { value: 'playful', label: 'Playful & Creative' },
+                    { value: 'corporate', label: 'Corporate & Professional' },
+                    { value: 'futuristic', label: 'Bold & Futuristic' },
+                  ].map(({ value, label }) => (
+                    <div key={value}>
+                      <RadioGroupItem value={value} id={`style-${value}`} className="peer sr-only" />
+                      <Label htmlFor={`style-${value}`} className="flex h-full flex-col items-center justify-center rounded-md border-2 border-accent bg-secondary p-4 hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 [&:has([data-state=checked])]:border-primary">
+                        {label}
+                      </Label>
+                    </div>
+                  ))}
                 </RadioGroup>
               </div>
 
-              <div className="space-y-4 rounded-lg bg-background/50 p-4">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Label className="text-base font-semibold">
-                    Suggested Sections
-                  </Label>
-                  {isSuggesting && <LoaderCircle className="h-4 w-4 animate-spin text-muted-foreground" />}
+                    <h3 className="text-lg font-medium text-white">
+                        Suggested Sections
+                    </h3>
+                    {isSuggesting && <LoaderCircle className="h-4 w-4 animate-spin" />}
                 </div>
-
-                {suggestions.length > 0 ? (
-                  <div className="flex flex-wrap gap-3">
+                {suggestions.length > 0 && (
+                    <div className="flex flex-wrap gap-3">
                     {suggestions.map(suggestion => (
-                      <button
+                        <button
                         key={suggestion}
                         type="button"
                         onClick={() => handleToggleSuggestion(suggestion)}
                         className={cn(
-                          "rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                          selectedSuggestions.has(suggestion)
+                            "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                            selectedSuggestions.has(suggestion)
                             ? "bg-primary text-primary-foreground"
-                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                            : "bg-secondary text-secondary-foreground hover:bg-accent"
                         )}
-                      >
+                        >
                         {suggestion}
-                      </button>
+                        </button>
                     ))}
-                  </div>
-                ) : (
-                  !isSuggesting && description.trim().split(/\s+/).length >= 3 && (
-                    <div className="flex items-center gap-3 rounded-lg border border-dashed border-border p-4">
-                      <Sparkles className="h-6 w-6 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">We'll suggest sections here once you provide a more detailed description above.</p>
                     </div>
-                  )
                 )}
+              </div>
+
+              <div className="grid w-full items-center gap-2">
+                <h3 className="text-lg font-medium text-white">
+                  Are there any specific sections or data points you want to include? (Optional)
+                </h3>
+                <Input
+                  id="data-points"
+                  placeholder="e.g., Hero Section, Features, Testimonials"
+                  className="text-base"
+                  value={dataPoints}
+                  onChange={handleDataPointsChange}
+                />
               </div>
 
               <div className="flex justify-end pt-4">

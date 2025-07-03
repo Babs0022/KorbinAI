@@ -10,8 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { generateImage } from "@/ai/flows/generate-image-flow";
-import type { GenerateImageInput } from "@/ai/flows/generate-image-flow";
+import { generateImage, type GenerateImageInput } from "@/ai/flows/generate-image-flow";
 
 export default function ImageGeneratorPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -77,13 +76,13 @@ export default function ImageGeneratorPage() {
           </p>
         </div>
 
-        <Card className="w-full border-0 bg-card/50 sm:border">
-          <CardContent className="p-0 sm:p-8">
+        <Card className="w-full rounded-xl">
+          <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="space-y-2">
-                <Label htmlFor="prompt" className="text-base font-semibold">
+                <h3 className="text-lg font-medium text-white">
                   What should the image look like?
-                </Label>
+                </h3>
                 <Textarea
                   id="prompt"
                   name="prompt"
@@ -110,7 +109,7 @@ export default function ImageGeneratorPage() {
         </Card>
 
         {isLoading && (
-          <Card className="mt-12">
+          <Card className="mt-12 rounded-xl">
             <CardHeader>
               <CardTitle>Generating Your Image...</CardTitle>
             </CardHeader>
@@ -121,7 +120,7 @@ export default function ImageGeneratorPage() {
         )}
 
         {generatedImage && !isLoading && (
-          <Card className="mt-12">
+          <Card className="mt-12 rounded-xl">
             <CardHeader>
               <CardTitle>Your Generated Image</CardTitle>
             </CardHeader>
