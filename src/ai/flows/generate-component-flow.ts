@@ -33,11 +33,19 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateComponentInputSchema},
   output: {schema: GenerateComponentOutputSchema},
   prompt: `You are an expert Next.js developer specializing in creating beautiful and functional React components.
-Your task is to generate the code for a single, self-contained React component file (.tsx).
-Use TypeScript, Tailwind CSS, and components from shadcn/ui where appropriate.
+Your task is to generate the code for a single, self-contained React component file (.tsx) and a name for it.
+You MUST return the output as a valid JSON object that conforms to this Zod schema:
+\`\`\`json
+{
+  "componentName": "A PascalCase name for the component, e.g., ContactForm.",
+  "componentCode": "The full TSX code for the React component, including all necessary imports."
+}
+\`\`\`
+
+The component should use TypeScript, Tailwind CSS, and components from shadcn/ui where appropriate.
 Ensure the component is fully responsive and accessible.
 Use placeholder images from \`https://placehold.co/<width>x<height>.png\` if images are needed. Add a data-ai-hint attribute to the image with one or two keywords for the image.
-Do not add any explanations, introductory text, or markdown formatting around the code. Output only the raw code for the component file itself.
+Do not add any explanations, introductory text, or markdown formatting around the JSON. Output only the raw JSON object.
 
 Component Description: "{{description}}"
 Visual Style: "{{style}}"
@@ -45,7 +53,7 @@ Visual Style: "{{style}}"
 Specific Data Points to include: "{{dataPoints}}"
 {{/if}}
 
-Generate the component code now.
+Generate the JSON output now.
 `,
 });
 
@@ -56,9 +64,12 @@ const generateComponentFlow = ai.defineFlow(
     outputSchema: GenerateComponentOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
+    const response = await prompt(input);
+    const output = response.output;
+
     if (!output) {
-      throw new Error('Failed to generate component.');
+      console.error('AI response was empty or invalid.', { fullResponse: response });
+      throw new Error('Failed to generate component because the AI response was empty or invalid.');
     }
     // Clean up the output to remove markdown code blocks if the AI includes them
     const cleanedCode = output.componentCode.replace(/^```tsx\n/, '').replace(/\n```$/, '');

@@ -8,6 +8,12 @@ import CodeDisplay from '@/components/wizards/CodeDisplay';
 async function GeneratedComponent({ searchParams }: { searchParams: GenerateComponentInput }) {
   try {
     const result = await generateComponent(searchParams);
+
+    if (!result?.componentName || !result.componentCode) {
+      console.error("AI flow returned invalid data:", result);
+      throw new Error("The AI returned an invalid or incomplete component structure.");
+    }
+
     return <CodeDisplay componentName={result.componentName} componentCode={result.componentCode} />;
   } catch (error) {
     console.error("Failed to generate component:", error);
