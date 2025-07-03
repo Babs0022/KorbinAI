@@ -2,6 +2,8 @@
 "use client";
 
 import { useState } from "react";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button } from "@/components/ui/button";
 import { Copy, Check, Terminal, Folder, File as FileIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
@@ -43,10 +45,32 @@ const buildFileTree = (files: File[]): FileTree => {
     });
     return tree;
   };
+  
+const getLanguage = (filePath: string): string => {
+    const extension = filePath.split('.').pop()?.toLowerCase() || '';
+    switch (extension) {
+        case 'tsx':
+        case 'jsx':
+            return 'tsx';
+        case 'ts':
+            return 'typescript';
+        case 'js':
+            return 'javascript';
+        case 'json':
+            return 'json';
+        case 'css':
+            return 'css';
+        case 'md':
+            return 'markdown';
+        default:
+            return 'plaintext';
+    }
+};
 
 // --- UI COMPONENTS ---
 const CodeBlockWithHeader = ({ file }: { file: File }) => {
   const [copied, setCopied] = useState(false);
+  const language = getLanguage(file.filePath);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(file.componentCode);
@@ -55,7 +79,7 @@ const CodeBlockWithHeader = ({ file }: { file: File }) => {
   };
 
   return (
-    <div className="mt-4 overflow-hidden rounded-lg border bg-secondary/30">
+    <div className="mt-4 overflow-hidden rounded-lg border bg-secondary">
       <div className="flex items-center justify-between bg-muted/30 px-4 py-2">
         <div className="flex min-w-0 items-center gap-3">
             <FileIcon className="h-4 w-4 shrink-0" />
@@ -69,9 +93,20 @@ const CodeBlockWithHeader = ({ file }: { file: File }) => {
           <span className="sr-only">Copy Code</span>
         </Button>
       </div>
-      <pre className="overflow-x-auto p-4 text-sm">
-        <code>{file.componentCode}</code>
-      </pre>
+      <SyntaxHighlighter
+        language={language}
+        style={vscDarkPlus}
+        customStyle={{ margin: 0, backgroundColor: 'transparent' }}
+        codeTagProps={{
+          style: {
+            fontFamily: "var(--font-code, monospace)",
+            fontSize: "0.875rem",
+          },
+        }}
+        className="!p-4"
+      >
+        {file.componentCode}
+      </SyntaxHighlighter>
     </div>
   );
 };
