@@ -5,7 +5,7 @@ import React from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, BarChartHorizontal, TestTubes, CopyPlus, Plug, Rocket, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Users, BarChartHorizontal, TestTubes, CopyPlus, Plug, Rocket, CheckCircle, Settings2 } from 'lucide-react';
 import Link from 'next/link';
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from '@/components/shared/GlassCard';
 import { Badge } from '@/components/ui/badge';
@@ -19,9 +19,9 @@ interface RoadmapItem {
 
 const launchedFeatures: RoadmapItem[] = [
   {
-    title: "Team Collaboration Hub",
-    description: "Securely share, manage, and discuss prompts in a real-time collaborative workspace with role-based access for admins, editors, and viewers.",
-    icon: Users,
+    title: "Refinement & Optimization Hub",
+    description: "Iteratively improve saved prompts with direct editing and AI-powered contextual suggestions to evolve your best prompts.",
+    icon: Settings2,
     status: "Launched",
   },
   {
@@ -39,6 +39,12 @@ const launchedFeatures: RoadmapItem[] = [
 ];
 
 const nextFeatures: RoadmapItem[] = [
+    {
+        title: "Team Collaboration Hub",
+        description: "Securely share, manage, and discuss prompts in a real-time collaborative workspace with role-based access controls.",
+        icon: Users,
+        status: "Planned",
+    },
     {
         title: "Advanced Analytics & Cost Tracking",
         description: "An enhanced dashboard to monitor prompt API costs per user/prompt and track overall spending to optimize your budget.",
