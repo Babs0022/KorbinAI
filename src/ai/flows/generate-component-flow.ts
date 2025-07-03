@@ -1,76 +1,89 @@
 'use server';
 /**
- * @fileOverview A flow for generating React components based on user descriptions.
+ * @fileOverview A flow for generating multi-file React applications based on user descriptions.
  *
- * - generateComponent - A function that generates a React component.
- * - GenerateComponentInput - The input type for the generateComponent function.
- * - GenerateComponentOutput - The return type for the generateComponent function.
+ * - generateApp - A function that generates a React application structure.
+ * - GenerateAppInput - The input type for the generateApp function.
+ * - GenerateAppOutput - The return type for the generateApp function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
-const GenerateComponentInputSchema = z.object({
-  description: z.string().describe('A plain English description of the component to build.'),
+const GenerateAppInputSchema = z.object({
+  description: z.string().describe('A plain English description of the application or page to build.'),
   style: z.string().describe("The visual style of the brand (e.g., 'Minimalist & Modern', 'Playful & Creative')."),
-  dataPoints: z.string().optional().describe('A comma-separated list of specific data points the component should display.'),
+  dataPoints: z.string().optional().describe('A comma-separated list of specific data points or sections the app should include.'),
 });
-export type GenerateComponentInput = z.infer<typeof GenerateComponentInputSchema>;
+export type GenerateAppInput = z.infer<typeof GenerateAppInputSchema>;
 
-const GenerateComponentOutputSchema = z.object({
-  componentName: z.string().describe('A PascalCase name for the component, e.g., ContactForm.'),
-  componentCode: z.string().describe('The full TSX code for the React component, including all necessary imports.'),
+const FileOutputSchema = z.object({
+    filePath: z.string().describe("The full, absolute path for the file, e.g., 'src/app/page.tsx' or 'src/components/sections/HeroSection.tsx'."),
+    componentCode: z.string().describe("The full TSX/TS code for the file, including all necessary imports and content."),
+    instructions: z.string().describe("A brief, user-friendly explanation of this file's purpose and how it connects to other files."),
 });
-export type GenerateComponentOutput = z.infer<typeof GenerateComponentOutputSchema>;
+
+const GenerateAppOutputSchema = z.object({
+  files: z.array(FileOutputSchema).describe("An array of all the files needed for the application."),
+  finalInstructions: z.string().describe("A final summary of what the user should do next, like running 'npm run dev' to see the page. Do not tell them to run npm install."),
+});
+export type GenerateAppOutput = z.infer<typeof GenerateAppOutputSchema>;
 
 
-export async function generateComponent(input: GenerateComponentInput): Promise<GenerateComponentOutput> {
-  return generateComponentFlow(input);
+export async function generateApp(input: GenerateAppInput): Promise<GenerateAppOutput> {
+  return generateAppFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'generateComponentPrompt',
+  name: 'generateAppPrompt',
   model: 'googleai/gemini-1.5-flash-latest',
-  input: {schema: GenerateComponentInputSchema},
-  output: {schema: GenerateComponentOutputSchema},
-  prompt: `You are an expert Next.js developer specializing in creating beautiful and functional React components.
-Your task is to generate the code for a single, self-contained React component file (.tsx) and a name for it.
-You MUST return the output as a valid JSON object. The JSON object must have two keys: 'componentName' and 'componentCode'.
+  input: {schema: GenerateAppInputSchema},
+  output: {schema: GenerateAppOutputSchema},
+  prompt: `You are an expert Next.js developer and architect. Your task is to generate the full file structure for a web application based on a user's description.
+You MUST return the output as a valid JSON object that adheres to the defined schema. The JSON object must contain an array of file objects and final instructions.
 
-The component should use TypeScript, Tailwind CSS, and components from shadcn/ui where appropriate.
-Ensure the component is fully responsive and accessible.
-Use placeholder images from \`https://placehold.co/<width>x<height>.png\` if images are needed. Add a data-ai-hint attribute to the image with one or two keywords for the image.
-Do not add any explanations or introductory text. Output ONLY the raw JSON object.
+- For each file, provide a complete file path (e.g., 'src/app/page.tsx'), the full code, and a brief instruction for the user.
+- Use TypeScript, Next.js App Router, Tailwind CSS, and components from shadcn/ui where appropriate.
+- Create separate, reusable components for different sections of a page and place them in 'src/components/sections/'.
+- Ensure all components are self-contained and import any dependencies they need.
+- The main page route should always be 'src/app/page.tsx'.
+- Use placeholder images from \`https://placehold.co/<width>x<height>.png\` if images are needed. Add a data-ai-hint attribute to the image with one or two keywords for the image.
+- Do not add any explanations or introductory text. Output ONLY the raw JSON object.
 
-Component Description: "{{description}}"
+App Description: "{{description}}"
 Visual Style: "{{style}}"
 {{#if dataPoints}}
-Specific Data Points to include: "{{dataPoints}}"
+Specific Sections/Data to include: "{{dataPoints}}"
 {{/if}}
 
-Generate the JSON output now.
+Generate the JSON output for the entire application now.
 `,
 });
 
-const generateComponentFlow = ai.defineFlow(
+const generateAppFlow = ai.defineFlow(
   {
-    name: 'generateComponentFlow',
-    inputSchema: GenerateComponentInputSchema,
-    outputSchema: GenerateComponentOutputSchema,
+    name: 'generateAppFlow',
+    inputSchema: GenerateAppInputSchema,
+    outputSchema: GenerateAppOutputSchema,
   },
   async (input) => {
     const response = await prompt(input);
     const output = response.output;
 
-    if (!output) {
+    if (!output?.files || output.files.length === 0) {
       console.error('AI response was empty or invalid. Raw text from model:', response.text);
-      throw new Error('Failed to generate component because the AI response was empty or invalid.');
+      throw new Error('Failed to generate application because the AI response was empty or invalid.');
     }
-    // Clean up the output to remove markdown code blocks if the AI includes them
-    const cleanedCode = output.componentCode.replace(/^```tsx\n?/, '').replace(/\n?```$/, '');
+    
+    // Clean up the code in each file to remove markdown blocks if the AI includes them
+    const cleanedFiles = output.files.map(file => ({
+        ...file,
+        componentCode: file.componentCode.replace(/^```(tsx|typescript|ts|jsx|js|json)?\n?/, '').replace(/\n?```$/, '')
+    }));
+
     return {
-      ...output,
-      componentCode: cleanedCode,
+        ...output,
+        files: cleanedFiles,
     };
   }
 );

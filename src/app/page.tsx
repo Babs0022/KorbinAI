@@ -18,8 +18,8 @@ export default function HomePage() {
     },
     {
       icon: <LayoutTemplate className="h-8 w-8" />,
-      title: "Web Component",
-      subtitle: "Forms, galleries, hero sections",
+      title: "Web Page / App",
+      subtitle: "Full landing pages, dashboards, etc.",
       href: "/component-wizard",
     },
     {

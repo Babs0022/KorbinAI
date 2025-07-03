@@ -45,11 +45,10 @@ export default function ComponentWizardPage() {
 
         <div className="text-center">
           <h1 className="mb-2 text-4xl font-bold md:text-5xl">
-            Let's build your Web Component
+            Let's build your Application
           </h1>
           <p className="mb-12 text-lg text-muted-foreground">
-            Answer these simple questions so we can generate the best possible
-            result for you.
+            Describe the application, page, or feature you want to build.
           </p>
         </div>
 
@@ -58,11 +57,11 @@ export default function ComponentWizardPage() {
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="grid w-full items-center gap-2">
                 <Label htmlFor="component-description" className="text-base font-semibold">
-                  In plain English, describe the component you want to build.
+                  In plain English, describe what you want to build.
                 </Label>
                 <Textarea
                   id="component-description"
-                  placeholder="e.g., 'A contact form with fields for name, email, and message,' or 'A pricing table with three tiers.'"
+                  placeholder="e.g., 'A SaaS landing page with a hero, features, and pricing sections' or 'A dashboard for an e-commerce store.'"
                   className="min-h-[120px] text-base"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -109,11 +108,11 @@ export default function ComponentWizardPage() {
 
               <div className="grid w-full items-center gap-2">
                 <Label htmlFor="data-points" className="text-base font-semibold">
-                  Are there any specific data points it should display? (optional)
+                  Are there any specific sections or data points it should include? (optional)
                 </Label>
                 <Input
                   id="data-points"
-                  placeholder="e.g., 'name, price, user_testimonial,' or 'event_title, date, location.'"
+                  placeholder="e.g., 'hero, features, testimonials, pricing' or 'user profile, order history'."
                   className="text-base"
                   value={dataPoints}
                   onChange={(e) => setDataPoints(e.target.value)}
@@ -128,7 +127,7 @@ export default function ComponentWizardPage() {
                       Generating...
                     </>
                   ) : (
-                    "Generate Component"
+                    "Generate Application"
                   )}
                 </Button>
               </div>
