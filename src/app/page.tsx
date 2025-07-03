@@ -54,7 +54,7 @@ export default function HomePage() {
   // button for unauthenticated users.
   return (
     <DashboardLayout>
-      <main className="flex flex-col items-center justify-center p-4 md:p-8">
+      <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
         <div className="w-full max-w-4xl text-center">
           <h1 className="mb-12 text-4xl font-bold md:text-5xl">
             What would you like to create today?
