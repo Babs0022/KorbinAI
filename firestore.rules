@@ -4,37 +4,41 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // By default, deny all reads and writes
-    match /{document=**} {
-      allow read, write: if false;
+    // Helper function to check if the requesting user is an admin.
+    // This requires a `users` collection where an `admin: true` field is stored.
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true;
     }
 
-    // Users can only read and write their own user document.
+    // --- User Profiles ---
+    // Users can read any profile, but can only create or update their own.
     match /users/{userId} {
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-      // Allow creation if the UID in the new document matches the authenticated user.
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
     }
 
-    // Users can create, read, update, and delete their own workspaces.
+    // --- Workspaces ---
+    // Users can only manage their own documents. Validation is enforced on creation.
     match /workspaces/{workspaceId} {
-        allow get, list: if request.auth != null && resource.data.userId == request.auth.uid;
-        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-        allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      // A user can read, update, or delete a workspace only if they are the owner.
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      // A user can create a workspace if they are the owner and provide valid data.
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0 && request.resource.data.name.size() < 100
+                    && request.resource.data.summary is string
+                    && request.resource.data.type is string
+                    && request.resource.data.input is map
+                    && request.resource.data.featurePath is string;
     }
 
-    // Users can read their own subscription status, but cannot write to it.
-    // Writes are handled by secure backend functions only.
-    match /userSubscriptions/{userId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        allow write: if false;
-    }
-
-    // Users can read their own transaction history, but cannot write to it.
-    // Writes are handled by secure backend functions only.
-    match /transactions/{transactionId} {
-        allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-        allow write: if false;
+    // --- Templates (Example Collection) ---
+    // Templates are readable by any authenticated user, but only writable by admins.
+    match /templates/{templateId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
     }
   }
 }
