@@ -3,9 +3,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { LoaderCircle, Copy, Check, Sparkles, ArrowRight } from "lucide-react";
+import { LoaderCircle, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +13,7 @@ import { generatePrompt, type GeneratePromptInput } from "@/ai/flows/generate-pr
 import { generatePromptFormatSuggestions } from "@/ai/flows/generate-prompt-format-suggestions-flow";
 import { analyzePrompt, type AnalyzePromptOutput } from "@/ai/flows/analyze-prompt-flow";
 import { useAuth } from "@/contexts/AuthContext";
+import GenerationResultCard from "@/components/shared/GenerationResultCard";
 
 export default function PromptGeneratorClient() {
   // Form State
@@ -23,7 +24,6 @@ export default function PromptGeneratorClient() {
   // Generation State
   const [isLoading, setIsLoading] = useState(false);
   const [generatedPrompt, setGeneratedPrompt] = useState("");
-  const [copied, setCopied] = useState(false);
 
   // Suggestion State
   const [formatSuggestions, setFormatSuggestions] = useState<string[]>([]);
@@ -68,13 +68,6 @@ export default function PromptGeneratorClient() {
       if (timeout) clearTimeout(timeout);
     };
   }, [taskDescription]);
-
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(generatedPrompt);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -216,20 +209,11 @@ export default function PromptGeneratorClient() {
 
       {generatedPrompt && (
         <div className="mt-12 space-y-8">
-          <Card className="rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Your Generated Prompt</CardTitle>
-              <Button variant="ghost" size="icon" onClick={handleCopy}>
-                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                <span className="sr-only">Copy Prompt</span>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md bg-secondary p-4">
-                {generatedPrompt}
-              </div>
-            </CardContent>
-          </Card>
+          <GenerationResultCard
+            title="Your Generated Prompt"
+            content={generatedPrompt}
+            variant="prose"
+          />
 
           {toolSuggestion && toolSuggestion.tool !== 'none' && toolMap[toolSuggestion.tool] && (
             <Card className="rounded-xl bg-primary/10 border border-dashed border-primary/50 animate-fade-in">

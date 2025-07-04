@@ -3,9 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { LoaderCircle, Copy, Check, Sparkles, Wand2 } from "lucide-react";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { LoaderCircle, Sparkles, Wand2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -16,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { generateStructuredData, type GenerateStructuredDataInput } from "@/ai/flows/generate-structured-data-flow";
 import { generateJsonSchemaSuggestions } from "@/ai/flows/generate-json-schema-suggestions-flow";
 import { useAuth } from "@/contexts/AuthContext";
+import GenerationResultCard from "@/components/shared/GenerationResultCard";
 
 export default function StructuredDataClient() {
   const searchParams = useSearchParams();
@@ -30,7 +29,6 @@ export default function StructuredDataClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefining, setIsRefining] = useState<string | false>(false);
   const [generatedData, setGeneratedData] = useState("");
-  const [copied, setCopied] = useState(false);
 
   // Suggestion State
   const [suggestion, setSuggestion] = useState("");
@@ -75,13 +73,6 @@ export default function StructuredDataClient() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [description, format]);
-
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(generatedData);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -281,30 +272,12 @@ export default function StructuredDataClient() {
 
       {generatedData && (
         <div className="mt-12 space-y-8 animate-fade-in">
-          <Card className="rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Your Generated Data</CardTitle>
-              <Button variant="ghost" size="icon" onClick={handleCopy}>
-                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                <span className="sr-only">Copy Data</span>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <SyntaxHighlighter
-                language={format}
-                style={vscDarkPlus}
-                customStyle={{ margin: 0, backgroundColor: 'hsl(var(--secondary))', borderRadius: 'var(--radius)', padding: '1rem' }}
-                codeTagProps={{
-                  style: {
-                    fontFamily: "var(--font-code, monospace)",
-                    fontSize: "0.875rem",
-                  },
-                }}
-              >
-                {generatedData}
-              </SyntaxHighlighter>
-            </CardContent>
-          </Card>
+          <GenerationResultCard
+            title="Your Generated Data"
+            content={generatedData}
+            language={format}
+            variant="code"
+          />
 
           <Card className="rounded-xl border-primary/20 bg-primary/5">
             <CardHeader>

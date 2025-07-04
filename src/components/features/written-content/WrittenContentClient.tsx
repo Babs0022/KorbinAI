@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { LoaderCircle, Copy, Check, Sparkles, Wand2 } from "lucide-react";
+import { LoaderCircle, Sparkles, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { generateWrittenContent, GenerateWrittenContentInput } from "@/ai/flows/generate-written-content-flow";
 import { generateContentSuggestions, GenerateContentSuggestionsOutput } from "@/ai/flows/generate-content-suggestions-flow";
 import { useAuth } from "@/contexts/AuthContext";
+import GenerationResultCard from "@/components/shared/GenerationResultCard";
 
 export default function WrittenContentClient() {
   const searchParams = useSearchParams();
@@ -37,7 +38,6 @@ export default function WrittenContentClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefining, setIsRefining] = useState<string | false>(false);
   const [generatedContent, setGeneratedContent] = useState("");
-  const [copied, setCopied] = useState(false);
   
   // Suggestion state
   const [suggestions, setSuggestions] = useState<GenerateContentSuggestionsOutput>({ suggestedAudience: '', suggestedKeywords: [] });
@@ -89,12 +89,6 @@ export default function WrittenContentClient() {
       kwSet.add(keyword);
       return Array.from(kwSet).join(', ');
     });
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(generatedContent);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -315,20 +309,11 @@ export default function WrittenContentClient() {
 
       {generatedContent && (
           <div className="mt-12 space-y-8 animate-fade-in">
-              <Card className="rounded-xl">
-                  <CardHeader className="flex flex-row items-center justify-between p-4">
-                  <CardTitle>Your Generated Content</CardTitle>
-                  <Button variant="ghost" size="icon" onClick={handleCopy}>
-                      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                      <span className="sr-only">Copy Content</span>
-                  </Button>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                  <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md bg-secondary p-4">
-                      {generatedContent}
-                  </div>
-                  </CardContent>
-              </Card>
+              <GenerationResultCard
+                title="Your Generated Content"
+                content={generatedContent}
+                variant="prose"
+              />
 
               <Card className="rounded-xl border-primary/20 bg-primary/5">
                   <CardHeader>
