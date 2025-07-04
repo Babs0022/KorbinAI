@@ -108,21 +108,23 @@ export default function WorkspacesPage() {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {workspaces.map((workspace) => (
-                <Link key={workspace.id} href={{ pathname: workspace.featurePath, query: workspace.input as any }} legacyBehavior>
-                    <a className="block h-full">
-                        <Card className="h-full flex flex-col hover:border-primary/80 transition-colors duration-200">
-                            <CardHeader className="flex-row items-start gap-4 space-y-0">
-                                <WorkspaceIcon type={workspace.type} />
-                                <div className="flex-1">
-                                    <CardTitle>{workspace.name}</CardTitle>
-                                    <CardDescription className="line-clamp-2 mt-1">{workspace.summary}</CardDescription>
-                                </div>
-                            </CardHeader>
-                            <CardFooter className="mt-auto pt-4 text-xs text-muted-foreground">
-                                {workspace.updatedAt && `Last updated ${formatDistanceToNow(new Date(workspace.updatedAt), { addSuffix: true })}`}
-                            </CardFooter>
-                        </Card>
-                    </a>
+                <Link
+                    key={workspace.id}
+                    href={{ pathname: workspace.featurePath, query: workspace.input as any }}
+                    className="block h-full"
+                >
+                    <Card className="h-full flex flex-col hover:border-primary/80 transition-colors duration-200">
+                        <CardHeader className="flex-row items-start gap-4 space-y-0">
+                            <WorkspaceIcon type={workspace.type} />
+                            <div className="flex-1">
+                                <CardTitle>{workspace.name}</CardTitle>
+                                <CardDescription className="line-clamp-2 mt-1">{workspace.summary}</CardDescription>
+                            </div>
+                        </CardHeader>
+                        <CardFooter className="mt-auto pt-4 text-xs text-muted-foreground">
+                            {workspace.updatedAt && `Last updated ${formatDistanceToNow(new Date(workspace.updatedAt), { addSuffix: true })}`}
+                        </CardFooter>
+                    </Card>
                 </Link>
             ))}
         </div>
