@@ -3,17 +3,38 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read and write their own document.
+
+    // By default, deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users can only read and write their own user document.
     match /users/{userId} {
       allow read, update: if request.auth != null && request.auth.uid == userId;
-      // Anyone authenticated can create a user document, but only for their own UID.
-      allow create: if request.auth != null && request.auth.uid == userId;
+      // Allow creation if the UID in the new document matches the authenticated user.
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
     }
 
     // Users can create, read, update, and delete their own workspaces.
     match /workspaces/{workspaceId} {
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
-      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+        allow get, list: if request.auth != null && resource.data.userId == request.auth.uid;
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // Users can read their own subscription status, but cannot write to it.
+    // Writes are handled by secure backend functions only.
+    match /userSubscriptions/{userId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+    }
+
+    // Users can read their own transaction history, but cannot write to it.
+    // Writes are handled by secure backend functions only.
+    match /transactions/{transactionId} {
+        allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+        allow write: if false;
     }
   }
 }
