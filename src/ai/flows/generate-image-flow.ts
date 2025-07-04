@@ -42,6 +42,10 @@ const generateImageFlow = ai.defineFlow(
       candidates: input.count,
     });
 
+    if (!response.candidates || !Array.isArray(response.candidates)) {
+      throw new Error('Image generation failed: The AI model did not return any image candidates. This may be due to a safety policy violation in the prompt.');
+    }
+
     const imageUrls = response.candidates
       .map(candidate => candidate.output?.media?.url)
       .filter((url): url is string => !!url);
