@@ -5,7 +5,6 @@ import type { Workspace } from '@/types/workspace';
 import NextImage from 'next/image';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Pencil } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,6 @@ interface WorkspacePreviewDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onExport: (workspace: Workspace) => void;
-  onEdit: (workspace: Workspace) => void;
 }
 
 const getLanguage = (format: string | undefined): string => {
@@ -24,17 +22,8 @@ const getLanguage = (format: string | undefined): string => {
     return 'json';
 };
 
-function isValidPath(path: unknown): path is string {
-    return typeof path === 'string' && path.trim() !== '' && path.startsWith('/');
-}
-
-export default function WorkspacePreviewDialog({ workspace, isOpen, onOpenChange, onExport, onEdit }: WorkspacePreviewDialogProps) {
+export default function WorkspacePreviewDialog({ workspace, isOpen, onOpenChange, onExport }: WorkspacePreviewDialogProps) {
   if (!workspace) return null;
-
-  const handleEditClick = () => {
-    onEdit(workspace);
-    onOpenChange(false); // Close dialog after clicking edit
-  }
 
   const renderContent = () => {
     switch (workspace.type) {
@@ -96,9 +85,6 @@ export default function WorkspacePreviewDialog({ workspace, isOpen, onOpenChange
         <DialogFooter className="mt-6 sm:justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
             <Button variant="secondary" onClick={() => onExport(workspace)}>Export</Button>
-            <Button onClick={handleEditClick} disabled={!isValidPath(workspace.featurePath)}>
-                <Pencil className="mr-2 h-4 w-4" /> Edit
-            </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

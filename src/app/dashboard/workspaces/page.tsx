@@ -5,13 +5,12 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, FolderKanban, Feather, Bolt, LayoutTemplate, Image, Code2, MoreVertical, Eye, Download, Trash2, LoaderCircle, Pencil } from 'lucide-react';
+import { PlusCircle, FolderKanban, Feather, Bolt, LayoutTemplate, Image, Code2, MoreVertical, Eye, Download, Trash2, LoaderCircle } from 'lucide-react';
 import type { Workspace } from '@/types/workspace';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
@@ -60,14 +59,8 @@ const WorkspaceCardSkeleton = () => (
     </Card>
 );
 
-function isValidPath(path: unknown): path is string {
-    return typeof path === 'string' && path.trim() !== '' && path.startsWith('/');
-}
-
-
 export default function WorkspacesPage() {
   const { user } = useAuth();
-  const router = useRouter();
   const { toast } = useToast();
   
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -117,25 +110,6 @@ export default function WorkspacesPage() {
       setWorkspaces([]);
     }
   }, [user, toast]);
-
-  const handleEdit = (workspace: Workspace) => {
-    // Defensively coerce featurePath to a string primitive to avoid crashes.
-    const pathAsString = String(workspace.featurePath || '');
-  
-    if (isValidPath(pathAsString)) {
-      router.push({
-        pathname: pathAsString,
-        query: workspace.input as any,
-      });
-    } else {
-      console.warn('Invalid or missing featurePath for edit:', workspace.featurePath);
-      toast({
-        variant: "destructive",
-        title: "Cannot Edit Workspace",
-        description: "This workspace doesn't have a valid path and cannot be edited.",
-      });
-    }
-  };
 
   const handleDeleteClick = (workspace: Workspace) => {
     setWorkspaceToAction(workspace);
@@ -275,9 +249,6 @@ export default function WorkspacesPage() {
                                 <DropdownMenuItem onSelect={() => setViewingWorkspace(workspace)}>
                                     <Eye className="mr-2 h-4 w-4" /> View Details
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => handleEdit(workspace)} disabled={!isValidPath(workspace.featurePath)}>
-                                    <Pencil className="mr-2 h-4 w-4" /> Edit
-                                </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => handleExport(workspace)}>
                                     <Download className="mr-2 h-4 w-4" /> Export
                                 </DropdownMenuItem>
@@ -335,7 +306,6 @@ export default function WorkspacesPage() {
           isOpen={!!viewingWorkspace}
           onOpenChange={(open) => !open && setViewingWorkspace(null)}
           onExport={handleExport}
-          onEdit={handleEdit}
         />
       </main>
     </DashboardLayout>
