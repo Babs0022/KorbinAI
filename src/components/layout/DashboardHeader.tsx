@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -14,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, User, Settings, LogOut } from "lucide-react";
+import { LayoutGrid, User, Settings, LogOut, FolderKanban } from "lucide-react";
 
 export default function DashboardHeader() {
   const { user, logout, loading } = useAuth();
@@ -61,6 +62,12 @@ export default function DashboardHeader() {
                   <Link href="/">
                     <LayoutGrid />
                     Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/workspaces">
+                    <FolderKanban />
+                    Workspaces
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

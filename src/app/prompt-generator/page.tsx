@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { generatePrompt, type GeneratePromptInput } from "@/ai/flows/generate-prompt-flow";
 import { generatePromptFormatSuggestions } from "@/ai/flows/generate-prompt-format-suggestions-flow";
 import { analyzePrompt, type AnalyzePromptOutput } from "@/ai/flows/analyze-prompt-flow";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function PromptGeneratorPage() {
   // Form State
@@ -31,6 +32,7 @@ export default function PromptGeneratorPage() {
   const [toolSuggestion, setToolSuggestion] = useState<AnalyzePromptOutput | null>(null);
 
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const toolMap: Record<string, { href: string; queryParam: string }> = {
     'image-generator': { href: '/image-generator', queryParam: 'prompt' },
@@ -84,6 +86,7 @@ export default function PromptGeneratorPage() {
       taskDescription,
       targetModel: targetModel || undefined,
       outputFormat: outputFormat || undefined,
+      userId: user?.uid,
     };
 
     if (!input.taskDescription) {
@@ -208,7 +211,7 @@ export default function PromptGeneratorPage() {
               </div>
 
               <div className="flex justify-end pt-4">
-                <Button type="submit" size="lg" className="text-lg" disabled={isLoading}>
+                <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !user}>
                   {isLoading ? (
                     <>
                       <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />

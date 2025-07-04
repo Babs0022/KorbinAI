@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { generateImage, type GenerateImageInput } from "@/ai/flows/generate-image-flow";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 const styleOptions = [
   { value: "photorealistic", label: "Photorealistic" },
@@ -31,6 +32,7 @@ const ratioOptions = [
 export default function ImageGeneratorPage() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Form State
   const [prompt, setPrompt] = useState("");
@@ -72,6 +74,7 @@ export default function ImageGeneratorPage() {
     const input: GenerateImageInput = {
       prompt: finalPrompt,
       count: 4,
+      userId: user?.uid,
     };
 
     try {
@@ -157,7 +160,7 @@ export default function ImageGeneratorPage() {
                         </RadioGroup>
                     </div>
 
-                    <Button type="submit" size="lg" className="w-full text-lg" disabled={isLoading}>
+                    <Button type="submit" size="lg" className="w-full text-lg" disabled={isLoading || !user}>
                     {isLoading ? (
                         <>
                         <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />

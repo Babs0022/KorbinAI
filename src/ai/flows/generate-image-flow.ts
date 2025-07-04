@@ -10,10 +10,12 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
+import { saveWorkspace } from '@/services/workspaceService';
 
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('A detailed text description of the image to generate.'),
   count: z.number().min(1).max(4).default(4).describe('The number of images to generate.'),
+  userId: z.string().optional().describe('The ID of the user performing the generation.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
@@ -55,6 +57,24 @@ const generateImageFlow = ai.defineFlow(
       throw new Error('Image generation failed to return any images. This may be due to a safety policy violation in the prompt or a network issue.');
     }
 
-    return { imageUrls };
+    const output = { imageUrls };
+
+    if (input.userId) {
+      // For images, we just save the prompt as the "output" for simplicity in the workspace view.
+      // And we save the first image URL as a preview.
+      const { userId, ...workspaceInput } = input;
+      await saveWorkspace({
+        userId,
+        type: 'image',
+        input: workspaceInput,
+        output: { 
+            prompt: input.prompt,
+            previewUrl: output.imageUrls[0] 
+        },
+        featurePath: '/image-generator',
+      });
+    }
+
+    return output;
   }
 );

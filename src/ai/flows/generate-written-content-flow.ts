@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow for generating and refining written content based on user specifications.
@@ -9,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
+import { saveWorkspace } from '@/services/workspaceService';
 
 const GenerateWrittenContentInputSchema = z.object({
   contentType: z.string().describe("The type of content to generate (e.g., 'Blog Post', 'Email')."),
@@ -18,6 +20,7 @@ const GenerateWrittenContentInputSchema = z.object({
   keywords: z.string().optional().describe('A comma-separated list of keywords to include.'),
   originalContent: z.string().optional().describe('Existing content to be refined. If present, the flow will refine this content instead of generating new content from the topic.'),
   refinementInstruction: z.string().optional().describe("The instruction for refining the content (e.g., 'Make it shorter', 'Change the tone to witty')."),
+  userId: z.string().optional().describe('The ID of the user performing the generation.'),
 });
 export type GenerateWrittenContentInput = z.infer<typeof GenerateWrittenContentInputSchema>;
 
@@ -80,6 +83,18 @@ const generateWrittenContentFlow = ai.defineFlow(
     if (!output?.generatedContent) {
       console.error('AI response was empty or invalid. Raw text from model:', response.text);
       throw new Error('Failed to generate content because the AI response was empty or invalid.');
+    }
+
+    // Only save brand new generations, not refinements
+    if (input.userId && !input.originalContent) {
+      const { userId, ...workspaceInput } = input;
+      await saveWorkspace({
+        userId,
+        type: 'written-content',
+        input: workspaceInput,
+        output: output.generatedContent,
+        featurePath: '/written-content',
+      });
     }
 
     return output;

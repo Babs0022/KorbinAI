@@ -21,11 +21,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { generateWrittenContent, GenerateWrittenContentInput } from "@/ai/flows/generate-written-content-flow";
 import { generateContentSuggestions, GenerateContentSuggestionsOutput } from "@/ai/flows/generate-content-suggestions-flow";
-import { cn } from "@/lib/utils";
-
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function WrittenContentPage() {
   const searchParams = useSearchParams();
+  const { user } = useAuth();
 
   // Form state
   const [contentType, setContentType] = useState("blog-post");
@@ -109,6 +109,7 @@ export default function WrittenContentPage() {
       topic,
       audience,
       keywords,
+      userId: user?.uid,
     };
 
     if (!input.topic) {
@@ -149,6 +150,7 @@ export default function WrittenContentPage() {
       topic,
       originalContent: generatedContent,
       refinementInstruction: instruction,
+      userId: user?.uid,
     };
 
     try {
@@ -315,7 +317,7 @@ export default function WrittenContentPage() {
               </div>
 
               <div className="flex justify-end pt-4">
-                <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !!isRefining}>
+                <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !!isRefining || !user}>
                   {isLoading ? (
                     <>
                       <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />

@@ -16,9 +16,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { generateStructuredData, type GenerateStructuredDataInput } from "@/ai/flows/generate-structured-data-flow";
 import { generateJsonSchemaSuggestions } from "@/ai/flows/generate-json-schema-suggestions-flow";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function StructuredDataPage() {
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   
   // Form State
   const [format, setFormat] = useState("json");
@@ -91,6 +93,7 @@ export default function StructuredDataPage() {
       description,
       format,
       schemaDefinition: schemaDefinition || undefined,
+      userId: user?.uid,
     };
 
     if (!input.description) {
@@ -131,6 +134,7 @@ export default function StructuredDataPage() {
       schemaDefinition: schemaDefinition || undefined,
       originalData: generatedData,
       refinementInstruction: instruction,
+      userId: user?.uid,
     };
 
     try {
@@ -257,7 +261,7 @@ export default function StructuredDataPage() {
               </div>
 
               <div className="flex justify-end pt-4">
-                <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !!isRefining}>
+                <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !!isRefining || !user}>
                   {isLoading ? (
                     <>
                       <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />

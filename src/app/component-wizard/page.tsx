@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { generateSectionSuggestions } from "@/ai/flows/generate-section-suggestions-flow";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 
 const STEPS = [
   { step: 1, title: "The Core Idea", icon: <Wand2 /> },
@@ -24,6 +25,7 @@ const STEPS = [
 export default function ComponentWizardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
 
   const [step, setStep] = useState(1);
   const [generationMode, setGenerationMode] = useState("existing");
@@ -100,6 +102,7 @@ export default function ComponentWizardPage() {
       description,
       style,
       dataPoints,
+      userId: user?.uid || '',
     });
 
     router.push(`/component-wizard/result?${params.toString()}`);
@@ -303,7 +306,7 @@ export default function ComponentWizardPage() {
 
                     <div className="flex justify-between pt-4">
                         <Button type="button" variant="outline" size="lg" onClick={() => setStep(2)}>Back</Button>
-                        <Button type="submit" size="lg" className="text-lg" disabled={isLoading}>
+                        <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !user}>
                         {isLoading ? (
                             <>
                             <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />

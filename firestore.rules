@@ -1,103 +1,14 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if the user is the CEO/Admin.
-    function isAppAdmin() {
-      return request.auth != null && request.auth.token.email == 'babseli933@gmail.com';
-    }
-
-    // Helper function to check if a user is the owner of a document.
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Helper function to check if a user is authenticated.
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    // Helper function to check if a user is a member of a team.
-    function isTeamMember(teamId) {
-      return get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid] != null;
-    }
-
-    // Helper function to get a user's role in a team.
-    function getTeamRole(teamId) {
-      return get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid].role;
-    }
-    
-    // --- User-specific data ---
-
-    // users/{userId}
     match /users/{userId} {
-      allow read, write: if isOwner(userId) || isAppAdmin();
+      allow read, create, update: if request.auth.uid == userId;
     }
-    
-    // userSettings/{userId}
-    match /userSettings/{userId} {
-      allow read, write: if isOwner(userId) || isAppAdmin();
-    }
-    
-    // userSubscriptions/{userId}
-    match /userSubscriptions/{userId} {
-      allow read, write: if isOwner(userId) || isAppAdmin();
-    }
-    
-    // users/{userId}/promptHistory/{promptId}
-    match /users/{userId}/promptHistory/{promptId} {
-      allow read, write, delete: if isOwner(userId) || isAppAdmin();
-    }
-    
-    // users/{userId}/onboardingInfo/{docId}
-    match /users/{userId}/onboardingInfo/{docId} {
-        allow read, write: if isOwner(userId) || isAppAdmin();
-    }
-    
-    // --- Public/Shared data ---
 
-    // appAnnouncements/{announcementId}
-    match /appAnnouncements/{announcementId} {
-      allow read: if isAuthenticated();
-      allow write: if isAppAdmin();
-    }
-    
-    // newsletterSubscribers/{email}
-    match /newsletterSubscribers/{email} {
-        allow create: if true;
-        allow read, update, delete: if isAppAdmin();
-    }
-    
-    // --- Team Data ---
-    
-    // teams/{teamId}
-    match /teams/{teamId} {
-      allow read: if isTeamMember(teamId) || isAppAdmin();
-      allow update: if (isTeamMember(teamId) && getTeamRole(teamId) == 'admin') || isAppAdmin();
-      allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
-      allow delete: if isAppAdmin();
-    }
-    
-    // teams/{teamId}/sharedPrompts/{promptId}
-    match /teams/{teamId}/sharedPrompts/{promptId} {
-      allow read: if isTeamMember(teamId) || isAppAdmin();
-      allow write: if (isTeamMember(teamId) && (getTeamRole(teamId) == 'admin' || getTeamRole(teamId) == 'editor')) || isAppAdmin();
-    }
-    
-    // teams/{teamId}/chatMessages/{messageId}
-    match /teams/{teamId}/chatMessages/{messageId} {
-       allow read: if isTeamMember(teamId) || isAppAdmin();
-      allow create: if isTeamMember(teamId) && request.resource.data.senderId == request.auth.uid;
-      allow update, delete: if isAppAdmin();
-    }
-    
-    // --- Transaction Data (highly restricted) ---
-    
-    match /transactions/{transactionId} {
-        allow read: if isOwner(resource.data.userId) || isAppAdmin();
-        // Cloud Functions should write, but admin can for manual changes
-        allow write: if isAppAdmin();
+    match /workspaces/{workspaceId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
     }
   }
 }
