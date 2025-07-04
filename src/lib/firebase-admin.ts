@@ -1,18 +1,17 @@
 
 import admin from 'firebase-admin';
+import { getStorage } from 'firebase-admin/storage';
 
 // This file is intended for server-side code (e.g., Genkit flows, API routes).
 // It initializes the Firebase Admin SDK, which has elevated privileges.
 
 // Check if the app is already initialized to prevent errors in hot-reloading environments.
-// By not catching the error, we ensure that if initialization fails for a real reason
-// (like missing credentials), the actual error is thrown, rather than a subsequent
-// "default app does not exist" error.
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 const firestoreDb = admin.firestore();
 const adminAuth = admin.auth();
+const storageBucket = getStorage().bucket(); // Get default bucket for file storage
 
-export { firestoreDb, adminAuth };
+export { firestoreDb, adminAuth, storageBucket };

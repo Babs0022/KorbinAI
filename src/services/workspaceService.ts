@@ -2,12 +2,18 @@
 'use server';
 /**
  * @fileOverview A server-side service for managing user workspaces in Firestore.
+ * This service implements a hybrid storage strategy: small content is stored
+ * directly in Firestore for speed, while large content (>10KB or specific types)
+ * is offloaded to Cloud Storage to avoid hitting the 1 MiB document size limit.
  */
 
-import { firestoreDb } from '@/lib/firebase-admin';
+import { firestoreDb, storageBucket } from '@/lib/firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { generateWorkspaceMetadata } from '@/ai/flows/generate-prompt-metadata-flow';
 import type { Workspace, WorkspaceType } from '@/types/workspace';
+
+const LARGE_CONTENT_TYPES: WorkspaceType[] = ['component-wizard', 'image'];
+const MAX_INLINE_OUTPUT_SIZE_BYTES = 10000; // Store outputs under 10KB inline
 
 // Helper to convert a Firestore document to a serializable Workspace object
 const serializeWorkspace = (doc: FirebaseFirestore.DocumentSnapshot): Workspace | null => {
@@ -30,16 +36,9 @@ const serializeWorkspace = (doc: FirebaseFirestore.DocumentSnapshot): Workspace 
     } as Workspace;
 };
 
+
 /**
- * Saves or updates a user's workspace in Firestore.
- * It automatically generates a name and summary for the workspace using an AI flow.
- *
- * @param userId - The UID of the user.
- * @param type - The type of workspace being saved.
- * @param input - The user's original input to the generation tool.
- * @param output - The generated output from the tool.
- * @param featurePath - The path to the tool used, e.g., '/written-content'.
- * @returns The ID of the saved workspace document.
+ * Saves or updates a user's workspace, storing large outputs in Cloud Storage.
  */
 export async function saveWorkspace({
   userId,
@@ -55,12 +54,12 @@ export async function saveWorkspace({
   featurePath: string;
 }): Promise<string> {
   if (!userId) {
-    // Don't throw an error, just log and exit gracefully if user is not logged in.
     console.log('No user ID provided, skipping workspace save.');
     return '';
   }
 
-  // Determine the content to send to the AI for naming/summarizing.
+  const docRef = firestoreDb.collection('workspaces').doc(); // Create ref to get ID first
+
   let contentForMetadata: string;
   if (type === 'image') {
     contentForMetadata = (input as { prompt: string }).prompt;
@@ -72,39 +71,48 @@ export async function saveWorkspace({
     contentForMetadata = JSON.stringify(output);
   }
 
-  // Generate metadata (name, summary) for the workspace
   const metadata = await generateWorkspaceMetadata({ type, content: contentForMetadata });
+  
+  let finalOutput;
+  const stringifiedOutput = typeof output === 'string' ? output : JSON.stringify(output);
 
-  // Ensure the objects being saved are plain and serializable to prevent Firestore errors.
-  const serializableInput = JSON.parse(JSON.stringify(input));
-  const serializableOutput = typeof output === 'string'
-    ? output.substring(0, 10000) // Truncate very long strings
-    : JSON.parse(JSON.stringify(output));
+  // Decide whether to store in Firestore or Cloud Storage
+  if (LARGE_CONTENT_TYPES.includes(type) || stringifiedOutput.length > MAX_INLINE_OUTPUT_SIZE_BYTES) {
+      const storagePath = `workspaces/${userId}/${docRef.id}/output.json`;
+      try {
+          await storageBucket.file(storagePath).save(stringifiedOutput, {
+              contentType: 'application/json'
+          });
+          console.log(`Large workspace output saved to Cloud Storage at ${storagePath}`);
+          finalOutput = { storagePath }; // Store the reference
+      } catch (error) {
+          console.error("Error saving to Cloud Storage:", error);
+          throw new Error("Failed to save large workspace content to storage.");
+      }
+  } else {
+      finalOutput = JSON.parse(JSON.stringify(output)); // Ensure it's a plain object
+  }
 
   const workspaceData = {
     userId,
     type,
     name: metadata.name,
     summary: metadata.summary,
-    input: serializableInput,
-    output: serializableOutput,
+    input: JSON.parse(JSON.stringify(input)),
+    output: finalOutput,
     featurePath,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   };
 
-  const docRef = await firestoreDb.collection('workspaces').add(workspaceData);
+  await docRef.set(workspaceData);
   console.log(`Workspace saved for user ${userId} with ID: ${docRef.id}`);
-
   return docRef.id;
 }
 
 
 /**
- * Deletes a user's workspace from Firestore after verifying ownership.
- *
- * @param workspaceId - The ID of the workspace document to delete.
- * @param userId - The UID of the user requesting the deletion.
+ * Deletes a workspace document and its associated Cloud Storage file, if any.
  */
 export async function deleteWorkspace({
   workspaceId,
@@ -127,9 +135,21 @@ export async function deleteWorkspace({
 
   const workspaceData = doc.data();
   if (workspaceData?.userId !== userId) {
-    // This is a server-side check to enforce security rules.
     console.error(`User ${userId} attempted to delete workspace ${workspaceId} owned by ${workspaceData?.userId}.`);
     throw new Error('Permission denied. You can only delete your own workspaces.');
+  }
+
+  // Check for and delete associated Cloud Storage file
+  if (workspaceData?.output?.storagePath) {
+      try {
+          await storageBucket.file(workspaceData.output.storagePath).delete();
+          console.log(`Deleted Cloud Storage file: ${workspaceData.output.storagePath}`);
+      } catch (error: any) {
+          // Log error but don't block Firestore deletion. 404 means file is already gone, which is fine.
+          if (error.code !== 404) {
+               console.error(`Failed to delete Cloud Storage file ${workspaceData.output.storagePath}, it may be orphaned:`, error);
+          }
+      }
   }
 
   await docRef.delete();
@@ -138,17 +158,13 @@ export async function deleteWorkspace({
 
 
 /**
- * Fetches a single workspace document from Firestore and verifies ownership.
- *
- * @param workspaceId - The ID of the workspace document to fetch.
- * @param userId - The UID of the user requesting the workspace.
- * @returns The workspace data or null if not found or permission is denied.
+ * Fetches a single workspace, hydrating it with content from Cloud Storage if necessary.
  */
 export async function getWorkspace({
   workspaceId,
   userId,
 }: {
-  workspaceId: string;
+  workspaceId:string;
   userId: string;
 }): Promise<Workspace | null> {
   if (!userId || !workspaceId) {
@@ -158,7 +174,7 @@ export async function getWorkspace({
 
   const docRef = firestoreDb.collection('workspaces').doc(workspaceId);
   const doc = await docRef.get();
-
+  
   const workspace = serializeWorkspace(doc);
 
   if (!workspace) {
@@ -168,8 +184,20 @@ export async function getWorkspace({
   
   if (workspace.userId !== userId) {
     console.error(`User ${userId} attempted to access workspace ${workspaceId} owned by ${workspace.userId}.`);
-    // Do not throw an error, just return null to indicate not found/no permission
     return null;
+  }
+
+  // If output is stored in Cloud Storage, fetch and replace it
+  const outputRef = workspace.output as any;
+  if (outputRef?.storagePath) {
+      try {
+          const [fileContents] = await storageBucket.file(outputRef.storagePath).download();
+          workspace.output = JSON.parse(fileContents.toString('utf-8'));
+          console.log(`Hydrated workspace ${workspaceId} with content from ${outputRef.storagePath}`);
+      } catch (error) {
+          console.error(`Failed to fetch workspace content from Cloud Storage (${outputRef.storagePath}):`, error);
+          workspace.output = { error: "Failed to load content from storage." };
+      }
   }
 
   return workspace;
