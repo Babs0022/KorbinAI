@@ -24,29 +24,13 @@ const getLanguage = (format: string | undefined): string => {
     return 'json';
 };
 
-function isValidPath(path: any): path is string {
-    return typeof path === 'string' && path.trim().startsWith('/');
-}
-
-
 export default function WorkspacePreviewDialog({ workspace, isOpen, onOpenChange, onExport }: WorkspacePreviewDialogProps) {
   if (!workspace) return null;
 
   const renderContent = () => {
     switch (workspace.type) {
       case 'image':
-        let imageUrls: string[] | undefined;
-        // Handle both old format (object) and new format (stringified JSON)
-        if (typeof workspace.output === 'string') {
-          try {
-            imageUrls = JSON.parse(workspace.output).imageUrls;
-          } catch (e) {
-            console.error("Failed to parse image workspace output:", e);
-            imageUrls = [];
-          }
-        } else {
-          imageUrls = (workspace.output as any)?.imageUrls;
-        }
+        const imageUrls = (workspace.output as any)?.imageUrls;
 
         return (imageUrls && Array.isArray(imageUrls) && imageUrls.length > 0) ? (
           <ScrollArea className="mt-4 h-72 rounded-md border p-4">
@@ -122,12 +106,10 @@ export default function WorkspacePreviewDialog({ workspace, isOpen, onOpenChange
         {renderContent()}
         <DialogFooter className="mt-6 sm:justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
-            {workspace.type !== 'image' && (
-                <Button variant="secondary" onClick={() => onExport(workspace)}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Export
-                </Button>
-            )}
+            <Button variant="secondary" onClick={() => onExport(workspace)}>
+                <Download className="mr-2 h-4 w-4" />
+                Export
+            </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

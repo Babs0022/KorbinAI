@@ -65,8 +65,7 @@ const generateImageFlow = ai.defineFlow(
         userId,
         type: 'image',
         input: workspaceInput,
-        // The fix: stringify the output object to prevent nested entity errors in Firestore.
-        output: JSON.stringify(flowOutput),
+        output: flowOutput,
         featurePath: '/image-generator',
       });
     }
