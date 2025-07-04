@@ -85,8 +85,8 @@ const generateWrittenContentFlow = ai.defineFlow(
       throw new Error('Failed to generate content because the AI response was empty or invalid.');
     }
 
-    // Only save brand new generations, not refinements
-    if (input.userId && !input.originalContent) {
+    // Save every generation to the workspace if a user is logged in.
+    if (input.userId) {
       const { userId, ...workspaceInput } = input;
       await saveWorkspace({
         userId,

@@ -89,8 +89,8 @@ const generateStructuredDataFlow = ai.defineFlow(
     const cleanedData = output.generatedData.replace(/^```(json|csv)?\n?/, '').replace(/\n?```$/, '');
     const finalOutput = { generatedData: cleanedData };
     
-    // Only save brand new generations, not refinements
-    if (input.userId && !input.originalData) {
+    // Save every generation to the workspace if a user is logged in.
+    if (input.userId) {
       const { userId, ...workspaceInput } = input;
       await saveWorkspace({
         userId,
