@@ -4,9 +4,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, LoaderCircle, Copy, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Copy, Check, Sparkles, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -36,6 +36,7 @@ export default function WrittenContentPage() {
   
   // Generation state
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefining, setIsRefining] = useState<string | false>(false);
   const [generatedContent, setGeneratedContent] = useState("");
   const [copied, setCopied] = useState(false);
   
@@ -80,6 +81,7 @@ export default function WrittenContentPage() {
     return () => {
       if (timeout) clearTimeout(timeout);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topic]);
 
   const handleAddKeyword = (keyword: string) => {
@@ -138,6 +140,44 @@ export default function WrittenContentPage() {
     }
   };
 
+  const handleRefine = async (instruction: string) => {
+    setIsRefining(instruction);
+    
+    const input: GenerateWrittenContentInput = {
+      contentType, 
+      tone,
+      topic,
+      originalContent: generatedContent,
+      refinementInstruction: instruction,
+    };
+
+    try {
+      const result = await generateWrittenContent(input);
+      if (result.generatedContent) {
+        setGeneratedContent(result.generatedContent);
+        toast({ title: "Content Refined", description: "The content has been updated." });
+      } else {
+        throw new Error("The AI did not return any refined content.");
+      }
+    } catch (error) {
+      console.error("Failed to refine content:", error);
+      toast({
+        variant: "destructive",
+        title: "Refinement Failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred.",
+      });
+    } finally {
+      setIsRefining(false);
+    }
+  }
+
+  const refinementOptions = [
+    { label: "Make Shorter", instruction: "Make it shorter" },
+    { label: "Make Longer", instruction: "Make it longer and more detailed" },
+    { label: `Change tone to ${tone === 'professional' ? 'Casual' : 'Professional'}`, instruction: `Change the tone of voice to be more ${tone === 'professional' ? 'casual and friendly' : 'professional and formal'}` },
+    { label: "Add Call-to-Action", instruction: "Add a compelling call-to-action at the end" },
+  ];
+
   return (
     <main className="flex min-h-screen flex-col items-center p-4 md:p-8">
       <div className="w-full max-w-4xl">
@@ -151,10 +191,10 @@ export default function WrittenContentPage() {
 
         <div className="text-center">
           <h1 className="mb-2 text-4xl font-bold md:text-5xl">
-            Generate Written Content
+            Written Content Assistant
           </h1>
           <p className="mb-12 text-lg text-muted-foreground">
-            Describe the content you want to create, and our AI will write it for you.
+            Describe the content you want to create, and our AI will write and refine it with you.
           </p>
         </div>
 
@@ -254,6 +294,7 @@ export default function WrittenContentPage() {
                     <Input id="keywords" name="keywords" placeholder="e.g., 'AI, productivity, automation'" className="text-base" value={keywords} onChange={(e) => setKeywords(e.target.value)} />
                     {suggestions.suggestedKeywords.length > 0 && (
                         <div className="mt-2 space-y-2">
+                            <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Sparkles className="h-3 w-3 text-primary" /> Suggestions:</p>
                             <div className="flex flex-wrap gap-2">
                                 {suggestions.suggestedKeywords.map(kw => (
                                     <Button
@@ -264,7 +305,7 @@ export default function WrittenContentPage() {
                                         onClick={() => handleAddKeyword(kw)}
                                         className="text-xs"
                                     >
-                                        <Sparkles className="mr-1 h-3 w-3 text-primary" /> {kw}
+                                       + {kw}
                                     </Button>
                                 ))}
                             </div>
@@ -274,7 +315,7 @@ export default function WrittenContentPage() {
               </div>
 
               <div className="flex justify-end pt-4">
-                <Button type="submit" size="lg" className="text-lg" disabled={isLoading}>
+                <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !!isRefining}>
                   {isLoading ? (
                     <>
                       <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
@@ -290,20 +331,45 @@ export default function WrittenContentPage() {
         </Card>
 
         {generatedContent && (
-          <Card className="mt-12 rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between p-4">
-              <CardTitle>Your Generated Content</CardTitle>
-              <Button variant="ghost" size="icon" onClick={handleCopy}>
-                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                <span className="sr-only">Copy Content</span>
-              </Button>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md bg-secondary p-4">
-                {generatedContent}
-              </div>
-            </CardContent>
-          </Card>
+            <div className="mt-12 space-y-8 animate-fade-in">
+                <Card className="rounded-xl">
+                    <CardHeader className="flex flex-row items-center justify-between p-4">
+                    <CardTitle>Your Generated Content</CardTitle>
+                    <Button variant="ghost" size="icon" onClick={handleCopy}>
+                        {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                        <span className="sr-only">Copy Content</span>
+                    </Button>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                    <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md bg-secondary p-4">
+                        {generatedContent}
+                    </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="rounded-xl border-primary/20 bg-primary/5">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Wand2 className="h-5 w-5 text-primary" />
+                            Refine & Improve
+                        </CardTitle>
+                        <CardDescription>Not quite right? Let's try improving it.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-wrap gap-3">
+                        {refinementOptions.map(opt => (
+                            <Button 
+                                key={opt.instruction}
+                                variant="outline"
+                                onClick={() => handleRefine(opt.instruction)}
+                                disabled={!!isRefining}
+                            >
+                                {isRefining === opt.instruction && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                                {opt.label}
+                            </Button>
+                        ))}
+                    </CardContent>
+                </Card>
+            </div>
         )}
       </div>
     </main>
