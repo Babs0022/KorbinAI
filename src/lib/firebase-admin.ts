@@ -1,5 +1,5 @@
 
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 
 // This file is intended for server-side code (e.g., Genkit flows, API routes).
 // It initializes the Firebase Admin SDK, which has elevated privileges.
