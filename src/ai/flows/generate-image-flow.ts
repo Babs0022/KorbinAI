@@ -33,25 +33,26 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async (input) => {
-    const response = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: input.prompt,
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      },
-      candidates: input.count,
-    });
+    // The image generation model does not support the `candidates` parameter to generate
+    // multiple images in a single call. Instead, we must call it multiple times in parallel.
+    const generationPromises = Array(input.count).fill(null).map(() => 
+      ai.generate({
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        prompt: input.prompt,
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        },
+      })
+    );
 
-    if (!response.candidates || !Array.isArray(response.candidates)) {
-      throw new Error('Image generation failed: The AI model did not return any image candidates. This may be due to a safety policy violation in the prompt.');
-    }
+    const results = await Promise.all(generationPromises);
 
-    const imageUrls = response.candidates
-      .map(candidate => candidate.output?.media?.url)
+    const imageUrls = results
+      .map(response => response.media?.url)
       .filter((url): url is string => !!url);
       
-    if (!imageUrls.length) {
-      throw new Error('Image generation failed to return any images.');
+    if (imageUrls.length === 0) {
+      throw new Error('Image generation failed to return any images. This may be due to a safety policy violation in the prompt or a network issue.');
     }
 
     return { imageUrls };
