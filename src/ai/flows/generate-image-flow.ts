@@ -57,18 +57,16 @@ const generateImageFlow = ai.defineFlow(
       throw new Error('Image generation failed to return any images. This may be due to a safety policy violation in the prompt or a network issue.');
     }
 
-    // Explicitly create a plain JavaScript object to prevent Firestore serialization errors.
-    // Genkit response objects can be complex, and this ensures we only store the data.
-    const flowOutput = { imageUrls: JSON.parse(JSON.stringify(imageUrls)) };
+    const flowOutput = { imageUrls };
 
     if (input.userId) {
-      // The output saved to the workspace should be a plain object containing all image URLs.
       const { userId, ...workspaceInput } = input;
       await saveWorkspace({
         userId,
         type: 'image',
         input: workspaceInput,
-        output: flowOutput, // Pass the sanitized object
+        // The fix: stringify the output object to prevent nested entity errors in Firestore.
+        output: JSON.stringify(flowOutput),
         featurePath: '/image-generator',
       });
     }

@@ -5,7 +5,7 @@ import type { Workspace } from '@/types/workspace';
 import NextImage from 'next/image';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Download, Edit } from 'lucide-react';
+import { Download } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,6 @@ interface WorkspacePreviewDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onExport: (workspace: Workspace) => void;
-  onEdit: (workspace: Workspace) => void;
 }
 
 const getLanguage = (format: string | undefined): string => {
@@ -30,13 +29,25 @@ function isValidPath(path: any): path is string {
 }
 
 
-export default function WorkspacePreviewDialog({ workspace, isOpen, onOpenChange, onExport, onEdit }: WorkspacePreviewDialogProps) {
+export default function WorkspacePreviewDialog({ workspace, isOpen, onOpenChange, onExport }: WorkspacePreviewDialogProps) {
   if (!workspace) return null;
 
   const renderContent = () => {
     switch (workspace.type) {
       case 'image':
-        const imageUrls = (workspace.output as any)?.imageUrls;
+        let imageUrls: string[] | undefined;
+        // Handle both old format (object) and new format (stringified JSON)
+        if (typeof workspace.output === 'string') {
+          try {
+            imageUrls = JSON.parse(workspace.output).imageUrls;
+          } catch (e) {
+            console.error("Failed to parse image workspace output:", e);
+            imageUrls = [];
+          }
+        } else {
+          imageUrls = (workspace.output as any)?.imageUrls;
+        }
+
         return (imageUrls && Array.isArray(imageUrls) && imageUrls.length > 0) ? (
           <ScrollArea className="mt-4 h-72 rounded-md border p-4">
             <div className="grid grid-cols-2 gap-4">
@@ -117,12 +128,6 @@ export default function WorkspacePreviewDialog({ workspace, isOpen, onOpenChange
                     Export
                 </Button>
             )}
-             <Button 
-                onClick={() => onEdit(workspace)} 
-                disabled={!isValidPath(workspace.featurePath) || workspace.type === 'image'}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-            </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
