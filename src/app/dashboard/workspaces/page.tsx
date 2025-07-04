@@ -11,7 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, FolderKanban, Feather, Bolt, LayoutTemplate, Image, Code2, MoreVertical, Eye, Download, Trash2, LoaderCircle } from 'lucide-react';
+import { PlusCircle, FolderKanban, Feather, Bolt, LayoutTemplate, Image, Code2, MoreVertical, Eye, Download, Trash2, LoaderCircle, Edit } from 'lucide-react';
 import type { Workspace } from '@/types/workspace';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
@@ -59,6 +59,12 @@ const WorkspaceCardSkeleton = () => (
         </CardFooter>
     </Card>
 );
+
+// Type guard to check for a valid path
+function isValidPath(path: any): path is string {
+    return typeof path === 'string' && path.trim().startsWith('/');
+}
+
 
 export default function WorkspacesPage() {
   const { user } = useAuth();
@@ -114,12 +120,29 @@ export default function WorkspacesPage() {
   }, [user, toast]);
   
   const handleViewClick = (workspace: Workspace) => {
-    // For application code, navigate to a dedicated viewer page
     if (workspace.type === 'component-wizard') {
         router.push(`/dashboard/workspaces/${workspace.id}`);
     } else {
-        // For all other types, open the preview dialog
         setViewingWorkspace(workspace);
+    }
+  };
+
+  const handleEditClick = (workspace: Workspace) => {
+    const { featurePath, input } = workspace;
+    const path = String(featurePath || '');
+
+    if (isValidPath(path)) {
+      router.push({
+        pathname: path,
+        query: input as any,
+      });
+    } else {
+      console.warn('Invalid featurePath:', path);
+      toast({
+        variant: "destructive",
+        title: "Cannot Edit",
+        description: "This workspace is from an older version and cannot be edited directly.",
+      });
     }
   };
 
@@ -154,26 +177,17 @@ export default function WorkspacesPage() {
   const handleExport = (workspace: Workspace) => {
     if (!workspace) return;
 
+    // For images, the export action is to open the gallery where individual downloads are possible.
+    if (workspace.type === 'image') {
+      setViewingWorkspace(workspace);
+      return;
+    }
+    
     let content: string;
     let filename: string;
     let mimeType: string;
 
     const sanitizedName = workspace.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-
-    // Special case for image export
-    if (workspace.type === 'image') {
-        const previewUrl = (workspace.output as any)?.previewUrl;
-        if (previewUrl && typeof previewUrl === 'string') {
-            const a = document.createElement('a');
-            a.href = previewUrl;
-            a.download = `${sanitizedName || 'image'}.png`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            toast({ title: "Image downloading..."});
-            return;
-        }
-    }
     
     // Logic for text-based content
     switch (workspace.type) {
@@ -261,6 +275,9 @@ export default function WorkspacesPage() {
                                 <DropdownMenuItem onSelect={() => handleViewClick(workspace)}>
                                     <Eye className="mr-2 h-4 w-4" /> View
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => handleEditClick(workspace)} disabled={!isValidPath(workspace.featurePath)}>
+                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => handleExport(workspace)}>
                                     <Download className="mr-2 h-4 w-4" /> Export
                                 </DropdownMenuItem>
@@ -318,6 +335,7 @@ export default function WorkspacesPage() {
           isOpen={!!viewingWorkspace}
           onOpenChange={(open) => !open && setViewingWorkspace(null)}
           onExport={handleExport}
+          onEdit={handleEditClick}
         />
       </main>
     </DashboardLayout>

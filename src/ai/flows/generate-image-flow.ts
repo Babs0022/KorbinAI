@@ -57,24 +57,21 @@ const generateImageFlow = ai.defineFlow(
       throw new Error('Image generation failed to return any images. This may be due to a safety policy violation in the prompt or a network issue.');
     }
 
-    const output = { imageUrls };
+    const flowOutput = { imageUrls };
 
     if (input.userId) {
-      // For images, we just save the prompt as the "output" for simplicity in the workspace view.
-      // And we save the first image URL as a preview.
+      // The output saved to the workspace should be a plain object containing all image URLs.
+      const workspaceOutput = { imageUrls: flowOutput.imageUrls };
       const { userId, ...workspaceInput } = input;
       await saveWorkspace({
         userId,
         type: 'image',
         input: workspaceInput,
-        output: { 
-            prompt: input.prompt,
-            previewUrl: output.imageUrls[0] 
-        },
+        output: workspaceOutput,
         featurePath: '/image-generator',
       });
     }
 
-    return output;
+    return flowOutput;
   }
 );
