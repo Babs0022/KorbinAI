@@ -106,6 +106,18 @@ export default function WorkspacesPage() {
     }
   }, [user]);
 
+  const handleViewEdit = (workspace: Workspace) => {
+    if (workspace.featurePath && typeof workspace.featurePath === 'string') {
+      router.push({ pathname: workspace.featurePath, query: workspace.input as any });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Cannot View Workspace",
+        description: "This workspace is missing a valid path and cannot be opened.",
+      });
+    }
+  };
+
   const handleDeleteClick = (workspace: Workspace) => {
     setWorkspaceToAction(workspace);
     setIsDialogOpen(true);
@@ -241,7 +253,7 @@ export default function WorkspacesPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={() => router.push({ pathname: workspace.featurePath, query: workspace.input as any })} disabled={!workspace.featurePath}>
+                                <DropdownMenuItem onSelect={() => handleViewEdit(workspace)} disabled={!workspace.featurePath}>
                                     <Eye className="mr-2 h-4 w-4" /> View / Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => handleExport(workspace)}>
