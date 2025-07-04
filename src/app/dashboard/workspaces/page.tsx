@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -61,6 +62,7 @@ const WorkspaceCardSkeleton = () => (
 
 export default function WorkspacesPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
   
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -110,6 +112,16 @@ export default function WorkspacesPage() {
       setWorkspaces([]);
     }
   }, [user, toast]);
+  
+  const handleViewClick = (workspace: Workspace) => {
+    // For application code, navigate to a dedicated viewer page
+    if (workspace.type === 'component-wizard') {
+        router.push(`/dashboard/workspaces/${workspace.id}`);
+    } else {
+        // For all other types, open the preview dialog
+        setViewingWorkspace(workspace);
+    }
+  };
 
   const handleDeleteClick = (workspace: Workspace) => {
     setWorkspaceToAction(workspace);
@@ -246,8 +258,8 @@ export default function WorkspacesPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={() => setViewingWorkspace(workspace)}>
-                                    <Eye className="mr-2 h-4 w-4" /> View Details
+                                <DropdownMenuItem onSelect={() => handleViewClick(workspace)}>
+                                    <Eye className="mr-2 h-4 w-4" /> View
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => handleExport(workspace)}>
                                     <Download className="mr-2 h-4 w-4" /> Export

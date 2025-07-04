@@ -5,9 +5,30 @@
  */
 
 import { firestoreDb } from '@/lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { generateWorkspaceMetadata } from '@/ai/flows/generate-prompt-metadata-flow';
-import type { WorkspaceType } from '@/types/workspace';
+import type { Workspace, WorkspaceType } from '@/types/workspace';
+
+// Helper to convert a Firestore document to a serializable Workspace object
+const serializeWorkspace = (doc: FirebaseFirestore.DocumentSnapshot): Workspace | null => {
+    if (!doc.exists) return null;
+    const data = doc.data();
+    if (!data) return null;
+
+    // Convert Firestore Timestamps to ISO strings for serialization
+    const serializedData = { ...data };
+    if (data.createdAt instanceof Timestamp) {
+        serializedData.createdAt = data.createdAt.toDate().toISOString();
+    }
+    if (data.updatedAt instanceof Timestamp) {
+        serializedData.updatedAt = data.updatedAt.toDate().toISOString();
+    }
+
+    return {
+        id: doc.id,
+        ...serializedData,
+    } as Workspace;
+};
 
 /**
  * Saves or updates a user's workspace in Firestore.
@@ -113,4 +134,43 @@ export async function deleteWorkspace({
 
   await docRef.delete();
   console.log(`Workspace ${workspaceId} successfully deleted for user ${userId}.`);
+}
+
+
+/**
+ * Fetches a single workspace document from Firestore and verifies ownership.
+ *
+ * @param workspaceId - The ID of the workspace document to fetch.
+ * @param userId - The UID of the user requesting the workspace.
+ * @returns The workspace data or null if not found or permission is denied.
+ */
+export async function getWorkspace({
+  workspaceId,
+  userId,
+}: {
+  workspaceId: string;
+  userId: string;
+}): Promise<Workspace | null> {
+  if (!userId || !workspaceId) {
+    console.error('User ID and Workspace ID are required to fetch a workspace.');
+    throw new Error('User ID and Workspace ID are required.');
+  }
+
+  const docRef = firestoreDb.collection('workspaces').doc(workspaceId);
+  const doc = await docRef.get();
+
+  const workspace = serializeWorkspace(doc);
+
+  if (!workspace) {
+    console.warn(`Workspace with ID ${workspaceId} not found.`);
+    return null;
+  }
+  
+  if (workspace.userId !== userId) {
+    console.error(`User ${userId} attempted to access workspace ${workspaceId} owned by ${workspace.userId}.`);
+    // Do not throw an error, just return null to indicate not found/no permission
+    return null;
+  }
+
+  return workspace;
 }
