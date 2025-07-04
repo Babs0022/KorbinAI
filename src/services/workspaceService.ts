@@ -5,6 +5,7 @@
  */
 
 import { firestoreDb } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { generateWorkspaceMetadata } from '@/ai/flows/generate-prompt-metadata-flow';
 import type { WorkspaceType } from '@/types/workspace';
 
@@ -67,8 +68,8 @@ export async function saveWorkspace({
     input: serializableInput,
     output: serializableOutput,
     featurePath,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   };
 
   const docRef = await firestoreDb.collection('workspaces').add(workspaceData);
