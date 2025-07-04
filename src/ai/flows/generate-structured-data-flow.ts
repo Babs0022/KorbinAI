@@ -1,8 +1,9 @@
+
 'use server';
 /**
- * @fileOverview A flow for generating structured data like JSON or CSV.
+ * @fileOverview A flow for generating and refining structured data like JSON or CSV.
  * 
- * - generateStructuredData - A function that generates data based on a description.
+ * - generateStructuredData - A function that generates or refines data based on a description.
  * - GenerateStructuredDataInput - The input type for the function.
  * - GenerateStructuredDataOutput - The return type for the function.
  */
@@ -14,6 +15,8 @@ const GenerateStructuredDataInputSchema = z.object({
   description: z.string().describe('A plain English description of the data to generate.'),
   format: z.string().describe("The desired output format (e.g., 'JSON', 'CSV')."),
   schemaDefinition: z.string().optional().describe('For JSON, an optional schema or example of the desired structure.'),
+  originalData: z.string().optional().describe('Existing data to be refined. If present, the flow will refine this data instead of generating new data from the description.'),
+  refinementInstruction: z.string().optional().describe("The instruction for refining the data (e.g., 'Add 10 more records', 'Add a unique ID field')."),
 });
 export type GenerateStructuredDataInput = z.infer<typeof GenerateStructuredDataInputSchema>;
 
@@ -31,18 +34,33 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: GenerateStructuredDataInputSchema},
   output: {schema: GenerateStructuredDataOutputSchema},
-  prompt: `You are an expert data generation machine. Your task is to generate structured data based on the user's request.
+  prompt: `You are an expert data generation machine. Your task is to generate or refine structured data based on the user's request.
 You must output ONLY the raw data, without any explanations, introductions, or markdown formatting like \`\`\`json.
+
+{{#if originalData}}
+Your task is to refine the following data based on a specific instruction.
+
+Original Data (Format: {{format}}):
+---
+{{{originalData}}}
+---
+
+Refinement Instruction: "{{refinementInstruction}}"
+
+Refine the data now. Ensure the output is only the refined data in the same format.
+{{else}}
+Your task is to generate structured data from scratch.
 
 Data Description: "{{description}}"
 Output Format: "{{format}}"
 
 {{#if schemaDefinition}}
 Use this schema or example to guide the structure of the JSON output:
-{{schemaDefinition}}
+{{{schemaDefinition}}}
 {{/if}}
 
 Generate the data now.
+{{/if}}
   `,
 });
 

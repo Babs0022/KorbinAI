@@ -4,9 +4,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, LoaderCircle, Copy, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Copy, Check, Sparkles, Wand2 } from "lucide-react";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +27,7 @@ export default function StructuredDataPage() {
 
   // Generation State
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefining, setIsRefining] = useState<string | false>(false);
   const [generatedData, setGeneratedData] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -45,7 +49,6 @@ export default function StructuredDataPage() {
   useEffect(() => {
     if (debounceTimeout) clearTimeout(debounceTimeout);
     
-    // Only generate suggestions for JSON format and if description is long enough
     if (format !== 'json' || description.trim().split(/\s+/).length < 4) {
       setSuggestion("");
       return;
@@ -118,6 +121,43 @@ export default function StructuredDataPage() {
       setIsLoading(false);
     }
   };
+  
+  const handleRefine = async (instruction: string) => {
+    setIsRefining(instruction);
+    
+    const input: GenerateStructuredDataInput = {
+      description, // Pass original description for context
+      format,
+      schemaDefinition: schemaDefinition || undefined,
+      originalData: generatedData,
+      refinementInstruction: instruction,
+    };
+
+    try {
+      const result = await generateStructuredData(input);
+      if (result.generatedData) {
+        setGeneratedData(result.generatedData);
+        toast({ title: "Data Refined", description: "The data has been updated." });
+      } else {
+        throw new Error("The AI did not return any refined data.");
+      }
+    } catch (error) {
+      console.error("Failed to refine data:", error);
+      toast({
+        variant: "destructive",
+        title: "Refinement Failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred.",
+      });
+    } finally {
+      setIsRefining(false);
+    }
+  };
+
+  const refinementOptions = [
+    { label: "Add 10 more records", instruction: "Add 10 more records to the list, keeping the same structure." },
+    { label: "Add unique ID field", instruction: "Add a new field to each record called 'id' with a unique identifier (e.g., a UUID or an incrementing number)." },
+    { label: "Sanitize data", instruction: "Review all data and sanitize it for a professional presentation. For example, ensure names are capitalized correctly and emails look realistic." },
+  ];
 
   return (
     <main className="flex min-h-screen flex-col items-center p-4 md:p-8">
@@ -132,10 +172,10 @@ export default function StructuredDataPage() {
 
         <div className="text-center">
           <h1 className="mb-2 text-4xl font-bold md:text-5xl">
-            Generate Structured Data
+            Structured Data Assistant
           </h1>
           <p className="mb-12 text-lg text-muted-foreground">
-            Describe the data you need, and the AI will generate it in your chosen format.
+            Describe the data you need, and our AI will generate and refine it with you.
           </p>
         </div>
 
@@ -217,7 +257,7 @@ export default function StructuredDataPage() {
               </div>
 
               <div className="flex justify-end pt-4">
-                <Button type="submit" size="lg" className="text-lg" disabled={isLoading}>
+                <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !!isRefining}>
                   {isLoading ? (
                     <>
                       <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
@@ -233,20 +273,55 @@ export default function StructuredDataPage() {
         </Card>
 
         {generatedData && (
-          <Card className="mt-12 rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Your Generated Data</CardTitle>
-              <Button variant="ghost" size="icon" onClick={handleCopy}>
-                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                <span className="sr-only">Copy Data</span>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <pre className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md bg-secondary p-4">
-                <code>{generatedData}</code>
-              </pre>
-            </CardContent>
-          </Card>
+          <div className="mt-12 space-y-8 animate-fade-in">
+            <Card className="rounded-xl">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Your Generated Data</CardTitle>
+                <Button variant="ghost" size="icon" onClick={handleCopy}>
+                  {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  <span className="sr-only">Copy Data</span>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <SyntaxHighlighter
+                  language={format}
+                  style={vscDarkPlus}
+                  customStyle={{ margin: 0, backgroundColor: 'hsl(var(--secondary))', borderRadius: 'var(--radius)', padding: '1rem' }}
+                  codeTagProps={{
+                    style: {
+                      fontFamily: "var(--font-code, monospace)",
+                      fontSize: "0.875rem",
+                    },
+                  }}
+                >
+                  {generatedData}
+                </SyntaxHighlighter>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-xl border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wand2 className="h-5 w-5 text-primary" />
+                  Refine Data
+                </CardTitle>
+                <CardDescription>Not quite right? Let's try improving it.</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-3">
+                {refinementOptions.map(opt => (
+                  <Button 
+                    key={opt.instruction}
+                    variant="outline"
+                    onClick={() => handleRefine(opt.instruction)}
+                    disabled={!!isRefining}
+                  >
+                    {isRefining === opt.instruction && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                    {opt.label}
+                  </Button>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </main>
