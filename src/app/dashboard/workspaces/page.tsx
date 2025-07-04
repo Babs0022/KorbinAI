@@ -11,7 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, FolderKanban, Feather, Bolt, LayoutTemplate, Image, Code2, MoreVertical, Eye, Download, Trash2, LoaderCircle } from 'lucide-react';
+import { PlusCircle, FolderKanban, Feather, Bolt, LayoutTemplate, Image, Code2, MoreVertical, Eye, Download, Trash2, LoaderCircle, Pencil } from 'lucide-react';
 import type { Workspace } from '@/types/workspace';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { deleteWorkspace } from '@/services/workspaceService';
+import WorkspacePreviewDialog from '@/components/wizards/WorkspacePreviewDialog';
 
 
 const WorkspaceIcon = ({ type }: { type: Workspace['type'] }) => {
@@ -59,6 +60,11 @@ const WorkspaceCardSkeleton = () => (
     </Card>
 );
 
+function isValidPath(path: unknown): path is string {
+    return typeof path === 'string' && path.trim() !== '' && path.startsWith('/');
+}
+
+
 export default function WorkspacesPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -67,10 +73,11 @@ export default function WorkspacesPage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // State for delete confirmation
+  // State for dialogs
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [workspaceToAction, setWorkspaceToAction] = useState<Workspace | null>(null);
+  const [viewingWorkspace, setViewingWorkspace] = useState<Workspace | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -96,6 +103,11 @@ export default function WorkspacesPage() {
         setIsLoading(false);
       }, (error) => {
         console.error("Error fetching workspaces: ", error);
+        toast({
+          variant: "destructive",
+          title: "Error fetching workspaces",
+          description: error.message,
+        });
         setIsLoading(false);
       });
 
@@ -104,29 +116,29 @@ export default function WorkspacesPage() {
       setIsLoading(false);
       setWorkspaces([]);
     }
-  }, [user]);
+  }, [user, toast]);
 
-  const handleViewEdit = (workspace: Workspace) => {
+  const handleEdit = (workspace: Workspace) => {
     const { featurePath, input } = workspace;
-
-    if (typeof featurePath === 'string' && featurePath.trim() !== '' && featurePath.startsWith('/')) {
+  
+    if (isValidPath(featurePath)) {
       router.push({
         pathname: featurePath,
         query: input as any,
       });
     } else {
-      console.warn('Invalid featurePath:', featurePath);
+      console.warn('Invalid featurePath for edit:', featurePath);
       toast({
         variant: "destructive",
-        title: "Cannot View Workspace",
-        description: "This workspace doesn't have a valid path and cannot be opened.",
+        title: "Cannot Edit Workspace",
+        description: "This workspace doesn't have a valid path and cannot be edited.",
       });
     }
   };
 
   const handleDeleteClick = (workspace: Workspace) => {
     setWorkspaceToAction(workspace);
-    setIsDialogOpen(true);
+    setIsDeleteDialogOpen(true);
   };
   
   const handleDeleteConfirm = async () => {
@@ -147,7 +159,7 @@ export default function WorkspacesPage() {
       });
     } finally {
       setIsDeleting(false);
-      setIsDialogOpen(false);
+      setIsDeleteDialogOpen(false);
       setWorkspaceToAction(null);
     }
   };
@@ -259,8 +271,11 @@ export default function WorkspacesPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={() => handleViewEdit(workspace)}>
-                                    <Eye className="mr-2 h-4 w-4" /> View / Edit
+                                <DropdownMenuItem onSelect={() => setViewingWorkspace(workspace)}>
+                                    <Eye className="mr-2 h-4 w-4" /> View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => handleEdit(workspace)} disabled={!isValidPath(workspace.featurePath)}>
+                                    <Pencil className="mr-2 h-4 w-4" /> Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => handleExport(workspace)}>
                                     <Download className="mr-2 h-4 w-4" /> Export
@@ -291,7 +306,7 @@ export default function WorkspacesPage() {
           </p>
           {renderContent()}
         </div>
-        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -313,6 +328,14 @@ export default function WorkspacesPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <WorkspacePreviewDialog
+          workspace={viewingWorkspace}
+          isOpen={!!viewingWorkspace}
+          onOpenChange={(open) => !open && setViewingWorkspace(null)}
+          onExport={handleExport}
+          onEdit={handleEdit}
+        />
       </main>
     </DashboardLayout>
   );
