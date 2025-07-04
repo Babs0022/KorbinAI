@@ -39,6 +39,10 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert data generation machine. Your task is to generate or refine structured data based on the user's request.
 You must output ONLY the raw data, without any explanations, introductions, or markdown formatting like \`\`\`json.
 
+Important Formatting Rules:
+- If the format is CSV, ensure each record is on a new line. Do not output a single-line CSV.
+- If the format is JSON, ensure it is well-formed.
+
 {{#if originalData}}
 Your task is to refine the following data based on a specific instruction.
 
@@ -49,7 +53,7 @@ Original Data (Format: {{format}}):
 
 Refinement Instruction: "{{refinementInstruction}}"
 
-Refine the data now. Ensure the output is only the refined data in the same format.
+Refine the data now. Ensure the output is only the refined data in the same format, respecting the formatting rules above.
 {{else}}
 Your task is to generate structured data from scratch.
 
