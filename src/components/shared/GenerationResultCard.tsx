@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,8 @@ interface GenerationResultCardProps {
   variant?: 'prose' | 'code';
 }
 
-export default function GenerationResultCard({ title, content, language = 'markdown', variant = 'prose' }: GenerationResultCardProps) {
+// The core component logic
+function GenerationResultCardComponent({ title, content, language = 'markdown', variant = 'prose' }: GenerationResultCardProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -54,3 +55,9 @@ export default function GenerationResultCard({ title, content, language = 'markd
     </Card>
   );
 }
+
+// Wrap the component with React.memo to prevent unnecessary re-renders when its props do not change.
+const GenerationResultCard = React.memo(GenerationResultCardComponent);
+GenerationResultCard.displayName = "GenerationResultCard";
+
+export default GenerationResultCard;
