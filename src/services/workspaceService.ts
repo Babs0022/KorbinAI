@@ -2,18 +2,16 @@
 'use server';
 /**
  * @fileOverview A server-side service for managing user workspaces in Firestore.
- * This service implements a hybrid storage strategy: small content is stored
- * directly in Firestore for speed, while large content (>10KB or specific types)
- * is offloaded to Cloud Storage to avoid hitting the 1 MiB document size limit.
+ * This service implements a content/metadata split pattern for performance.
+ * - Workspace metadata (name, summary, etc.) is stored in the `workspaces` collection.
+ * - Large content (input, output) is stored in a separate `workspace_content` collection.
+ * This makes querying for lists of workspaces fast and efficient.
  */
 
-import { firestoreDb, storageBucket } from '@/lib/firebase-admin';
+import { firestoreDb } from '@/lib/firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { generateWorkspaceMetadata } from '@/ai/flows/generate-prompt-metadata-flow';
 import type { Workspace, WorkspaceType } from '@/types/workspace';
-
-const LARGE_CONTENT_TYPES: WorkspaceType[] = ['component-wizard', 'image'];
-const MAX_INLINE_OUTPUT_SIZE_BYTES = 10000; // Store outputs under 10KB inline
 
 // Helper to convert a Firestore document to a serializable Workspace object
 const serializeWorkspace = (doc: FirebaseFirestore.DocumentSnapshot): Workspace | null => {
@@ -38,7 +36,7 @@ const serializeWorkspace = (doc: FirebaseFirestore.DocumentSnapshot): Workspace 
 
 
 /**
- * Saves or updates a user's workspace, storing large outputs in Cloud Storage.
+ * Saves or updates a user's workspace, splitting data between metadata and content collections.
  */
 export async function saveWorkspace({
   userId,
@@ -58,7 +56,8 @@ export async function saveWorkspace({
     return '';
   }
 
-  const docRef = firestoreDb.collection('workspaces').doc(); // Create ref to get ID first
+  const workspaceRef = firestoreDb.collection('workspaces').doc(); // Create ref to get ID first
+  const contentRef = firestoreDb.collection('workspace_content').doc(workspaceRef.id);
 
   let contentForMetadata: string;
   if (type === 'image') {
@@ -72,47 +71,35 @@ export async function saveWorkspace({
   }
 
   const metadata = await generateWorkspaceMetadata({ type, content: contentForMetadata });
-  
-  let finalOutput;
-  const stringifiedOutput = typeof output === 'string' ? output : JSON.stringify(output);
-
-  // Decide whether to store in Firestore or Cloud Storage
-  if (LARGE_CONTENT_TYPES.includes(type) || stringifiedOutput.length > MAX_INLINE_OUTPUT_SIZE_BYTES) {
-      const storagePath = `workspaces/${userId}/${docRef.id}/output.json`;
-      try {
-          await storageBucket.file(storagePath).save(stringifiedOutput, {
-              contentType: 'application/json'
-          });
-          console.log(`Large workspace output saved to Cloud Storage at ${storagePath}`);
-          finalOutput = { storagePath }; // Store the reference
-      } catch (error) {
-          console.error("Error saving to Cloud Storage:", error);
-          throw new Error("Failed to save large workspace content to storage.");
-      }
-  } else {
-      finalOutput = JSON.parse(JSON.stringify(output)); // Ensure it's a plain object
-  }
 
   const workspaceData = {
     userId,
     type,
     name: metadata.name,
     summary: metadata.summary,
-    input: JSON.parse(JSON.stringify(input)),
-    output: finalOutput,
     featurePath,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   };
 
-  await docRef.set(workspaceData);
-  console.log(`Workspace saved for user ${userId} with ID: ${docRef.id}`);
-  return docRef.id;
+  const contentData = {
+    input: JSON.parse(JSON.stringify(input)),
+    output: JSON.parse(JSON.stringify(output)), // Ensure plain object
+  };
+
+  // Use a batch write to ensure both documents are created atomically
+  const batch = firestoreDb.batch();
+  batch.set(workspaceRef, workspaceData);
+  batch.set(contentRef, contentData);
+  await batch.commit();
+
+  console.log(`Workspace saved for user ${userId} with ID: ${workspaceRef.id}`);
+  return workspaceRef.id;
 }
 
 
 /**
- * Deletes a workspace document and its associated Cloud Storage file, if any.
+ * Deletes a workspace document and its associated content document.
  */
 export async function deleteWorkspace({
   workspaceId,
@@ -125,8 +112,9 @@ export async function deleteWorkspace({
     throw new Error('User ID and Workspace ID are required for deletion.');
   }
 
-  const docRef = firestoreDb.collection('workspaces').doc(workspaceId);
-  const doc = await docRef.get();
+  const workspaceRef = firestoreDb.collection('workspaces').doc(workspaceId);
+  const contentRef = firestoreDb.collection('workspace_content').doc(workspaceId);
+  const doc = await workspaceRef.get();
 
   if (!doc.exists) {
     console.warn(`Workspace with ID ${workspaceId} not found. Nothing to delete.`);
@@ -139,26 +127,18 @@ export async function deleteWorkspace({
     throw new Error('Permission denied. You can only delete your own workspaces.');
   }
 
-  // Check for and delete associated Cloud Storage file
-  if (workspaceData?.output?.storagePath) {
-      try {
-          await storageBucket.file(workspaceData.output.storagePath).delete();
-          console.log(`Deleted Cloud Storage file: ${workspaceData.output.storagePath}`);
-      } catch (error: any) {
-          // Log error but don't block Firestore deletion. 404 means file is already gone, which is fine.
-          if (error.code !== 404) {
-               console.error(`Failed to delete Cloud Storage file ${workspaceData.output.storagePath}, it may be orphaned:`, error);
-          }
-      }
-  }
+  // Use a batch to delete both documents atomically
+  const batch = firestoreDb.batch();
+  batch.delete(workspaceRef);
+  batch.delete(contentRef);
+  await batch.commit();
 
-  await docRef.delete();
-  console.log(`Workspace ${workspaceId} successfully deleted for user ${userId}.`);
+  console.log(`Workspace ${workspaceId} and its content successfully deleted for user ${userId}.`);
 }
 
 
 /**
- * Fetches a single workspace, hydrating it with content from Cloud Storage if necessary.
+ * Fetches a single workspace, combining its metadata and content from two collections.
  */
 export async function getWorkspace({
   workspaceId,
@@ -172,10 +152,15 @@ export async function getWorkspace({
     throw new Error('User ID and Workspace ID are required.');
   }
 
-  const docRef = firestoreDb.collection('workspaces').doc(workspaceId);
-  const doc = await docRef.get();
+  const workspaceRef = firestoreDb.collection('workspaces').doc(workspaceId);
+  const contentRef = firestoreDb.collection('workspace_content').doc(workspaceId);
   
-  const workspace = serializeWorkspace(doc);
+  const [workspaceDoc, contentDoc] = await Promise.all([
+      workspaceRef.get(),
+      contentRef.get()
+  ]);
+  
+  const workspace = serializeWorkspace(workspaceDoc);
 
   if (!workspace) {
     console.warn(`Workspace with ID ${workspaceId} not found.`);
@@ -184,21 +169,17 @@ export async function getWorkspace({
   
   if (workspace.userId !== userId) {
     console.error(`User ${userId} attempted to access workspace ${workspaceId} owned by ${workspace.userId}.`);
-    return null;
+    throw new Error('Permission denied.');
   }
 
-  // If output is stored in Cloud Storage, fetch and replace it
-  const outputRef = workspace.output as any;
-  if (outputRef?.storagePath) {
-      try {
-          const [fileContents] = await storageBucket.file(outputRef.storagePath).download();
-          workspace.output = JSON.parse(fileContents.toString('utf-8'));
-          console.log(`Hydrated workspace ${workspaceId} with content from ${outputRef.storagePath}`);
-      } catch (error) {
-          console.error(`Failed to fetch workspace content from Cloud Storage (${outputRef.storagePath}):`, error);
-          workspace.output = { error: "Failed to load content from storage." };
-      }
+  const contentData = contentDoc.data();
+  if (contentData) {
+      workspace.input = contentData.input;
+      workspace.output = contentData.output;
+  } else {
+      console.warn(`Content for workspace ${workspaceId} not found.`);
+      workspace.output = { error: "Failed to load workspace content." };
   }
-
+  
   return workspace;
 }

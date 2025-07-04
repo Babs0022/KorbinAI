@@ -15,8 +15,8 @@ export interface Workspace {
   name: string;
   summary: string;
   type: WorkspaceType;
-  input: WorkspaceInput;
-  output: string | object;
+  input?: WorkspaceInput;  // Now optional, as it will be in a separate doc
+  output?: string | object; // Now optional
   featurePath: string;
   createdAt: any; // Firestore Timestamp
   updatedAt: any; // Firestore Timestamp

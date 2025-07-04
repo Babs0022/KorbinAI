@@ -32,7 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deleteWorkspace } from '@/services/workspaceService';
+import { deleteWorkspace, getWorkspace } from '@/services/workspaceService';
 import WorkspacePreviewDialog from '@/components/wizards/WorkspacePreviewDialog';
 
 
@@ -128,22 +128,23 @@ export default function WorkspacesPage() {
   };
 
   const handleEditClick = (workspace: Workspace) => {
-    const { featurePath, input } = workspace;
-    const path = String(featurePath || '');
-
-    if (isValidPath(path)) {
-      router.push({
-        pathname: path,
-        query: input as any,
-      });
-    } else {
-      console.warn('Invalid featurePath:', path);
-      toast({
-        variant: "destructive",
-        title: "Cannot Edit",
-        description: "This workspace is from an older version and cannot be edited directly.",
-      });
-    }
+    if (!workspace.id || !user) return;
+    
+    // Since the list view doesn't have input, we must fetch it first.
+    getWorkspace({ workspaceId: workspace.id, userId: user.uid }).then(fullWorkspace => {
+        if (fullWorkspace && isValidPath(fullWorkspace.featurePath)) {
+            router.push({
+                pathname: fullWorkspace.featurePath,
+                query: fullWorkspace.input as any,
+            });
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Cannot Edit",
+                description: "Could not load workspace for editing. It might be an older version.",
+            });
+        }
+    });
   };
 
   const handleDeleteClick = (workspace: Workspace) => {
@@ -174,12 +175,19 @@ export default function WorkspacesPage() {
     }
   };
 
-  const handleExport = (workspace: Workspace) => {
-    if (!workspace) return;
-
-    // For images, the export action is to open the gallery where individual downloads are possible.
+  const handleExport = async (workspace: Workspace) => {
+    if (!workspace || !user) return;
+    
+    // For images, we just open the preview dialog
     if (workspace.type === 'image') {
-      setViewingWorkspace(workspace);
+      handleViewClick(workspace);
+      return;
+    }
+
+    // For other types, we need the full content which isn't in the list view
+    const fullWorkspace = await getWorkspace({ workspaceId: workspace.id, userId: user.uid });
+    if (!fullWorkspace || !fullWorkspace.output) {
+      toast({ variant: "destructive", title: "Export Failed", description: "Could not load workspace content." });
       return;
     }
     
@@ -187,29 +195,28 @@ export default function WorkspacesPage() {
     let filename: string;
     let mimeType: string;
 
-    const sanitizedName = workspace.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const sanitizedName = fullWorkspace.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     
-    // Logic for text-based content
-    switch (workspace.type) {
+    switch (fullWorkspace.type) {
         case 'written-content':
         case 'prompt':
-            content = workspace.output as string;
+            content = fullWorkspace.output as string;
             filename = `${sanitizedName}.md`;
             mimeType = 'text/markdown';
             break;
         case 'structured-data':
-            content = typeof workspace.output === 'string' ? workspace.output : JSON.stringify(workspace.output, null, 2);
-            const format = (workspace.input as any).format || 'json';
+            content = typeof fullWorkspace.output === 'string' ? fullWorkspace.output : JSON.stringify(fullWorkspace.output, null, 2);
+            const format = (fullWorkspace.input as any).format || 'json';
             filename = `${sanitizedName}.${format}`;
             mimeType = format === 'csv' ? 'text/csv' : 'application/json';
             break;
         case 'component-wizard':
-            content = JSON.stringify(workspace.output, null, 2);
+            content = JSON.stringify(fullWorkspace.output, null, 2);
             filename = `${sanitizedName}_files.json`;
             mimeType = 'application/json';
             break;
         default:
-            content = typeof workspace.output === 'string' ? workspace.output : JSON.stringify(workspace.output, null, 2);
+            content = typeof fullWorkspace.output === 'string' ? fullWorkspace.output : JSON.stringify(fullWorkspace.output, null, 2);
             filename = `${sanitizedName}.txt`;
             mimeType = 'text/plain';
     }
@@ -331,11 +338,10 @@ export default function WorkspacesPage() {
         </AlertDialog>
 
         <WorkspacePreviewDialog
-          workspace={viewingWorkspace}
+          workspaceMetadata={viewingWorkspace}
           isOpen={!!viewingWorkspace}
           onOpenChange={(open) => !open && setViewingWorkspace(null)}
           onExport={handleExport}
-          onEdit={handleEditClick}
         />
       </main>
     </DashboardLayout>
