@@ -9,6 +9,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import MultiCodeDisplay from '@/components/wizards/CodeDisplay';
 
 interface WorkspacePreviewDialogProps {
   workspace: Workspace | null;
@@ -57,17 +58,20 @@ export default function WorkspacePreviewDialog({ workspace, isOpen, onOpenChange
         );
 
       case 'component-wizard':
-        const files = (workspace.output as any)?.files;
-        return files && Array.isArray(files) ? (
-          <ScrollArea className="mt-4 h-72">
-            <div className="rounded-md bg-secondary p-4 font-mono text-sm">
-              <h4 className="mb-2 font-semibold">Generated Files:</h4>
-              <ul className="space-y-1">
-                {files.map((file: any) => <li key={file.filePath}>{file.filePath}</li>)}
-              </ul>
-            </div>
-          </ScrollArea>
-        ) : <p>No file information available.</p>;
+        const output = workspace.output as any;
+        const files = output?.files;
+        const finalInstructions = output?.finalInstructions;
+
+        if (files && Array.isArray(files) && finalInstructions) {
+          return (
+            <ScrollArea className="mt-4 h-[70vh] rounded-md border">
+              <div className="p-4 md:p-6">
+                <MultiCodeDisplay files={files} finalInstructions={finalInstructions} variant="preview" />
+              </div>
+            </ScrollArea>
+          );
+        }
+        return <p>No file information available.</p>;
 
       default:
         return <p className="mt-4 text-muted-foreground">Preview not available for this workspace type.</p>;
@@ -76,7 +80,7 @@ export default function WorkspacePreviewDialog({ workspace, isOpen, onOpenChange
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>{workspace.name}</DialogTitle>
           <DialogDescription>{workspace.summary}</DialogDescription>

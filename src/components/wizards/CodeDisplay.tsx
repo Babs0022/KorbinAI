@@ -18,6 +18,7 @@ interface File {
 interface MultiCodeDisplayProps {
   files: File[];
   finalInstructions: string;
+  variant?: 'full' | 'preview';
 }
 
 interface FileTree {
@@ -147,15 +148,17 @@ const RenderFileTree = ({ tree, level = 0 }: { tree: FileTree, level?: number })
 
 // --- MAIN COMPONENT ---
 
-export default function MultiCodeDisplay({ files, finalInstructions }: MultiCodeDisplayProps) {
+export default function MultiCodeDisplay({ files, finalInstructions, variant = 'full' }: MultiCodeDisplayProps) {
   const fileTree = buildFileTree(files);
 
   return (
-    <div className="space-y-12">
-      <div>
-        <h2 className="text-3xl font-bold">Your Application is Ready!</h2>
-        <p className="mt-2 text-lg text-muted-foreground">Create the files below to set up your new application.</p>
-      </div>
+    <div className="space-y-8">
+      {variant === 'full' && (
+        <div>
+          <h2 className="text-3xl font-bold">Your Application is Ready!</h2>
+          <p className="mt-2 text-lg text-muted-foreground">Create the files below to set up your new application.</p>
+        </div>
+      )}
       
       <div className="file-tree-container">
         <RenderFileTree tree={fileTree} />
