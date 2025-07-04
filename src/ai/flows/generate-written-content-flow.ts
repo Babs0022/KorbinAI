@@ -18,6 +18,11 @@ const GenerateWrittenContentInputSchema = z.object({
   topic: z.string().describe('The main topic or message of the content.'),
   audience: z.string().optional().describe('The target audience for the content.'),
   keywords: z.string().optional().describe('A comma-separated list of keywords to include.'),
+  outputFormat: z.string().optional().describe("The desired output format (e.g., 'JSON', 'Markdown', 'HTML'). Defaults to Markdown if not specified."),
+  examples: z.array(z.object({
+    input: z.string().describe("An example of a user's input."),
+    output: z.string().describe("The corresponding desired output for the example input.")
+  })).optional().describe("An array of few-shot examples to guide the model's response style and structure."),
   originalContent: z.string().optional().describe('Existing content to be refined. If present, the flow will refine this content instead of generating new content from the topic.'),
   refinementInstruction: z.string().optional().describe("The instruction for refining the content (e.g., 'Make it shorter', 'Change the tone to witty')."),
   userId: z.string().optional().describe('The ID of the user performing the generation.'),
@@ -38,7 +43,7 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: GenerateWrittenContentInputSchema},
   output: {schema: GenerateWrittenContentOutputSchema},
-  prompt: `You are an expert copywriter.
+  prompt: `You are an expert copywriter and content creator.
 
 {{#if originalContent}}
 Your task is to refine the following content based on a specific instruction.
@@ -52,20 +57,45 @@ Refinement Instruction: "{{refinementInstruction}}"
 
 Refine the content now. Ensure the output is only the refined text, formatted nicely (e.g., with markdown).
 {{else}}
-Your task is to generate high-quality written content based on the user's specifications.
+You are a world-class AI content creation expert, acting as a {{tone}} writer. Your goal is to generate high-quality content based on the user's request.
 
-Content Type: "{{contentType}}"
-Tone of Voice: "{{tone}}"
-Main Topic/Message: "{{topic}}"
+**Core Task:**
+Generate a "{{contentType}}" about the following topic: "{{topic}}".
+
+**Audience:**
 {{#if audience}}
-Target Audience: "{{audience}}"
+The content should be tailored for the following audience: "{{audience}}".
+{{else}}
+The content should be written for a general audience.
 {{/if}}
+
+**Keywords:**
 {{#if keywords}}
-Keywords to Include: "{{keywords}}"
+Incorporate the following keywords naturally into the content: {{keywords}}.
 {{/if}}
-  
-Generate the content now. Ensure it is well-written, engaging, and perfectly matches the requested tone and topic.
-Format the output nicely. For example, use markdown for headings and lists for blog posts.
+
+**Output Format:**
+{{#if outputFormat}}
+The final output MUST be in well-formed {{outputFormat}} format.
+{{else}}
+The final output should be in well-formatted Markdown.
+{{/if}}
+
+{{#if examples}}
+**Examples (Few-Shot Learning):**
+Use the following input/output examples as a strict guide for the desired style and structure. Replicate the output format precisely.
+{{#each examples}}
+---
+EXAMPLE INPUT:
+\`{{this.input}}\`
+
+EXAMPLE OUTPUT:
+\`{{{this.output}}}\`
+---
+{{/each}}
+{{/if}}
+
+Generate the content now based on these instructions. Do not include any explanations or introductions, only the generated content itself.
 {{/if}}
 `,
 });
