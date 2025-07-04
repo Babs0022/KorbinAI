@@ -1,43 +1,60 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if the requesting user is an admin.
-    // This requires a `users` collection where an `admin: true` field is stored.
+    // Helper function to check if the requesting user is the owner of the document.
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Helper function to check if the user is an admin.
+    // This securely checks the user's document in the 'users' collection.
     function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true;
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true;
     }
 
-    // --- User Profiles ---
-    // Users can read any profile, but can only create or update their own.
+    // --- User Profile Rules ---
+    // Users can only read, create, and update their own profiles.
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.uid == userId;
+      allow read, create: if isOwner(userId);
+      
+      // Prevent users from making themselves admins or changing their UID.
+      allow update: if isOwner(userId)
+                    && !('admin' in request.resource.data) || request.resource.data.admin == resource.data.admin
+                    && request.resource.data.uid == resource.data.uid;
     }
 
-    // --- Workspaces ---
-    // Users can only manage their own documents. Validation is enforced on creation.
+    // --- Workspace Rules ---
+    // Workspaces are user-specific content.
     match /workspaces/{workspaceId} {
-      // A user can read, update, or delete a workspace only if they are the owner.
-      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
 
       // A user can create a workspace if they are the owner and provide valid data.
-      allow create: if request.auth != null
-                    && request.resource.data.userId == request.auth.uid
+      allow create: if isOwner(request.resource.data.userId)
                     && request.resource.data.name is string
-                    && request.resource.data.name.size() > 0 && request.resource.data.name.size() < 100
+                    && request.resource.data.name.size() > 0
                     && request.resource.data.summary is string
                     && request.resource.data.type is string
                     && request.resource.data.input is map
+                    && (request.resource.data.output is map || request.resource.data.output is string)
                     && request.resource.data.featurePath is string;
+
+      // Only the owner can read or delete their own workspace.
+      allow read, delete: if isOwner(resource.data.userId);
+
+      // The owner can update a workspace, but cannot change the owner (userId) or creation date.
+      allow update: if isOwner(resource.data.userId)
+                    && request.resource.data.userId == resource.data.userId
+                    && request.resource.data.createdAt == resource.data.createdAt;
     }
 
-    // --- Templates (Example Collection) ---
-    // Templates are readable by any authenticated user, but only writable by admins.
+    // --- Templates Rules ---
+    // Templates are publicly readable but only writable by admins.
     match /templates/{templateId} {
+      // Any authenticated user can read templates.
       allow read: if request.auth != null;
+
+      // Only users with 'admin: true' in their user document can write.
       allow write: if isAdmin();
     }
   }
