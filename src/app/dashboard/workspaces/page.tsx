@@ -241,7 +241,7 @@ export default function WorkspacesPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={() => router.push({ pathname: workspace.featurePath, query: workspace.input as any })}>
+                                <DropdownMenuItem onSelect={() => router.push({ pathname: workspace.featurePath, query: workspace.input as any })} disabled={!workspace.featurePath}>
                                     <Eye className="mr-2 h-4 w-4" /> View / Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => handleExport(workspace)}>
