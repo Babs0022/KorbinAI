@@ -203,7 +203,7 @@ export default function StructuredDataClient() {
                 <RadioGroup
                   value={format}
                   onValueChange={setFormat}
-                  className="flex items-center gap-6 pt-1"
+                  className="flex flex-wrap items-center gap-6 pt-1"
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="json" id="format-json" />
@@ -213,24 +213,32 @@ export default function StructuredDataClient() {
                     <RadioGroupItem value="csv" id="format-csv" />
                     <Label htmlFor="format-csv" className="text-base">CSV</Label>
                   </div>
+                   <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="kml" id="format-kml" />
+                    <Label htmlFor="format-kml" className="text-base">KML</Label>
+                  </div>
+                   <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="xml" id="format-xml" />
+                    <Label htmlFor="format-xml" className="text-base">XML</Label>
+                  </div>
                 </RadioGroup>
               </div>
               
               <div className="space-y-2">
                  <div className="flex items-center gap-2">
                   <h3 className="text-lg font-medium text-white">
-                    JSON Schema/Example <span className="font-normal text-muted-foreground">(optional)</span>
+                    Schema/Example <span className="font-normal text-muted-foreground">(optional)</span>
                   </h3>
-                  {isSuggesting && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                  {isSuggesting && format === 'json' && <LoaderCircle className="h-4 w-4 animate-spin" />}
                 </div>
                 <Textarea
                   id="schemaDefinition"
                   name="schemaDefinition"
-                  placeholder={`e.g., {\n  "name": "string",\n  "class": "string",\n  "level": "number"\n}`}
+                  placeholder={`e.g., {\n  "name": "string",\n  "level": "number"\n} or an XML structure`}
                   className="min-h-[100px] font-mono text-xs"
                   value={schemaDefinition}
                   onChange={(e) => setSchemaDefinition(e.target.value)}
-                  disabled={format !== 'json'}
+                  disabled={format === 'csv'}
                 />
                 {format === 'json' && suggestion && (
                   <div className="mt-2 rounded-md border border-dashed border-primary/50 bg-secondary p-2">
@@ -275,7 +283,7 @@ export default function StructuredDataClient() {
           <GenerationResultCard
             title="Your Generated Data"
             content={generatedData}
-            language={format}
+            language={format === 'kml' ? 'xml' : format}
             variant="code"
           />
 

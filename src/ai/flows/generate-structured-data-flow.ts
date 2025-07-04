@@ -14,8 +14,8 @@ import { saveWorkspace } from '@/services/workspaceService';
 
 const GenerateStructuredDataInputSchema = z.object({
   description: z.string().describe('A plain English description of the data to generate.'),
-  format: z.string().describe("The desired output format (e.g., 'JSON', 'CSV')."),
-  schemaDefinition: z.string().optional().describe('For JSON, an optional schema or example of the desired structure.'),
+  format: z.string().describe("The desired output format (e.g., 'JSON', 'CSV', 'KML', 'XML')."),
+  schemaDefinition: z.string().optional().describe('An optional schema or example of the desired structure (e.g., a JSON schema, an example XML/KML structure).'),
   originalData: z.string().optional().describe('Existing data to be refined. If present, the flow will refine this data instead of generating new data from the description.'),
   refinementInstruction: z.string().optional().describe("The instruction for refining the data (e.g., 'Add 10 more records', 'Add a unique ID field')."),
   userId: z.string().optional().describe('The ID of the user performing the generation.'),
@@ -23,7 +23,7 @@ const GenerateStructuredDataInputSchema = z.object({
 export type GenerateStructuredDataInput = z.infer<typeof GenerateStructuredDataInputSchema>;
 
 const GenerateStructuredDataOutputSchema = z.object({
-  generatedData: z.string().describe('The complete, formatted structured data.'),
+  generatedData: z.string().describe('The complete, formatted structured data (e.g., a JSON object, a CSV string, or an XML/KML document).'),
 });
 export type GenerateStructuredDataOutput = z.infer<typeof GenerateStructuredDataOutputSchema>;
 
@@ -37,35 +37,39 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateStructuredDataInputSchema},
   output: {schema: GenerateStructuredDataOutputSchema},
   prompt: `You are an expert data generation machine. Your task is to generate or refine structured data based on the user's request.
-You must output ONLY the raw data, without any explanations, introductions, or markdown formatting like \`\`\`json.
+You must output ONLY the raw data, without any explanations, introductions, or markdown formatting like \`\`\`json\`\`\` or \`\`\`xml\`\`\`.
 
-Important Formatting Rules:
-- If the format is CSV, ensure each record is on a new line. Do not output a single-line CSV.
-- If the format is JSON, ensure it is well-formed.
+**Core Instructions:**
+1.  **Strictly Adhere to Format:** The generated data must be valid for the requested format ({{format}}).
+2.  **Use the Schema:** If a schema or example is provided, it is a strict guide. Your output structure MUST match it. For XML-based formats like KML, this means using the correct tags, namespaces, and nesting.
+3.  **No Explanations:** Do not add any text before or after the data block.
+
+---
 
 {{#if originalData}}
-Your task is to refine the following data based on a specific instruction.
+**Task: Refine Existing Data**
 
-Original Data (Format: {{format}}):
----
-{{{originalData}}}
----
+-   **Refinement Instruction:** "{{refinementInstruction}}"
+-   **Original Data (Format: {{format}}):**
+    ---
+    {{{originalData}}}
+    ---
 
-Refinement Instruction: "{{refinementInstruction}}"
-
-Refine the data now. Ensure the output is only the refined data in the same format, respecting the formatting rules above.
+Refine the data now. Ensure the output is only the refined data in the same format.
 {{else}}
-Your task is to generate structured data from scratch.
+**Task: Generate New Data**
 
-Data Description: "{{description}}"
-Output Format: "{{format}}"
+-   **Data Description:** "{{description}}"
+-   **Output Format:** "{{format}}"
 
 {{#if schemaDefinition}}
-Use this schema or example to guide the structure of the JSON output:
-{{{schemaDefinition}}}
+-   **Schema / Example Structure:**
+    ---
+    {{{schemaDefinition}}}
+    ---
 {{/if}}
 
-Generate the data now.
+Generate the data now based on these instructions.
 {{/if}}
   `,
 });
@@ -86,7 +90,7 @@ const generateStructuredDataFlow = ai.defineFlow(
     }
     
     // Clean up the output to remove potential markdown code blocks
-    const cleanedData = output.generatedData.replace(/^```(json|csv)?\n?/, '').replace(/\n?```$/, '');
+    const cleanedData = output.generatedData.replace(/^```(json|csv|xml|kml)?\n?/, '').replace(/\n?```$/, '');
     const finalOutput = { generatedData: cleanedData };
     
     // Save every generation to the workspace if a user is logged in.
