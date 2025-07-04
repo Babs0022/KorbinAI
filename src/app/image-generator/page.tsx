@@ -5,20 +5,44 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import NextImage from "next/image";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, LoaderCircle } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { generateImage, type GenerateImageInput } from "@/ai/flows/generate-image-flow";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+const styleOptions = [
+  { value: "photorealistic", label: "Photorealistic" },
+  { value: "digital art", label: "Digital Art" },
+  { value: "anime", label: "Anime / Manga" },
+  { value: "minimalist line art", label: "Line Art" },
+];
+
+const ratioOptions = [
+    { value: "1:1", label: "Square (1:1)" },
+    { value: "2:3", label: "Portrait (2:3)" },
+    { value: "16:9", label: "Landscape (16:9)" },
+];
 
 export default function ImageGeneratorPage() {
   const searchParams = useSearchParams();
-  const [isLoading, setIsLoading] = useState(false);
-  const [generatedImage, setGeneratedImage] = useState("");
-  const [prompt, setPrompt] = useState("");
   const { toast } = useToast();
+
+  // Form State
+  const [prompt, setPrompt] = useState("");
+  const [style, setStyle] = useState(styleOptions[0].value);
+  const [aspectRatio, setAspectRatio] = useState(ratioOptions[0].value);
+  
+  // Generation State
+  const [isLoading, setIsLoading] = useState(false);
+  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+  
+  // Dialog State
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const urlPrompt = searchParams.get('prompt');
@@ -29,14 +53,10 @@ export default function ImageGeneratorPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setGeneratedImage("");
+    setGeneratedImages([]);
     setIsLoading(true);
 
-    const input: GenerateImageInput = {
-      prompt,
-    };
-
-    if (!input.prompt) {
+    if (!prompt) {
       toast({
         variant: "destructive",
         title: "Prompt is required",
@@ -46,12 +66,20 @@ export default function ImageGeneratorPage() {
       return;
     }
 
+    // Construct a more detailed prompt for the AI
+    const finalPrompt = `${prompt}, ${style}, aspect ratio ${aspectRatio}`;
+
+    const input: GenerateImageInput = {
+      prompt: finalPrompt,
+      count: 4,
+    };
+
     try {
       const result = await generateImage(input);
-      if (result.imageUrl) {
-        setGeneratedImage(result.imageUrl);
+      if (result.imageUrls && result.imageUrls.length > 0) {
+        setGeneratedImages(result.imageUrls);
       } else {
-        throw new Error("The AI did not return an image.");
+        throw new Error("The AI did not return any images.");
       }
     } catch (error) {
       console.error("Failed to generate image:", error);
@@ -67,7 +95,7 @@ export default function ImageGeneratorPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center p-4 md:p-8">
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-6xl">
         <Link
           href="/"
           className="mb-8 inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"
@@ -78,74 +106,142 @@ export default function ImageGeneratorPage() {
 
         <div className="text-center">
           <h1 className="mb-2 text-4xl font-bold md:text-5xl">
-            Image Generator
+            Image Studio
           </h1>
           <p className="mb-12 text-lg text-muted-foreground">
-            Describe the image you want to create, and the AI will bring it to life.
+            Describe your vision, choose a style, and let the AI bring it to life.
           </p>
         </div>
 
-        <Card className="w-full rounded-xl">
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="space-y-2">
-                <h3 className="text-lg font-medium text-white">
-                  What should the image look like?
-                </h3>
-                <Textarea
-                  id="prompt"
-                  name="prompt"
-                  placeholder="e.g., 'A photorealistic image of a red panda wearing a tiny wizard hat, sitting in a magical forest.'"
-                  className="min-h-[120px] text-base"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  required
-                />
-              </div>
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+            {/* --- CONTROLS --- */}
+            <form onSubmit={handleSubmit} className="space-y-8 lg:col-span-4">
+                <Card className="w-full rounded-xl sticky top-8">
+                <CardContent className="p-6 space-y-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="prompt" className="text-lg font-medium text-white">1. Describe your image</Label>
+                        <Textarea
+                        id="prompt"
+                        name="prompt"
+                        placeholder="e.g., 'A red panda wearing a tiny wizard hat, sitting in a magical forest.'"
+                        className="min-h-[150px] text-base"
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        required
+                        />
+                    </div>
+                    
+                    <div className="space-y-3">
+                        <h3 className="text-lg font-medium text-white">2. Select a style</h3>
+                         <RadioGroup value={style} onValueChange={setStyle} className="grid grid-cols-2 gap-2">
+                            {styleOptions.map(({ value, label }) => (
+                                <div key={value}>
+                                <RadioGroupItem value={value} id={`style-${value}`} className="peer sr-only" />
+                                <Label htmlFor={`style-${value}`} className="flex h-full min-h-[50px] flex-col items-center justify-center rounded-md border-2 border-accent bg-secondary p-3 text-center text-sm hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 [&:has([data-state=checked])]:border-primary">
+                                    {label}
+                                </Label>
+                                </div>
+                            ))}
+                        </RadioGroup>
+                    </div>
 
-              <div className="flex justify-end pt-4">
-                <Button type="submit" size="lg" className="text-lg" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    "Generate Image"
-                  )}
-                </Button>
-              </div>
+                    <div className="space-y-3">
+                        <h3 className="text-lg font-medium text-white">3. Choose an aspect ratio</h3>
+                        <RadioGroup value={aspectRatio} onValueChange={setAspectRatio}>
+                            {ratioOptions.map(({ value, label }) => (
+                                <div key={value} className="flex items-center space-x-2">
+                                    <RadioGroupItem value={value} id={`ratio-${value}`} />
+                                    <Label htmlFor={`ratio-${value}`} className="text-base">{label}</Label>
+                                </div>
+                            ))}
+                        </RadioGroup>
+                    </div>
+
+                    <Button type="submit" size="lg" className="w-full text-lg" disabled={isLoading}>
+                    {isLoading ? (
+                        <>
+                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                        Generating...
+                        </>
+                    ) : (
+                        "Generate Images"
+                    )}
+                    </Button>
+                </CardContent>
+                </Card>
             </form>
-          </CardContent>
-        </Card>
 
-        {isLoading && (
-          <Card className="mt-12 rounded-xl">
-            <CardHeader>
-              <CardTitle>Generating Your Image...</CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center p-16">
-                <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
-            </CardContent>
-          </Card>
-        )}
+            {/* --- RESULTS --- */}
+            <div className="lg:col-span-8">
+                {isLoading && (
+                    <div className="flex h-full items-center justify-center rounded-xl border border-dashed p-16">
+                        <div className="text-center">
+                            <LoaderCircle className="mx-auto h-12 w-12 animate-spin text-primary" />
+                            <h3 className="mt-4 text-xl font-semibold">Generating your masterpieces...</h3>
+                            <p className="text-muted-foreground">The AI is warming up its paintbrushes.</p>
+                        </div>
+                    </div>
+                )}
+                
+                {!isLoading && generatedImages.length === 0 && (
+                     <div className="flex h-full items-center justify-center rounded-xl border border-dashed p-16">
+                        <div className="text-center">
+                           <h3 className="text-xl font-semibold">Your gallery awaits</h3>
+                           <p className="text-muted-foreground">Describe your vision and click "Generate" to see the magic.</p>
+                        </div>
+                    </div>
+                )}
 
-        {generatedImage && !isLoading && (
-          <Card className="mt-12 rounded-xl">
-            <CardHeader>
-              <CardTitle>Your Generated Image</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <NextImage
-                src={generatedImage}
-                alt="Generated image"
-                width={1024}
-                height={1024}
-                className="rounded-lg border"
-              />
-            </CardContent>
-          </Card>
-        )}
+                {generatedImages.length > 0 && (
+                    <div className="grid grid-cols-2 gap-4">
+                        {generatedImages.map((src, index) => (
+                        <button
+                            key={index}
+                            className="group relative aspect-square w-full overflow-hidden rounded-lg transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+                            onClick={() => setSelectedImage(src)}
+                        >
+                            <NextImage
+                            src={src}
+                            alt={`Generated image ${index + 1}`}
+                            fill
+                            sizes="(max-width: 768px) 50vw, 33vw"
+                            className="object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center">
+                                <span className="text-white font-semibold">View</span>
+                            </div>
+                        </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+
+        <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
+            <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle>Generated Image</DialogTitle>
+                </DialogHeader>
+                {selectedImage && (
+                    <div className="space-y-4">
+                        <div className="relative aspect-square w-full">
+                           <NextImage
+                                src={selectedImage}
+                                alt="Selected generated image"
+                                fill
+                                className="rounded-md object-contain"
+                           />
+                        </div>
+                         <a href={selectedImage} download={`generated-image-${Date.now()}.png`}>
+                            <Button className="w-full">
+                                <Download className="mr-2 h-4 w-4" />
+                                Download Image
+                            </Button>
+                        </a>
+                    </div>
+                )}
+            </DialogContent>
+        </Dialog>
       </div>
     </main>
   );
