@@ -109,10 +109,12 @@ const generateAppFlow = ai.defineFlow(
       throw new Error('Failed to generate application because the AI response was empty or invalid.');
     }
     
-    // Clean up the code in each file to remove markdown blocks if the AI includes them
+    // Clean up the code and ensure plain objects by explicitly creating them,
+    // avoiding the spread operator on complex Genkit response objects.
     const cleanedFiles = output.files.map(file => ({
-        ...file,
-        componentCode: file.componentCode.replace(/^```(tsx|typescript|ts|jsx|js|json)?\n?/, '').replace(/\n?```$/, '')
+        filePath: file.filePath,
+        componentCode: file.componentCode.replace(/^```(tsx|typescript|ts|jsx|js|json)?\n?/, '').replace(/\n?```$/, ''),
+        instructions: file.instructions,
     }));
     
     // Construct a new, clean object to prevent passing complex Genkit objects to Firestore.
