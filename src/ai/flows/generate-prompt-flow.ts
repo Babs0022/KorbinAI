@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow for generating optimized AI prompts based on user requirements.
@@ -21,7 +22,6 @@ export type GeneratePromptInput = z.infer<typeof GeneratePromptInputSchema>;
 // Define the output schema with Zod
 const GeneratePromptOutputSchema = z.object({
   generatedPrompt: z.string().describe('The complete, optimized prompt ready to be used.'),
-  explanation: z.string().describe('A brief explanation of why the prompt is structured the way it is.'),
 });
 export type GeneratePromptOutput = z.infer<typeof GeneratePromptOutputSchema>;
 
@@ -53,7 +53,7 @@ Target AI Model: "{{targetModel}}"
 Desired Output Format: "{{outputFormat}}"
 {{/if}}
 
-Generate the prompt now. Also, provide a brief, helpful explanation of the key techniques you used to enhance the original description. The explanation should be plain text, without any markdown formatting like asterisks for bolding.
+Generate the prompt now. Return only a JSON object that matches the schema.
 `,
 });
 

@@ -22,7 +22,6 @@ export default function PromptGeneratorPage() {
   // Generation State
   const [isLoading, setIsLoading] = useState(false);
   const [generatedPrompt, setGeneratedPrompt] = useState("");
-  const [explanation, setExplanation] = useState("");
   const [copied, setCopied] = useState(false);
 
   // Suggestion State
@@ -78,7 +77,6 @@ export default function PromptGeneratorPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setGeneratedPrompt("");
-    setExplanation("");
     setToolSuggestion(null);
     setIsLoading(true);
 
@@ -102,7 +100,6 @@ export default function PromptGeneratorPage() {
       const result = await generatePrompt(input);
       if (result.generatedPrompt) {
         setGeneratedPrompt(result.generatedPrompt);
-        setExplanation(result.explanation);
         
         // After generating the prompt, analyze it for tool suggestions
         const analysisResult = await analyzePrompt({ prompt: result.generatedPrompt });
@@ -247,21 +244,6 @@ export default function PromptGeneratorPage() {
                   {generatedPrompt}
                 </div>
               </CardContent>
-            </Card>
-
-            <Card className="rounded-xl">
-               <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-xl">
-                        <Sparkles className="h-5 w-5 text-primary" />
-                        Prompt Engineering Tips
-                    </CardTitle>
-                    <CardDescription>Here’s why this prompt is effective:</CardDescription>
-                </CardHeader>
-               <CardContent>
-                 <div className="prose-sm dark:prose-invert max-w-none text-muted-foreground">
-                    {explanation}
-                 </div>
-               </CardContent>
             </Card>
 
             {toolSuggestion && toolSuggestion.tool !== 'none' && toolMap[toolSuggestion.tool] && (
