@@ -115,9 +115,10 @@ const generateAppFlow = ai.defineFlow(
         componentCode: file.componentCode.replace(/^```(tsx|typescript|ts|jsx|js|json)?\n?/, '').replace(/\n?```$/, '')
     }));
     
-    const finalOutput = {
-        ...output,
+    // Construct a new, clean object to prevent passing complex Genkit objects to Firestore.
+    const finalOutput: GenerateAppOutput = {
         files: cleanedFiles,
+        finalInstructions: output.finalInstructions,
     };
 
     if (input.userId) {
