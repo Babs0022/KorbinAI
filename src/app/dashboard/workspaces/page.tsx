@@ -119,15 +119,16 @@ export default function WorkspacesPage() {
   }, [user, toast]);
 
   const handleEdit = (workspace: Workspace) => {
-    const { featurePath, input } = workspace;
+    // Defensively coerce featurePath to a string primitive to avoid crashes.
+    const pathAsString = String(workspace.featurePath || '');
   
-    if (isValidPath(featurePath)) {
+    if (isValidPath(pathAsString)) {
       router.push({
-        pathname: featurePath,
-        query: input as any,
+        pathname: pathAsString,
+        query: workspace.input as any,
       });
     } else {
-      console.warn('Invalid featurePath for edit:', featurePath);
+      console.warn('Invalid or missing featurePath for edit:', workspace.featurePath);
       toast({
         variant: "destructive",
         title: "Cannot Edit Workspace",
