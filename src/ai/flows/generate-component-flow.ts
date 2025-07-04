@@ -14,7 +14,7 @@ import {z} from 'zod';
 const GenerateAppInputSchema = z.object({
   description: z.string().describe('A plain English description of the application or page to build.'),
   style: z.string().describe("The visual style of the brand (e.g., 'Minimalist & Modern', 'Playful & Creative')."),
-  dataPoints: z.string().optional().describe('A comma-separated list of specific data points or sections the app should include.'),
+  dataPoints: z.string().optional().describe('A comma-separated list of specific page sections the app should include (e.g., Hero, Features, Testimonials). This is the primary guide for page structure.'),
   generationMode: z.enum(['new', 'existing']).describe("Determines whether to generate a full new application or add to an existing one."),
 });
 export type GenerateAppInput = z.infer<typeof GenerateAppInputSchema>;
@@ -41,47 +41,54 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: GenerateAppInputSchema},
   output: {schema: GenerateAppOutputSchema},
-  prompt: `You are an expert Next.js developer and architect. Your task is to generate the files for a web application based on the user's request.
+  prompt: `You are an expert Next.js developer specializing in creating beautiful, production-ready applications using ShadCN UI and Tailwind CSS. Your task is to generate the files for a web application based on a structured request.
 
-Pay close attention to the **Generation Mode**.
-
----
-### Generation Mode: {{generationMode}}
----
-
-**If the Generation Mode is 'new':**
-Your task is to generate ALL the necessary files to create a COMPLETE, standalone Next.js application from scratch.
-- **File Paths:** This is critical. You must generate both root-level files and files inside the 'src' directory.
-    - **Root Files:** Paths like 'package.json', 'next.config.ts', and 'tailwind.config.ts' MUST NOT start with 'src/'.
-    - **Source Files:** All application code (pages, components, styles) MUST have paths starting with 'src/'. For example: 'src/app/page.tsx'.
-- **Dependencies:** The 'package.json' MUST include 'next', 'react', 'react-dom', 'tailwindcss'. You can also add 'lucide-react' for icons and 'clsx' for utility classes. DO NOT generate a 'devDependencies' section. The 'scripts' must include "dev", "build", and "start".
-- **Configuration:** Generate valid, standard 'next.config.ts' and 'tailwind.config.ts' files.
-- **Base Styles:** Provide 'src/app/globals.css' with Tailwind directives.
-- **Root Layout:** Create a 'src/app/layout.tsx' file.
-
-**If the Generation Mode is 'existing':**
-Your task is to generate ONLY the files to create a new page or feature within an *existing* Next.js application.
-- **File Paths:** All generated files MUST have an absolute path starting from the 'src/' directory (e.g., 'src/app/new-feature/page.tsx'). DO NOT generate root-level files like 'package.json' or any configuration files.
-- **Main Route:** The primary page for this new feature should be at a new route like 'src/app/new-page/page.tsx'. Use 'src/app/page.tsx' only if the user explicitly asks to replace the homepage.
-
----
-### General Instructions (Apply to Both Modes)
-- **Output Format:** You MUST return the output as a valid JSON object that adheres to the defined schema. The JSON object must contain an array of file objects and final instructions. Do not add any explanations or introductory text in your response. Output ONLY the raw JSON object.
-- **File Content:** For each file, provide the full, complete TSX/TS/JSON code.
-- **User Instructions:** For each file, include a simple, one-sentence explanation of its purpose for a non-technical user.
-- **Technology Stack:** Use TypeScript, the Next.js App Router, and Tailwind CSS. For 'new' mode, do not assume shadcn/ui is installed; generate simple components.
-- **Component Structure:** Create separate, reusable components for different sections of a page. Place new components in 'src/components/sections/'.
-- **Placeholders:** Use placeholder images from \`https://placehold.co/<width>x<height>.png\` where needed. Add a \`data-ai-hint\` attribute with one or two keywords for the image.
+Pay close attention to the **Generation Mode** and the requested **Page Sections**.
 
 ---
 ### User Request
-App Description: "{{description}}"
-Visual Style: "{{style}}"
+- **App Description:** "{{description}}"
+- **Visual Style:** "{{style}}"
+- **Generation Mode:** {{generationMode}}
 {{#if dataPoints}}
-Specific Sections/Data to include: "{{dataPoints}}"
+- **Page Sections:** "{{dataPoints}}"
 {{/if}}
+---
 
-Generate the JSON output for the application files now based on the specified Generation Mode.
+### Core Instructions
+
+1.  **Structure from Sections**: The "Page Sections" are your primary guide. For the main page, create one React component for EACH section listed in 'dataPoints'.
+    -   Place new section components in \`src/components/sections/\`. For example, a "Hero" section becomes \`src/components/sections/HeroSection.tsx\`.
+    -   The main page file (e.g., \`src/app/page.tsx\`) should import these section components and render them in order.
+
+2.  **Use High-Quality UI Components**:
+    -   Build the UI using **ShadCN components** (\`@/components/ui/*\`) like \`<Card>\`, \`<Button>\`, \`<Input>\`, etc. This is mandatory for professional results.
+    -   Use **Lucide React icons** for iconography.
+    -   Use Tailwind CSS for all styling. Do not use inline styles.
+    -   Use placeholder images from \`https://placehold.co/<width>x<height>.png\`. Add a \`data-ai-hint\` attribute with one or two keywords for the image.
+
+3.  **Generation Mode Logic**:
+
+    -   **If Mode is 'existing'**:
+        -   Generate ONLY the files for the new page and its section components.
+        -   All file paths MUST start with \`src/\`. The main page should be at a new route like \`src/app/new-page/page.tsx\`, unless the description implies changing the homepage.
+        -   DO NOT generate \`package.json\`, config files, or \`layout.tsx\`. Assume ShadCN is already installed.
+
+    -   **If Mode is 'new'**:
+        -   Generate ALL files for a COMPLETE, standalone Next.js app.
+        -   **Root Files**: Paths like \`package.json\`, \`next.config.ts\`, \`tailwind.config.ts\`, \`components.json\` must be at the root (no \`src/\` prefix).
+        -   **Source Files**: App code, components, and styles must be in \`src/\`.
+        -   **Dependencies**: \`package.json\` must include everything needed for a ShadCN project: \`next\`, \`react\`, \`tailwindcss\`, \`lucide-react\`, \`class-variance-authority\`, \`clsx\`, \`tailwind-merge\`, \`tailwindcss-animate\`, and all necessary \`@radix-ui/*\` packages. Add TypeScript dev dependencies.
+        -   **Configuration**: Generate valid configs, including \`components.json\` for ShadCN.
+        -   **Styling**: Generate \`src/app/globals.css\` with a theme matching the user's chosen **Visual Style**.
+        -   **Layout**: Generate a root \`src/app/layout.tsx\`.
+
+4.  **Output Format**:
+    -   You MUST return a valid JSON object matching the schema.
+    -   Provide the FULL, complete code for every file.
+    -   For each file, include a simple, one-sentence explanation of its purpose.
+
+Generate the application files now based on these detailed instructions.
 `,
 });
 
