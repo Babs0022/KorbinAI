@@ -109,7 +109,18 @@ export default function StructuredDataPage() {
     try {
       const result = await generateStructuredData(input);
       if (result.generatedData) {
-        setGeneratedData(result.generatedData);
+        let finalData = result.generatedData;
+        if (format === 'json') {
+          try {
+            // Attempt to parse and re-stringify with indentation
+            const parsedJson = JSON.parse(finalData);
+            finalData = JSON.stringify(parsedJson, null, 2);
+          } catch (e) {
+            // If parsing fails, use the raw data. The syntax highlighter might still work.
+            console.warn("Could not parse and format generated JSON, displaying as is.", e);
+          }
+        }
+        setGeneratedData(finalData);
       } else {
         throw new Error("The AI did not return any data.");
       }
@@ -140,7 +151,18 @@ export default function StructuredDataPage() {
     try {
       const result = await generateStructuredData(input);
       if (result.generatedData) {
-        setGeneratedData(result.generatedData);
+        let finalData = result.generatedData;
+        if (format === 'json') {
+          try {
+            // Attempt to parse and re-stringify with indentation
+            const parsedJson = JSON.parse(finalData);
+            finalData = JSON.stringify(parsedJson, null, 2);
+          } catch (e) {
+            // If parsing fails, use the raw data.
+            console.warn("Could not parse and format refined JSON, displaying as is.", e);
+          }
+        }
+        setGeneratedData(finalData);
         toast({ title: "Data Refined", description: "The data has been updated." });
       } else {
         throw new Error("The AI did not return any refined data.");
