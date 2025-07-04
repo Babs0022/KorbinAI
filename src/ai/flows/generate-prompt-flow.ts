@@ -53,7 +53,7 @@ Target AI Model: "{{targetModel}}"
 Desired Output Format: "{{outputFormat}}"
 {{/if}}
 
-Generate the prompt now. Also, provide a brief, helpful explanation of the key techniques you used to enhance the original description.
+Generate the prompt now. Also, provide a brief, helpful explanation of the key techniques you used to enhance the original description. The explanation should be plain text, without any markdown formatting like asterisks for bolding.
 `,
 });
 
