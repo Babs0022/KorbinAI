@@ -57,8 +57,8 @@ export async function saveWorkspace({
   // Ensure the objects being saved are plain and serializable to prevent Firestore errors.
   const serializableInput = JSON.parse(JSON.stringify(input));
   const serializableOutput = typeof output === 'string'
-    ? output.substring(0, 5000) // Truncate long strings
-    : JSON.parse(JSON.stringify(output)); // Deep clone to remove non-serializable parts
+    ? output.substring(0, 10000) // Truncate very long strings
+    : JSON.parse(JSON.stringify(output));
 
   const workspaceData = {
     userId,
@@ -76,4 +76,41 @@ export async function saveWorkspace({
   console.log(`Workspace saved for user ${userId} with ID: ${docRef.id}`);
 
   return docRef.id;
+}
+
+
+/**
+ * Deletes a user's workspace from Firestore after verifying ownership.
+ *
+ * @param workspaceId - The ID of the workspace document to delete.
+ * @param userId - The UID of the user requesting the deletion.
+ */
+export async function deleteWorkspace({
+  workspaceId,
+  userId,
+}: {
+  workspaceId: string;
+  userId: string;
+}): Promise<void> {
+  if (!userId || !workspaceId) {
+    throw new Error('User ID and Workspace ID are required for deletion.');
+  }
+
+  const docRef = firestoreDb.collection('workspaces').doc(workspaceId);
+  const doc = await docRef.get();
+
+  if (!doc.exists) {
+    console.warn(`Workspace with ID ${workspaceId} not found. Nothing to delete.`);
+    return;
+  }
+
+  const workspaceData = doc.data();
+  if (workspaceData?.userId !== userId) {
+    // This is a server-side check to enforce security rules.
+    console.error(`User ${userId} attempted to delete workspace ${workspaceId} owned by ${workspaceData?.userId}.`);
+    throw new Error('Permission denied. You can only delete your own workspaces.');
+  }
+
+  await docRef.delete();
+  console.log(`Workspace ${workspaceId} successfully deleted for user ${userId}.`);
 }
