@@ -53,15 +53,19 @@ export async function saveWorkspace({
   // Generate metadata (name, summary) for the workspace
   const metadata = await generateWorkspaceMetadata({ type, content: contentForMetadata });
 
+  // Ensure the objects being saved are plain and serializable to prevent Firestore errors.
+  const serializableInput = JSON.parse(JSON.stringify(input));
+  const serializableOutput = typeof output === 'string'
+    ? output.substring(0, 5000) // Truncate long strings
+    : JSON.parse(JSON.stringify(output)); // Deep clone to remove non-serializable parts
+
   const workspaceData = {
     userId,
     type,
     name: metadata.name,
     summary: metadata.summary,
-    input,
-    // Truncate long string outputs to avoid exceeding Firestore document size limits.
-    // Objects (like for components/images) are assumed to be smaller and are stored as-is.
-    output: typeof output === 'string' ? output.substring(0, 5000) : output,
+    input: serializableInput,
+    output: serializableOutput,
     featurePath,
     createdAt: new Date(),
     updatedAt: new Date(),
