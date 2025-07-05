@@ -57,7 +57,10 @@ const generateImageFlow = ai.defineFlow(
       throw new Error('Image generation failed to return any images. This may be due to a safety policy violation in the prompt or a network issue.');
     }
 
-    const flowOutput = { imageUrls };
+    // Construct a new, clean object to prevent passing complex Genkit objects or proxies to Firestore.
+    const flowOutput: GenerateImageOutput = {
+      imageUrls: imageUrls.map(url => url), // Re-map to ensure it's a new, clean array
+    };
 
     if (input.userId) {
       const { userId, ...workspaceInput } = input;
