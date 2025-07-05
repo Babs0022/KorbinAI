@@ -7,7 +7,9 @@ import { getStorage } from 'firebase-admin/storage';
 
 // Check if the app is already initialized to prevent errors in hot-reloading environments.
 if (!admin.apps.length) {
-  admin.initializeApp();
+  admin.initializeApp({
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  });
 }
 
 const firestoreDb = admin.firestore();
