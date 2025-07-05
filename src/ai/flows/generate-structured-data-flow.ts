@@ -93,13 +93,14 @@ const generateStructuredDataFlow = ai.defineFlow(
     const cleanedData = output.generatedData.replace(/^```(json|csv|xml|kml)?\n?/, '').replace(/\n?```$/, '');
     const finalOutput = { generatedData: cleanedData };
     
-    // Save every generation to the workspace if a user is logged in.
     if (input.userId) {
       const { userId, ...workspaceInput } = input;
+      // Sanitize input to ensure it's a plain JS object before saving.
+      const sanitizedInput = JSON.parse(JSON.stringify(workspaceInput));
       await saveWorkspace({
         userId,
         type: 'structured-data',
-        input: workspaceInput,
+        input: sanitizedInput,
         output: finalOutput.generatedData,
         featurePath: '/structured-data',
       });

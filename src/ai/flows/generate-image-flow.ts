@@ -35,8 +35,6 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async (input) => {
-    // The image generation model does not support the `candidates` parameter to generate
-    // multiple images in a single call. Instead, we must call it multiple times in parallel.
     const generationPromises = Array(input.count).fill(null).map(() => 
       ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
@@ -57,18 +55,21 @@ const generateImageFlow = ai.defineFlow(
       throw new Error('Image generation failed to return any images. This may be due to a safety policy violation in the prompt or a network issue.');
     }
 
-    // Construct a new, clean object to prevent passing complex Genkit objects or proxies to Firestore.
     const flowOutput: GenerateImageOutput = {
-      imageUrls: imageUrls.map(url => url), // Re-map to ensure it's a new, clean array
+      imageUrls: imageUrls,
     };
 
     if (input.userId) {
       const { userId, ...workspaceInput } = input;
+      // Sanitize both input and output to ensure they are plain JS objects before saving.
+      const sanitizedInput = JSON.parse(JSON.stringify(workspaceInput));
+      const sanitizedOutput = JSON.parse(JSON.stringify(flowOutput));
+      
       await saveWorkspace({
         userId,
         type: 'image',
-        input: workspaceInput,
-        output: flowOutput,
+        input: sanitizedInput,
+        output: sanitizedOutput,
         featurePath: '/image-generator',
       });
     }

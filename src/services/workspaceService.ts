@@ -37,6 +37,7 @@ const serializeWorkspace = (doc: FirebaseFirestore.DocumentSnapshot): Workspace 
 
 /**
  * Saves or updates a user's workspace, splitting data between metadata and content collections.
+ * This function expects the input and output to be pre-sanitized plain JavaScript objects.
  */
 export async function saveWorkspace({
   userId,
@@ -56,7 +57,7 @@ export async function saveWorkspace({
     return '';
   }
 
-  const workspaceRef = firestoreDb.collection('workspaces').doc(); // Create ref to get ID first
+  const workspaceRef = firestoreDb.collection('workspaces').doc();
   const contentRef = firestoreDb.collection('workspace_content').doc(workspaceRef.id);
 
   let contentForMetadata: string;
@@ -70,21 +71,23 @@ export async function saveWorkspace({
     contentForMetadata = JSON.stringify(output);
   }
 
-  const metadata = await generateWorkspaceMetadata({ type, content: contentForMetadata });
-
+  // Generate metadata. The result from this flow is a Genkit proxy object.
+  const metadataResult = await generateWorkspaceMetadata({ type, content: contentForMetadata });
+  
+  // Explicitly create a plain object from the metadata result to avoid Firestore errors.
   const workspaceData = {
     userId,
     type,
-    name: metadata.name,
-    summary: metadata.summary,
+    name: String(metadataResult.name),
+    summary: String(metadataResult.summary),
     featurePath,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   };
 
   const contentData = {
-    input: JSON.parse(JSON.stringify(input)),
-    output: JSON.parse(JSON.stringify(output)), // Ensure plain object
+    input, // Assumes input is a pre-sanitized plain object
+    output, // Assumes output is a pre-sanitized plain object or string
   };
 
   // Use a batch write to ensure both documents are created atomically

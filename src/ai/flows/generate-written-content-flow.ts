@@ -115,13 +115,14 @@ const generateWrittenContentFlow = ai.defineFlow(
       throw new Error('Failed to generate content because the AI response was empty or invalid.');
     }
 
-    // Save every generation to the workspace if a user is logged in.
     if (input.userId) {
       const { userId, ...workspaceInput } = input;
+      // Sanitize input to ensure it's a plain JS object before saving.
+      const sanitizedInput = JSON.parse(JSON.stringify(workspaceInput));
       await saveWorkspace({
         userId,
         type: 'written-content',
-        input: workspaceInput,
+        input: sanitizedInput,
         output: output.generatedContent,
         featurePath: '/written-content',
       });

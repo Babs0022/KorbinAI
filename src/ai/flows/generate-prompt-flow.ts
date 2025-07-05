@@ -77,10 +77,12 @@ const generatePromptFlow = ai.defineFlow(
     
     if (input.userId) {
       const { userId, ...workspaceInput } = input;
+      // Sanitize input to ensure it's a plain JS object before saving.
+      const sanitizedInput = JSON.parse(JSON.stringify(workspaceInput));
       await saveWorkspace({
         userId,
         type: 'prompt',
-        input: workspaceInput,
+        input: sanitizedInput,
         output: output.generatedPrompt,
         featurePath: '/prompt-generator',
       });

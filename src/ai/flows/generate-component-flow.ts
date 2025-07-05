@@ -102,35 +102,37 @@ const generateAppFlow = ai.defineFlow(
   },
   async (input) => {
     const response = await prompt(input);
-    const output = response.output;
+    const aiOutput = response.output;
 
-    if (!output?.files || output.files.length === 0) {
+    if (!aiOutput?.files || aiOutput.files.length === 0) {
       console.error('AI response was empty or invalid. Raw text from model:', response.text);
       throw new Error('Failed to generate application because the AI response was empty or invalid.');
     }
     
-    // Clean up the code and ensure plain objects by explicitly creating them,
-    // avoiding the spread operator on complex Genkit response objects.
-    const cleanedFiles = output.files.map(file => ({
-        filePath: file.filePath,
-        componentCode: file.componentCode.replace(/^```(tsx|typescript|ts|jsx|js|json)?\n?/, '').replace(/\n?```$/, ''),
-        instructions: file.instructions,
+    // Clean up the code and ensure plain objects by explicitly creating them.
+    const cleanedFiles = aiOutput.files.map(file => ({
+        filePath: String(file.filePath),
+        componentCode: String(file.componentCode).replace(/^```(tsx|typescript|ts|jsx|js|json)?\n?/, '').replace(/\n?```$/, ''),
+        instructions: String(file.instructions),
     }));
     
     // Construct a new, clean object to prevent passing complex Genkit objects to Firestore.
     const finalOutput: GenerateAppOutput = {
         files: cleanedFiles,
-        finalInstructions: output.finalInstructions,
+        finalInstructions: String(aiOutput.finalInstructions),
     };
 
     if (input.userId) {
-      // Exclude userId from the input saved to the database
       const { userId, ...workspaceInput } = input;
+      // Sanitize both input and output to ensure they are plain JS objects before saving.
+      const sanitizedInput = JSON.parse(JSON.stringify(workspaceInput));
+      const sanitizedOutput = JSON.parse(JSON.stringify(finalOutput));
+
       await saveWorkspace({
         userId,
         type: 'component-wizard',
-        input: workspaceInput,
-        output: finalOutput,
+        input: sanitizedInput,
+        output: sanitizedOutput,
         featurePath: '/component-wizard',
       });
     }
