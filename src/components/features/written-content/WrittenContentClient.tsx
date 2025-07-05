@@ -3,7 +3,14 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { LoaderCircle, Sparkles, Wand2 } from "lucide-react";
+import { LoaderCircle, Sparkles, Wand2, Undo, ChevronsRight } from "lucide-react";
+
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+
+import { generateWrittenContent, GenerateWrittenContentInput } from "@/ai/flows/generate-written-content-flow";
+import { generateContentSuggestions, GenerateContentSuggestionsOutput } from "@/ai/flows/generate-content-suggestions-flow";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,15 +24,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { generateWrittenContent, GenerateWrittenContentInput } from "@/ai/flows/generate-written-content-flow";
-import { generateContentSuggestions, GenerateContentSuggestionsOutput } from "@/ai/flows/generate-content-suggestions-flow";
-import { useAuth } from "@/contexts/AuthContext";
-import GenerationResultCard from "@/components/shared/GenerationResultCard";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+
 
 export default function WrittenContentClient() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   // Form state
   const [contentType, setContentType] = useState("blog-post");
@@ -36,7 +49,6 @@ export default function WrittenContentClient() {
   
   // Generation state
   const [isLoading, setIsLoading] = useState(false);
-  const [isRefining, setIsRefining] = useState<string | false>(false);
   const [generatedContent, setGeneratedContent] = useState("");
   
   // Suggestion state
@@ -44,7 +56,14 @@ export default function WrittenContentClient() {
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  const { toast } = useToast();
+  // Refinement State
+  const [selection, setSelection] = useState({ start: 0, end: 0 });
+  const [isRefineModalOpen, setIsRefineModalOpen] = useState(false);
+  const [textToRefine, setTextToRefine] = useState("");
+  const [refinedText, setRefinedText] = useState("");
+  const [isRefiningInModal, setIsRefiningInModal] = useState(false);
+  const [contentBeforeRefinement, setContentBeforeRefinement] = useState("");
+  const [customRefineInstruction, setCustomRefineInstruction] = useState("");
   
   useEffect(() => {
     const urlTopic = searchParams.get('topic');
@@ -134,43 +153,82 @@ export default function WrittenContentClient() {
     }
   };
 
-  const handleRefine = async (instruction: string) => {
-    setIsRefining(instruction);
+  const openRefineModal = (isFullDocument: boolean) => {
+    setRefinedText("");
+    setCustomRefineInstruction("");
+    const text = isFullDocument 
+      ? generatedContent 
+      : generatedContent.substring(selection.start, selection.end);
+
+    if (!text) {
+      toast({ variant: "destructive", title: "No text to refine", description: "Select some text in the editor or use the 'Refine Full Document' option." });
+      return;
+    }
     
-    const input: GenerateWrittenContentInput = {
-      contentType, 
-      tone,
-      topic,
-      originalContent: generatedContent,
-      refinementInstruction: instruction,
-      userId: user?.uid,
-    };
+    setTextToRefine(text);
+    setIsRefineModalOpen(true);
+  };
+  
+  const handleModalRefine = async (instruction: string) => {
+    setIsRefiningInModal(true);
+    const finalInstruction = instruction || customRefineInstruction;
+
+    if (!finalInstruction) {
+        toast({ variant: "destructive", title: "Instruction required", description: "Please select a refinement goal or provide a custom instruction." });
+        setIsRefiningInModal(false);
+        return;
+    }
 
     try {
-      const result = await generateWrittenContent(input);
-      if (result.generatedContent) {
-        setGeneratedContent(result.generatedContent);
-        toast({ title: "Content Refined", description: "The content has been updated." });
-      } else {
-        throw new Error("The AI did not return any refined content.");
-      }
+        const result = await generateWrittenContent({
+            contentType, tone, topic, // Pass context from the main form
+            originalContent: textToRefine,
+            refinementInstruction: finalInstruction,
+            userId: user?.uid,
+        });
+        if (result.generatedContent) {
+            setRefinedText(result.generatedContent);
+        } else {
+            throw new Error("The AI did not return a refinement.");
+        }
     } catch (error) {
-      console.error("Failed to refine content:", error);
-      toast({
-        variant: "destructive",
-        title: "Refinement Failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred.",
-      });
+        console.error("Failed to refine content:", error);
+        toast({
+            variant: "destructive",
+            title: "Refinement Failed",
+            description: error instanceof Error ? error.message : "An unknown error occurred.",
+        });
     } finally {
-      setIsRefining(false);
+        setIsRefiningInModal(false);
     }
-  }
+  };
 
-  const refinementOptions = [
-    { label: "Make Shorter", instruction: "Make it shorter" },
-    { label: "Make Longer", instruction: "Make it longer and more detailed" },
-    { label: `Change tone to ${tone === 'professional' ? 'Casual' : 'Professional'}`, instruction: `Change the tone of voice to be more ${tone === 'professional' ? 'casual and friendly' : 'professional and formal'}` },
-    { label: "Add Call-to-Action", instruction: "Add a compelling call-to-action at the end" },
+  const handleAcceptChanges = () => {
+    setContentBeforeRefinement(generatedContent); // For undo
+    
+    const isFullDocumentRefinement = textToRefine === generatedContent;
+
+    const newContent = isFullDocumentRefinement
+      ? refinedText 
+      : generatedContent.substring(0, selection.start) + refinedText + generatedContent.substring(selection.end);
+
+    setGeneratedContent(newContent);
+    setIsRefineModalOpen(false);
+    toast({ title: "Content Updated", description: "Your changes have been applied to the editor." });
+  };
+  
+  const handleUndo = () => {
+    if (!contentBeforeRefinement) return;
+    setGeneratedContent(contentBeforeRefinement);
+    setContentBeforeRefinement("");
+    toast({ title: "Undo Successful", description: "The last refinement has been reverted." });
+  };
+
+  const presetRefinementGoals = [
+    "Make it more concise",
+    "Improve grammar & spelling",
+    "Enhance clarity",
+    "Make it more engaging",
   ];
 
   return (
@@ -178,6 +236,7 @@ export default function WrittenContentClient() {
       <Card className="w-full rounded-xl">
         <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Form Fields... */}
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
               <div className="space-y-2">
                 <h3 className="text-lg font-medium text-white">
@@ -291,8 +350,9 @@ export default function WrittenContentClient() {
               </div>
             </div>
 
+
             <div className="flex justify-end pt-4">
-              <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !!isRefining || !user}>
+              <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !user}>
                 {isLoading ? (
                   <>
                     <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
@@ -308,12 +368,21 @@ export default function WrittenContentClient() {
       </Card>
 
       {generatedContent && (
-          <div className="mt-12 space-y-8 animate-fade-in">
-              <GenerationResultCard
-                title="Your Generated Content"
-                content={generatedContent}
-                variant="prose"
-              />
+          <div className="mt-12 space-y-4 animate-fade-in">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Generated Content</CardTitle>
+                  <CardDescription>You can now edit the content directly or use the refinement tools below.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Textarea 
+                    value={generatedContent}
+                    onChange={(e) => setGeneratedContent(e.target.value)}
+                    onSelect={(e) => setSelection({ start: e.currentTarget.selectionStart, end: e.currentTarget.selectionEnd })}
+                    className="min-h-[300px] text-base"
+                  />
+                </CardContent>
+              </Card>
 
               <Card className="rounded-xl border-primary/20 bg-primary/5">
                   <CardHeader>
@@ -321,24 +390,85 @@ export default function WrittenContentClient() {
                           <Wand2 className="h-5 w-5 text-primary" />
                           Refine & Improve
                       </CardTitle>
-                      <CardDescription>Not quite right? Let's try improving it.</CardDescription>
+                      <CardDescription>Select text in the editor to refine a specific part, or refine the whole document.</CardDescription>
                   </CardHeader>
                   <CardContent className="flex flex-wrap gap-3">
-                      {refinementOptions.map(opt => (
-                          <Button 
-                              key={opt.instruction}
-                              variant="outline"
-                              onClick={() => handleRefine(opt.instruction)}
-                              disabled={!!isRefining}
-                          >
-                              {isRefining === opt.instruction && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                              {opt.label}
-                          </Button>
-                      ))}
+                      <Button variant="secondary" onClick={() => openRefineModal(false)} disabled={selection.start === selection.end}>
+                        Refine Selection
+                      </Button>
+                      <Button variant="secondary" onClick={() => openRefineModal(true)}>
+                        Refine Full Document
+                      </Button>
+                      <Button variant="outline" onClick={handleUndo} disabled={!contentBeforeRefinement}>
+                        <Undo className="mr-2 h-4 w-4" />
+                        Undo Last Refinement
+                      </Button>
                   </CardContent>
               </Card>
           </div>
       )}
+
+      <Dialog open={isRefineModalOpen} onOpenChange={setIsRefineModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Refine Content</DialogTitle>
+          </DialogHeader>
+          
+          {!refinedText ? (
+            // Initial View: Select refinement goal
+            <div className="space-y-6 py-4">
+              <div>
+                <Label className="text-muted-foreground">You are refining:</Label>
+                <div className="mt-2 max-h-40 overflow-y-auto rounded-md border bg-secondary p-3 text-sm">
+                    <p className="whitespace-pre-wrap">{textToRefine}</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Choose a refinement goal:</Label>
+                <div className="grid grid-cols-2 gap-2">
+                    {presetRefinementGoals.map(goal => (
+                        <Button key={goal} variant="outline" onClick={() => handleModalRefine(goal)} disabled={isRefiningInModal}>
+                             {isRefiningInModal && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                             {goal}
+                        </Button>
+                    ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="custom-instruction">Or, provide a custom instruction:</Label>
+                <div className="flex gap-2">
+                    <Input 
+                        id="custom-instruction"
+                        placeholder="e.g., 'Make this sound more professional'"
+                        value={customRefineInstruction}
+                        onChange={(e) => setCustomRefineInstruction(e.target.value)}
+                    />
+                    <Button onClick={() => handleModalRefine(customRefineInstruction)} disabled={isRefiningInModal || !customRefineInstruction}>
+                        {isRefiningInModal && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                        Apply
+                    </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Result View: Show refinement and accept/discard
+            <div className="space-y-4 py-4">
+                <Label className="text-muted-foreground">Suggested refinement:</Label>
+                <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md border bg-secondary p-4">
+                  {refinedText}
+                </div>
+                <DialogFooter className="pt-4">
+                    <Button variant="ghost" onClick={() => setRefinedText("")}>Back to Options</Button>
+                    <Button onClick={handleAcceptChanges}>
+                        <ChevronsRight className="mr-2 h-4 w-4"/>
+                        Accept Changes
+                    </Button>
+                </DialogFooter>
+            </div>
+          )}
+
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
