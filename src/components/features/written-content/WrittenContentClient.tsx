@@ -152,6 +152,13 @@ export default function WrittenContentClient() {
       setIsLoading(false);
     }
   };
+  
+  const handleSelectionChange = (target: HTMLTextAreaElement) => {
+    // Defensive check to ensure properties exist
+    if (typeof target.selectionStart === 'number' && typeof target.selectionEnd === 'number') {
+      setSelection({ start: target.selectionStart, end: target.selectionEnd });
+    }
+  };
 
   const openRefineModal = (isFullDocument: boolean) => {
     setRefinedText("");
@@ -378,8 +385,10 @@ export default function WrittenContentClient() {
                   <Textarea 
                     value={generatedContent}
                     onChange={(e) => setGeneratedContent(e.target.value)}
-                    onSelect={(e) => setSelection({ start: e.currentTarget.selectionStart, end: e.currentTarget.selectionEnd })}
-                    className="min-h-[300px] text-base"
+                    onSelect={(e) => handleSelectionChange(e.currentTarget)}
+                    onMouseUp={(e) => handleSelectionChange(e.currentTarget)}
+                    onKeyUp={(e) => handleSelectionChange(e.currentTarget)}
+                    className="h-[450px] text-base"
                   />
                 </CardContent>
               </Card>
