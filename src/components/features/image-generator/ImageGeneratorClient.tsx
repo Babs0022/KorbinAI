@@ -72,7 +72,7 @@ export default function ImageGeneratorClient() {
 
     const input: GenerateImageInput = {
       prompt: finalPrompt,
-      count: 4,
+      count: 1,
       userId: user?.uid,
     };
 
@@ -148,7 +148,7 @@ export default function ImageGeneratorClient() {
                         Generating...
                         </>
                     ) : (
-                        "Generate Images"
+                        "Generate Image"
                     )}
                     </Button>
                 </CardContent>
@@ -161,7 +161,7 @@ export default function ImageGeneratorClient() {
                     <div className="flex h-full items-center justify-center rounded-xl border border-dashed p-16">
                         <div className="text-center">
                             <LoaderCircle className="mx-auto h-12 w-12 animate-spin text-primary" />
-                            <h3 className="mt-4 text-xl font-semibold">Generating your masterpieces...</h3>
+                            <h3 className="mt-4 text-xl font-semibold">Generating your masterpiece...</h3>
                             <p className="text-muted-foreground">The AI is warming up its paintbrushes.</p>
                         </div>
                     </div>
@@ -177,22 +177,22 @@ export default function ImageGeneratorClient() {
                 )}
 
                 {generatedImages.length > 0 && (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="flex justify-center items-center">
                         {generatedImages.map((src, index) => (
                         <button
                             key={index}
-                            className="group relative aspect-square w-full overflow-hidden rounded-lg transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+                            className="group relative aspect-square w-full max-w-lg overflow-hidden rounded-lg transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
                             onClick={() => setSelectedImage(src)}
                         >
                             <NextImage
                             src={src}
                             alt={`Generated image ${index + 1}`}
                             fill
-                            sizes="(max-width: 768px) 50vw, 33vw"
+                            sizes="(max-width: 1024px) 100vw, 50vw"
                             className="object-cover"
                             />
                             <div className="absolute inset-0 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center">
-                                <span className="text-white font-semibold">View</span>
+                                <span className="text-white font-semibold">View & Download</span>
                             </div>
                         </button>
                         ))}

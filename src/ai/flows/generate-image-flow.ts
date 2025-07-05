@@ -14,7 +14,7 @@ import { saveWorkspace } from '@/services/workspaceService';
 
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('A detailed text description of the image to generate.'),
-  count: z.number().min(1).max(4).default(4).describe('The number of images to generate.'),
+  count: z.number().min(1).max(4).default(1).describe('The number of images to generate.'),
   userId: z.string().optional().describe('The ID of the user performing the generation.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
