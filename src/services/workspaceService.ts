@@ -177,8 +177,8 @@ export async function getWorkspace({
       workspace.input = contentData.input;
       workspace.output = contentData.output;
   } else {
-      console.warn(`Content for workspace ${workspaceId} not found.`);
-      workspace.output = { error: "Failed to load workspace content." };
+      console.error(`Content for workspace ${workspaceId} not found.`);
+      throw new Error('Failed to load workspace content. The data may have been corrupted or deleted.');
   }
   
   return workspace;
