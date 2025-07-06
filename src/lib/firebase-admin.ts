@@ -13,9 +13,6 @@ if (!admin.apps.length) {
 
 const firestoreDb = admin.firestore();
 const adminAuth = admin.auth();
+const adminStorage = admin.storage();
 
-// NOTE: Storage-related code has been removed. The previous attempt to initialize
-// Cloud Storage here was causing errors because it was not being used by the
-// services that import this module.
-
-export { firestoreDb, adminAuth };
+export { firestoreDb, adminAuth, adminStorage };

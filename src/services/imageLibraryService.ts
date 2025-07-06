@@ -1,6 +1,7 @@
+
 'use server';
 
-import { firestoreDb } from '@/lib/firebase-admin';
+import { firestoreDb, adminStorage } from '@/lib/firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import type { ImageLibraryEntry } from '@/types/imageLibrary';
 
@@ -23,12 +24,15 @@ const serializeImageLibraryEntry = (doc: FirebaseFirestore.DocumentSnapshot): Im
 
 
 /**
- * Saves generated images to the user's library, creating one document per image.
+ * Saves generated images by first uploading them to Cloud Storage,
+ * then saving the public URL to the user's Firestore library.
+ * Creates one document per image.
+ * @returns A promise that resolves with an array of public URLs for the saved images.
  */
 export async function saveToImageLibrary({
   userId,
   prompt,
-  imageUrls,
+  imageUrls, // These are the raw data URIs from the image generation model
 }: {
   userId: string;
   prompt: string;
@@ -39,25 +43,61 @@ export async function saveToImageLibrary({
     throw new Error('User ID must be provided.');
   }
 
+  const storageBucket = adminStorage.bucket(); // Get default bucket from firebase-admin
+  
+  // Step 1: Upload all images to Cloud Storage and get their public URLs
+  const uploadPromises = imageUrls.map(async (dataUri) => {
+    const matches = dataUri.match(/^data:(.+);base64,(.+)$/);
+    if (!matches) {
+      console.error('Invalid data URI format received from generation model.');
+      throw new Error('Invalid data URI format');
+    }
+    const mimeType = matches[1];
+    const base64Data = matches[2];
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    // Create a unique file name
+    const fileName = `image_library/${userId}/${Date.now()}_${Math.round(Math.random() * 1E9)}.png`;
+    const file = storageBucket.file(fileName);
+
+    // Save the buffer to the file
+    await file.save(buffer, {
+      metadata: {
+        contentType: mimeType,
+        cacheControl: 'public, max-age=31536000', // Cache image for 1 year
+      },
+    });
+
+    // Make the file public
+    await file.makePublic();
+    
+    // Return the public URL
+    return file.publicUrl();
+  });
+
+  const publicUrls = await Promise.all(uploadPromises);
+
+  // Step 2: Save the public URLs to Firestore in a batch
   const batch = firestoreDb.batch();
-  const docIds: string[] = [];
   const libraryCollection = firestoreDb.collection('image_library');
 
-  imageUrls.forEach(url => {
+  publicUrls.forEach(url => {
     const libraryRef = libraryCollection.doc();
     const libraryData = {
       userId,
       prompt,
-      imageUrl: url, // Store a single URL per document
+      imageUrl: url, // This is now a short, public URL
       createdAt: FieldValue.serverTimestamp(),
     };
     batch.set(libraryRef, libraryData);
-    docIds.push(libraryRef.id);
   });
 
   await batch.commit();
-  console.log(`Saved ${imageUrls.length} images to library for user ${userId}`);
-  return docIds;
+
+  console.log(`Saved ${publicUrls.length} image URLs to library for user ${userId}`);
+  
+  // Return the public URLs so the flow can pass them to the client
+  return publicUrls;
 }
 
 /**

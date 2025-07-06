@@ -47,26 +47,30 @@ const generateImageFlow = ai.defineFlow(
 
     const results = await Promise.all(generationPromises);
 
-    const imageUrls = results
+    const dataUris = results
       .map(response => response.media?.url)
       .filter((url): url is string => !!url);
       
-    if (imageUrls.length === 0) {
+    if (dataUris.length === 0) {
       throw new Error('Image generation failed to return any images. This may be due to a safety policy violation in the prompt or a network issue.');
     }
 
-    const flowOutput: GenerateImageOutput = {
-      imageUrls: imageUrls,
-    };
+    let finalImageUrls = dataUris;
 
     if (input.userId) {
-      // Save to the new image library instead of workspace
-      await saveToImageLibrary({
+      // This service now uploads the data URIs to cloud storage
+      // and returns an array of public, permanent URLs.
+      finalImageUrls = await saveToImageLibrary({
         userId: input.userId,
         prompt: input.prompt,
-        imageUrls: imageUrls,
+        imageUrls: dataUris,
       });
     }
+
+    // Return the public URLs to the client for display.
+    const flowOutput: GenerateImageOutput = {
+      imageUrls: finalImageUrls,
+    };
 
     return flowOutput;
   }
