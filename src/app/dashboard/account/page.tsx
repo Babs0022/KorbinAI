@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
-import { LoaderCircle, User, Key, Image as ImageIcon } from "lucide-react";
+import { LoaderCircle, User, Key, Image as ImageIcon, CreditCard } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { auth, db } from "@/lib/firebase";
@@ -284,6 +285,22 @@ export default function AccountManagementPage() {
                     </div>
                   </form>
                 </Form>
+              </CardContent>
+            </Card>
+
+             {/* Subscription Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><CreditCard /> Subscription Status</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                 <div>
+                    <p className="font-semibold">Current Plan: <span className="font-normal text-muted-foreground">Free Plan</span></p>
+                    {/* Add logic here later to show plan details and renewal date */}
+                 </div>
+                 <Button asChild>
+                    <Link href="/dashboard/billing">Manage Subscription</Link>
+                 </Button>
               </CardContent>
             </Card>
           </div>
