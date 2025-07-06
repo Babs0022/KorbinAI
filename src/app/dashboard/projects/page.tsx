@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { LoaderCircle, FolderKanban, FileText, Code, Image as ImageIcon, LayoutTemplate } from 'lucide-react';
 import type { Project } from '@/services/projectService';
@@ -64,11 +64,26 @@ function ProjectList({ projects }: { projects: Project[] }) {
     );
 }
 
-// Client component to get user and pass to server component child
+// This component now handles auth and data fetching on the client.
 function ProjectsPageClient() {
-    const { user, loading } = useAuth();
+    const { user, loading: authLoading } = useAuth();
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [projectsLoading, setProjectsLoading] = useState(true);
 
-    if (loading) {
+    useEffect(() => {
+        if (user) {
+            setProjectsLoading(true);
+            getProjectsForUser(user.uid)
+                .then(setProjects)
+                .catch(console.error) // In a real app, you might want better error handling
+                .finally(() => setProjectsLoading(false));
+        } else if (!authLoading) {
+            // User is not logged in, and auth check is complete
+            setProjectsLoading(false);
+        }
+    }, [user, authLoading]);
+
+    if (authLoading) {
         return <div className="flex flex-1 items-center justify-center p-16"><LoaderCircle className="h-12 w-12 animate-spin text-primary" /></div>;
     }
 
@@ -87,18 +102,11 @@ function ProjectsPageClient() {
              </Card>
          );
     }
+    
+    if (projectsLoading) {
+        return <div className="flex flex-1 items-center justify-center p-16"><LoaderCircle className="h-12 w-12 animate-spin text-primary" /></div>;
+    }
 
-    // This pattern uses Suspense to stream the server-rendered list while the page loads.
-    return (
-        <Suspense fallback={<div className="flex flex-1 items-center justify-center p-16"><LoaderCircle className="h-12 w-12 animate-spin text-primary" /></div>}>
-            <ProjectsFetcher userId={user.uid} />
-        </Suspense>
-    );
-}
-
-// Server component that actually fetches the data
-async function ProjectsFetcher({ userId }: { userId: string }) {
-    const projects = await getProjectsForUser(userId);
     return <ProjectList projects={projects} />;
 }
 
