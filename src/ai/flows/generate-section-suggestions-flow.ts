@@ -29,14 +29,20 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: GenerateSectionSuggestionsInputSchema},
   output: {schema: GenerateSectionSuggestionsOutputSchema},
-  prompt: `You are a web development assistant. Based on the user's description of a web page, suggest a list of common sections or components for that page.
+  prompt: `You are an expert software architect and UI/UX designer. Your task is to analyze a user's description of a web page or application and break it down into a logical list of UI sections or components.
 
-  Return ONLY a JSON object with a "suggestions" array. Your suggestions should be short, one-to-three word phrases.
+**Instructions:**
+1.  **Analyze the Core Functionality:** First, deeply understand the user's goal. Are they building a marketing landing page, a data-heavy dashboard, a simple blog, an e-commerce site, or a specialized tool?
+2.  **Suggest Relevant Components:** Based on your analysis, suggest a list of components that are *specifically relevant* to that type of application.
+    *   **For a landing page:** Suggest sections like "Hero", "Features", "Pricing", "Testimonials", "FAQ", "Call to Action", "Footer".
+    *   **For a dashboard:** Suggest components like "Sidebar Navigation", "Header with User Profile", "Key Metric Cards", "Data Table", "Chart Widgets", "Activity Feed".
+    *   **For a blog:** Suggest sections like "Featured Post", "Post List", "Categories", "Author Bio".
+    *   **For a specialized tool (like a smart contract deployer):** Think functionally. Suggest components like "Wallet Connection", "Contract Selection", "Function Inputs", "Transaction Status", "Gas Estimator".
+3.  **Output Format:** Return ONLY a JSON object with a "suggestions" array. The suggestions should be short, descriptive phrases (2-4 words).
 
-  For example, if the user says "A landing page for a new SaaS app", you should suggest things like "Hero Section", "Features", "Pricing Table", "Testimonials", "FAQ", "Contact Form", "Footer".
-  If the user says "An e-commerce product page", you should suggest things like "Product Gallery", "Product Description", "Customer Reviews", "Add to Cart", "Related Products".
+**Crucially, DO NOT suggest generic landing page sections (like 'FAQ' or 'Testimonials') for functional applications like dashboards or specialized tools.** Your suggestions must be tailored to the user's specific request.
 
-  User Description: "{{description}}"
+User's Application Description: "{{description}}"
 `,
 });
 
