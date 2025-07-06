@@ -374,7 +374,15 @@ export default function WrittenContentClient() {
         </CardContent>
       </Card>
 
-      {generatedContent && (
+      {isLoading && (
+        <div className="mt-12 flex flex-col items-center justify-center gap-4 text-center animate-fade-in">
+          <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
+          <h2 className="text-2xl font-bold">Generating Content...</h2>
+          <p className="text-muted-foreground">The AI is crafting your words. Please wait a moment.</p>
+        </div>
+      )}
+
+      {generatedContent && !isLoading && (
           <div className="mt-12 space-y-4 animate-fade-in">
               <Card>
                 <CardHeader>

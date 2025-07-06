@@ -278,7 +278,15 @@ export default function StructuredDataClient() {
         </CardContent>
       </Card>
 
-      {generatedData && (
+      {isLoading && (
+        <div className="mt-12 flex flex-col items-center justify-center gap-4 text-center animate-fade-in">
+          <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
+          <h2 className="text-2xl font-bold">Generating Data...</h2>
+          <p className="text-muted-foreground">The AI is structuring your data. Please wait.</p>
+        </div>
+      )}
+
+      {generatedData && !isLoading && (
         <div className="mt-12 space-y-8 animate-fade-in">
           <GenerationResultCard
             title="Your Generated Data"
