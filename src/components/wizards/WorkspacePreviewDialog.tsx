@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import MultiCodeDisplay from '@/components/wizards/CodeDisplay';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
 
 interface WorkspacePreviewDialogProps {
   workspaceMetadata: Workspace | null; // Receives the metadata from the list view
@@ -115,10 +116,8 @@ export default function WorkspacePreviewDialog({ workspaceMetadata, isOpen, onOp
       case 'written-content':
       case 'prompt':
         return (
-          <ScrollArea className="mt-4 h-72 rounded-md border">
-            <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap p-4">
-              {fullWorkspace.output as string}
-            </div>
+          <ScrollArea className="mt-4 h-72 rounded-md border p-4">
+            <MarkdownRenderer>{fullWorkspace.output as string}</MarkdownRenderer>
           </ScrollArea>
         );
 

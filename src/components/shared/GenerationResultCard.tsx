@@ -7,6 +7,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Copy, Check } from "lucide-react";
+import MarkdownRenderer from "./MarkdownRenderer";
 
 interface GenerationResultCardProps {
   title: string;
@@ -47,8 +48,8 @@ function GenerationResultCardComponent({ title, content, language = 'markdown', 
             {content}
           </SyntaxHighlighter>
         ) : (
-          <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md bg-secondary p-4">
-            {content}
+          <div className="rounded-md bg-secondary p-4">
+            <MarkdownRenderer>{content}</MarkdownRenderer>
           </div>
         )}
       </CardContent>

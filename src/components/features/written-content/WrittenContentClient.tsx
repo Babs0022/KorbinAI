@@ -32,7 +32,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
+import MarkdownRenderer from "@/components/shared/MarkdownRenderer";
 
 
 export default function WrittenContentClient() {
@@ -278,7 +278,7 @@ export default function WrittenContentClient() {
                   ].map(({ value, label }) => (
                     <div key={value}>
                       <RadioGroupItem value={value} id={`tone-${value}`} className="peer sr-only" />
-                      <Label htmlFor={`tone-${value}`} className="flex h-full items-center justify-center rounded-md border-2 border-accent bg-secondary px-4 py-2 hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 [&:has([data-state=checked])]:border-primary">
+                      <Label htmlFor={`tone-${value}`} className="flex h-full items-center justify-center rounded-md border-2 border-accent bg-secondary px-4 py-2 text-center hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 [&:has([data-state=checked])]:border-primary">
                         {label}
                       </Label>
                     </div>
@@ -471,8 +471,8 @@ export default function WrittenContentClient() {
             // Result View: Show refinement and accept/discard
             <div className="space-y-4 py-4">
                 <Label className="text-muted-foreground">Suggested refinement:</Label>
-                <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-md border bg-secondary p-4">
-                  {refinedText}
+                <div className="rounded-md border bg-secondary p-4">
+                    <MarkdownRenderer>{refinedText}</MarkdownRenderer>
                 </div>
                 <DialogFooter className="pt-4">
                     <Button variant="ghost" onClick={() => setRefinedText("")}>Back to Options</Button>
