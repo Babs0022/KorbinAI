@@ -468,10 +468,13 @@ export default function WrittenContentClient() {
           ) : (
             // Result View: Show refinement and accept/discard
             <div className="space-y-4 py-4">
-                <Label className="text-muted-foreground">Suggested refinement:</Label>
-                <div className="rounded-md border bg-secondary p-4">
-                    <MarkdownRenderer>{refinedText}</MarkdownRenderer>
-                </div>
+                <Label className="text-muted-foreground">Suggested refinement (you can edit this text):</Label>
+                <Textarea 
+                    value={refinedText}
+                    onChange={(e) => setRefinedText(e.target.value)}
+                    className="h-[50vh] text-base"
+                    placeholder="The refined text will appear here..."
+                />
                 <DialogFooter className="pt-4">
                     <Button variant="ghost" onClick={() => setRefinedText("")}>Back to Options</Button>
                     <Button onClick={handleAcceptChanges}>
