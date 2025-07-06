@@ -268,7 +268,7 @@ export default function WrittenContentClient() {
                  <RadioGroup
                   value={tone}
                   onValueChange={setTone}
-                  className="grid grid-cols-2 gap-4 pt-2"
+                  className="grid grid-cols-2 gap-4 pt-2 md:grid-cols-4"
                 >
                   {[
                     { value: 'professional', label: 'Professional' },

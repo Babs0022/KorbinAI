@@ -187,7 +187,7 @@ export default function AccountManagementPage() {
                         
                         <div className="w-full space-y-2">
                             <h3 className="text-sm font-medium flex items-center gap-2 text-muted-foreground"><ImageIcon className="w-4 h-4"/> Select an Avatar</h3>
-                            <div className="grid grid-cols-5 gap-4">
+                            <div className="grid grid-cols-4 gap-4 sm:grid-cols-5">
                                 {avatars.map((avatarUrl, index) => (
                                     <button type="button" key={index} onClick={() => setSelectedAvatar(avatarUrl)}>
                                         <NextImage 
