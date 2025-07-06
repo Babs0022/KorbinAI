@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -59,7 +58,7 @@ export default function DashboardHeader() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard">
+                  <Link href="/">
                     <LayoutGrid />
                     Dashboard
                   </Link>
