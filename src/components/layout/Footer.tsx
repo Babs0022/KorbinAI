@@ -15,6 +15,8 @@ const XIcon = (props: React.ComponentProps<'svg'>) => (
   );
 
 export default function Footer() {
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'team@brieflyai.xyz';
+
   return (
     <footer className="border-t border-border/40">
       <div className="container flex flex-col items-center justify-between gap-6 py-10 sm:flex-row">
@@ -31,6 +33,9 @@ export default function Footer() {
             </Link>
             <Link href="/privacy-policy" className="text-sm text-muted-foreground hover:text-foreground">
                 Privacy Policy
+            </Link>
+            <Link href={`mailto:${supportEmail}`} className="text-sm text-muted-foreground hover:text-foreground">
+                Contact
             </Link>
             <Link href="https://x.com/trybrieflyai" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
                 <XIcon />
