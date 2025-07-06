@@ -65,12 +65,6 @@ export default function DashboardHeader() {
                     Dashboard
                   </Link>
                 </DropdownMenuItem>
-                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/library">
-                    <ImageIcon />
-                    Image Library
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/account">
                     <User />

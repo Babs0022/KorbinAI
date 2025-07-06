@@ -10,12 +10,10 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { saveToImageLibrary } from '@/services/imageLibraryService';
 
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('A detailed text description of the image to generate.'),
   count: z.number().min(1).max(4).default(1).describe('The number of images to generate.'),
-  userId: z.string().optional().describe('The ID of the user performing the generation.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
@@ -55,21 +53,8 @@ const generateImageFlow = ai.defineFlow(
       throw new Error('Image generation failed to return any images. This may be due to a safety policy violation in the prompt or a network issue.');
     }
 
-    let finalImageUrls = dataUris;
-
-    if (input.userId) {
-      // This service now uploads the data URIs to cloud storage
-      // and returns an array of public, permanent URLs.
-      finalImageUrls = await saveToImageLibrary({
-        userId: input.userId,
-        prompt: input.prompt,
-        imageUrls: dataUris,
-      });
-    }
-
-    // Return the public URLs to the client for display.
     const flowOutput: GenerateImageOutput = {
-      imageUrls: finalImageUrls,
+      imageUrls: dataUris,
     };
 
     return flowOutput;

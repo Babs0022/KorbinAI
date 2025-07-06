@@ -73,7 +73,6 @@ export default function ImageGeneratorClient() {
     const input: GenerateImageInput = {
       prompt: finalPrompt,
       count: 1,
-      userId: user?.uid,
     };
 
     try {
