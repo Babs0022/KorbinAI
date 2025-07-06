@@ -23,7 +23,7 @@ const serializeImageLibraryEntry = (doc: FirebaseFirestore.DocumentSnapshot): Im
 
 
 /**
- * Saves a generated image record to the user's library.
+ * Saves generated images to the user's library, creating one document per image.
  */
 export async function saveToImageLibrary({
   userId,
@@ -33,24 +33,31 @@ export async function saveToImageLibrary({
   userId: string;
   prompt: string;
   imageUrls: string[];
-}): Promise<string> {
+}): Promise<string[]> {
   if (!userId) {
     console.error('User ID is required to save to the image library.');
     throw new Error('User ID must be provided.');
   }
 
-  const libraryRef = firestoreDb.collection('image_library').doc();
+  const batch = firestoreDb.batch();
+  const docIds: string[] = [];
+  const libraryCollection = firestoreDb.collection('image_library');
 
-  const libraryData = {
-    userId,
-    prompt,
-    imageUrls,
-    createdAt: FieldValue.serverTimestamp(),
-  };
+  imageUrls.forEach(url => {
+    const libraryRef = libraryCollection.doc();
+    const libraryData = {
+      userId,
+      prompt,
+      imageUrl: url, // Store a single URL per document
+      createdAt: FieldValue.serverTimestamp(),
+    };
+    batch.set(libraryRef, libraryData);
+    docIds.push(libraryRef.id);
+  });
 
-  await libraryRef.set(libraryData);
-  console.log(`Image saved to library for user ${userId} with ID: ${libraryRef.id}`);
-  return libraryRef.id;
+  await batch.commit();
+  console.log(`Saved ${imageUrls.length} images to library for user ${userId}`);
+  return docIds;
 }
 
 /**

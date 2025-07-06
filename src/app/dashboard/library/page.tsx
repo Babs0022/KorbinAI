@@ -92,36 +92,34 @@ export default function LibraryPage() {
                         ) : images.length === 0 ? (
                             <EmptyState />
                         ) : (
-                            images.flatMap(entry => 
-                                entry.imageUrls.map((url, index) => (
-                                    <Card key={`${entry.id}-${index}`} className="flex flex-col">
-                                        <CardContent className="p-0">
-                                            <button 
-                                                className="block w-full aspect-square relative group overflow-hidden rounded-t-lg"
-                                                onClick={() => setSelectedImage(url)}
-                                            >
-                                                <NextImage
-                                                    src={url}
-                                                    alt={entry.prompt}
-                                                    fill
-                                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                                                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                                                    data-ai-hint="generated art"
-                                                />
-                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                                    <span className="text-white font-semibold">View</span>
-                                                </div>
-                                            </button>
-                                        </CardContent>
-                                        <CardHeader className="flex-1">
-                                            <CardDescription className="line-clamp-2">{entry.prompt}</CardDescription>
-                                        </CardHeader>
-                                        <CardFooter className="text-xs text-muted-foreground">
-                                            {formatDistanceToNow(new Date(entry.createdAt), { addSuffix: true })}
-                                        </CardFooter>
-                                    </Card>
-                                ))
-                            )
+                            images.map(entry => (
+                                <Card key={entry.id} className="flex flex-col">
+                                    <CardContent className="p-0">
+                                        <button 
+                                            className="block w-full aspect-square relative group overflow-hidden rounded-t-lg"
+                                            onClick={() => setSelectedImage(entry.imageUrl)}
+                                        >
+                                            <NextImage
+                                                src={entry.imageUrl}
+                                                alt={entry.prompt}
+                                                fill
+                                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                                data-ai-hint="generated art"
+                                            />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                <span className="text-white font-semibold">View</span>
+                                            </div>
+                                        </button>
+                                    </CardContent>
+                                    <CardHeader className="flex-1">
+                                        <CardDescription className="line-clamp-2">{entry.prompt}</CardDescription>
+                                    </CardHeader>
+                                    <CardFooter className="text-xs text-muted-foreground">
+                                        {formatDistanceToNow(new Date(entry.createdAt), { addSuffix: true })}
+                                    </CardFooter>
+                                </Card>
+                            ))
                         )}
                     </div>
                 </div>
