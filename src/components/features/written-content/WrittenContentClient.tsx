@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { LoaderCircle, Sparkles, Wand2, Undo, ChevronsRight } from "lucide-react";
+import { LoaderCircle, Sparkles, Wand2, Undo, ChevronsRight, Copy, Check } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +50,7 @@ export default function WrittenContentClient() {
   // Generation state
   const [isLoading, setIsLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState("");
+  const [copied, setCopied] = useState(false);
   
   // Suggestion state
   const [suggestions, setSuggestions] = useState<GenerateContentSuggestionsOutput>({ suggestedAudience: '', suggestedKeywords: [] });
@@ -229,6 +230,12 @@ export default function WrittenContentClient() {
     toast({ title: "Undo Successful", description: "The last refinement has been reverted." });
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(generatedContent);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const presetRefinementGoals = [
     "Make it more concise",
     "Improve grammar & spelling",
@@ -383,9 +390,15 @@ export default function WrittenContentClient() {
       {generatedContent && !isLoading && (
           <div className="mt-12 space-y-4 animate-fade-in">
               <Card>
-                <CardHeader>
-                  <CardTitle>Your Generated Content</CardTitle>
-                  <CardDescription>You can now edit the content directly or use the refinement tools below.</CardDescription>
+                <CardHeader className="flex flex-row items-start justify-between">
+                  <div>
+                    <CardTitle>Your Generated Content</CardTitle>
+                    <CardDescription>You can now edit the content directly or use the refinement tools below.</CardDescription>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={handleCopy} className="shrink-0">
+                      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                      <span className="sr-only">Copy content</span>
+                  </Button>
                 </CardHeader>
                 <CardContent>
                   <Textarea 
