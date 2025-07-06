@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 import Logo from '@/components/shared/Logo';
 
@@ -35,7 +34,7 @@ export default function Footer() {
                 Privacy Policy
             </Link>
             <Link href={`mailto:${supportEmail}`} className="text-sm text-muted-foreground hover:text-foreground">
-                Contact
+                {supportEmail}
             </Link>
             <Link href="https://x.com/trybrieflyai" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
                 <XIcon />

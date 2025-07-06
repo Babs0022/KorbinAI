@@ -31,6 +31,6 @@ env:
   
   # URLs for multi-domain routing. Update these when you connect custom domains.
   - variable: NEXT_PUBLIC_MARKETING_URL
-    value: "https://brieflyai-gtgc2.web.app"
+    value: "https://brieflyai.xyz
   - variable: NEXT_PUBLIC_APP_URL
-    value: "https://app-brieflyai.web.app" # Replace with your app site's default or custom domain
+    value: https://dash.brieflyai.xyz
