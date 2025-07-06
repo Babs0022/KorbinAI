@@ -40,7 +40,7 @@ function GenerationResultCardComponent({ title, content, language = 'markdown', 
           <SyntaxHighlighter
             language={language}
             style={vscDarkPlus}
-            customStyle={{ margin: 0, backgroundColor: 'hsl(var(--secondary))', borderRadius: 'var(--radius)', padding: '1rem' }}
+            customStyle={{ margin: 0, backgroundColor: 'hsl(var(--secondary))', borderRadius: 'var(--radius)', padding: '1rem', maxHeight: '60vh', overflowY: 'auto' }}
             codeTagProps={{
               style: { fontFamily: "var(--font-code, monospace)", fontSize: "0.875rem" },
             }}
@@ -48,7 +48,7 @@ function GenerationResultCardComponent({ title, content, language = 'markdown', 
             {content}
           </SyntaxHighlighter>
         ) : (
-          <div className="rounded-md bg-secondary p-4">
+          <div className="rounded-md bg-secondary p-4 max-h-[60vh] overflow-y-auto">
             <MarkdownRenderer>{content}</MarkdownRenderer>
           </div>
         )}
