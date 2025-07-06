@@ -59,7 +59,7 @@ export default function DashboardHeader() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/">
+                  <Link href="/dashboard">
                     <LayoutGrid />
                     Dashboard
                   </Link>
