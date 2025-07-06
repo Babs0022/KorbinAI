@@ -2,7 +2,7 @@
 'use server';
 
 import { firestoreDb } from '@/lib/firebase-admin';
-import { generateProjectMetadata, type GenerateProjectMetadataInput } from '@/ai/flows/generate-project-metadata-flow';
+import { generateProjectMetadata } from '@/ai/flows/generate-project-metadata-flow';
 import { z } from 'zod';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { User } from 'firebase/auth';
@@ -69,11 +69,8 @@ export async function saveProject({ userId, type, content }: SaveProjectInput): 
     contentForMetadata = 'A saved project with unspecified content.';
   }
 
-  // The metadata flow doesn't handle all our custom types, so we map them.
-  const metadataType = type === 'image-generator' ? 'written-content' : type;
-
   const metadata = await generateProjectMetadata({
-    type: metadataType,
+    type: type,
     content: contentForMetadata,
   });
   
