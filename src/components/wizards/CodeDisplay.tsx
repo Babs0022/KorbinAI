@@ -104,7 +104,7 @@ const CodeBlockWithHeader = ({ file }: { file: File }) => {
             fontSize: "0.875rem",
           },
         }}
-        className="!p-4"
+        className="!p-4 max-h-[60vh] overflow-auto"
       >
         {file.componentCode}
       </SyntaxHighlighter>

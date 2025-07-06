@@ -3,14 +3,17 @@
 
 import { useState, useEffect } from "react";
 import NextImage from "next/image";
+import Link from 'next/link';
 import { useSearchParams } from "next/navigation";
-import { LoaderCircle, Download } from "lucide-react";
+import { LoaderCircle, Download, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+import { saveProject } from '@/services/projectService';
 import { generateImage, type GenerateImageInput } from "@/ai/flows/generate-image-flow";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,6 +44,8 @@ export default function ImageGeneratorClient() {
   // Generation State
   const [isLoading, setIsLoading] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [projectId, setProjectId] = useState<string | null>(null);
   
   // Dialog State
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -56,6 +61,7 @@ export default function ImageGeneratorClient() {
     e.preventDefault();
     setGeneratedImages([]);
     setIsLoading(true);
+    setProjectId(null); // Reset save state on new generation
 
     if (!prompt) {
       toast({
@@ -67,12 +73,11 @@ export default function ImageGeneratorClient() {
       return;
     }
 
-    // Construct a more detailed prompt for the AI
     const finalPrompt = `${prompt}, ${style}, aspect ratio ${aspectRatio}`;
 
     const input: GenerateImageInput = {
       prompt: finalPrompt,
-      count: 1,
+      count: 1, // Let's keep it to 1 image per generation for simplicity
     };
 
     try {
@@ -93,11 +98,41 @@ export default function ImageGeneratorClient() {
       setIsLoading(false);
     }
   };
+  
+  const handleSave = async () => {
+    if (!user || generatedImages.length === 0) return;
+    setIsSaving(true);
+    try {
+        const id = await saveProject({
+            userId: user.uid,
+            type: 'image-generator',
+            content: generatedImages,
+        });
+        setProjectId(id);
+        toast({
+            title: "Project Saved!",
+            description: "Your generated image(s) have been saved to your projects.",
+            action: (
+                <ToastAction altText="View Project" asChild>
+                    <Link href={`/dashboard/projects/${id}`}>View</Link>
+                </ToastAction>
+            ),
+        });
+    } catch (error) {
+        console.error("Failed to save project:", error);
+        toast({
+            variant: "destructive",
+            title: "Save Failed",
+            description: error instanceof Error ? error.message : "An unknown error occurred.",
+        });
+    } finally {
+        setIsSaving(false);
+    }
+  };
 
   return (
     <>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-            {/* --- CONTROLS --- */}
             <form onSubmit={handleSubmit} className="space-y-8 lg:col-span-4">
                 <Card className="w-full rounded-xl sticky top-8">
                 <CardContent className="p-6 space-y-6">
@@ -154,7 +189,6 @@ export default function ImageGeneratorClient() {
                 </Card>
             </form>
 
-            {/* --- RESULTS --- */}
             <div className="lg:col-span-8">
                 {isLoading && (
                     <div className="flex h-full items-center justify-center rounded-xl border border-dashed p-16">
@@ -176,25 +210,33 @@ export default function ImageGeneratorClient() {
                 )}
 
                 {generatedImages.length > 0 && (
-                    <div className="flex justify-center items-center">
-                        {generatedImages.map((src, index) => (
-                        <button
-                            key={index}
-                            className="group relative aspect-square w-full max-w-lg overflow-hidden rounded-lg transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-                            onClick={() => setSelectedImage(src)}
-                        >
-                            <NextImage
-                            src={src}
-                            alt={`Generated image ${index + 1}`}
-                            fill
-                            sizes="(max-width: 1024px) 100vw, 50vw"
-                            className="object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center">
-                                <span className="text-white font-semibold">View & Download</span>
-                            </div>
-                        </button>
-                        ))}
+                    <div className="space-y-4">
+                        <div className="flex justify-center items-center">
+                            {generatedImages.map((src, index) => (
+                            <button
+                                key={index}
+                                className="group relative aspect-square w-full max-w-lg overflow-hidden rounded-lg transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+                                onClick={() => setSelectedImage(src)}
+                            >
+                                <NextImage
+                                src={src}
+                                alt={`Generated image ${index + 1}`}
+                                fill
+                                sizes="(max-width: 1024px) 100vw, 50vw"
+                                className="object-cover"
+                                />
+                                <div className="absolute inset-0 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center">
+                                    <span className="text-white font-semibold">View & Download</span>
+                                </div>
+                            </button>
+                            ))}
+                        </div>
+                        <div className="flex justify-center">
+                            <Button onClick={handleSave} disabled={isSaving || !!projectId} size="lg">
+                                {isSaving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                {projectId ? 'Saved' : 'Save Project'}
+                            </Button>
+                        </div>
                     </div>
                 )}
             </div>

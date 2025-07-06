@@ -2,18 +2,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from 'next/link';
 import { useSearchParams } from "next/navigation";
-import { LoaderCircle, Sparkles, Wand2 } from "lucide-react";
+import { LoaderCircle, Sparkles, Wand2, Save } from "lucide-react";
+
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+import { saveProject } from '@/services/projectService';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
 import { generateStructuredData, type GenerateStructuredDataInput } from "@/ai/flows/generate-structured-data-flow";
 import { generateJsonSchemaSuggestions } from "@/ai/flows/generate-json-schema-suggestions-flow";
-import { useAuth } from "@/contexts/AuthContext";
 import GenerationResultCard from "@/components/shared/GenerationResultCard";
 
 export default function StructuredDataClient() {
@@ -29,6 +33,8 @@ export default function StructuredDataClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefining, setIsRefining] = useState<string | false>(false);
   const [generatedData, setGeneratedData] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [projectId, setProjectId] = useState<string | null>(null);
 
   // Suggestion State
   const [suggestion, setSuggestion] = useState("");
@@ -78,6 +84,7 @@ export default function StructuredDataClient() {
     e.preventDefault();
     setGeneratedData("");
     setIsLoading(true);
+    setProjectId(null); // Reset save state
 
     const input: GenerateStructuredDataInput = {
       description,
@@ -101,11 +108,9 @@ export default function StructuredDataClient() {
         let finalData = result.generatedData;
         if (format === 'json') {
           try {
-            // Attempt to parse and re-stringify with indentation
             const parsedJson = JSON.parse(finalData);
             finalData = JSON.stringify(parsedJson, null, 2);
           } catch (e) {
-            // If parsing fails, use the raw data. The syntax highlighter might still work.
             console.warn("Could not parse and format generated JSON, displaying as is.", e);
           }
         }
@@ -127,9 +132,10 @@ export default function StructuredDataClient() {
   
   const handleRefine = async (instruction: string) => {
     setIsRefining(instruction);
+    setProjectId(null); // Content changed, allow re-saving
     
     const input: GenerateStructuredDataInput = {
-      description, // Pass original description for context
+      description,
       format,
       schemaDefinition: schemaDefinition || undefined,
       originalData: generatedData,
@@ -142,11 +148,9 @@ export default function StructuredDataClient() {
         let finalData = result.generatedData;
         if (format === 'json') {
           try {
-            // Attempt to parse and re-stringify with indentation
             const parsedJson = JSON.parse(finalData);
             finalData = JSON.stringify(parsedJson, null, 2);
           } catch (e) {
-            // If parsing fails, use the raw data.
             console.warn("Could not parse and format refined JSON, displaying as is.", e);
           }
         }
@@ -164,6 +168,37 @@ export default function StructuredDataClient() {
       });
     } finally {
       setIsRefining(false);
+    }
+  };
+  
+  const handleSave = async () => {
+    if (!user || !generatedData) return;
+    setIsSaving(true);
+    try {
+      const id = await saveProject({
+        userId: user.uid,
+        type: 'structured-data',
+        content: generatedData,
+      });
+      setProjectId(id);
+      toast({
+        title: "Project Saved!",
+        description: "Your data has been saved to your projects.",
+        action: (
+          <ToastAction altText="View Project" asChild>
+            <Link href={`/dashboard/projects/${id}`}>View</Link>
+          </ToastAction>
+        ),
+      });
+    } catch (error) {
+      console.error("Failed to save project:", error);
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred.",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -293,28 +328,37 @@ export default function StructuredDataClient() {
             variant="code"
           />
 
-          <Card className="rounded-xl border-primary/20 bg-primary/5">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wand2 className="h-5 w-5 text-primary" />
-                Refine Data
-              </CardTitle>
-              <CardDescription>Not quite right? Let's try improving it.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-3">
-              {refinementOptions.map(opt => (
-                <Button 
-                  key={opt.instruction}
-                  variant="outline"
-                  onClick={() => handleRefine(opt.instruction)}
-                  disabled={!!isRefining}
-                >
-                  {isRefining === opt.instruction && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                  {opt.label}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            <Card className="rounded-xl border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wand2 className="h-5 w-5 text-primary" />
+                  Refine Data
+                </CardTitle>
+                <CardDescription>Not quite right? Let's try improving it.</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-3">
+                {refinementOptions.map(opt => (
+                  <Button 
+                    key={opt.instruction}
+                    variant="secondary"
+                    onClick={() => handleRefine(opt.instruction)}
+                    disabled={!!isRefining}
+                  >
+                    {isRefining === opt.instruction && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                    {opt.label}
+                  </Button>
+                ))}
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-center md:justify-end md:pt-8">
+               <Button onClick={handleSave} disabled={isSaving || !!projectId} size="lg">
+                  {isSaving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  {projectId ? 'Saved' : 'Save Project'}
                 </Button>
-              ))}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
     </>

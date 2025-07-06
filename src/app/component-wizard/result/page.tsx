@@ -1,9 +1,10 @@
+
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, FileWarning, LoaderCircle } from 'lucide-react';
 import { generateApp, type GenerateAppInput } from '@/ai/flows/generate-component-flow';
-import MultiCodeDisplay from '@/components/wizards/CodeDisplay';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import ComponentResultDisplay from '@/components/wizards/ComponentResultDisplay';
 
 // This is the main component that fetches the data on the server
 async function GeneratedApp({ searchParams }: { searchParams: GenerateAppInput }) {
@@ -15,7 +16,7 @@ async function GeneratedApp({ searchParams }: { searchParams: GenerateAppInput }
       throw new Error("The AI returned an invalid or empty file structure.");
     }
 
-    return <MultiCodeDisplay files={result.files} finalInstructions={result.finalInstructions} />;
+    return <ComponentResultDisplay result={result} />;
   } catch (error) {
     console.error("Failed to generate application:", error);
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";

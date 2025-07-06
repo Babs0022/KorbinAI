@@ -2,12 +2,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from 'next/link';
 import { useSearchParams } from "next/navigation";
-import { LoaderCircle, Sparkles, Wand2, Undo, ChevronsRight, Copy, Check } from "lucide-react";
+import { LoaderCircle, Sparkles, Wand2, Undo, ChevronsRight, Copy, Check, Save } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
+import { saveProject } from '@/services/projectService';
 import { generateWrittenContent, GenerateWrittenContentInput } from "@/ai/flows/generate-written-content-flow";
 import { generateContentSuggestions, GenerateContentSuggestionsOutput } from "@/ai/flows/generate-content-suggestions-flow";
 
@@ -30,9 +33,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
-import MarkdownRenderer from "@/components/shared/MarkdownRenderer";
 
 
 export default function WrittenContentClient() {
@@ -51,6 +52,8 @@ export default function WrittenContentClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState("");
   const [copied, setCopied] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [projectId, setProjectId] = useState<string | null>(null);
   
   // Suggestion state
   const [suggestions, setSuggestions] = useState<GenerateContentSuggestionsOutput>({ suggestedAudience: '', suggestedKeywords: [] });
@@ -115,6 +118,7 @@ export default function WrittenContentClient() {
     e.preventDefault();
     setGeneratedContent("");
     setIsLoading(true);
+    setProjectId(null); // Reset save state on new generation
 
     const input: GenerateWrittenContentInput = {
       contentType,
@@ -154,7 +158,6 @@ export default function WrittenContentClient() {
   };
   
   const handleSelectionChange = (target: HTMLTextAreaElement) => {
-    // Defensive check to ensure properties exist
     if (typeof target.selectionStart === 'number' && typeof target.selectionEnd === 'number') {
       setSelection({ start: target.selectionStart, end: target.selectionEnd });
     }
@@ -188,7 +191,7 @@ export default function WrittenContentClient() {
 
     try {
         const result = await generateWrittenContent({
-            contentType, tone, topic, // Pass context from the main form
+            contentType, tone, topic,
             originalContent: textToRefine,
             refinementInstruction: finalInstruction,
         });
@@ -210,7 +213,8 @@ export default function WrittenContentClient() {
   };
 
   const handleAcceptChanges = () => {
-    setContentBeforeRefinement(generatedContent); // For undo
+    setContentBeforeRefinement(generatedContent);
+    setProjectId(null); // Changes have been made, allow re-saving
     
     const isFullDocumentRefinement = textToRefine === generatedContent;
 
@@ -227,6 +231,7 @@ export default function WrittenContentClient() {
     if (!contentBeforeRefinement) return;
     setGeneratedContent(contentBeforeRefinement);
     setContentBeforeRefinement("");
+    setProjectId(null);
     toast({ title: "Undo Successful", description: "The last refinement has been reverted." });
   };
 
@@ -234,6 +239,37 @@ export default function WrittenContentClient() {
     navigator.clipboard.writeText(generatedContent);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+  
+  const handleSave = async () => {
+    if (!user) return;
+    setIsSaving(true);
+    try {
+        const id = await saveProject({
+            userId: user.uid,
+            type: 'written-content',
+            content: generatedContent,
+        });
+        setProjectId(id);
+        toast({
+            title: "Project Saved!",
+            description: "Your content has been saved to your projects.",
+            action: (
+                <ToastAction altText="View Project" asChild>
+                    <Link href={`/dashboard/projects/${id}`}>View</Link>
+                </ToastAction>
+            ),
+        });
+    } catch (error) {
+        console.error("Failed to save project:", error);
+        toast({
+            variant: "destructive",
+            title: "Save Failed",
+            description: error instanceof Error ? error.message : "An unknown error occurred.",
+        });
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   const presetRefinementGoals = [
@@ -248,7 +284,6 @@ export default function WrittenContentClient() {
       <Card className="w-full rounded-xl">
         <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Form Fields... */}
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
               <div className="space-y-2">
                 <h3 className="text-lg font-medium text-white">
@@ -395,15 +430,24 @@ export default function WrittenContentClient() {
                     <CardTitle>Your Generated Content</CardTitle>
                     <CardDescription>You can now edit the content directly or use the refinement tools below.</CardDescription>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={handleCopy} className="shrink-0">
-                      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                      <span className="sr-only">Copy content</span>
-                  </Button>
+                   <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={handleCopy} className="shrink-0">
+                            {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                            <span className="sr-only">Copy content</span>
+                        </Button>
+                        <Button onClick={handleSave} disabled={isSaving || !!projectId}>
+                            {isSaving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            {projectId ? 'Saved' : 'Save Project'}
+                        </Button>
+                   </div>
                 </CardHeader>
                 <CardContent>
                   <Textarea 
                     value={generatedContent}
-                    onChange={(e) => setGeneratedContent(e.target.value)}
+                    onChange={(e) => {
+                      setGeneratedContent(e.target.value);
+                      setProjectId(null); // Content changed, allow re-saving
+                    }}
                     onSelect={(e) => handleSelectionChange(e.currentTarget)}
                     onMouseUp={(e) => handleSelectionChange(e.currentTarget)}
                     onKeyUp={(e) => handleSelectionChange(e.currentTarget)}
@@ -443,7 +487,6 @@ export default function WrittenContentClient() {
           </DialogHeader>
           
           {!refinedText ? (
-            // Initial View: Select refinement goal
             <div className="space-y-6 py-4">
               <div>
                 <Label className="text-muted-foreground">You are refining:</Label>
@@ -479,7 +522,6 @@ export default function WrittenContentClient() {
               </div>
             </div>
           ) : (
-            // Result View: Show refinement and accept/discard
             <div className="space-y-4 py-4">
                 <Label className="text-muted-foreground">Suggested refinement (you can edit this text):</Label>
                 <Textarea 

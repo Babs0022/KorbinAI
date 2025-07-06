@@ -3,16 +3,20 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { LoaderCircle, Sparkles, ArrowRight } from "lucide-react";
+import { LoaderCircle, Sparkles, ArrowRight, Save } from "lucide-react";
+
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+import { saveProject } from '@/services/projectService';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
 import { generatePrompt, type GeneratePromptInput } from "@/ai/flows/generate-prompt-flow";
 import { generatePromptFormatSuggestions } from "@/ai/flows/generate-prompt-format-suggestions-flow";
 import { analyzePrompt, type AnalyzePromptOutput } from "@/ai/flows/analyze-prompt-flow";
-import { useAuth } from "@/contexts/AuthContext";
 import GenerationResultCard from "@/components/shared/GenerationResultCard";
 
 export default function PromptGeneratorClient() {
@@ -24,6 +28,8 @@ export default function PromptGeneratorClient() {
   // Generation State
   const [isLoading, setIsLoading] = useState(false);
   const [generatedPrompt, setGeneratedPrompt] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [projectId, setProjectId] = useState<string | null>(null);
 
   // Suggestion State
   const [formatSuggestions, setFormatSuggestions] = useState<string[]>([]);
@@ -74,6 +80,7 @@ export default function PromptGeneratorClient() {
     setGeneratedPrompt("");
     setToolSuggestion(null);
     setIsLoading(true);
+    setProjectId(null); // Reset save state
 
     const input: GeneratePromptInput = {
       taskDescription,
@@ -96,7 +103,6 @@ export default function PromptGeneratorClient() {
       if (result.generatedPrompt) {
         setGeneratedPrompt(result.generatedPrompt);
         
-        // After generating the prompt, analyze it for tool suggestions
         const analysisResult = await analyzePrompt({ prompt: result.generatedPrompt });
         if (analysisResult && analysisResult.tool !== 'none') {
             setToolSuggestion(analysisResult);
@@ -115,6 +121,38 @@ export default function PromptGeneratorClient() {
       setIsLoading(false);
     }
   };
+
+  const handleSave = async () => {
+    if (!user || !generatedPrompt) return;
+    setIsSaving(true);
+    try {
+      const id = await saveProject({
+        userId: user.uid,
+        type: 'prompt',
+        content: generatedPrompt,
+      });
+      setProjectId(id);
+      toast({
+        title: "Project Saved!",
+        description: "Your prompt has been saved to your projects.",
+        action: (
+          <ToastAction altText="View Project" asChild>
+            <Link href={`/dashboard/projects/${id}`}>View</Link>
+          </ToastAction>
+        ),
+      });
+    } catch (error) {
+      console.error("Failed to save project:", error);
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
 
   return (
     <>
@@ -214,30 +252,37 @@ export default function PromptGeneratorClient() {
             variant="prose"
           />
 
-          {toolSuggestion && toolSuggestion.tool !== 'none' && toolMap[toolSuggestion.tool] && (
-            <Card className="rounded-xl bg-primary/10 border border-dashed border-primary/50 animate-fade-in">
-              <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                      <Sparkles className="h-8 w-8 text-primary shrink-0" />
-                      <div className="text-center sm:text-left">
-                          <h3 className="text-lg font-semibold text-white">Let's Create!</h3>
-                          <p className="text-muted-foreground">{toolSuggestion.suggestion}</p>
-                      </div>
-                  </div>
-                  <Button size="lg" className="shrink-0" asChild>
-                    <Link
-                        href={{
-                            pathname: toolMap[toolSuggestion.tool].href,
-                            query: { [toolMap[toolSuggestion.tool].queryParam]: generatedPrompt },
-                        }}
-                    >
-                        Try It Now
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-              </CardContent>
-            </Card>
-          )}
+          <div className="flex justify-between items-center">
+            {toolSuggestion && toolSuggestion.tool !== 'none' && toolMap[toolSuggestion.tool] ? (
+              <Card className="rounded-xl bg-primary/10 border border-dashed border-primary/50 animate-fade-in">
+                <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <Sparkles className="h-8 w-8 text-primary shrink-0" />
+                        <div className="text-center sm:text-left">
+                            <h3 className="text-lg font-semibold text-white">Let's Create!</h3>
+                            <p className="text-muted-foreground">{toolSuggestion.suggestion}</p>
+                        </div>
+                    </div>
+                    <Button size="lg" className="shrink-0" asChild>
+                      <Link
+                          href={{
+                              pathname: toolMap[toolSuggestion.tool].href,
+                              query: { [toolMap[toolSuggestion.tool].queryParam]: generatedPrompt },
+                          }}
+                      >
+                          Try It Now
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                </CardContent>
+              </Card>
+            ) : <div />}
+
+            <Button onClick={handleSave} disabled={isSaving || !!projectId} size="lg">
+              {isSaving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {projectId ? 'Saved' : 'Save Project'}
+            </Button>
+          </div>
         </div>
       )}
     </>
