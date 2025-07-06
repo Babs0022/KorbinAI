@@ -89,30 +89,6 @@ export default function WorkspacePreviewDialog({ workspaceMetadata, isOpen, onOp
     if (!fullWorkspace) return <ErrorState message="No content available." />;
 
     switch (fullWorkspace.type) {
-      case 'image':
-        const imageUrls = (fullWorkspace.output as any)?.imageUrls;
-        return (imageUrls && Array.isArray(imageUrls) && imageUrls.length > 0) ? (
-          <ScrollArea className="mt-4 h-72 rounded-md border p-4">
-            <div className="grid grid-cols-2 gap-4">
-              {imageUrls.map((url: string, index: number) => (
-                <a 
-                  key={index} 
-                  href={url} 
-                  download={`${fullWorkspace.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${index + 1}.png`} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="group relative aspect-square w-full overflow-hidden rounded-md"
-                >
-                  <NextImage src={url} alt={`${fullWorkspace.name} ${index + 1}`} fill className="object-cover" data-ai-hint="abstract image" />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <Download className="h-8 w-8 text-white" />
-                  </div>
-                </a>
-              ))}
-            </div>
-          </ScrollArea>
-        ) : <p className="mt-4">No image preview available.</p>;
-
       case 'written-content':
       case 'prompt':
         return (

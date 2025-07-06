@@ -11,7 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, FolderKanban, Feather, Bolt, LayoutTemplate, Image, Code2, MoreVertical, Eye, Download, Trash2, LoaderCircle, Edit } from 'lucide-react';
+import { PlusCircle, FolderKanban, Feather, Bolt, LayoutTemplate, Code2, MoreVertical, Eye, Download, Trash2, LoaderCircle, Edit } from 'lucide-react';
 import type { Workspace } from '@/types/workspace';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
@@ -42,7 +42,6 @@ const WorkspaceIcon = ({ type }: { type: Workspace['type'] }) => {
     case 'written-content': return <Feather {...props} />;
     case 'prompt': return <Bolt {...props} />;
     case 'component-wizard': return <LayoutTemplate {...props} />;
-    case 'image': return <Image {...props} />;
     case 'structured-data': return <Code2 {...props} />;
     default: return <FolderKanban {...props} />;
   }
@@ -178,12 +177,6 @@ export default function WorkspacesPage() {
   const handleExport = async (workspace: Workspace) => {
     if (!workspace || !user) return;
     
-    // For images, we just open the preview dialog
-    if (workspace.type === 'image') {
-      handleViewClick(workspace);
-      return;
-    }
-
     // For other types, we need the full content which isn't in the list view
     const fullWorkspace = await getWorkspace({ workspaceId: workspace.id, userId: user.uid });
     if (!fullWorkspace || !fullWorkspace.output) {

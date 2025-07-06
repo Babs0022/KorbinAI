@@ -10,7 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { saveWorkspace } from '@/services/workspaceService';
+import { saveToImageLibrary } from '@/services/imageLibraryService';
 
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('A detailed text description of the image to generate.'),
@@ -60,17 +60,11 @@ const generateImageFlow = ai.defineFlow(
     };
 
     if (input.userId) {
-      const { userId, ...workspaceInput } = input;
-      // Sanitize both input and output to ensure they are plain JS objects before saving.
-      const sanitizedInput = JSON.parse(JSON.stringify(workspaceInput));
-      const sanitizedOutput = JSON.parse(JSON.stringify(flowOutput));
-      
-      await saveWorkspace({
-        userId,
-        type: 'image',
-        input: sanitizedInput,
-        output: sanitizedOutput,
-        featurePath: '/image-generator',
+      // Save to the new image library instead of workspace
+      await saveToImageLibrary({
+        userId: input.userId,
+        prompt: input.prompt,
+        imageUrls: imageUrls,
       });
     }
 

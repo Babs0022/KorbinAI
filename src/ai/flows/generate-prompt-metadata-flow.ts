@@ -10,7 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
-const WORKSPACE_TYPES = ['written-content', 'prompt', 'image', 'component-wizard', 'structured-data'] as const;
+const WORKSPACE_TYPES = ['written-content', 'prompt', 'component-wizard', 'structured-data'] as const;
 
 const GenerateWorkspaceMetadataInputSchema = z.object({
   type: z.enum(WORKSPACE_TYPES).describe('The type of content in the workspace.'),
@@ -41,7 +41,6 @@ The content is for a '{{type}}' workspace.
 Here are some examples:
 - If type is 'prompt' and content is "Create a marketing campaign for a new coffee shop", a good name would be "Coffee Shop Marketing Prompt" and summary "A prompt to generate a marketing campaign for a new coffee business."
 - If type is 'written-content' and content starts with "Introducing the new SuperWidget 5000...", a good name would be "SuperWidget 5000 Launch Announcement" and summary "A blog post announcing the launch of the new SuperWidget 5000 product."
-- If type is 'image' and content is "A photorealistic image of a majestic lion in the savannah at sunset", a good name would be "Majestic Lion at Sunset" and summary "An image prompt for a photorealistic lion in the savannah."
 
 Return ONLY a JSON object that matches the schema.
 

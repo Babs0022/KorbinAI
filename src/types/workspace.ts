@@ -1,5 +1,5 @@
 
-export const WORKSPACE_TYPES = ['written-content', 'prompt', 'image', 'component-wizard', 'structured-data'] as const;
+export const WORKSPACE_TYPES = ['written-content', 'prompt', 'component-wizard', 'structured-data'] as const;
 export type WorkspaceType = typeof WORKSPACE_TYPES[number];
 
 export interface WorkspaceInput {

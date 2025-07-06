@@ -14,7 +14,6 @@ const chartConfig = {
 const typeDisplayNames: { [key: string]: string } = {
   'written-content': 'Written Content',
   'prompt': 'Prompts',
-  'image': 'Images',
   'component-wizard': 'Apps/Pages',
   'structured-data': 'Structured Data',
 };
