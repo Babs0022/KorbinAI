@@ -72,14 +72,16 @@ export async function saveWorkspace({
   }
 
   // Generate metadata. The result from this flow is a Genkit proxy object.
-  const metadataResult = await generateWorkspaceMetadata({ type, content: contentForMetadata });
+  const metadataResultProxy = await generateWorkspaceMetadata({ type, content: contentForMetadata });
+
+  // Sanitize the Genkit proxy object into a plain JavaScript object before using it.
+  const metadataResult = JSON.parse(JSON.stringify(metadataResultProxy));
   
-  // Explicitly create a plain object from the metadata result to avoid Firestore errors.
   const workspaceData = {
     userId,
     type,
-    name: String(metadataResult.name),
-    summary: String(metadataResult.summary),
+    name: metadataResult.name,
+    summary: metadataResult.summary,
     featurePath,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
