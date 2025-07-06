@@ -82,12 +82,6 @@ export default function DashboardHeader() {
                     Analytics
                   </Link>
                 </DropdownMenuItem>
-                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/billing">
-                    <CreditCard />
-                    Billing
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/account">
                     <User />

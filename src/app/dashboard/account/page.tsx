@@ -298,9 +298,6 @@ export default function AccountManagementPage() {
                     <p className="font-semibold">Current Plan: <span className="font-normal text-muted-foreground">Free Plan</span></p>
                     {/* Add logic here later to show plan details and renewal date */}
                  </div>
-                 <Button asChild>
-                    <Link href="/dashboard/billing">Manage Subscription</Link>
-                 </Button>
               </CardContent>
             </Card>
           </div>
