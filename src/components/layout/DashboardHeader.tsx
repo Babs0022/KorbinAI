@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, User, Settings, LogOut, FolderKanban } from "lucide-react";
+import { LayoutGrid, User, Settings, LogOut, FolderKanban, BarChart2 } from "lucide-react";
 
 export default function DashboardHeader() {
   const { user, logout, loading } = useAuth();
@@ -68,6 +68,12 @@ export default function DashboardHeader() {
                   <Link href="/dashboard/workspaces">
                     <FolderKanban />
                     Workspaces
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/analytics">
+                    <BarChart2 />
+                    Analytics
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

@@ -186,3 +186,73 @@ export async function getWorkspace({
   
   return workspace;
 }
+
+
+/**
+ * Fetches and aggregates analytics data for a user's workspaces.
+ */
+export async function getWorkspaceAnalytics({ userId }: { userId: string }) {
+  if (!userId) {
+    throw new Error('User ID is required to fetch analytics.');
+  }
+
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const sevenDaysAgoTimestamp = Timestamp.fromDate(sevenDaysAgo);
+
+  const workspacesRef = firestoreDb.collection('workspaces');
+  const q = workspacesRef.where('userId', '==', userId)
+  
+  const snapshot = await q.get();
+  const snapshotLast7Days = await q.where('createdAt', '>=', sevenDaysAgoTimestamp).get();
+
+
+  if (snapshot.empty) {
+    return {
+      totalGenerations: 0,
+      generationsByType: {},
+      activityLast7Days: [],
+      favoriteTool: 'N/A',
+    };
+  }
+
+  const generationsByType: { [key: string]: number } = {};
+  
+  snapshot.forEach(doc => {
+    const data = doc.data() as Workspace;
+    if (data.type) {
+      generationsByType[data.type] = (generationsByType[data.type] || 0) + 1;
+    }
+  });
+
+  const activityMap = new Map<string, number>();
+  snapshotLast7Days.forEach(doc => {
+    const data = doc.data() as Workspace;
+    if (data.createdAt && data.createdAt instanceof Timestamp) {
+        const date = data.createdAt.toDate().toISOString().split('T')[0]; // YYYY-MM-DD
+        activityMap.set(date, (activityMap.get(date) || 0) + 1);
+    }
+  });
+
+
+  // Find favorite tool
+  const favoriteTool = Object.entries(generationsByType).sort(([, a], [, b]) => b - a)[0]?.[0] || 'N/A';
+  
+  // Format daily activity for charts
+  const activityLast7Days = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateString = d.toISOString().split('T')[0];
+    return {
+      date: dateString,
+      count: activityMap.get(dateString) || 0,
+    };
+  }).reverse();
+
+  return {
+    totalGenerations: snapshot.size,
+    generationsByType,
+    activityLast7Days,
+    favoriteTool,
+  };
+}
