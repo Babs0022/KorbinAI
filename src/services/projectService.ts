@@ -3,41 +3,8 @@
 
 import { firestoreDb } from '@/lib/firebase-admin';
 import { generateProjectMetadata } from '@/ai/flows/generate-project-metadata-flow';
-import { z } from 'zod';
 import { FieldValue } from 'firebase-admin/firestore';
-import type { User } from 'firebase/auth';
-
-// --- Zod Schemas for Project Data Validation ---
-
-const ComponentFileSchema = z.object({
-  filePath: z.string(),
-  componentCode: z.string(),
-  instructions: z.string(),
-});
-
-const ComponentWizardContentSchema = z.object({
-  files: z.array(ComponentFileSchema),
-  finalInstructions: z.string(),
-});
-
-export const ProjectContentSchema = z.union([
-  z.string(), // For text-based content like written, prompt, structured-data
-  z.array(z.string()), // For image URLs from the image generator
-  ComponentWizardContentSchema, // For component wizard results
-]);
-export type ProjectContent = z.infer<typeof ProjectContentSchema>;
-
-export const ProjectSchema = z.object({
-  id: z.string(),
-  userId: z.string(),
-  name: z.string(),
-  summary: z.string(),
-  type: z.enum(['written-content', 'prompt', 'structured-data', 'image-generator', 'component-wizard']),
-  content: ProjectContentSchema,
-  createdAt: z.any(), // Firestore Timestamp
-  updatedAt: z.any(), // Firestore Timestamp
-});
-export type Project = z.infer<typeof ProjectSchema>;
+import type { Project, ProjectContent } from '@/types/project';
 
 interface SaveProjectInput {
   userId: string;
