@@ -6,7 +6,7 @@ import Footer from '@/components/layout/Footer';
 
 export default function TermsOfServicePage() {
   const effectiveDate = "June 12, 2025";
-  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@brieflyai.com';
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'team@brieflyai.xyz';
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
