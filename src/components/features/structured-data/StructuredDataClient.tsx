@@ -83,7 +83,6 @@ export default function StructuredDataClient() {
       description,
       format,
       schemaDefinition: schemaDefinition || undefined,
-      userId: user?.uid,
     };
 
     if (!input.description) {
@@ -135,7 +134,6 @@ export default function StructuredDataClient() {
       schemaDefinition: schemaDefinition || undefined,
       originalData: generatedData,
       refinementInstruction: instruction,
-      userId: user?.uid,
     };
 
     try {

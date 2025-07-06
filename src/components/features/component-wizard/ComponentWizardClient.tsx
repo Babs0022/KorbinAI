@@ -101,7 +101,6 @@ export default function ComponentWizardClient() {
       description,
       style,
       dataPoints,
-      userId: user?.uid || '',
     });
 
     router.push(`/component-wizard/result?${params.toString()}`);

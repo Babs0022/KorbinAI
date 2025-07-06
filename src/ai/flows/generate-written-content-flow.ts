@@ -11,7 +11,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { saveProject } from '@/services/workspaceService';
 
 const GenerateWrittenContentInputSchema = z.object({
   contentType: z.string().describe("The type of content to generate (e.g., 'Blog Post', 'Email')."),
@@ -26,7 +25,6 @@ const GenerateWrittenContentInputSchema = z.object({
   })).optional().describe("An array of few-shot examples to guide the model's response style and structure."),
   originalContent: z.string().optional().describe('Existing content to be refined. If present, the flow will refine this content instead of generating new content from the topic.'),
   refinementInstruction: z.string().optional().describe("The instruction for refining the content (e.g., 'Make it shorter', 'Change the tone to witty')."),
-  userId: z.string().optional().describe('The ID of the user performing the generation.'),
 });
 export type GenerateWrittenContentInput = z.infer<typeof GenerateWrittenContentInputSchema>;
 
@@ -114,19 +112,6 @@ const generateWrittenContentFlow = ai.defineFlow(
     if (!output?.generatedContent) {
       console.error('AI response was empty or invalid. Raw text from model:', response.text);
       throw new Error('Failed to generate content because the AI response was empty or invalid.');
-    }
-
-    if (input.userId) {
-      const { userId, ...projectInput } = input;
-      // Sanitize input to ensure it's a plain JS object before saving.
-      const sanitizedInput = JSON.parse(JSON.stringify(projectInput));
-      await saveProject({
-        userId,
-        type: 'written-content',
-        input: sanitizedInput,
-        output: output.generatedContent,
-        featurePath: '/written-content',
-      });
     }
 
     return output;

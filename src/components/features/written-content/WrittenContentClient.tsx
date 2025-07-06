@@ -121,7 +121,6 @@ export default function WrittenContentClient() {
       topic,
       audience,
       keywords,
-      userId: user?.uid,
     };
 
     if (!input.topic) {
@@ -191,7 +190,6 @@ export default function WrittenContentClient() {
             contentType, tone, topic, // Pass context from the main form
             originalContent: textToRefine,
             refinementInstruction: finalInstruction,
-            userId: user?.uid,
         });
         if (result.generatedContent) {
             setRefinedText(result.generatedContent);

@@ -79,7 +79,6 @@ export default function PromptGeneratorClient() {
       taskDescription,
       targetModel: targetModel || undefined,
       outputFormat: outputFormat || undefined,
-      userId: user?.uid,
     };
 
     if (!input.taskDescription) {

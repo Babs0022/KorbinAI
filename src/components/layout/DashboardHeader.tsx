@@ -65,22 +65,10 @@ export default function DashboardHeader() {
                     Dashboard
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/workspaces">
-                    <FolderKanban />
-                    Projects
-                  </Link>
-                </DropdownMenuItem>
                  <DropdownMenuItem asChild>
                   <Link href="/dashboard/library">
                     <ImageIcon />
                     Image Library
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/analytics">
-                    <BarChart2 />
-                    Analytics
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

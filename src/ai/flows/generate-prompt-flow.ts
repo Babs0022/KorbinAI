@@ -11,14 +11,12 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { saveProject } from '@/services/workspaceService';
 
 // Define the input schema with Zod
 const GeneratePromptInputSchema = z.object({
   taskDescription: z.string().describe('A plain English description of the task the user wants to accomplish.'),
   targetModel: z.string().optional().describe("The specific AI model this prompt is for (e.g., 'Gemini 1.5 Pro', 'Claude 3 Opus')."),
   outputFormat: z.string().optional().describe("The desired format for the AI's output (e.g., 'JSON', 'Markdown', 'a bulleted list')."),
-  userId: z.string().optional().describe('The ID of the user performing the generation.'),
 });
 export type GeneratePromptInput = z.infer<typeof GeneratePromptInputSchema>;
 
@@ -74,19 +72,6 @@ const generatePromptFlow = ai.defineFlow(
     if (!output?.generatedPrompt) {
       console.error('AI response was empty or invalid. Raw text from model:', response.text);
       throw new Error('Failed to generate prompt because the AI response was empty or invalid.');
-    }
-    
-    if (input.userId) {
-      const { userId, ...projectInput } = input;
-      // Sanitize input to ensure it's a plain JS object before saving.
-      const sanitizedInput = JSON.parse(JSON.stringify(projectInput));
-      await saveProject({
-        userId,
-        type: 'prompt',
-        input: sanitizedInput,
-        output: output.generatedPrompt,
-        featurePath: '/prompt-generator',
-      });
     }
 
     return output;

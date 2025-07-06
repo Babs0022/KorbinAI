@@ -11,7 +11,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { saveProject } from '@/services/workspaceService';
 
 const GenerateStructuredDataInputSchema = z.object({
   description: z.string().describe('A plain English description of the data to generate.'),
@@ -19,7 +18,6 @@ const GenerateStructuredDataInputSchema = z.object({
   schemaDefinition: z.string().optional().describe('An optional schema or example of the desired structure (e.g., a JSON schema, an example XML/KML structure).'),
   originalData: z.string().optional().describe('Existing data to be refined. If present, the flow will refine this data instead of generating new data from the description.'),
   refinementInstruction: z.string().optional().describe("The instruction for refining the data (e.g., 'Add 10 more records', 'Add a unique ID field')."),
-  userId: z.string().optional().describe('The ID of the user performing the generation.'),
 });
 export type GenerateStructuredDataInput = z.infer<typeof GenerateStructuredDataInputSchema>;
 
@@ -93,19 +91,6 @@ const generateStructuredDataFlow = ai.defineFlow(
     // Clean up the output to remove potential markdown code blocks
     const cleanedData = output.generatedData.replace(/^```(json|csv|xml|kml)?\n?/, '').replace(/\n?```$/, '');
     const finalOutput = { generatedData: cleanedData };
-    
-    if (input.userId) {
-      const { userId, ...projectInput } = input;
-      // Sanitize input to ensure it's a plain JS object before saving.
-      const sanitizedInput = JSON.parse(JSON.stringify(projectInput));
-      await saveProject({
-        userId,
-        type: 'structured-data',
-        input: sanitizedInput,
-        output: finalOutput.generatedData,
-        featurePath: '/structured-data',
-      });
-    }
 
     return finalOutput;
   }

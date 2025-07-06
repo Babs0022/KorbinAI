@@ -11,14 +11,12 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { saveProject } from '@/services/workspaceService';
 
 const GenerateAppInputSchema = z.object({
   description: z.string().describe('A plain English description of the application or page to build.'),
   style: z.string().describe("The visual style of the brand (e.g., 'Minimalist & Modern', 'Playful & Creative')."),
   dataPoints: z.string().optional().describe('A comma-separated list of specific page sections the app should include (e.g., Hero, Features, Testimonials). This is the primary guide for page structure.'),
   generationMode: z.enum(['new', 'existing']).describe("Determines whether to generate a full new application or add to an existing one."),
-  userId: z.string().optional().describe('The ID of the user performing the generation.'),
 });
 export type GenerateAppInput = z.infer<typeof GenerateAppInputSchema>;
 
@@ -117,26 +115,11 @@ const generateAppFlow = ai.defineFlow(
         instructions: String(file.instructions),
     }));
     
-    // Construct a new, clean object to prevent passing complex Genkit objects to Firestore.
+    // Construct a new, clean object to prevent passing complex Genkit objects.
     const finalOutput: GenerateAppOutput = {
         files: cleanedFiles,
         finalInstructions: String(aiOutput.finalInstructions),
     };
-
-    if (input.userId) {
-      const { userId, ...projectInput } = input;
-      // Sanitize both input and output to ensure they are plain JS objects before saving.
-      const sanitizedInput = JSON.parse(JSON.stringify(projectInput));
-      const sanitizedOutput = JSON.parse(JSON.stringify(finalOutput));
-
-      await saveProject({
-        userId,
-        type: 'component-wizard',
-        input: sanitizedInput,
-        output: sanitizedOutput,
-        featurePath: '/component-wizard',
-      });
-    }
 
     return finalOutput;
   }
