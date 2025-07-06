@@ -1,14 +1,15 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
-import type { Workspace } from '@/types/workspace';
+import type { Project } from '@/types/workspace';
 import NextImage from 'next/image';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Download, LoaderCircle, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getWorkspace } from '@/services/workspaceService';
+import { getProject } from '@/services/workspaceService';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -17,11 +18,11 @@ import MultiCodeDisplay from '@/components/wizards/CodeDisplay';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
 
-interface WorkspacePreviewDialogProps {
-  workspaceMetadata: Workspace | null; // Receives the metadata from the list view
+interface ProjectPreviewDialogProps {
+  projectMetadata: Project | null; // Receives the metadata from the list view
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onExport: (workspace: Workspace) => void;
+  onExport: (project: Project) => void;
 }
 
 const getLanguage = (format: string | undefined): string => {
@@ -52,24 +53,24 @@ const ErrorState = ({ message }: { message: string }) => (
   </Card>
 );
 
-export default function WorkspacePreviewDialog({ workspaceMetadata, isOpen, onOpenChange, onExport }: WorkspacePreviewDialogProps) {
+export default function ProjectPreviewDialog({ projectMetadata, isOpen, onOpenChange, onExport }: ProjectPreviewDialogProps) {
   const { user } = useAuth();
-  const [fullWorkspace, setFullWorkspace] = useState<Workspace | null>(null);
+  const [fullProject, setFullProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen && workspaceMetadata && user) {
+    if (isOpen && projectMetadata && user) {
       const fetchContent = async () => {
         setIsLoading(true);
         setError(null);
-        setFullWorkspace(null);
+        setFullProject(null);
         try {
-          const data = await getWorkspace({ workspaceId: workspaceMetadata.id, userId: user.uid });
+          const data = await getProject({ projectId: projectMetadata.id, userId: user.uid });
           if (data) {
-            setFullWorkspace(data);
+            setFullProject(data);
           } else {
-            setError("Could not find the workspace content.");
+            setError("Could not find the project content.");
           }
         } catch (e: any) {
           setError(e.message || "An unknown error occurred.");
@@ -79,27 +80,27 @@ export default function WorkspacePreviewDialog({ workspaceMetadata, isOpen, onOp
       };
       fetchContent();
     }
-  }, [isOpen, workspaceMetadata, user]);
+  }, [isOpen, projectMetadata, user]);
 
-  if (!workspaceMetadata) return null;
+  if (!projectMetadata) return null;
 
   const renderContent = () => {
     if (isLoading) return <LoadingState />;
     if (error) return <ErrorState message={error} />;
-    if (!fullWorkspace) return <ErrorState message="No content available." />;
+    if (!fullProject) return <ErrorState message="No content available." />;
 
-    switch (fullWorkspace.type) {
+    switch (fullProject.type) {
       case 'written-content':
       case 'prompt':
         return (
           <ScrollArea className="mt-4 h-72 rounded-md border p-4">
-            <MarkdownRenderer>{fullWorkspace.output as string}</MarkdownRenderer>
+            <MarkdownRenderer>{fullProject.output as string}</MarkdownRenderer>
           </ScrollArea>
         );
 
       case 'structured-data':
-        const lang = getLanguage((fullWorkspace.input as any)?.format);
-        const dataString = typeof fullWorkspace.output === 'string' ? fullWorkspace.output : JSON.stringify(fullWorkspace.output, null, 2);
+        const lang = getLanguage((fullProject.input as any)?.format);
+        const dataString = typeof fullProject.output === 'string' ? fullProject.output : JSON.stringify(fullProject.output, null, 2);
         return (
           <ScrollArea className="mt-4 h-72">
             <SyntaxHighlighter language={lang} style={vscDarkPlus} customStyle={{ margin: 0, backgroundColor: 'hsl(var(--secondary))', borderRadius: 'var(--radius)', padding: '1rem' }}>
@@ -110,10 +111,10 @@ export default function WorkspacePreviewDialog({ workspaceMetadata, isOpen, onOp
 
       case 'component-wizard':
          // This case is handled by the full-page viewer now.
-         return <ErrorState message="Application workspaces should be viewed on their dedicated page." />
+         return <ErrorState message="Application projects should be viewed on their dedicated page." />
 
       default:
-        return <p className="mt-4 text-muted-foreground">Preview not available for this workspace type.</p>;
+        return <p className="mt-4 text-muted-foreground">Preview not available for this project type.</p>;
     }
   };
 
@@ -121,13 +122,13 @@ export default function WorkspacePreviewDialog({ workspaceMetadata, isOpen, onOp
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>{workspaceMetadata.name}</DialogTitle>
-          <DialogDescription>{workspaceMetadata.summary}</DialogDescription>
+          <DialogTitle>{projectMetadata.name}</DialogTitle>
+          <DialogDescription>{projectMetadata.summary}</DialogDescription>
         </DialogHeader>
         {renderContent()}
         <DialogFooter className="mt-6 sm:justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
-            <Button variant="secondary" onClick={() => fullWorkspace && onExport(fullWorkspace)} disabled={!fullWorkspace || !!error}>
+            <Button variant="secondary" onClick={() => fullProject && onExport(fullProject)} disabled={!fullProject || !!error}>
                 <Download className="mr-2 h-4 w-4" />
                 Export
             </Button>

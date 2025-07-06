@@ -1,8 +1,9 @@
 
+
 {
   "indexes": [
     {
-      "collectionGroup": "workspaces",
+      "collectionGroup": "projects",
       "queryScope": "COLLECTION",
       "fields": [
         {

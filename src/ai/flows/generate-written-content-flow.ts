@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A flow for generating and refining written content based on user specifications.
@@ -10,7 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { saveWorkspace } from '@/services/workspaceService';
+import { saveProject } from '@/services/workspaceService';
 
 const GenerateWrittenContentInputSchema = z.object({
   contentType: z.string().describe("The type of content to generate (e.g., 'Blog Post', 'Email')."),
@@ -116,10 +117,10 @@ const generateWrittenContentFlow = ai.defineFlow(
     }
 
     if (input.userId) {
-      const { userId, ...workspaceInput } = input;
+      const { userId, ...projectInput } = input;
       // Sanitize input to ensure it's a plain JS object before saving.
-      const sanitizedInput = JSON.parse(JSON.stringify(workspaceInput));
-      await saveWorkspace({
+      const sanitizedInput = JSON.parse(JSON.stringify(projectInput));
+      await saveProject({
         userId,
         type: 'written-content',
         input: sanitizedInput,

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link";
@@ -67,7 +68,7 @@ export default function DashboardHeader() {
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/workspaces">
                     <FolderKanban />
-                    Workspaces
+                    Projects
                   </Link>
                 </DropdownMenuItem>
                  <DropdownMenuItem asChild>

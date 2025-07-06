@@ -1,42 +1,43 @@
 
+
 'use server';
 /**
  * @fileOverview An AI flow that generates a name and summary for a piece of content.
  *
- * - generateWorkspaceMetadata - A function that generates metadata for a workspace.
- * - GenerateWorkspaceMetadataInput - Input type.
- * - GenerateWorkspaceMetadataOutput - Output type.
+ * - generateProjectMetadata - A function that generates metadata for a project.
+ * - GenerateProjectMetadataInput - Input type.
+ * - GenerateProjectMetadataOutput - Output type.
  */
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
-const WORKSPACE_TYPES = ['written-content', 'prompt', 'component-wizard', 'structured-data'] as const;
+const PROJECT_TYPES = ['written-content', 'prompt', 'component-wizard', 'structured-data'] as const;
 
-const GenerateWorkspaceMetadataInputSchema = z.object({
-  type: z.enum(WORKSPACE_TYPES).describe('The type of content in the workspace.'),
+const GenerateProjectMetadataInputSchema = z.object({
+  type: z.enum(PROJECT_TYPES).describe('The type of content in the project.'),
   content: z.string().describe('The generated content to be summarized.'),
 });
-export type GenerateWorkspaceMetadataInput = z.infer<typeof GenerateWorkspaceMetadataInputSchema>;
+export type GenerateProjectMetadataInput = z.infer<typeof GenerateProjectMetadataInputSchema>;
 
-const GenerateWorkspaceMetadataOutputSchema = z.object({
-  name: z.string().describe("A short, descriptive name for the workspace (3-5 words)."),
-  summary: z.string().describe("A one-sentence summary of the workspace content."),
+const GenerateProjectMetadataOutputSchema = z.object({
+  name: z.string().describe("A short, descriptive name for the project (3-5 words)."),
+  summary: z.string().describe("A one-sentence summary of the project content."),
 });
-export type GenerateWorkspaceMetadataOutput = z.infer<typeof GenerateWorkspaceMetadataOutputSchema>;
+export type GenerateProjectMetadataOutput = z.infer<typeof GenerateProjectMetadataOutputSchema>;
 
-export async function generateWorkspaceMetadata(input: GenerateWorkspaceMetadataInput): Promise<GenerateWorkspaceMetadataOutput> {
-  return generateWorkspaceMetadataFlow(input);
+export async function generateProjectMetadata(input: GenerateProjectMetadataInput): Promise<GenerateProjectMetadataOutput> {
+  return generateProjectMetadataFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'generateWorkspaceMetadataPrompt',
+  name: 'generateProjectMetadataPrompt',
   model: 'googleai/gemini-1.5-flash-latest',
-  input: {schema: GenerateWorkspaceMetadataInputSchema},
-  output: {schema: GenerateWorkspaceMetadataOutputSchema},
+  input: {schema: GenerateProjectMetadataInputSchema},
+  output: {schema: GenerateProjectMetadataOutputSchema},
   prompt: `You are an expert at summarizing and naming content.
 Your task is to analyze a piece of content and generate a short, descriptive name (3-5 words) and a concise one-sentence summary for it.
 
-The content is for a '{{type}}' workspace.
+The content is for a '{{type}}' project.
 
 Here are some examples:
 - If type is 'prompt' and content is "Create a marketing campaign for a new coffee shop", a good name would be "Coffee Shop Marketing Prompt" and summary "A prompt to generate a marketing campaign for a new coffee business."
@@ -51,16 +52,16 @@ Content to analyze:
 `,
 });
 
-const generateWorkspaceMetadataFlow = ai.defineFlow(
+const generateProjectMetadataFlow = ai.defineFlow(
   {
-    name: 'generateWorkspaceMetadataFlow',
-    inputSchema: GenerateWorkspaceMetadataInputSchema,
-    outputSchema: GenerateWorkspaceMetadataOutputSchema,
+    name: 'generateProjectMetadataFlow',
+    inputSchema: GenerateProjectMetadataInputSchema,
+    outputSchema: GenerateProjectMetadataOutputSchema,
   },
   async (input) => {
     // Truncate content to avoid hitting token limits for very large outputs.
     const truncatedContent = input.content.substring(0, 2000);
     const response = await prompt({ ...input, content: truncatedContent });
-    return response.output ?? { name: 'Untitled Workspace', summary: 'No summary available.' };
+    return response.output ?? { name: 'Untitled Project', summary: 'No summary available.' };
   }
 );

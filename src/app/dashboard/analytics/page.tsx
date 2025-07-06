@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from 'next/link';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { getWorkspaceAnalytics } from "@/services/workspaceService";
+import { getProjectAnalytics } from "@/services/workspaceService";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import AnalyticsCharts from "@/components/dashboard/AnalyticsCharts";
@@ -45,7 +46,7 @@ export default function AnalyticsPage() {
 
         const fetchData = async () => {
             try {
-                const data = await getWorkspaceAnalytics({ userId: user.uid });
+                const data = await getProjectAnalytics({ userId: user.uid });
                 setAnalyticsData(data);
             } catch (error) {
                 console.error("Failed to fetch analytics data", error);

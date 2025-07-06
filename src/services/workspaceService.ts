@@ -1,20 +1,21 @@
 
+
 'use server';
 /**
- * @fileOverview A server-side service for managing user workspaces in Firestore.
+ * @fileOverview A server-side service for managing user projects in Firestore.
  * This service implements a content/metadata split pattern for performance.
- * - Workspace metadata (name, summary, etc.) is stored in the `workspaces` collection.
- * - Large content (input, output) is stored in a separate `workspace_content` collection.
- * This makes querying for lists of workspaces fast and efficient.
+ * - Project metadata (name, summary, etc.) is stored in the `projects` collection.
+ * - Large content (input, output) is stored in a separate `project_content` collection.
+ * This makes querying for lists of projects fast and efficient.
  */
 
 import { firestoreDb } from '@/lib/firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
-import { generateWorkspaceMetadata } from '@/ai/flows/generate-prompt-metadata-flow';
-import type { Workspace, WorkspaceType } from '@/types/workspace';
+import { generateProjectMetadata } from '@/ai/flows/generate-prompt-metadata-flow';
+import type { Project, ProjectType } from '@/types/workspace';
 
-// Helper to convert a Firestore document to a serializable Workspace object
-const serializeWorkspace = (doc: FirebaseFirestore.DocumentSnapshot): Workspace | null => {
+// Helper to convert a Firestore document to a serializable Project object
+const serializeProject = (doc: FirebaseFirestore.DocumentSnapshot): Project | null => {
     if (!doc.exists) return null;
     const data = doc.data();
     if (!data) return null;
@@ -31,15 +32,15 @@ const serializeWorkspace = (doc: FirebaseFirestore.DocumentSnapshot): Workspace 
     return {
         id: doc.id,
         ...serializedData,
-    } as Workspace;
+    } as Project;
 };
 
 
 /**
- * Saves or updates a user's workspace, splitting data between metadata and content collections.
+ * Saves or updates a user's project, splitting data between metadata and content collections.
  * This function expects the input and output to be pre-sanitized plain JavaScript objects.
  */
-export async function saveWorkspace({
+export async function saveProject({
   userId,
   type,
   input,
@@ -47,23 +48,21 @@ export async function saveWorkspace({
   featurePath,
 }: {
   userId: string;
-  type: WorkspaceType;
+  type: ProjectType;
   input: object;
   output: string | object;
   featurePath: string;
 }): Promise<string> {
   if (!userId) {
-    console.log('No user ID provided, skipping workspace save.');
+    console.log('No user ID provided, skipping project save.');
     return '';
   }
 
-  const workspaceRef = firestoreDb.collection('workspaces').doc();
-  const contentRef = firestoreDb.collection('workspace_content').doc(workspaceRef.id);
+  const projectRef = firestoreDb.collection('projects').doc();
+  const contentRef = firestoreDb.collection('project_content').doc(projectRef.id);
 
   let contentForMetadata: string;
-  if (type === 'image') {
-    contentForMetadata = (input as { prompt: string }).prompt;
-  } else if (type === 'component-wizard') {
+  if (type === 'component-wizard') {
     contentForMetadata = (input as { description: string }).description;
   } else if (typeof output === 'string') {
     contentForMetadata = output;
@@ -72,12 +71,12 @@ export async function saveWorkspace({
   }
 
   // Generate metadata. The result from this flow is a Genkit proxy object.
-  const metadataResultProxy = await generateWorkspaceMetadata({ type, content: contentForMetadata });
+  const metadataResultProxy = await generateProjectMetadata({ type, content: contentForMetadata });
 
   // Sanitize the Genkit proxy object into a plain JavaScript object before using it.
   const metadataResult = JSON.parse(JSON.stringify(metadataResultProxy));
   
-  const workspaceData = {
+  const projectData = {
     userId,
     type,
     name: metadataResult.name,
@@ -94,106 +93,106 @@ export async function saveWorkspace({
 
   // Use a batch write to ensure both documents are created atomically
   const batch = firestoreDb.batch();
-  batch.set(workspaceRef, workspaceData);
+  batch.set(projectRef, projectData);
   batch.set(contentRef, contentData);
   await batch.commit();
 
-  console.log(`Workspace saved for user ${userId} with ID: ${workspaceRef.id}`);
-  return workspaceRef.id;
+  console.log(`Project saved for user ${userId} with ID: ${projectRef.id}`);
+  return projectRef.id;
 }
 
 
 /**
- * Deletes a workspace document and its associated content document.
+ * Deletes a project document and its associated content document.
  */
-export async function deleteWorkspace({
-  workspaceId,
+export async function deleteProject({
+  projectId,
   userId,
 }: {
-  workspaceId: string;
+  projectId: string;
   userId: string;
 }): Promise<void> {
-  if (!userId || !workspaceId) {
-    throw new Error('User ID and Workspace ID are required for deletion.');
+  if (!userId || !projectId) {
+    throw new Error('User ID and Project ID are required for deletion.');
   }
 
-  const workspaceRef = firestoreDb.collection('workspaces').doc(workspaceId);
-  const contentRef = firestoreDb.collection('workspace_content').doc(workspaceId);
-  const doc = await workspaceRef.get();
+  const projectRef = firestoreDb.collection('projects').doc(projectId);
+  const contentRef = firestoreDb.collection('project_content').doc(projectId);
+  const doc = await projectRef.get();
 
   if (!doc.exists) {
-    console.warn(`Workspace with ID ${workspaceId} not found. Nothing to delete.`);
+    console.warn(`Project with ID ${projectId} not found. Nothing to delete.`);
     return;
   }
 
-  const workspaceData = doc.data();
-  if (workspaceData?.userId !== userId) {
-    console.error(`User ${userId} attempted to delete workspace ${workspaceId} owned by ${workspaceData?.userId}.`);
-    throw new Error('Permission denied. You can only delete your own workspaces.');
+  const projectData = doc.data();
+  if (projectData?.userId !== userId) {
+    console.error(`User ${userId} attempted to delete project ${projectId} owned by ${projectData?.userId}.`);
+    throw new Error('Permission denied. You can only delete your own projects.');
   }
 
   // Use a batch to delete both documents atomically
   const batch = firestoreDb.batch();
-  batch.delete(workspaceRef);
+  batch.delete(projectRef);
   batch.delete(contentRef);
   await batch.commit();
 
-  console.log(`Workspace ${workspaceId} and its content successfully deleted for user ${userId}.`);
+  console.log(`Project ${projectId} and its content successfully deleted for user ${userId}.`);
 }
 
 
 /**
- * Fetches a single workspace, combining its metadata and content from two collections.
+ * Fetches a single project, combining its metadata and content from two collections.
  */
-export async function getWorkspace({
-  workspaceId,
+export async function getProject({
+  projectId,
   userId,
 }: {
-  workspaceId:string;
+  projectId:string;
   userId: string;
-}): Promise<Workspace | null> {
-  if (!userId || !workspaceId) {
-    console.error('User ID and Workspace ID are required to fetch a workspace.');
-    throw new Error('User ID and Workspace ID are required.');
+}): Promise<Project | null> {
+  if (!userId || !projectId) {
+    console.error('User ID and Project ID are required to fetch a project.');
+    throw new Error('User ID and Project ID are required.');
   }
 
-  const workspaceRef = firestoreDb.collection('workspaces').doc(workspaceId);
-  const contentRef = firestoreDb.collection('workspace_content').doc(workspaceId);
+  const projectRef = firestoreDb.collection('projects').doc(projectId);
+  const contentRef = firestoreDb.collection('project_content').doc(projectId);
   
-  const [workspaceDoc, contentDoc] = await Promise.all([
-      workspaceRef.get(),
+  const [projectDoc, contentDoc] = await Promise.all([
+      projectRef.get(),
       contentRef.get()
   ]);
   
-  const workspace = serializeWorkspace(workspaceDoc);
+  const project = serializeProject(projectDoc);
 
-  if (!workspace) {
-    console.warn(`Workspace with ID ${workspaceId} not found.`);
+  if (!project) {
+    console.warn(`Project with ID ${projectId} not found.`);
     return null;
   }
   
-  if (workspace.userId !== userId) {
-    console.error(`User ${userId} attempted to access workspace ${workspaceId} owned by ${workspace.userId}.`);
+  if (project.userId !== userId) {
+    console.error(`User ${userId} attempted to access project ${projectId} owned by ${project.userId}.`);
     throw new Error('Permission denied.');
   }
 
   const contentData = contentDoc.data();
   if (contentData) {
-      workspace.input = contentData.input;
-      workspace.output = contentData.output;
+      project.input = contentData.input;
+      project.output = contentData.output;
   } else {
-      console.error(`Content for workspace ${workspaceId} not found.`);
-      throw new Error('Failed to load workspace content. The data may have been corrupted or deleted.');
+      console.error(`Content for project ${projectId} not found.`);
+      throw new Error('Failed to load project content. The data may have been corrupted or deleted.');
   }
   
-  return workspace;
+  return project;
 }
 
 
 /**
- * Fetches and aggregates analytics data for a user's workspaces.
+ * Fetches and aggregates analytics data for a user's projects.
  */
-export async function getWorkspaceAnalytics({ userId }: { userId: string }) {
+export async function getProjectAnalytics({ userId }: { userId: string }) {
   if (!userId) {
     throw new Error('User ID is required to fetch analytics.');
   }
@@ -202,8 +201,8 @@ export async function getWorkspaceAnalytics({ userId }: { userId: string }) {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const sevenDaysAgoTimestamp = Timestamp.fromDate(sevenDaysAgo);
 
-  const workspacesRef = firestoreDb.collection('workspaces');
-  const q = workspacesRef.where('userId', '==', userId)
+  const projectsRef = firestoreDb.collection('projects');
+  const q = projectsRef.where('userId', '==', userId)
   
   const snapshot = await q.get();
   const snapshotLast7Days = await q.where('createdAt', '>=', sevenDaysAgoTimestamp).get();
@@ -221,7 +220,7 @@ export async function getWorkspaceAnalytics({ userId }: { userId: string }) {
   const generationsByType: { [key: string]: number } = {};
   
   snapshot.forEach(doc => {
-    const data = doc.data() as Workspace;
+    const data = doc.data() as Project;
     if (data.type) {
       generationsByType[data.type] = (generationsByType[data.type] || 0) + 1;
     }
@@ -229,7 +228,7 @@ export async function getWorkspaceAnalytics({ userId }: { userId: string }) {
 
   const activityMap = new Map<string, number>();
   snapshotLast7Days.forEach(doc => {
-    const data = doc.data() as Workspace;
+    const data = doc.data() as Project;
     if (data.createdAt && data.createdAt instanceof Timestamp) {
         const date = data.createdAt.toDate().toISOString().split('T')[0]; // YYYY-MM-DD
         activityMap.set(date, (activityMap.get(date) || 0) + 1);

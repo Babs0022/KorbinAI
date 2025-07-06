@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A flow for generating multi-file React applications based on user descriptions.
@@ -10,7 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { saveWorkspace } from '@/services/workspaceService';
+import { saveProject } from '@/services/workspaceService';
 
 const GenerateAppInputSchema = z.object({
   description: z.string().describe('A plain English description of the application or page to build.'),
@@ -123,12 +124,12 @@ const generateAppFlow = ai.defineFlow(
     };
 
     if (input.userId) {
-      const { userId, ...workspaceInput } = input;
+      const { userId, ...projectInput } = input;
       // Sanitize both input and output to ensure they are plain JS objects before saving.
-      const sanitizedInput = JSON.parse(JSON.stringify(workspaceInput));
+      const sanitizedInput = JSON.parse(JSON.stringify(projectInput));
       const sanitizedOutput = JSON.parse(JSON.stringify(finalOutput));
 
-      await saveWorkspace({
+      await saveProject({
         userId,
         type: 'component-wizard',
         input: sanitizedInput,

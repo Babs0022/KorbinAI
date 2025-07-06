@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A flow for generating and refining structured data like JSON or CSV.
@@ -10,7 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { saveWorkspace } from '@/services/workspaceService';
+import { saveProject } from '@/services/workspaceService';
 
 const GenerateStructuredDataInputSchema = z.object({
   description: z.string().describe('A plain English description of the data to generate.'),
@@ -94,10 +95,10 @@ const generateStructuredDataFlow = ai.defineFlow(
     const finalOutput = { generatedData: cleanedData };
     
     if (input.userId) {
-      const { userId, ...workspaceInput } = input;
+      const { userId, ...projectInput } = input;
       // Sanitize input to ensure it's a plain JS object before saving.
-      const sanitizedInput = JSON.parse(JSON.stringify(workspaceInput));
-      await saveWorkspace({
+      const sanitizedInput = JSON.parse(JSON.stringify(projectInput));
+      await saveProject({
         userId,
         type: 'structured-data',
         input: sanitizedInput,

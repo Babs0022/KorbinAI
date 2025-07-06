@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -12,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, FolderKanban, Feather, Bolt, LayoutTemplate, Code2, MoreVertical, Eye, Download, Trash2, LoaderCircle, Edit } from 'lucide-react';
-import type { Workspace } from '@/types/workspace';
+import type { Project } from '@/types/workspace';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -32,11 +33,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deleteWorkspace, getWorkspace } from '@/services/workspaceService';
-import WorkspacePreviewDialog from '@/components/wizards/WorkspacePreviewDialog';
+import { deleteProject, getProject } from '@/services/workspaceService';
+import ProjectPreviewDialog from '@/components/wizards/WorkspacePreviewDialog';
 
 
-const WorkspaceIcon = ({ type }: { type: Workspace['type'] }) => {
+const ProjectIcon = ({ type }: { type: Project['type'] }) => {
   const props = { className: 'h-6 w-6 text-muted-foreground' };
   switch (type) {
     case 'written-content': return <Feather {...props} />;
@@ -47,7 +48,7 @@ const WorkspaceIcon = ({ type }: { type: Workspace['type'] }) => {
   }
 };
 
-const WorkspaceCardSkeleton = () => (
+const ProjectCardSkeleton = () => (
     <Card>
         <CardHeader>
             <Skeleton className="h-6 w-3/4" />
@@ -65,47 +66,47 @@ function isValidPath(path: any): path is string {
 }
 
 
-export default function WorkspacesPage() {
+export default function ProjectsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // State for dialogs
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [workspaceToAction, setWorkspaceToAction] = useState<Workspace | null>(null);
-  const [viewingWorkspace, setViewingWorkspace] = useState<Workspace | null>(null);
+  const [projectToAction, setProjectToAction] = useState<Project | null>(null);
+  const [viewingProject, setViewingProject] = useState<Project | null>(null);
 
   useEffect(() => {
     if (user) {
       setIsLoading(true);
       const q = query(
-        collection(db, 'workspaces'),
+        collection(db, 'projects'),
         where('userId', '==', user.uid),
         orderBy('updatedAt', 'desc')
       );
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const userWorkspaces: Workspace[] = [];
+        const userProjects: Project[] = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          userWorkspaces.push({
+          userProjects.push({
             id: doc.id,
             ...data,
             createdAt: data.createdAt?.toDate(),
             updatedAt: data.updatedAt?.toDate(),
-          } as Workspace);
+          } as Project);
         });
-        setWorkspaces(userWorkspaces);
+        setProjects(userProjects);
         setIsLoading(false);
       }, (error) => {
-        console.error("Error fetching workspaces: ", error);
+        console.error("Error fetching projects: ", error);
         toast({
           variant: "destructive",
-          title: "Error fetching workspaces",
+          title: "Error fetching projects",
           description: error.message,
         });
         setIsLoading(false);
@@ -114,54 +115,54 @@ export default function WorkspacesPage() {
       return () => unsubscribe();
     } else {
       setIsLoading(false);
-      setWorkspaces([]);
+      setProjects([]);
     }
   }, [user, toast]);
   
-  const handleViewClick = (workspace: Workspace) => {
-    if (workspace.type === 'component-wizard') {
-        router.push(`/dashboard/workspaces/${workspace.id}`);
+  const handleViewClick = (project: Project) => {
+    if (project.type === 'component-wizard') {
+        router.push(`/dashboard/workspaces/${project.id}`);
     } else {
-        setViewingWorkspace(workspace);
+        setViewingProject(project);
     }
   };
 
-  const handleEditClick = (workspace: Workspace) => {
-    if (!workspace.id || !user) return;
+  const handleEditClick = (project: Project) => {
+    if (!project.id || !user) return;
     
     // Since the list view doesn't have input, we must fetch it first.
-    getWorkspace({ workspaceId: workspace.id, userId: user.uid }).then(fullWorkspace => {
-        if (fullWorkspace && isValidPath(fullWorkspace.featurePath)) {
+    getProject({ projectId: project.id, userId: user.uid }).then(fullProject => {
+        if (fullProject && isValidPath(fullProject.featurePath)) {
             router.push({
-                pathname: fullWorkspace.featurePath,
-                query: fullWorkspace.input as any,
+                pathname: fullProject.featurePath,
+                query: fullProject.input as any,
             });
         } else {
             toast({
                 variant: "destructive",
                 title: "Cannot Edit",
-                description: "Could not load workspace for editing. It might be an older version.",
+                description: "Could not load project for editing. It might be an older version.",
             });
         }
     });
   };
 
-  const handleDeleteClick = (workspace: Workspace) => {
-    setWorkspaceToAction(workspace);
+  const handleDeleteClick = (project: Project) => {
+    setProjectToAction(project);
     setIsDeleteDialogOpen(true);
   };
   
   const handleDeleteConfirm = async () => {
-    if (!workspaceToAction || !user) return;
+    if (!projectToAction || !user) return;
     setIsDeleting(true);
     try {
-      await deleteWorkspace({ workspaceId: workspaceToAction.id, userId: user.uid });
+      await deleteProject({ projectId: projectToAction.id, userId: user.uid });
       toast({
-        title: "Workspace Deleted",
-        description: `"${workspaceToAction.name}" has been permanently deleted.`,
+        title: "Project Deleted",
+        description: `"${projectToAction.name}" has been permanently deleted.`,
       });
     } catch (error) {
-      console.error("Failed to delete workspace:", error);
+      console.error("Failed to delete project:", error);
       toast({
         variant: "destructive",
         title: "Deletion Failed",
@@ -170,17 +171,17 @@ export default function WorkspacesPage() {
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
-      setWorkspaceToAction(null);
+      setProjectToAction(null);
     }
   };
 
-  const handleExport = async (workspace: Workspace) => {
-    if (!workspace || !user) return;
+  const handleExport = async (project: Project) => {
+    if (!project || !user) return;
     
     // For other types, we need the full content which isn't in the list view
-    const fullWorkspace = await getWorkspace({ workspaceId: workspace.id, userId: user.uid });
-    if (!fullWorkspace || !fullWorkspace.output) {
-      toast({ variant: "destructive", title: "Export Failed", description: "Could not load workspace content." });
+    const fullProject = await getProject({ projectId: project.id, userId: user.uid });
+    if (!fullProject || !fullProject.output) {
+      toast({ variant: "destructive", title: "Export Failed", description: "Could not load project content." });
       return;
     }
     
@@ -188,28 +189,28 @@ export default function WorkspacesPage() {
     let filename: string;
     let mimeType: string;
 
-    const sanitizedName = fullWorkspace.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const sanitizedName = fullProject.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     
-    switch (fullWorkspace.type) {
+    switch (fullProject.type) {
         case 'written-content':
         case 'prompt':
-            content = fullWorkspace.output as string;
+            content = fullProject.output as string;
             filename = `${sanitizedName}.md`;
             mimeType = 'text/markdown';
             break;
         case 'structured-data':
-            content = typeof fullWorkspace.output === 'string' ? fullWorkspace.output : JSON.stringify(fullWorkspace.output, null, 2);
-            const format = (fullWorkspace.input as any).format || 'json';
+            content = typeof fullProject.output === 'string' ? fullProject.output : JSON.stringify(fullProject.output, null, 2);
+            const format = (fullProject.input as any).format || 'json';
             filename = `${sanitizedName}.${format}`;
             mimeType = format === 'csv' ? 'text/csv' : 'application/json';
             break;
         case 'component-wizard':
-            content = JSON.stringify(fullWorkspace.output, null, 2);
+            content = JSON.stringify(fullProject.output, null, 2);
             filename = `${sanitizedName}_files.json`;
             mimeType = 'application/json';
             break;
         default:
-            content = typeof fullWorkspace.output === 'string' ? fullWorkspace.output : JSON.stringify(fullWorkspace.output, null, 2);
+            content = typeof fullProject.output === 'string' ? fullProject.output : JSON.stringify(fullProject.output, null, 2);
             filename = `${sanitizedName}.txt`;
             mimeType = 'text/plain';
     }
@@ -231,16 +232,16 @@ export default function WorkspacesPage() {
     if (isLoading) {
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => <WorkspaceCardSkeleton key={i} />)}
+                {[...Array(6)].map((_, i) => <ProjectCardSkeleton key={i} />)}
             </div>
         );
     }
     
-    if (workspaces.length === 0) {
+    if (projects.length === 0) {
         return (
             <div className="text-center py-16 border-2 border-dashed rounded-lg">
                 <FolderKanban className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-medium">No Workspaces Yet</h3>
+                <h3 className="mt-4 text-lg font-medium">No Projects Yet</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                     Create some content and it will appear here automatically.
                 </p>
@@ -256,13 +257,13 @@ export default function WorkspacesPage() {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {workspaces.map((workspace) => (
-                <Card key={workspace.id} className="h-full flex flex-col hover:border-primary/80 transition-colors duration-200">
+            {projects.map((project) => (
+                <Card key={project.id} className="h-full flex flex-col hover:border-primary/80 transition-colors duration-200">
                     <CardHeader className="flex-row items-start gap-4 space-y-0">
-                        <WorkspaceIcon type={workspace.type} />
+                        <ProjectIcon type={project.type} />
                         <div className="flex-1">
-                            <CardTitle>{workspace.name}</CardTitle>
-                            <CardDescription className="line-clamp-2 mt-1">{workspace.summary}</CardDescription>
+                            <CardTitle>{project.name}</CardTitle>
+                            <CardDescription className="line-clamp-2 mt-1">{project.summary}</CardDescription>
                         </div>
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -272,24 +273,24 @@ export default function WorkspacesPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={() => handleViewClick(workspace)}>
+                                <DropdownMenuItem onSelect={() => handleViewClick(project)}>
                                     <Eye className="mr-2 h-4 w-4" /> View
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => handleEditClick(workspace)} disabled={!isValidPath(workspace.featurePath)}>
+                                <DropdownMenuItem onSelect={() => handleEditClick(project)} disabled={!isValidPath(project.featurePath)}>
                                     <Edit className="mr-2 h-4 w-4" /> Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => handleExport(workspace)}>
+                                <DropdownMenuItem onSelect={() => handleExport(project)}>
                                     <Download className="mr-2 h-4 w-4" /> Export
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onSelect={() => handleDeleteClick(workspace)} className="text-destructive focus:text-destructive">
+                                <DropdownMenuItem onSelect={() => handleDeleteClick(project)} className="text-destructive focus:text-destructive">
                                     <Trash2 className="mr-2 h-4 w-4" /> Delete
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </CardHeader>
                     <CardFooter className="mt-auto pt-4 text-xs text-muted-foreground">
-                        {workspace.updatedAt && `Last updated ${formatDistanceToNow(new Date(workspace.updatedAt), { addSuffix: true })}`}
+                        {project.updatedAt && `Last updated ${formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })}`}
                     </CardFooter>
                 </Card>
             ))}
@@ -301,7 +302,7 @@ export default function WorkspacesPage() {
     <DashboardLayout>
       <main className="flex-1 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold">Your Workspaces</h1>
+          <h1 className="text-3xl font-bold">Your Projects</h1>
           <p className="text-muted-foreground mt-2 mb-10">
             All your generated content is automatically saved here for you to revisit and reuse.
           </p>
@@ -312,8 +313,8 @@ export default function WorkspacesPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the workspace
-                <span className="font-bold"> "{workspaceToAction?.name}"</span>.
+                This action cannot be undone. This will permanently delete the project
+                <span className="font-bold"> "{projectToAction?.name}"</span>.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -330,10 +331,10 @@ export default function WorkspacesPage() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <WorkspacePreviewDialog
-          workspaceMetadata={viewingWorkspace}
-          isOpen={!!viewingWorkspace}
-          onOpenChange={(open) => !open && setViewingWorkspace(null)}
+        <ProjectPreviewDialog
+          projectMetadata={viewingProject}
+          isOpen={!!viewingProject}
+          onOpenChange={(open) => !open && setViewingProject(null)}
           onExport={handleExport}
         />
       </main>
