@@ -43,7 +43,12 @@ export async function saveToImageLibrary({
     throw new Error('User ID must be provided.');
   }
 
-  const storageBucket = adminStorage.bucket(); // Get default bucket from firebase-admin
+  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  if (!bucketName) {
+    console.error("Firebase Storage bucket name is not configured on the server.");
+    throw new Error("Server configuration error: Storage bucket name is missing.");
+  }
+  const storageBucket = adminStorage.bucket(bucketName);
   
   // Step 1: Upload all images to Cloud Storage and get their public URLs
   const uploadPromises = imageUrls.map(async (dataUri) => {
