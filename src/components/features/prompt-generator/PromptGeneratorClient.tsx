@@ -26,7 +26,7 @@ export default function PromptGeneratorClient() {
   const [taskDescription, setTaskDescription] = useState("");
   const [targetModel, setTargetModel] = useState("");
   const [outputFormat, setOutputFormat] = useState("");
-  const [image, setImage] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>([]);
 
   // Generation State
   const [isLoading, setIsLoading] = useState(false);
@@ -79,15 +79,27 @@ export default function PromptGeneratorClient() {
   }, [taskDescription]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-          setImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      const newImagesPromises = filesArray.map(file => {
+        return new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      });
+
+      Promise.all(newImagesPromises).then(newImages => {
+        setImages(prev => [...prev, ...newImages]);
+      });
     }
   };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -100,7 +112,7 @@ export default function PromptGeneratorClient() {
       taskDescription,
       targetModel: targetModel || undefined,
       outputFormat: outputFormat || undefined,
-      imageDataUri: image || undefined,
+      imageDataUris: images.length > 0 ? images : undefined,
     };
 
     if (!input.taskDescription) {
@@ -189,34 +201,35 @@ export default function PromptGeneratorClient() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-4">
               <h3 className="text-lg font-medium text-white">
-                Add Context Image <span className="font-normal text-muted-foreground">(optional)</span>
+                Add Context Images <span className="font-normal text-muted-foreground">(optional)</span>
               </h3>
-              {!image ? (
-                <Label htmlFor="image-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-accent">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <ImagePlus className="w-8 h-8 mb-4 text-muted-foreground" />
-                    <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span></p>
-                    <p className="text-xs text-muted-foreground">PNG or JPG</p>
+              <div className="flex flex-wrap gap-4">
+                {images.map((image, index) => (
+                  <div key={index} className="relative w-32 h-32">
+                    <NextImage src={image} alt={`Image preview ${index + 1}`} fill sizes="128px" className="object-cover rounded-lg" data-ai-hint="context image" />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-7 w-7 rounded-full z-10"
+                      onClick={() => removeImage(index)}
+                    >
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Remove image</span>
+                    </Button>
                   </div>
-                  <Input id="image-upload" type="file" className="hidden" accept="image/png, image/jpeg" onChange={handleImageChange} />
+                ))}
+                
+                <Label htmlFor="image-upload" className="flex flex-col items-center justify-center w-32 h-32 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-accent">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <ImagePlus className="w-8 h-8 text-muted-foreground" />
+                    <span className="sr-only">Add image</span>
+                  </div>
+                  <Input id="image-upload" type="file" className="hidden" accept="image/png, image/jpeg" onChange={handleImageChange} multiple />
                 </Label>
-              ) : (
-                <div className="relative w-full max-w-xs">
-                  <NextImage src={image} alt="Image preview" width={200} height={200} className="object-contain rounded-lg" data-ai-hint="context image" />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 h-7 w-7 rounded-full"
-                    onClick={() => setImage(null)}
-                  >
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Remove image</span>
-                  </Button>
-                </div>
-              )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2">

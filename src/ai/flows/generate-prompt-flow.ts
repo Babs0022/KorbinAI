@@ -15,7 +15,7 @@ import {z} from 'zod';
 // Define the input schema with Zod
 const GeneratePromptInputSchema = z.object({
   taskDescription: z.string().describe('A plain English description of the task the user wants to accomplish.'),
-  imageDataUri: z.string().optional().describe("An optional image provided as context, as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+  imageDataUris: z.array(z.string()).optional().describe("An optional array of images provided as context, as data URIs. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
   targetModel: z.string().optional().describe("The specific AI model this prompt is for (e.g., 'Gemini 1.5 Pro', 'Claude 3 Opus')."),
   outputFormat: z.string().optional().describe("The desired format for the AI's output (e.g., 'JSON', 'Markdown', 'a bulleted list')."),
 });
@@ -47,10 +47,12 @@ Follow these principles:
 4.  **Task Definition:** Clearly state the goal and the steps to achieve it.
 5.  **Constraints & Format:** Specify the desired output format, length, style, and any negative constraints.
 
-{{#if imageDataUri}}
+{{#if imageDataUris}}
 **Image Context:**
-The user has provided an image as context. Your generated prompt should incorporate this image. For example, by instructing the target model to analyze or describe it.
-{{media url=imageDataUri}}
+The user has provided image(s) as context. Your generated prompt should incorporate this image. For example, by instructing the target model to analyze or describe it.
+{{#each imageDataUris}}
+{{media url=this}}
+{{/each}}
 {{/if}}
 
 User's Task Description: "{{taskDescription}}"
