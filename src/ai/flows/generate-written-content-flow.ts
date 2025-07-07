@@ -18,6 +18,7 @@ const GenerateWrittenContentInputSchema = z.object({
   topic: z.string().describe('The main topic or message of the content.'),
   audience: z.string().optional().describe('The target audience for the content.'),
   keywords: z.string().optional().describe('A comma-separated list of keywords to include.'),
+  imageDataUri: z.string().optional().describe("An optional image provided as context, as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
   outputFormat: z.string().optional().describe("The desired output format (e.g., 'JSON', 'Markdown', 'HTML'). Defaults to Markdown if not specified."),
   examples: z.array(z.object({
     input: z.string().describe("An example of a user's input."),
@@ -57,6 +58,12 @@ Refinement Instruction: "{{refinementInstruction}}"
 Refine the content now. Ensure the output is only the refined text, formatted nicely (e.g., with markdown).
 {{else}}
 You are a world-class AI content creation expert, acting as a {{tone}} writer. Your goal is to generate high-quality content based on the user's request.
+
+{{#if imageDataUri}}
+**Image Context:**
+Use the following image as the primary context for your writing. The user's topic should be interpreted in relation to this image.
+{{media url=imageDataUri}}
+{{/if}}
 
 **Core Task:**
 Generate a "{{contentType}}" about the following topic: "{{topic}}".

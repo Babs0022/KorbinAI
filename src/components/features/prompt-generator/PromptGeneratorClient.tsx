@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { LoaderCircle, Sparkles, ArrowRight, Save } from "lucide-react";
+import { LoaderCircle, Sparkles, ArrowRight, Save, ImagePlus, X } from "lucide-react";
+import NextImage from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +14,7 @@ import { saveProject } from '@/services/projectService';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { generatePrompt, type GeneratePromptInput } from "@/ai/flows/generate-prompt-flow";
 import { generatePromptFormatSuggestions } from "@/ai/flows/generate-prompt-format-suggestions-flow";
@@ -24,6 +26,7 @@ export default function PromptGeneratorClient() {
   const [taskDescription, setTaskDescription] = useState("");
   const [targetModel, setTargetModel] = useState("");
   const [outputFormat, setOutputFormat] = useState("");
+  const [image, setImage] = useState<string | null>(null);
 
   // Generation State
   const [isLoading, setIsLoading] = useState(false);
@@ -75,6 +78,17 @@ export default function PromptGeneratorClient() {
     };
   }, [taskDescription]);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+          setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setGeneratedPrompt("");
@@ -86,6 +100,7 @@ export default function PromptGeneratorClient() {
       taskDescription,
       targetModel: targetModel || undefined,
       outputFormat: outputFormat || undefined,
+      imageDataUri: image || undefined,
     };
 
     if (!input.taskDescription) {
@@ -172,6 +187,36 @@ export default function PromptGeneratorClient() {
                 onChange={(e) => setTaskDescription(e.target.value)}
                 required
               />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-lg font-medium text-white">
+                Add Context Image <span className="font-normal text-muted-foreground">(optional)</span>
+              </h3>
+              {!image ? (
+                <Label htmlFor="image-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-accent">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <ImagePlus className="w-8 h-8 mb-4 text-muted-foreground" />
+                    <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span></p>
+                    <p className="text-xs text-muted-foreground">PNG or JPG</p>
+                  </div>
+                  <Input id="image-upload" type="file" className="hidden" accept="image/png, image/jpeg" onChange={handleImageChange} />
+                </Label>
+              ) : (
+                <div className="relative w-full max-w-xs">
+                  <NextImage src={image} alt="Image preview" width={200} height={200} className="object-contain rounded-lg" data-ai-hint="context image" />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-7 w-7 rounded-full"
+                    onClick={() => setImage(null)}
+                  >
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Remove image</span>
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2">

@@ -4,7 +4,8 @@
 import { useState, useEffect } from "react";
 import Link from 'next/link';
 import { useSearchParams } from "next/navigation";
-import { LoaderCircle, Sparkles, Wand2, Save } from "lucide-react";
+import { LoaderCircle, Sparkles, Wand2, Save, ImagePlus, X } from "lucide-react";
+import NextImage from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +15,7 @@ import { saveProject } from '@/services/projectService';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { generateStructuredData, type GenerateStructuredDataInput } from "@/ai/flows/generate-structured-data-flow";
@@ -28,6 +30,7 @@ export default function StructuredDataClient() {
   const [format, setFormat] = useState("json");
   const [description, setDescription] = useState("");
   const [schemaDefinition, setSchemaDefinition] = useState("");
+  const [image, setImage] = useState<string | null>(null);
 
   // Generation State
   const [isLoading, setIsLoading] = useState(false);
@@ -80,6 +83,17 @@ export default function StructuredDataClient() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [description, format]);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+          setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setGeneratedData("");
@@ -90,6 +104,7 @@ export default function StructuredDataClient() {
       description,
       format,
       schemaDefinition: schemaDefinition || undefined,
+      imageDataUri: image || undefined,
     };
 
     if (!input.description) {
@@ -228,6 +243,36 @@ export default function StructuredDataClient() {
               />
             </div>
 
+            <div className="space-y-2">
+              <h3 className="text-lg font-medium text-white">
+                Add Context Image <span className="font-normal text-muted-foreground">(optional)</span>
+              </h3>
+              {!image ? (
+                <Label htmlFor="image-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-accent">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <ImagePlus className="w-8 h-8 mb-4 text-muted-foreground" />
+                    <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span></p>
+                    <p className="text-xs text-muted-foreground">PNG or JPG</p>
+                  </div>
+                  <Input id="image-upload" type="file" className="hidden" accept="image/png, image/jpeg" onChange={handleImageChange} />
+                </Label>
+              ) : (
+                <div className="relative w-full max-w-xs">
+                  <NextImage src={image} alt="Image preview" width={200} height={200} className="object-contain rounded-lg" data-ai-hint="context image" />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-7 w-7 rounded-full"
+                    onClick={() => setImage(null)}
+                  >
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Remove image</span>
+                  </Button>
+                </div>
+              )}
+            </div>
+            
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-white">

@@ -16,7 +16,8 @@ const GenerateStructuredDataInputSchema = z.object({
   description: z.string().describe('A plain English description of the data to generate.'),
   format: z.string().describe("The desired output format (e.g., 'JSON', 'CSV', 'KML', 'XML')."),
   schemaDefinition: z.string().optional().describe('An optional schema or example of the desired structure (e.g., a JSON schema, an example XML/KML structure).'),
-  originalData: z.string().optional().describe('Existing data to be refined. If present, the flow will refine this data instead of generating new data from the description.'),
+  imageDataUri: z.string().optional().describe("An optional image provided as context, as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+  originalData: z.string().optional().describe('Existing data to be refined. If present, the flow will refine this data instead of generating new data from the topic.'),
   refinementInstruction: z.string().optional().describe("The instruction for refining the data (e.g., 'Add 10 more records', 'Add a unique ID field')."),
 });
 export type GenerateStructuredDataInput = z.infer<typeof GenerateStructuredDataInputSchema>;
@@ -57,6 +58,12 @@ You must output ONLY the raw data, without any explanations, introductions, or m
 Refine the data now. Ensure the output is only the refined data in the same format.
 {{else}}
 **Task: Generate New Data**
+
+{{#if imageDataUri}}
+**Image Context:**
+Use the following image as the primary source of information for generating the data. For example, if the user asks for "a list of items in the image", you should extract them from the photo.
+{{media url=imageDataUri}}
+{{/if}}
 
 -   **Data Description:** "{{description}}"
 -   **Output Format:** "{{format}}"
