@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview A flow for generating images from a text prompt.
+ * @fileOverview A flow for generating images from a text prompt, optionally with image context.
  * 
  * - generateImage - A function that takes a prompt and generates one or more images.
  * - GenerateImageInput - The input type for the function.
@@ -9,10 +9,12 @@
  */
 
 import {ai} from '@/ai/genkit';
+import type {Part} from 'genkit';
 import {z} from 'zod';
 
 const GenerateImageInputSchema = z.object({
-  prompt: z.string().describe('A detailed text description of the image to generate.'),
+  prompt: z.string().describe('A detailed text description of the image to generate, or instructions on how to modify the context images.'),
+  imageDataUris: z.array(z.string()).optional().describe("An optional array of images to use as context for the generation, as data URIs. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
   count: z.number().min(1).max(4).default(1).describe('The number of images to generate.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
@@ -33,10 +35,22 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async (input) => {
+    const promptParts: Part[] = [];
+
+    // If context images are provided, add them to the prompt parts.
+    if (input.imageDataUris && input.imageDataUris.length > 0) {
+        input.imageDataUris.forEach(uri => {
+            promptParts.push({ media: { url: uri } });
+        });
+    }
+
+    // Always add the text prompt.
+    promptParts.push({ text: input.prompt });
+    
     const generationPromises = Array(input.count).fill(null).map(() => 
       ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: input.prompt,
+        prompt: promptParts,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
         },

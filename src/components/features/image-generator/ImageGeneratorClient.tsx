@@ -5,12 +5,13 @@ import { useState, useEffect } from "react";
 import NextImage from "next/image";
 import Link from 'next/link';
 import { useSearchParams } from "next/navigation";
-import { LoaderCircle, Download, Save } from "lucide-react";
+import { LoaderCircle, Download, Save, ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { saveProject } from '@/services/projectService';
@@ -40,6 +41,8 @@ export default function ImageGeneratorClient() {
   const [prompt, setPrompt] = useState("");
   const [style, setStyle] = useState(styleOptions[0].value);
   const [aspectRatio, setAspectRatio] = useState(ratioOptions[0].value);
+  const [images, setImages] = useState<string[]>([]);
+  const [count, setCount] = useState(1);
   
   // Generation State
   const [isLoading, setIsLoading] = useState(false);
@@ -57,6 +60,28 @@ export default function ImageGeneratorClient() {
     }
   }, [searchParams]);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      const newImagesPromises = filesArray.map(file => {
+        return new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      });
+
+      Promise.all(newImagesPromises).then(newImages => {
+        setImages(prev => [...prev, ...newImages]);
+      });
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setGeneratedImages([]);
@@ -67,17 +92,21 @@ export default function ImageGeneratorClient() {
       toast({
         variant: "destructive",
         title: "Prompt is required",
-        description: "Please describe the image you want to create.",
+        description: "Please describe what you want to create or modify.",
       });
       setIsLoading(false);
       return;
     }
 
-    const finalPrompt = `${prompt}, ${style}, aspect ratio ${aspectRatio}`;
+    // Only add style and aspect ratio if we're generating from scratch
+    const finalPrompt = images.length > 0 
+      ? prompt 
+      : `${prompt}, ${style}, aspect ratio ${aspectRatio}`;
 
     const input: GenerateImageInput = {
       prompt: finalPrompt,
-      count: 1, // Let's keep it to 1 image per generation for simplicity
+      imageDataUris: images.length > 0 ? images : undefined,
+      count: count,
     };
 
     try {
@@ -137,11 +166,11 @@ export default function ImageGeneratorClient() {
                 <Card className="w-full rounded-xl sticky top-8">
                 <CardContent className="p-6 space-y-6">
                     <div className="space-y-2">
-                        <Label htmlFor="prompt" className="text-lg font-medium text-white">1. Describe your image</Label>
+                        <Label htmlFor="prompt" className="text-lg font-medium text-white">1. Describe your vision</Label>
                         <Textarea
                         id="prompt"
                         name="prompt"
-                        placeholder="e.g., 'A red panda wearing a tiny wizard hat, sitting in a magical forest.'"
+                        placeholder="e.g., 'A red panda wearing a tiny wizard hat...' or 'Make the background of this image a futuristic city.'"
                         className="min-h-[150px] text-base"
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
@@ -149,8 +178,39 @@ export default function ImageGeneratorClient() {
                         />
                     </div>
                     
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium text-white">
+                            2. Add Context Images <span className="font-normal text-muted-foreground">(optional)</span>
+                        </h3>
+                        <div className="flex flex-wrap gap-4">
+                            {images.map((image, index) => (
+                            <div key={index} className="relative w-24 h-24">
+                                <NextImage src={image} alt={`Image preview ${index + 1}`} fill sizes="96px" className="object-cover rounded-lg" data-ai-hint="context image" />
+                                <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full z-10"
+                                onClick={() => removeImage(index)}
+                                >
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Remove image</span>
+                                </Button>
+                            </div>
+                            ))}
+                            
+                            <Label htmlFor="image-upload" className="flex flex-col items-center justify-center w-24 h-24 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-accent">
+                            <div className="flex flex-col items-center justify-center">
+                                <ImagePlus className="w-8 h-8 text-muted-foreground" />
+                                <span className="sr-only">Add image</span>
+                            </div>
+                            <Input id="image-upload" type="file" className="hidden" accept="image/png, image/jpeg" onChange={handleImageChange} multiple />
+                            </Label>
+                        </div>
+                    </div>
+                    
                     <div className="space-y-3">
-                        <h3 className="text-lg font-medium text-white">2. Select a style</h3>
+                        <h3 className="text-lg font-medium text-white">3. Select a style <span className="text-sm font-normal text-muted-foreground">(for new images)</span></h3>
                          <RadioGroup value={style} onValueChange={setStyle} className="grid grid-cols-2 gap-2">
                             {styleOptions.map(({ value, label }) => (
                                 <div key={value}>
@@ -164,12 +224,24 @@ export default function ImageGeneratorClient() {
                     </div>
 
                     <div className="space-y-3">
-                        <h3 className="text-lg font-medium text-white">3. Choose an aspect ratio</h3>
+                        <h3 className="text-lg font-medium text-white">4. Choose an aspect ratio <span className="text-sm font-normal text-muted-foreground">(for new images)</span></h3>
                         <RadioGroup value={aspectRatio} onValueChange={setAspectRatio}>
                             {ratioOptions.map(({ value, label }) => (
                                 <div key={value} className="flex items-center space-x-2">
                                     <RadioGroupItem value={value} id={`ratio-${value}`} />
                                     <Label htmlFor={`ratio-${value}`} className="text-base">{label}</Label>
+                                </div>
+                            ))}
+                        </RadioGroup>
+                    </div>
+
+                    <div className="space-y-3">
+                        <h3 className="text-lg font-medium text-white">5. Number of images</h3>
+                        <RadioGroup value={String(count)} onValueChange={(val) => setCount(Number(val))}>
+                            {[1, 2, 3, 4].map(num => (
+                                <div key={num} className="flex items-center space-x-2">
+                                    <RadioGroupItem value={String(num)} id={`count-${num}`} />
+                                    <Label htmlFor={`count-${num}`} className="text-base">{num}</Label>
                                 </div>
                             ))}
                         </RadioGroup>
@@ -182,7 +254,7 @@ export default function ImageGeneratorClient() {
                         Generating...
                         </>
                     ) : (
-                        "Generate Image"
+                        "Generate"
                     )}
                     </Button>
                 </CardContent>
@@ -211,18 +283,18 @@ export default function ImageGeneratorClient() {
 
                 {generatedImages.length > 0 && (
                     <div className="space-y-4">
-                        <div className="flex justify-center items-center">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {generatedImages.map((src, index) => (
                             <button
                                 key={index}
-                                className="group relative aspect-square w-full max-w-lg overflow-hidden rounded-lg transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+                                className="group relative aspect-square w-full overflow-hidden rounded-lg transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
                                 onClick={() => setSelectedImage(src)}
                             >
                                 <NextImage
                                 src={src}
                                 alt={`Generated image ${index + 1}`}
                                 fill
-                                sizes="(max-width: 1024px) 100vw, 50vw"
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 className="object-cover"
                                 />
                                 <div className="absolute inset-0 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center">
