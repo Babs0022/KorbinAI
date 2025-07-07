@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -67,7 +68,7 @@ export default function HomePage() {
                 key={option.title}
                 className={cn(
                   "group",
-                  index < 3 ? "lg:col-span-2" : "lg:col-span-3"
+                  index < 2 ? "lg:col-span-3" : "lg:col-span-2"
                 )}
               >
                 <Card className="flex h-full transform flex-col items-start p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/80 rounded-xl">
