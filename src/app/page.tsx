@@ -1,16 +1,13 @@
 
 "use client";
 
-import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Feather, Code2, LayoutTemplate, Image, Bolt, LoaderCircle } from "lucide-react";
+import { Feather, Code2, LayoutTemplate, Image, Bolt } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 export default function HomePage() {
-  const { loading } = useAuth();
-  
   const creationOptions = [
     {
       icon: <Feather className="h-8 w-8" />,
@@ -43,16 +40,6 @@ export default function HomePage() {
       href: "/structured-data",
     },
   ];
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex flex-1 items-center justify-center">
-          <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      </DashboardLayout>
-    );
-  }
 
   return (
     <DashboardLayout>
