@@ -62,6 +62,19 @@ const generateProjectMetadataFlow = ai.defineFlow(
     // Truncate content to avoid hitting token limits for very large outputs.
     const truncatedContent = input.content.substring(0, 2000);
     const response = await prompt({ ...input, content: truncatedContent });
-    return response.output ?? { name: 'Untitled Project', summary: 'No summary available.' };
+    const output = response.output;
+
+    if (!output) {
+      return { name: 'Untitled Project', summary: 'No summary available.' };
+    }
+
+    // Sanitize the AI output to ensure it's a plain JavaScript object before returning.
+    // This prevents serialization errors when the result is used in server actions, e.g., saving to Firestore.
+    const cleanOutput: GenerateProjectMetadataOutput = {
+      name: String(output.name),
+      summary: String(output.summary),
+    };
+
+    return cleanOutput;
   }
 );
