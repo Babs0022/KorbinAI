@@ -28,9 +28,3 @@ env:
   # Support Email for contact links
   - variable: NEXT_PUBLIC_SUPPORT_EMAIL
     value: "team@brieflyai.xyz"
-  
-  # URLs for multi-domain routing. Update these when you connect custom domains.
-  - variable: NEXT_PUBLIC_MARKETING_URL
-    value: "https://brieflyai.xyz"
-  - variable: NEXT_PUBLIC_APP_URL
-    value: https://dash.brieflyai.xyz
