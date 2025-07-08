@@ -1,1 +1,1 @@
-// This type definition file has been cleared.
+// This type definition has been cleared as it was part of an obsolete feature.

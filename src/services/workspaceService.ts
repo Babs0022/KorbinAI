@@ -1,1 +1,1 @@
-// This service has been cleared.
+// This service has been cleared as it was part of an obsolete feature.

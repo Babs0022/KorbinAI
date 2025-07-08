@@ -1,2 +1,2 @@
-// This file is obsolete and has been cleared to prevent build errors.
-// The functionality has been consolidated into generate-project-metadata-flow.ts.
+// This file has been cleared as it was an unused remnant from a previous version.
+// Its functionality was merged into generate-project-metadata-flow.ts.

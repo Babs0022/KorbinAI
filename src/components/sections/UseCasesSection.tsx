@@ -1,1 +1,1 @@
-// This component has been cleared.
+// This component has been cleared as it is no longer used.

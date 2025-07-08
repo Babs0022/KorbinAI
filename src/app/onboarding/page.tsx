@@ -1,4 +1,4 @@
-
-export default function OnboardingPage() {
-  return <div>Onboarding Page - To be rebuilt</div>;
+// This page has been cleared as it was part of an un-implemented feature.
+export default function ObsoletePage() {
+  return null;
 }

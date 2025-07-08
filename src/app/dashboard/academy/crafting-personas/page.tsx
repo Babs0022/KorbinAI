@@ -1,4 +1,4 @@
-
-export default function Page() {
-  return <div>To be rebuilt</div>;
+// This page has been cleared as it was part of an obsolete feature.
+export default function ObsoletePage() {
+  return null;
 }

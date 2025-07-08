@@ -1,3 +1,4 @@
-export default function AnalyticsPage() {
-  return <div>This feature has been removed.</div>;
+// This page has been cleared as it was part of an obsolete feature.
+export default function ObsoletePage() {
+  return null;
 }
