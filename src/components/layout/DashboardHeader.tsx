@@ -76,12 +76,6 @@ export default function DashboardHeader() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                    <Link href="/dashboard/billing">
-                        <CreditCard />
-                        Billing
-                    </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
                   <Link href="/dashboard/settings">
                     <Settings />
                     Settings
