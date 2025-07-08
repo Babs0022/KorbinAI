@@ -94,6 +94,7 @@ export default function WrittenContentClient() {
             ...rest,
             targetAudience: state.contentIdea.targetAudience === 'Other' ? otherAudience || '' : state.contentIdea.targetAudience || '',
             keywords: state.contentIdea.keywords || [],
+            notionPageUrl: state.contentIdea.notionPageUrl || undefined,
           });
           setState(s => ({ ...s, generatedOutline: result.outline.join('\n') }));
       } catch (error) {
@@ -232,7 +233,10 @@ export default function WrittenContentClient() {
   };
 
   const progressPercentage = (currentStep / steps.length) * 100;
-  const isStep1Complete = state.contentIdea.mainTopic && state.contentIdea.mainTopic.trim() !== '' && state.contentIdea.purpose && state.contentIdea.purpose.trim() !== '';
+  
+  const isStep1Complete = 
+    (state.contentIdea.notionPageUrl && state.contentIdea.notionPageUrl.trim() !== '') || 
+    (state.contentIdea.mainTopic && state.contentIdea.mainTopic.trim() !== '' && state.contentIdea.purpose && state.contentIdea.purpose.trim() !== '');
 
   const renderStepContent = () => {
       if (state.isLoading && currentStep !== 1) {

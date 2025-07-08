@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { X, Book } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 // Define the shape of the form data
 export interface ContentIdeaFormData {
@@ -19,6 +20,7 @@ export interface ContentIdeaFormData {
   desiredTone: string;
   desiredLength: string;
   keywords: string[];
+  notionPageUrl: string; // New field
 }
 
 interface ContentIdeaFormProps {
@@ -41,6 +43,7 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
         desiredTone: initialData?.desiredTone || tones[0],
         desiredLength: initialData?.desiredLength || lengths[0],
         keywords: initialData?.keywords || [],
+        notionPageUrl: initialData?.notionPageUrl || '', // New field
     });
 
     const [keywordInput, setKeywordInput] = useState('');
@@ -69,8 +72,44 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
         handleChange('keywords', newKeywords);
     };
 
+    const hasNotionUrl = formData.notionPageUrl.trim() !== '';
+
     return (
         <div className="space-y-6">
+            <div className="space-y-2">
+                <Label htmlFor="notionPageUrl" className="flex items-center gap-2">
+                    <Book className="h-4 w-4" /> Import from Notion (Optional)
+                </Label>
+                <Input
+                    id="notionPageUrl"
+                    placeholder="Paste a public Notion page URL..."
+                    value={formData.notionPageUrl}
+                    onChange={(e) => handleChange('notionPageUrl', e.target.value)}
+                />
+            </div>
+            
+            <div className="relative flex items-center">
+                <Separator className="flex-1" />
+                <span className="px-4 text-xs font-semibold uppercase text-muted-foreground bg-card">OR</span>
+                <Separator className="flex-1" />
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="mainTopic">Main Topic/Idea</Label>
+                <Textarea
+                    id="mainTopic"
+                    placeholder="What's the main idea or topic?"
+                    className="min-h-[120px]"
+                    value={formData.mainTopic}
+                    onChange={(e) => handleChange('mainTopic', e.target.value)}
+                    disabled={hasNotionUrl}
+                    aria-disabled={hasNotionUrl}
+                />
+                 {hasNotionUrl && (
+                    <p className="text-xs text-primary">The content from your Notion page will be used as the main topic.</p>
+                )}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="contentType">Content Type</Label>
@@ -83,28 +122,16 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
                         </SelectContent>
                     </Select>
                 </div>
-            </div>
 
-            <div className="space-y-2">
-                <Label htmlFor="mainTopic">Main Topic/Idea</Label>
-                <Textarea
-                    id="mainTopic"
-                    placeholder="What's the main idea or topic?"
-                    className="min-h-[120px]"
-                    value={formData.mainTopic}
-                    onChange={(e) => handleChange('mainTopic', e.target.value)}
-                />
-            </div>
-
-            <div className="space-y-2">
-                <Label htmlFor="purpose">Purpose</Label>
-                <Textarea
-                    id="purpose"
-                    placeholder="What do you want this content to achieve? (e.g., drive sign-ups, educate users)"
-                    className="min-h-[80px]"
-                    value={formData.purpose}
-                    onChange={(e) => handleChange('purpose', e.target.value)}
-                />
+                <div className="space-y-2">
+                    <Label htmlFor="purpose">Purpose</Label>
+                    <Input
+                        id="purpose"
+                        placeholder="e.g., drive sign-ups, educate users"
+                        value={formData.purpose}
+                        onChange={(e) => handleChange('purpose', e.target.value)}
+                    />
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
