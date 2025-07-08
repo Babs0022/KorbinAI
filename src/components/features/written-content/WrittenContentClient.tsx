@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import ContentIdeaForm, { type ContentIdeaFormData } from '@/components/content-workflow/ContentIdeaForm';
 
 const steps = [
   { step: 1, name: 'Idea Definition' },
@@ -17,6 +18,7 @@ const steps = [
 
 export default function WrittenContentClient() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [contentIdea, setContentIdea] = useState<Partial<ContentIdeaFormData>>({});
 
   const handleNext = () => {
     setCurrentStep((prev) => Math.min(prev + 1, steps.length));
@@ -25,8 +27,14 @@ export default function WrittenContentClient() {
   const handlePrevious = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
+  
+  const handleDataChange = (data: ContentIdeaFormData) => {
+    setContentIdea(data);
+  };
 
   const progressPercentage = (currentStep / steps.length) * 100;
+
+  const isStep1Complete = contentIdea.mainTopic && contentIdea.mainTopic.trim() !== '' && contentIdea.purpose && contentIdea.purpose.trim() !== '';
 
   return (
     <Card className="w-full rounded-xl">
@@ -41,39 +49,41 @@ export default function WrittenContentClient() {
         <Progress value={progressPercentage} className="w-full mt-2" />
       </CardHeader>
       
-      <CardContent className="min-h-[300px]">
-        {/* Step 1: Idea Definition */}
+      <CardContent className="min-h-[400px] p-6">
         {currentStep === 1 && (
           <div className="animate-fade-in">
-            {/* Placeholder for Idea Definition components */}
+            <ContentIdeaForm onDataChange={handleDataChange} initialData={contentIdea} />
           </div>
         )}
 
-        {/* Step 2: Outline */}
         {currentStep === 2 && (
           <div className="animate-fade-in">
-            {/* Placeholder for Outline components */}
+            <h3 className="text-lg font-semibold">Outline Generation</h3>
+            <p className="text-muted-foreground mb-4">The next step will be to generate an outline based on this data.</p>
+            <pre className="mt-4 p-4 bg-secondary rounded-md text-sm overflow-auto max-h-[500px]">
+              {JSON.stringify(contentIdea, null, 2)}
+            </pre>
           </div>
         )}
 
-        {/* Step 3: Drafting */}
         {currentStep === 3 && (
           <div className="animate-fade-in">
-            {/* Placeholder for Drafting components */}
+            <h3 className="text-lg font-semibold">Drafting</h3>
+             <p className="text-muted-foreground">This step will generate the first draft.</p>
           </div>
         )}
 
-        {/* Step 4: Optimization */}
         {currentStep === 4 && (
           <div className="animate-fade-in">
-            {/* Placeholder for Optimization components */}
+             <h3 className="text-lg font-semibold">Optimization</h3>
+             <p className="text-muted-foreground">This step will provide tools to optimize the draft.</p>
           </div>
         )}
 
-        {/* Step 5: Review & Export */}
         {currentStep === 5 && (
           <div className="animate-fade-in">
-            {/* Placeholder for Review & Export components */}
+             <h3 className="text-lg font-semibold">Review & Export</h3>
+             <p className="text-muted-foreground">This step will allow for final review and export.</p>
           </div>
         )}
       </CardContent>
@@ -89,7 +99,7 @@ export default function WrittenContentClient() {
         </Button>
         <Button
           onClick={handleNext}
-          disabled={currentStep === steps.length}
+          disabled={currentStep === steps.length || (currentStep === 1 && !isStep1Complete)}
         >
           Next
           <ArrowRight className="ml-2 h-4 w-4" />
