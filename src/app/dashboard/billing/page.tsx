@@ -9,12 +9,16 @@ import { Check, Star } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePaystackPayment } from "react-paystack";
+import { useToast } from "@/hooks/use-toast";
 
-const planDetails = {
+// These plan codes MUST match the ones in your Paystack dashboard and backend function.
+const clientPlanDetails = {
   premium: {
     name: "Premium",
-    monthlyPrice: 15,
-    annualPrice: 150,
+    monthly: { price: 1500, code: 'PLN_c7d9pwc77ezn3a8' }, // 15 USD in cents
+    annually: { price: 15000, code: 'PLN_ipOrfr3kbnjdOoh' }, // 150 USD in cents
     features: [
       "500 generations/month",
       "Access to standard AI models",
@@ -24,8 +28,8 @@ const planDetails = {
   },
   unlimited: {
     name: "Unlimited",
-    monthlyPrice: 30,
-    annualPrice: 300,
+    monthly: { price: 3000, code: 'PLN_kb83pnnocije9fz' }, // 30 USD in cents
+    annually: { price: 30000, code: 'PLN_a90hrxjuodtw4ia' }, // 300 USD in cents
     features: [
       "Unlimited generations",
       "Access to advanced AI models",
@@ -36,8 +40,47 @@ const planDetails = {
   },
 };
 
-const PlanCard = ({ plan, isAnnual, isCurrentPlan = false }: { plan: typeof planDetails.premium, isAnnual: boolean, isCurrentPlan?: boolean }) => {
-  const price = isAnnual ? plan.annualPrice : plan.monthlyPrice;
+const PlanCard = ({ plan, isAnnual, isCurrentPlan = false, user }: { plan: typeof clientPlanDetails.premium, isAnnual: boolean, isCurrentPlan?: boolean, user: any }) => {
+  const { toast } = useToast();
+  const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '';
+  const selectedPlan = isAnnual ? plan.annually : plan.monthly;
+  const price = selectedPlan.price / 100;
+
+  const config = {
+      reference: new Date().getTime().toString(),
+      email: user?.email || '',
+      amount: selectedPlan.price,
+      plan: selectedPlan.code,
+      publicKey: publicKey,
+      currency: 'USD',
+  };
+
+  const initializePayment = usePaystackPayment(config);
+
+  const onSuccess = (reference: any) => {
+      toast({
+          title: "Payment Successful!",
+          description: `Your subscription is being activated. Ref: ${reference.reference}`,
+      });
+  };
+
+  const onClose = () => {
+      // User closed the popup
+  };
+
+  const handleUpgrade = () => {
+      if (!user) {
+          toast({ variant: 'destructive', title: 'Not Signed In', description: 'You must be signed in to upgrade your plan.' });
+          return;
+      }
+      if (!publicKey) {
+          console.error("Paystack public key not configured.");
+          toast({ variant: 'destructive', title: 'Configuration Error', description: 'The payment system is not properly configured.' });
+          return;
+      }
+      initializePayment(onSuccess, onClose);
+  };
+  
   return (
     <Card className={cn("flex flex-col", plan.name === 'Unlimited' && 'border-primary shadow-lg')}>
         {plan.name === 'Unlimited' && (
@@ -65,7 +108,7 @@ const PlanCard = ({ plan, isAnnual, isCurrentPlan = false }: { plan: typeof plan
         </ul>
       </CardContent>
       <CardFooter>
-        <Button className="w-full text-lg" disabled={isCurrentPlan}>
+        <Button className="w-full text-lg" disabled={isCurrentPlan} onClick={handleUpgrade}>
           {isCurrentPlan ? "Current Plan" : `Upgrade to ${plan.name}`}
         </Button>
       </CardFooter>
@@ -76,6 +119,10 @@ const PlanCard = ({ plan, isAnnual, isCurrentPlan = false }: { plan: typeof plan
 
 export default function BillingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
+  const { user } = useAuth();
+  
+  // TODO: Fetch user's current subscription status from Firestore
+  // and use it to set `isCurrentPlan` on the appropriate PlanCard.
 
   return (
     <DashboardLayout>
@@ -101,8 +148,8 @@ export default function BillingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <PlanCard plan={planDetails.premium} isAnnual={isAnnual} />
-            <PlanCard plan={planDetails.unlimited} isAnnual={isAnnual} />
+            <PlanCard plan={clientPlanDetails.premium} isAnnual={isAnnual} user={user} />
+            <PlanCard plan={clientPlanDetails.unlimited} isAnnual={isAnnual} user={user} />
           </div>
 
           <div className="mt-12 text-center text-muted-foreground">
