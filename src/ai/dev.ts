@@ -1,4 +1,3 @@
-
 // This file has been cleared.
 // Import AI flows here as they are created.
 import './flows/generate-component-flow';
@@ -12,3 +11,4 @@ import './flows/generate-prompt-format-suggestions-flow';
 import './flows/analyze-prompt-flow';
 import './flows/generate-json-schema-suggestions-flow';
 import './flows/generate-project-metadata-flow';
+import './flows/generate-content-outline-flow';
