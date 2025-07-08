@@ -6,6 +6,7 @@ import { getProjectById } from '@/services/projectService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import GenerationResultCard from '@/components/shared/GenerationResultCard';
 import MultiCodeDisplay from '@/components/wizards/CodeDisplay';
+import DownloadZipButton from '@/components/wizards/DownloadZipButton';
 import NextImage from 'next/image';
 
 async function ProjectViewer({ projectId }: { projectId: string }) {
@@ -62,7 +63,14 @@ async function ProjectViewer({ projectId }: { projectId: string }) {
 
       case 'component-wizard':
         const { files, finalInstructions } = project.content as { files: any[], finalInstructions: string };
-        return <MultiCodeDisplay files={files} finalInstructions={finalInstructions} variant="preview" />;
+        return (
+            <div className="space-y-6">
+                <MultiCodeDisplay files={files} finalInstructions={finalInstructions} variant="preview" />
+                 <div className="flex justify-end">
+                    <DownloadZipButton files={files} projectName={project.name.replace(/\s+/g, '-').toLowerCase()} />
+                </div>
+            </div>
+        );
 
       default:
         return <p>Unknown project type.</p>;
