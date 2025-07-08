@@ -10,7 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
-export const ExpandOutlineSectionInputSchema = z.object({
+const ExpandOutlineSectionInputSchema = z.object({
   currentOutlineSectionText: z.string().describe('The specific section title to be expanded.'),
   fullContentTopic: z.string().describe('The main topic of the entire piece of content.'),
   fullContentOutline: z.array(z.string()).describe('The complete list of all section titles in the outline.'),

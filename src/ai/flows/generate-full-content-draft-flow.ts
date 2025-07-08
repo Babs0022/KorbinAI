@@ -10,7 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
-export const GenerateFullContentDraftInputSchema = z.object({
+const GenerateFullContentDraftInputSchema = z.object({
   finalOutline: z.array(z.string()).describe("The finalized list of section titles for the content outline."),
   contentType: z.string().describe("The type of content (e.g., 'Blog Post')."),
   mainTopic: z.string().describe('The core topic of the content.'),

@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow for optimizing written content in various ways.
@@ -11,7 +12,7 @@ import {z} from 'zod';
 
 const OptimizationTypeSchema = z.enum(['seo', 'readability', 'tone', 'cta', 'headlines']);
 
-export const OptimizeContentInputSchema = z.object({
+const OptimizeContentInputSchema = z.object({
   content: z.string().describe('The current content string to be optimized.'),
   optimizationType: OptimizationTypeSchema.describe("The type of optimization to perform."),
   toneParameter: z.string().optional().describe("The new tone, required if optimizationType is 'tone'."),

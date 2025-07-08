@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow for generating a content outline from a detailed idea.
@@ -9,7 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
-export const GenerateContentOutlineInputSchema = z.object({
+const GenerateContentOutlineInputSchema = z.object({
   contentType: z.string().describe("The type of content (e.g., 'Blog Post')."),
   mainTopic: z.string().describe('The core topic of the content.'),
   purpose: z.string().describe('The goal or objective of the content.'),
