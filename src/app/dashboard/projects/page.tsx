@@ -1,36 +1,38 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { LoaderCircle, FolderKanban, FileText, Code, Image as ImageIcon, LayoutTemplate } from 'lucide-react';
+import { LoaderCircle, FolderKanban, FileText, Code, Image as ImageIcon, LayoutTemplate, ListFilter, Search } from 'lucide-react';
 import type { Project } from '@/services/projectService';
 import { getProjectsForUser } from '@/services/projectService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { formatDistanceToNow } from 'date-fns';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-const typeIcons: Record<Project['type'], React.ReactNode> = {
-  'written-content': <FileText className="h-4 w-4" />,
-  'prompt': <FileText className="h-4 w-4" />,
-  'structured-data': <Code className="h-4 w-4" />,
-  'image-generator': <ImageIcon className="h-4 w-4" />,
-  'component-wizard': <LayoutTemplate className="h-4 w-4" />,
+const projectTypes: Project['type'][] = ['written-content', 'prompt', 'structured-data', 'image-generator', 'component-wizard'];
+
+const typeInfo: Record<Project['type'], { icon: React.ReactNode; label: string }> = {
+  'written-content': { icon: <FileText className="h-4 w-4" />, label: 'Written Content' },
+  'prompt': { icon: <FileText className="h-4 w-4" />, label: 'Prompt' },
+  'structured-data': { icon: <Code className="h-4 w-4" />, label: 'Structured Data' },
+  'image-generator': { icon: <ImageIcon className="h-4 w-4" />, label: 'Image' },
+  'component-wizard': { icon: <LayoutTemplate className="h-4 w-4" />, label: 'Application' },
 };
+
 
 function ProjectList({ projects }: { projects: Project[] }) {
     if (projects.length === 0) {
         return (
             <div className="text-center py-16 border border-dashed rounded-lg bg-card/50">
                 <FolderKanban className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-xl font-semibold">No Projects Saved Yet</h3>
-                <p className="mt-2 text-muted-foreground">Generate some content and save it to see your projects here.</p>
-                <Button asChild className="mt-6">
-                    <Link href="/">Back to Creation Hub</Link>
-                </Button>
+                <h3 className="mt-4 text-xl font-semibold">No Matching Projects Found</h3>
+                <p className="mt-2 text-muted-foreground">Try adjusting your search or filters.</p>
             </div>
         );
     }
@@ -43,8 +45,8 @@ function ProjectList({ projects }: { projects: Project[] }) {
                         <div className="flex justify-between items-start gap-4">
                             <CardTitle className="line-clamp-2">{project.name}</CardTitle>
                             <Badge variant="outline" className="shrink-0 flex items-center gap-1.5 capitalize">
-                                {typeIcons[project.type]}
-                                {project.type.replace('-', ' ')}
+                                {typeInfo[project.type].icon}
+                                {typeInfo[project.type].label}
                             </Badge>
                         </div>
                         <CardDescription className="line-clamp-3 h-[60px] pt-1">{project.summary}</CardDescription>
@@ -64,24 +66,53 @@ function ProjectList({ projects }: { projects: Project[] }) {
     );
 }
 
-// This component now handles auth and data fetching on the client.
 function ProjectsPageClient() {
     const { user, loading: authLoading } = useAuth();
     const [projects, setProjects] = useState<Project[]>([]);
     const [projectsLoading, setProjectsLoading] = useState(true);
+    
+    // State for filtering
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedTypes, setSelectedTypes] = useState<Set<Project['type']>>(new Set());
 
     useEffect(() => {
         if (user) {
             setProjectsLoading(true);
             getProjectsForUser(user.uid)
                 .then(setProjects)
-                .catch(console.error) // In a real app, you might want better error handling
+                .catch(console.error)
                 .finally(() => setProjectsLoading(false));
         } else if (!authLoading) {
-            // User is not logged in, and auth check is complete
             setProjectsLoading(false);
         }
     }, [user, authLoading]);
+
+    const handleTypeToggle = (type: Project['type']) => {
+        setSelectedTypes(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(type)) {
+                newSet.delete(type);
+            } else {
+                newSet.add(type);
+            }
+            return newSet;
+        });
+    };
+
+    const filteredProjects = useMemo(() => {
+        return projects
+            .filter(p => {
+                if (selectedTypes.size > 0 && !selectedTypes.has(p.type)) {
+                    return false;
+                }
+                return true;
+            })
+            .filter(p => {
+                if (searchTerm.trim() === '') return true;
+                const lowercasedTerm = searchTerm.toLowerCase();
+                return p.name.toLowerCase().includes(lowercasedTerm) || p.summary.toLowerCase().includes(lowercasedTerm);
+            });
+    }, [projects, searchTerm, selectedTypes]);
 
     if (authLoading) {
         return <div className="flex flex-1 items-center justify-center p-16"><LoaderCircle className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -103,13 +134,49 @@ function ProjectsPageClient() {
          );
     }
     
-    if (projectsLoading) {
-        return <div className="flex flex-1 items-center justify-center p-16"><LoaderCircle className="h-12 w-12 animate-spin text-primary" /></div>;
-    }
+    return (
+        <>
+            <div className="mb-8 flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                        placeholder="Search by name or summary..."
+                        className="pl-10 h-11"
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="h-11">
+                            <ListFilter className="mr-2 h-4 w-4" />
+                            Filter by Type {selectedTypes.size > 0 && `(${selectedTypes.size})`}
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuLabel>Project Types</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {projectTypes.map(type => (
+                            <DropdownMenuCheckboxItem
+                                key={type}
+                                checked={selectedTypes.has(type)}
+                                onCheckedChange={() => handleTypeToggle(type)}
+                            >
+                                {typeInfo[type].label}
+                            </DropdownMenuCheckboxItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
 
-    return <ProjectList projects={projects} />;
+            {projectsLoading ? (
+                <div className="flex flex-1 items-center justify-center p-16"><LoaderCircle className="h-12 w-12 animate-spin text-primary" /></div>
+            ) : (
+                <ProjectList projects={filteredProjects} />
+            )}
+        </>
+    );
 }
-
 
 export default function ProjectsPage() {
     return (
@@ -124,3 +191,5 @@ export default function ProjectsPage() {
         </DashboardLayout>
     );
 }
+
+    
