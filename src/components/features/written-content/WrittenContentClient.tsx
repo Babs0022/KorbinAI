@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -64,18 +64,18 @@ export default function WrittenContentClient() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setState(initialState);
     setCurrentStep(1);
-  };
+  }, []);
   
-  const handleDataChange = (data: ContentIdeaFormData) => {
+  const handleDataChange = useCallback((data: ContentIdeaFormData) => {
     setState(s => ({ ...s, contentIdea: data }));
-  };
+  }, []);
 
-  const handleOutlineChange = (items: OutlineItem[]) => {
+  const handleOutlineChange = useCallback((items: OutlineItem[]) => {
     setState(s => ({ ...s, finalOutline: items }));
-  };
+  }, []);
 
   const handleGenerateOutline = async (isRegenerating = false) => {
       if (!isStep1Complete || !user) return;
@@ -90,7 +90,8 @@ export default function WrittenContentClient() {
           const result = await generateContentOutline({
             ...rest,
             targetAudience: state.contentIdea.targetAudience === 'Other' ? otherAudience || '' : state.contentIdea.targetAudience || '',
-          } as any);
+            keywords: state.contentIdea.keywords || [],
+          });
           setState(s => ({ ...s, generatedOutline: result.outline.join('\n') }));
       } catch (error) {
           console.error("Outline generation failed:", error);
