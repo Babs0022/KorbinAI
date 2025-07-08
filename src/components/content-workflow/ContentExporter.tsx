@@ -4,14 +4,16 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Save, Copy, Download, FileText, RefreshCw, ThumbsUp, ThumbsDown, Check } from 'lucide-react';
+import { Save, Copy, Download, FileText, RefreshCw, ThumbsUp, ThumbsDown, Check, Book } from 'lucide-react';
 import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
 import { useToast } from '@/hooks/use-toast';
 
 interface ContentExporterProps {
   finalContent: string;
   isSaving?: boolean;
+  isSavingToNotion?: boolean;
   onSaveContent: () => void;
+  onSaveToNotion: () => void;
   onStartNew: () => void;
   onFeedback: (feedback: 'good' | 'bad') => void;
 }
@@ -19,7 +21,9 @@ interface ContentExporterProps {
 export default function ContentExporter({
   finalContent,
   isSaving,
+  isSavingToNotion,
   onSaveContent,
+  onSaveToNotion,
   onStartNew,
   onFeedback,
 }: ContentExporterProps) {
@@ -107,6 +111,10 @@ export default function ContentExporter({
                   <Button variant="outline" onClick={() => handleDownload('txt')}>
                       <FileText className="mr-2 h-4 w-4" />
                       Plain Text (.txt)
+                  </Button>
+                   <Button variant="outline" onClick={onSaveToNotion} disabled={isSavingToNotion}>
+                      {isSavingToNotion ? <Save className="mr-2 h-4 w-4 animate-spin" /> : <Book className="mr-2 h-4 w-4" />}
+                      Save to Notion
                   </Button>
               </CardContent>
           </Card>
