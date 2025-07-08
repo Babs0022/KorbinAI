@@ -11,7 +11,7 @@ env:
   # CRITICAL: Go to your Firebase project settings, find your Web App, and copy the API Key here.
   # This is required for user login and authentication to work.
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: "REPLACE_WITH_YOUR_FIREBASE_API_KEY"
+    value: "AIzaSyBVHOI_nXcxs3JRyXhghG44u7WpLM0U4YA"
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
     value: brieflyai-gtgc2.firebaseapp.com
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
@@ -27,13 +27,13 @@ env:
   # CRITICAL: Go to Google AI Studio (aistudio.google.com) to generate an API key and paste it here.
   # This is required for all AI features, including saving projects, to work.
   - variable: GEMINI_API_KEY
-    value: "REPLACE_WITH_YOUR_GEMINI_API_KEY"
+    value: "AIzaSyDW9pe-n-Q7NFxhBD3O3K5Z1Mp9kSzYt_I"
 
   # Paystack Public Key (client-side for initiating payments)
   # CRITICAL: Go to your Paystack Dashboard -> Settings -> API Keys & Webhooks to find your "Public key".
   # This is required for the billing page to work.
   - variable: NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
-    value: "REPLACE_WITH_YOUR_PAYSTACK_PUBLIC_KEY"
+    value: "pk_live_6eebe3887afe15dff519d1f6434edcd015a4e169"
 
   # Support Email for contact links
   - variable: NEXT_PUBLIC_SUPPORT_EMAIL
