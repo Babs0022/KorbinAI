@@ -8,22 +8,24 @@ runConfig:
 # API keys for the deployed application to work.
 env:
   # Firebase SDK configuration (client-side)
+  # CRITICAL: You must replace the value below with your actual Firebase Web API Key.
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: AIzaSyBVHOI_nXcxs3JRyXhghG44u7WpLM0U4YA
+    value: "YOUR_FIREBASE_API_KEY_HERE"
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
     value: brieflyai-gtgc2.firebaseapp.com
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     value: brieflyai-gtgc2
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: brieflyai-gtgc2.firebasestorage.app
+    value: "brieflyai-gtgc2.appspot.com"
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    value: 429810342473
+    value: "429810342473"
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    value: 1:429810342473:web:b25b7915db5e6006f97d98
+    value: "1:429810342473:web:b25b7915db5e6006f97d98"
   
   # Gemini API Key (server-side for Genkit AI flows)
+  # CRITICAL: You must replace the value below with your actual Gemini API key.
   - variable: GEMINI_API_KEY
-    value: AIzaSyDW9pe-n-Q7NFxhBD3O3K5Z1Mp9kSzYt_I
+    value: "YOUR_GEMINI_API_KEY_HERE"
 
   # Support Email for contact links
   - variable: NEXT_PUBLIC_SUPPORT_EMAIL
