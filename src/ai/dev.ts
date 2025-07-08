@@ -15,3 +15,4 @@ import './flows/generate-project-metadata-flow';
 import './flows/generate-content-outline-flow';
 import './flows/expand-outline-section-flow';
 import './flows/generate-full-content-draft-flow';
+import './flows/generate-section-draft-flow';
