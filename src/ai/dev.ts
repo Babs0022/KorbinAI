@@ -14,3 +14,4 @@ import './flows/generate-json-schema-suggestions-flow';
 import './flows/generate-project-metadata-flow';
 import './flows/generate-content-outline-flow';
 import './flows/expand-outline-section-flow';
+import './flows/generate-full-content-draft-flow';
