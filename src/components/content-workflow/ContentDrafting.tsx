@@ -55,13 +55,13 @@ export default function ContentDrafting({
               <Label htmlFor="gen-full">Generate Full Draft</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="section" id="gen-section" />
-              <Label htmlFor="gen-section">Generate Section by Section</Label>
+              <RadioGroupItem value="section" id="gen-section" disabled />
+              <Label htmlFor="gen-section" className="text-muted-foreground">Section by Section (Soon)</Label>
             </div>
           </RadioGroup>
         </div>
         <div className="flex justify-end gap-4">
-           <Button onClick={handleGenerateClick}>
+           <Button onClick={handleGenerateClick} disabled={generationMode === 'section'}>
                 <FileText className="mr-2 h-4 w-4" />
                 {generateButtonText}
             </Button>
