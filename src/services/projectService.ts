@@ -135,8 +135,17 @@ export async function saveChatConversation(
     throw new Error('User ID and messages are required.');
   }
   
-  // Firestore requires plain objects, so we ensure the message objects are clean.
-  const plainMessages = messages.map(m => ({ role: m.role, content: m.content, ...(m.imageUrl && { imageUrl: m.imageUrl }) }));
+  // Explicitly create plain objects for Firestore to avoid 'undefined' values.
+  const plainMessages = messages.map(m => {
+      const message: { role: 'user' | 'assistant'; content: string; imageUrl?: string } = {
+          role: m.role,
+          content: m.content,
+      };
+      if (m.imageUrl) {
+          message.imageUrl = m.imageUrl;
+      }
+      return message;
+  });
 
   if (projectId) {
     // Update existing project
@@ -162,7 +171,7 @@ export async function saveChatConversation(
     const projectRef = firestoreDb.collection('projects').doc();
     const now = new Date();
     
-    // This is the data that will be written to Firestore, using server timestamps
+    // This is the data that will be written to Firestore
     const newProjectDataForDb = {
       userId,
       name: metadata.name,
@@ -176,14 +185,21 @@ export async function saveChatConversation(
     await projectRef.set(newProjectDataForDb);
     console.log(`New chat project ${projectRef.id} created for user ${userId}.`);
     
-    // This is the clean Project object that will be returned to the client
+    // This is the clean Project object that will be returned to the client.
+    // It must conform to the ChatMessage[] type for content, which allows optional/undefined imageUrl.
+    const clientContent: ChatMessage[] = plainMessages.map(m => ({
+        role: m.role,
+        content: m.content,
+        imageUrl: m.imageUrl || undefined,
+    }));
+    
     const newProjectForClient: Project = {
         id: projectRef.id,
         userId: userId,
         name: metadata.name,
         summary: metadata.summary,
         type: 'chat',
-        content: plainMessages,
+        content: clientContent,
         createdAt: now.toISOString(), // Convert date to string for client-side serialization
         updatedAt: now.toISOString(),
     };
