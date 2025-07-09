@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A conversational chat flow for BrieflyAI.
@@ -76,16 +77,24 @@ const conversationalChatFlow = ai.defineFlow(
         outputSchema: ConversationalChatOutputSchema,
     },
     async (input) => {
+        // Map the client-side message format to the Genkit message format.
         const history: Message[] = (input.history || []).map(msg => ({
             role: msg.role === 'assistant' ? 'model' : 'user',
             content: [{ text: msg.content }],
         }));
 
+        // If this is the first message from the user, prepend the system prompt to it.
+        // This is a reliable way to provide system instructions to models that don't
+        // support a dedicated `system` role in their chat history API.
+        if (history.length === 1 && history[0].role === 'user') {
+            const userPrompt = history[0].content[0].text;
+            history[0].content[0].text = `${systemPrompt}\n\n---\n\n${userPrompt}`;
+        }
+
         const response = await ai.generate({
             model: 'googleai/gemini-1.5-flash-latest',
-            system: systemPrompt,
+            // Pass the (potentially modified) history. The last message is the user's prompt.
             history: history,
-            prompt: input.prompt,
         });
 
         return { content: response.text };
