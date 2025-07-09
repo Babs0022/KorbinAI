@@ -42,3 +42,9 @@
     @apply text-foreground;
   }
 }
+
+@layer components {
+  .tour-highlight {
+    @apply outline-primary outline-2 outline-dashed outline-offset-4 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.6)] relative z-50 transition-all duration-300;
+  }
+}
