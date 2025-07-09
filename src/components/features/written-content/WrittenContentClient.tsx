@@ -19,7 +19,6 @@ import { generateContentOutline } from "@/ai/flows/generate-content-outline-flow
 import { generateFullContentDraft } from "@/ai/flows/generate-full-content-draft-flow";
 import { generateSectionDraft } from "@/ai/flows/generate-section-draft-flow";
 import { optimizeContent } from "@/ai/flows/optimize-content-flow";
-import { exportToNotionFlow } from "@/ai/flows/export-to-notion-flow";
 
 // Services
 import { saveProject } from "@/services/projectService";
@@ -45,7 +44,6 @@ const initialState = {
     optimizationSuggestions: '',
     isLoading: false,
     isSaving: false,
-    isSavingToNotion: false,
     projectId: null,
 };
 
@@ -60,7 +58,6 @@ export default function WrittenContentClient() {
       optimizationSuggestions: string;
       isLoading: boolean;
       isSaving: boolean;
-      isSavingToNotion: boolean;
       projectId: string | null;
   }>(initialState);
 
@@ -92,9 +89,9 @@ export default function WrittenContentClient() {
           const { otherAudience, ...rest } = state.contentIdea;
           const result = await generateContentOutline({
             ...rest,
+            mainTopic: state.contentIdea.mainTopic!,
             targetAudience: state.contentIdea.targetAudience === 'Other' ? otherAudience || '' : state.contentIdea.targetAudience || '',
             keywords: state.contentIdea.keywords || [],
-            notionPageUrl: state.contentIdea.notionPageUrl || undefined,
           });
           setState(s => ({ ...s, generatedOutline: result.outline.join('\n') }));
       } catch (error) {
@@ -191,27 +188,6 @@ export default function WrittenContentClient() {
         setState(s => ({ ...s, isSaving: false }));
     }
   };
-  
-  const handleSaveToNotion = async () => {
-      if (!user || !state.draftContent) return;
-      setState(s => ({ ...s, isSavingToNotion: true }));
-      try {
-          const result = await exportToNotionFlow({
-              title: state.contentIdea.mainTopic || 'Untitled BrieflyAI Content',
-              content: state.draftContent,
-          });
-          toast({
-              title: "Exported to Notion!",
-              description: "Your content is now available in Notion.",
-              action: <ToastAction altText="View in Notion" asChild><a href={result.notionPageUrl} target="_blank" rel="noopener noreferrer">View</a></ToastAction>,
-          });
-      } catch (error) {
-          console.error("Failed to save to Notion:", error);
-          toast({ variant: "destructive", title: "Notion Export Failed", description: error instanceof Error ? error.message : "An unknown error occurred." });
-      } finally {
-          setState(s => ({ ...s, isSavingToNotion: false }));
-      }
-  };
 
   const handleFeedback = (rating: 'good' | 'bad') => {
     if (!user || !state.projectId) {
@@ -235,8 +211,7 @@ export default function WrittenContentClient() {
   const progressPercentage = (currentStep / steps.length) * 100;
   
   const isStep1Complete = 
-    (state.contentIdea.notionPageUrl && state.contentIdea.notionPageUrl.trim() !== '') || 
-    (state.contentIdea.mainTopic && state.contentIdea.mainTopic.trim() !== '' && state.contentIdea.purpose && state.contentIdea.purpose.trim() !== '');
+    state.contentIdea.mainTopic && state.contentIdea.mainTopic.trim() !== '' && state.contentIdea.purpose && state.contentIdea.purpose.trim() !== '';
 
   const renderStepContent = () => {
       if (state.isLoading && currentStep !== 1) {
@@ -261,9 +236,7 @@ export default function WrittenContentClient() {
               return <ContentExporter 
                         finalContent={state.draftContent} 
                         isSaving={state.isSaving}
-                        isSavingToNotion={state.isSavingToNotion}
                         onSaveContent={handleSave} 
-                        onSaveToNotion={handleSaveToNotion}
                         onStartNew={handleReset} 
                         onFeedback={handleFeedback} 
                       />;
@@ -273,7 +246,7 @@ export default function WrittenContentClient() {
   };
 
   const getNextButtonDisabledState = () => {
-    if (state.isLoading || state.isSavingToNotion) return true;
+    if (state.isLoading) return true;
     if (currentStep === 1 && !isStep1Complete) return true;
     if (currentStep === 2 && state.finalOutline.length === 0) return true;
     if (currentStep === 3 && state.draftContent.trim() === '') return true;
