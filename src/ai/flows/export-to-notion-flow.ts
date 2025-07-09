@@ -3,22 +3,17 @@
 /**
  * @fileOverview A flow for exporting content to an external tool, like Notion.
  *
- * - exportToNotion - A function that handles exporting content.
+ * - exportToNotionFlow - A function that handles exporting content.
  * - ExportToNotionInput - The input type for the function.
  * - ExportToNotionOutput - The return type for the function.
  */
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-// Although we are mocking the API call, we import the official client
-// to demonstrate what a real implementation would use.
 import {Client} from '@notionhq/client';
 
 const ExportToNotionInputSchema = z.object({
   title: z.string().describe('The title for the Notion page.'),
   content: z.string().describe('The markdown content to be exported.'),
-  // In a real app, this would be an OAuth token stored for the user
-  notionAuthToken: z.string().optional().describe('The Notion integration token.'),
-  notionParentPageId: z.string().optional().describe('The ID of the parent page in Notion.'),
 });
 export type ExportToNotionInput = z.infer<typeof ExportToNotionInputSchema>;
 
@@ -28,11 +23,9 @@ const ExportToNotionOutputSchema = z.object({
 });
 export type ExportToNotionOutput = z.infer<typeof ExportToNotionOutputSchema>;
 
-
 /**
- * MOCK TOOL: In a real application, this tool would use the Notion SDK
- * to create a new page with the provided content. For this prototype,
- * it simulates success and returns a fake URL.
+ * A tool that uses the Notion SDK to create a new page with the provided content.
+ * It reads the API key and parent page ID from environment variables for security.
  */
 const saveToNotion = ai.defineTool(
   {
@@ -42,30 +35,67 @@ const saveToNotion = ai.defineTool(
     outputSchema: ExportToNotionOutputSchema,
   },
   async (input) => {
-    console.log(`[MOCK] Attempting to save content to Notion...`);
-    console.log(`[MOCK] Title: ${input.title}`);
-    
-    // --- REAL IMPLEMENTATION (EXAMPLE) ---
-    // const notion = new Client({ auth: input.notionAuthToken });
-    // const response = await notion.pages.create({
-    //     parent: { page_id: input.notionParentPageId! },
-    //     properties: { title: [{ text: { content: input.title } }] },
-    //     children: [ ... markdownToNotionBlocks(input.content) ... ]
-    // });
-    // return { notionPageUrl: response.url, message: "Successfully created page." };
-    // --- END REAL IMPLEMENTATION ---
+    const notionAuthToken = process.env.NOTION_API_KEY;
+    const notionParentPageId = process.env.NOTION_PARENT_PAGE_ID;
 
-    // For now, we just simulate a 2-second delay and return a mock response.
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const fakePageId = Math.random().toString(36).substring(2, 15);
-    const fakeUrl = `https://www.notion.so/mock-page-${fakePageId}`;
-    console.log(`[MOCK] Successfully created fake Notion page at ${fakeUrl}`);
-    
-    return {
-      notionPageUrl: fakeUrl,
-      message: 'Content successfully exported to Notion (mocked).',
-    };
+    if (!notionAuthToken || !notionParentPageId || notionAuthToken === 'YOUR_NOTION_API_KEY_HERE') {
+      console.error("Notion API Key or Parent Page ID is not configured.");
+      throw new Error("Notion integration is not configured on the server. Please set NOTION_API_KEY and NOTION_PARENT_PAGE_ID.");
+    }
+
+    const notion = new Client({ auth: notionAuthToken });
+
+    // A simple approach to convert markdown to Notion blocks.
+    // We'll put the entire markdown content into a single code block
+    // to preserve formatting. A more advanced version could parse markdown into
+    // various Notion block types (headings, lists, etc.).
+    const blocks = [
+        {
+            object: 'block' as const,
+            type: 'code' as const,
+            code: {
+                rich_text: [{
+                    type: 'text' as const,
+                    text: {
+                        content: input.content,
+                    },
+                }],
+                language: 'markdown' as const,
+            },
+        },
+    ];
+
+    try {
+        const response = await notion.pages.create({
+            parent: { page_id: notionParentPageId },
+            properties: {
+                // The 'title' property is a special case for page titles.
+                'title': [
+                    {
+                        type: 'text',
+                        text: {
+                            content: input.title,
+                        },
+                    },
+                ],
+            },
+            // The Notion API client has complex types for blocks.
+            // Casting to `any` simplifies this prototype.
+            children: blocks as any,
+        });
+
+        // The response from notion.pages.create contains the URL of the new page.
+        const pageUrl = (response as any).url;
+        
+        return {
+            notionPageUrl: pageUrl,
+            message: 'Content successfully exported to Notion.',
+        };
+    } catch (error: any) {
+        console.error("Notion API Error:", error.body || error.message);
+        // Provide a user-friendly error message
+        throw new Error(`Failed to export to Notion. Please ensure the integration has permission to access the parent page. Error: ${error.code}`);
+    }
   }
 );
 
@@ -77,8 +107,7 @@ export const exportToNotionFlow = ai.defineFlow(
     outputSchema: ExportToNotionOutputSchema,
   },
   async (input) => {
-    // This flow directly calls the tool. In a more complex scenario, an LLM
-    // could be used to decide which tool to call based on user intent.
+    // This flow directly calls the tool.
     const result = await saveToNotion(input);
     return result;
   }
