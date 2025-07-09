@@ -26,10 +26,11 @@ if (!PAYSTACK_WEBHOOK_SECRET) {
 }
 
 // --- Firebase and Paystack SDK Initialization ---
-try {
-  admin.initializeApp();
-} catch (e) {
-  logger.warn("Firebase Admin SDK may have already been initialized:", e);
+if (!admin.apps.length) {
+  // Explicitly use Application Default Credentials for consistency and robustness.
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+  });
 }
 const db = admin.firestore();
 // Initialize the SDK once, but ensure the key is present.
