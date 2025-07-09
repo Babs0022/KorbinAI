@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -54,13 +53,13 @@ export default function ChatClient() {
         const userMessage: ChatMessage = { role: 'user', content: input };
         const currentMessages = [...messages, userMessage];
         
-        setMessages(currentMessages); // Update UI
+        setMessages(currentMessages);
         setInput('');
         setIsLoading(true);
 
         try {
             const response = await conversationalChat({
-                history: currentMessages, 
+                history: currentMessages,
             });
 
             const assistantResponse = response.content;
@@ -69,7 +68,7 @@ export default function ChatClient() {
             if (imageMatch && imageMatch[1]) {
                 const imagePrompt = imageMatch[1];
                 const imageGenerationMessage: ChatMessage = { role: 'assistant', content: `Generating an image of: "${imagePrompt}"...` };
-                setMessages([...currentMessages, imageGenerationMessage]);
+                setMessages(prev => [...prev, imageGenerationMessage]);
                 
                 try {
                     const imageResult = await generateImage({ prompt: imagePrompt, count: 1 });
@@ -98,8 +97,8 @@ export default function ChatClient() {
     };
     
     return (
-        <div className="flex flex-col h-full">
-            <div ref={scrollAreaRef} className="flex-1 overflow-y-auto pr-4 -mr-4 space-y-6">
+        <div className="h-full w-full max-w-4xl mx-auto flex flex-col">
+            <div ref={scrollAreaRef} className="flex-1 overflow-y-auto space-y-6 p-4">
                 {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center">
                         <BrainCircuit className="w-16 h-16 text-primary" />
@@ -144,7 +143,7 @@ export default function ChatClient() {
                 )}
             </div>
             
-            <div className="pt-4 mt-auto shrink-0">
+            <div className="p-4 pt-0 shrink-0">
                  <form onSubmit={handleSubmit} className="relative">
                     <Textarea 
                         ref={textareaRef}
