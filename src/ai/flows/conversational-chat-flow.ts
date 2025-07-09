@@ -3,29 +3,22 @@
  * @fileOverview A conversational chat flow for BrieflyAI.
  *
  * - conversationalChat - A function that handles a conversational turn.
- * - ChatMessage - The type for a single message in the conversation.
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import type { Message } from 'genkit';
-
-export const ChatMessageSchema = z.object({
-  role: z.enum(['user', 'assistant']),
-  content: z.string(),
-  imageUrl: z.string().optional(),
-});
-export type ChatMessage = z.infer<typeof ChatMessageSchema>;
+import { ChatMessageSchema } from '@/types/chat';
 
 const ConversationalChatInputSchema = z.object({
   prompt: z.string(),
   history: z.array(ChatMessageSchema).optional(),
 });
-export type ConversationalChatInput = z.infer<typeof ConversationalChatInputSchema>;
+type ConversationalChatInput = z.infer<typeof ConversationalChatInputSchema>;
 
 const ConversationalChatOutputSchema = z.object({
   content: z.string(),
 });
-export type ConversationalChatOutput = z.infer<typeof ConversationalChatOutputSchema>;
+type ConversationalChatOutput = z.infer<typeof ConversationalChatOutputSchema>;
 
 
 export async function conversationalChat(input: ConversationalChatInput): Promise<ConversationalChatOutput> {
