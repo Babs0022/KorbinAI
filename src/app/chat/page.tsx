@@ -49,11 +49,16 @@ export default function ChatPage() {
     setSelectedChatId(chatId);
   };
   
-  const handleChatUpdated = (newChatId?: string) => {
-    if (newChatId && !selectedChatId) {
-        setSelectedChatId(newChatId);
+  const handleChatUpdated = (newProject?: Project) => {
+    if (newProject) {
+        // Optimistically add the new chat to the list and select it
+        setChats(prev => [newProject, ...prev]);
+        setSelectedChatId(newProject.id);
+    } else {
+        // It was an update, so just refresh the list from the server
+        // to get the new `updatedAt` time and re-order the list.
+        fetchChats();
     }
-    fetchChats();
   }
 
   const selectedChatMessages = chats.find(c => c.id === selectedChatId)?.content as ChatMessage[] || [];

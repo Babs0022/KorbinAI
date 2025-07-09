@@ -15,9 +15,7 @@ import NextImage from 'next/image';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { saveChatConversation } from '@/services/projectService';
-import ChatHistorySidebar from './ChatHistorySidebar';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { PanelLeft } from 'lucide-react';
+import type { Project } from '@/types/project';
 
 
 const starterPrompts = [
@@ -30,7 +28,7 @@ const starterPrompts = [
 interface ChatClientProps {
     initialChatId: string | null;
     initialMessages: ChatMessage[];
-    onChatUpdated: (newChatId?: string) => void;
+    onChatUpdated: (newProject?: Project) => void;
 }
 
 
@@ -106,12 +104,14 @@ export default function ChatClient({ initialChatId, initialMessages, onChatUpdat
             }
 
             const finalMessages = [...currentMessages, finalMessage];
-            const newChatId = await saveChatConversation(user.uid, finalMessages, currentChatId);
+            const { id, newProject } = await saveChatConversation(user.uid, finalMessages, currentChatId);
             
-            if (!currentChatId) {
-                setCurrentChatId(newChatId);
-                onChatUpdated(newChatId);
+            if (newProject) {
+                // This was a new chat, update local state and notify parent with full project
+                setCurrentChatId(id);
+                onChatUpdated(newProject);
             } else {
+                // This was an update to an existing chat, just notify parent to refresh
                 onChatUpdated();
             }
 

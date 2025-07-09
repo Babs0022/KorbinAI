@@ -124,13 +124,13 @@ export async function saveProject({ userId, type, content }: SaveProjectInput): 
  * @param userId The ID of the user.
  * @param messages The full array of messages in the conversation.
  * @param projectId The ID of the project if it exists, otherwise null.
- * @returns The ID of the saved or updated project.
+ * @returns The ID of the saved or updated project, and the full project object if it was newly created.
  */
 export async function saveChatConversation(
   userId: string,
   messages: ChatMessage[],
   projectId: string | null
-): Promise<string> {
+): Promise<{id: string; newProject?: Project}> {
   if (!userId || messages.length === 0) {
     throw new Error('User ID and messages are required.');
   }
@@ -146,7 +146,7 @@ export async function saveChatConversation(
       updatedAt: FieldValue.serverTimestamp(),
     });
     console.log(`Chat project ${projectId} updated for user ${userId}.`);
-    return projectId;
+    return { id: projectId };
   } else {
     // Create new project
     const contentForMetadata = messages
@@ -160,19 +160,35 @@ export async function saveChatConversation(
     });
 
     const projectRef = firestoreDb.collection('projects').doc();
-    const newProjectData: Omit<Project, 'id'> = {
+    const now = new Date();
+    
+    // This is the data that will be written to Firestore, using server timestamps
+    const newProjectDataForDb = {
       userId,
       name: metadata.name,
       summary: metadata.summary,
-      type: 'chat',
+      type: 'chat' as const,
       content: plainMessages,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     };
 
-    await projectRef.set(newProjectData);
+    await projectRef.set(newProjectDataForDb);
     console.log(`New chat project ${projectRef.id} created for user ${userId}.`);
-    return projectRef.id;
+    
+    // This is the clean Project object that will be returned to the client
+    const newProjectForClient: Project = {
+        id: projectRef.id,
+        userId: userId,
+        name: metadata.name,
+        summary: metadata.summary,
+        type: 'chat',
+        content: plainMessages,
+        createdAt: now.toISOString(), // Convert date to string for client-side serialization
+        updatedAt: now.toISOString(),
+    };
+    
+    return { id: projectRef.id, newProject: newProjectForClient };
   }
 }
 
