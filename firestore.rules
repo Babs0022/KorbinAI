@@ -1,61 +1,34 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if the requesting user is the owner of the document.
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
-
-    // Helper function to check if the user is an admin.
-    // This securely checks the user's document in the 'users' collection.
-    function isAdmin() {
-      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true;
-    }
-
-    // --- User Profile Rules ---
-    // Users can only read, create, and update their own profiles.
+    // Users can read and update their own user document.
     match /users/{userId} {
-      allow read, create: if isOwner(userId);
-      
-      // Prevent users from making themselves admins or changing their UID.
-      allow update: if isOwner(userId)
-                    && !('admin' in request.resource.data) || request.resource.data.admin == resource.data.admin
-                    && request.resource.data.uid == resource.data.uid;
+      allow read, update: if request.auth.uid == userId;
     }
 
-    // --- Workspace Rules ---
-    // Workspaces are user-specific content.
-    match /workspaces/{workspaceId} {
-
-      // A user can create a workspace if they are the owner and provide valid data.
-      allow create: if isOwner(request.resource.data.userId)
-                    && request.resource.data.name is string
-                    && request.resource.data.name.size() > 0
-                    && request.resource.data.summary is string
-                    && request.resource.data.type is string
-                    && request.resource.data.input is map
-                    && (request.resource.data.output is map || request.resource.data.output is string)
-                    && request.resource.data.featurePath is string;
-
-      // Only the owner can read or delete their own workspace.
-      allow read, delete: if isOwner(resource.data.userId);
-
-      // The owner can update a workspace, but cannot change the owner (userId) or creation date.
-      allow update: if isOwner(resource.data.userId)
-                    && request.resource.data.userId == resource.data.userId
-                    && request.resource.data.createdAt == resource.data.createdAt;
+    // Users can read their own subscription document. This fixes the error.
+    match /userSubscriptions/{userId} {
+      allow read: if request.auth.uid == userId;
     }
 
-    // --- Templates Rules ---
-    // Templates are publicly readable but only writable by admins.
-    match /templates/{templateId} {
-      // Any authenticated user can read templates.
-      allow read: if request.auth != null;
+    // Users can perform all operations on their own projects.
+    match /projects/{projectId} {
+      allow read, delete, update: if request.auth.uid == resource.data.userId;
+      allow create: if request.auth.uid == request.resource.data.userId;
+    }
 
-      // Only users with 'admin: true' in their user document can write.
-      allow write: if isAdmin();
+    // Transactions are created by the server, but users can read their own.
+    match /transactions/{transactionId} {
+        allow read: if request.auth.uid == resource.data.userId;
+    }
+
+    // Feedback can be created by users, and they can read their own.
+    match /feedback/{feedbackId} {
+      allow create: if request.auth.uid == request.resource.data.userId;
+      allow read: if request.auth.uid == resource.data.userId;
     }
   }
 }
