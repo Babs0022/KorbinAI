@@ -77,23 +77,33 @@ const conversationalChatFlow = ai.defineFlow(
         outputSchema: ConversationalChatOutputSchema,
     },
     async (input) => {
-        // The input history already contains the latest user message.
-        const history: Message[] = (input.history || []).map(msg => ({
+        // Map the client-side message format to the Genkit message format.
+        const fullHistory: Message[] = (input.history || []).map(msg => ({
             role: msg.role === 'assistant' ? 'model' : 'user',
             content: [{ text: msg.content }],
         }));
 
-        // If this is the first message from the user (total history length is 1),
-        // prepend the system prompt.
-        if (history.length === 1 && history[0].role === 'user') {
-            const userPrompt = history[0].content[0].text;
-            history[0].content[0].text = `${systemPrompt}\n\n---\n\n${userPrompt}`;
+        if (fullHistory.length === 0) {
+            // This is a safeguard. The client should not send an empty history.
+            return { content: "I'm sorry, I received an empty request. Please try again." };
+        }
+        
+        const systemInstruction = `${systemPrompt}\n\n---\n\n`;
+
+        // Separate the latest prompt from the history.
+        // The `pop()` method removes the last element from an array and returns it.
+        const latestMessage = fullHistory.pop()!;
+        let promptText = latestMessage.content[0].text || '';
+
+        // Prepend the detailed system prompt only to the very first user message of the conversation.
+        if (fullHistory.length === 0) {
+            promptText = systemInstruction + promptText;
         }
 
         const response = await ai.generate({
             model: 'googleai/gemini-1.5-flash-latest',
-            // Pass the full history. The last message is the user's current prompt.
-            history: history,
+            prompt: promptText, // The most recent message is the prompt
+            history: fullHistory, // The rest of the conversation is the history
         });
 
         return { content: response.text };
