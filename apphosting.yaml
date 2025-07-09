@@ -33,7 +33,7 @@ env:
   # CRITICAL: Go to notion.so/my-integrations, create an integration, and paste the "Internal Integration Token" here.
   # This is required for the "Save to Notion" feature to work.
   - variable: NOTION_API_KEY
-    value: "https://api.notion.com/v1/oauth/authorize?client_id=22bd872b-594c-80c1-9838-0037721d5b98&response_type=code&owner=user&redirect_uri=https%3A%2F%2Fdash%2Fbrieflyai.xyz"
+    value: "secret_YOUR_NOTION_API_KEY_HERE"
     
   # Notion Parent Page ID (server-side for Notion integration)
   # CRITICAL: Find the page in Notion you want to save content to, and copy its ID from the URL.
