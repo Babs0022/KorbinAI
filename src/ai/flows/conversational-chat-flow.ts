@@ -9,6 +9,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import type { Message } from 'genkit';
 import { ChatMessageSchema } from '@/types/chat';
+import { generateImage } from './generate-image-flow';
 
 // The input is now the entire chat history including the latest user message.
 const ConversationalChatInputSchema = z.object({
@@ -17,9 +18,11 @@ const ConversationalChatInputSchema = z.object({
 type ConversationalChatInput = z.infer<typeof ConversationalChatInputSchema>;
 
 const ConversationalChatOutputSchema = z.object({
+  role: z.literal('assistant'),
   content: z.string(),
+  imageUrl: z.string().optional(),
 });
-type ConversationalChatOutput = z.infer<typeof ConversationalChatOutputSchema>;
+export type ConversationalChatOutput = z.infer<typeof ConversationalChatOutputSchema>;
 
 
 export async function conversationalChat(input: ConversationalChatInput): Promise<ConversationalChatOutput> {
@@ -50,7 +53,7 @@ Here are your core capabilities:
   * Conducting quick research on a wide range of topics.
 
 * Visual Content:
-  * IMPORTANT: When asked to generate an image, illustration, or logo, you MUST respond ONLY with the exact text format: [IMAGE_GENERATION]A detailed text description of the image to generate.[/IMAGE_GENERATION]. Do not add any other words or pleasantries. For example: [IMAGE_GENERATION]A photorealistic image of an astronaut riding a horse on Mars.[/IMAGE_GENERATION]
+  * IMPORTANT: When asked to generate an image, illustration, or logo, you MUST respond ONLY with the exact text format: [IMAGE_GENERATION]A detailed text description of the image to generate.[/IMAGE_GENERATION]. Do not add any other words or pleasantries. For example: [IMAGE_GENERATION]A photorealistic image of a cat programming on a laptop, digital art style.[/IMAGE_GENERATION]
 
 * Language & Communication:
   * Translating text between different languages.
@@ -84,28 +87,43 @@ const conversationalChatFlow = ai.defineFlow(
         }));
 
         if (fullHistory.length === 0) {
-            // This is a safeguard. The client should not send an empty history.
-            return { content: "I'm sorry, I received an empty request. Please try again." };
-        }
-        
-        const systemInstruction = `${systemPrompt}\n\n---\n\n`;
-
-        // Separate the latest prompt from the history.
-        // The `pop()` method removes the last element from an array and returns it.
-        const latestMessage = fullHistory.pop()!;
-        let promptText = latestMessage.content[0].text || '';
-
-        // Prepend the detailed system prompt only to the very first user message of the conversation.
-        if (fullHistory.length === 0) {
-            promptText = systemInstruction + promptText;
+            throw new Error('At least one message is required in the history.');
         }
 
         const response = await ai.generate({
             model: 'googleai/gemini-1.5-flash-latest',
-            prompt: promptText, // The most recent message is the prompt
-            history: fullHistory, // The rest of the conversation is the history
+            system: systemPrompt,
+            history: fullHistory,
         });
 
-        return { content: response.text };
+        const assistantResponseText = response.text;
+        const imageMatch = assistantResponseText.match(/\[IMAGE_GENERATION\](.*)\[\/IMAGE_GENERATION\]/s);
+
+        if (imageMatch && imageMatch[1]) {
+            const imagePrompt = imageMatch[1].trim();
+            try {
+                const imageResult = await generateImage({ prompt: imagePrompt, count: 1 });
+                if (imageResult.imageUrls && imageResult.imageUrls.length > 0) {
+                    return {
+                        role: 'assistant',
+                        content: `Here is the image you requested for "${imagePrompt}":`,
+                        imageUrl: imageResult.imageUrls[0]
+                    };
+                } else {
+                    throw new Error("AI failed to return an image.");
+                }
+            } catch (imgError) {
+                 const errorMsg = imgError instanceof Error ? imgError.message : "An unknown error occurred during image generation.";
+                 return {
+                    role: 'assistant',
+                    content: `Sorry, I couldn't generate the image. Reason: ${errorMsg}`
+                 };
+            }
+        }
+        
+        return {
+            role: 'assistant',
+            content: assistantResponseText,
+        };
     }
 );

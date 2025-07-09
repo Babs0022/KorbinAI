@@ -10,7 +10,6 @@ import { SendHorizonal, Bot, User, BrainCircuit, LoaderCircle } from 'lucide-rea
 import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
 import { conversationalChat } from '@/ai/flows/conversational-chat-flow';
 import { type ChatMessage } from '@/types/chat';
-import { generateImage } from '@/ai/flows/generate-image-flow';
 import NextImage from 'next/image';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -48,6 +47,12 @@ export default function ChatClient({ initialChatId, initialMessages, onChatUpdat
         }
     }, [messages]);
     
+    // Reset the chat when the initial props change (e.g., selecting a new chat from sidebar)
+    useEffect(() => {
+        setMessages(initialMessages);
+        setCurrentChatId(initialChatId);
+    }, [initialChatId, initialMessages]);
+
     const handleStarterPrompt = (prompt: string) => {
         setInput(prompt);
         textareaRef.current?.focus();
@@ -63,47 +68,20 @@ export default function ChatClient({ initialChatId, initialMessages, onChatUpdat
         if (!input.trim() || isLoading || !user) return;
 
         const userMessage: ChatMessage = { role: 'user', content: input };
-        const currentMessages = [...messages, userMessage];
+        const updatedMessages = [...messages, userMessage];
         
-        setMessages(currentMessages);
+        setMessages(updatedMessages);
         setInput('');
         setIsLoading(true);
 
         try {
-            const response = await conversationalChat({
-                history: currentMessages,
+            const assistantResponse = await conversationalChat({
+                history: updatedMessages,
             });
 
-            const assistantResponse = response.content;
-            const imageMatch = assistantResponse.match(/\[IMAGE_GENERATION\](.*)\[\/IMAGE_GENERATION\]/s);
+            const finalMessages = [...updatedMessages, assistantResponse];
+            setMessages(finalMessages);
 
-            let finalMessage: ChatMessage;
-
-            if (imageMatch && imageMatch[1]) {
-                const imagePrompt = imageMatch[1];
-                const imageGenerationMessage: ChatMessage = { role: 'assistant', content: `Generating an image of: "${imagePrompt}"...` };
-                setMessages(prev => [...prev, imageGenerationMessage]);
-                
-                try {
-                    const imageResult = await generateImage({ prompt: imagePrompt, count: 1 });
-                    if (imageResult.imageUrls && imageResult.imageUrls.length > 0) {
-                        finalMessage = { role: 'assistant', content: `Here is the image you requested for "${imagePrompt}":`, imageUrl: imageResult.imageUrls[0] };
-                         setMessages(prev => [...prev.slice(0, -1), finalMessage]);
-                    } else {
-                        throw new Error("AI failed to return an image.");
-                    }
-                } catch (imgError) {
-                     const errorMsg = imgError instanceof Error ? imgError.message : "An unknown error occurred during image generation.";
-                     toast({ variant: "destructive", title: "Image Generation Failed", description: errorMsg });
-                     finalMessage = { role: 'assistant', content: `Sorry, I couldn't generate the image.` };
-                     setMessages(prev => [...prev.slice(0, -1), finalMessage]);
-                }
-            } else {
-                 finalMessage = { role: 'assistant', content: assistantResponse };
-                 setMessages(prev => [...prev, finalMessage]);
-            }
-
-            const finalMessages = [...currentMessages, finalMessage];
             const { id, newProject } = await saveChatConversation(user.uid, finalMessages, currentChatId);
             
             if (newProject) {
