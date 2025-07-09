@@ -2,7 +2,6 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import DashboardHeader from '@/components/layout/DashboardHeader';
-import Footer from '@/components/layout/Footer';
 
 export default function PrivacyPolicyPage() {
   const effectiveDate = "June 12, 2025";
@@ -81,7 +80,6 @@ export default function PrivacyPolicyPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

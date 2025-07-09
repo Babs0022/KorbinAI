@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import Logo from "@/components/shared/Logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,8 +30,8 @@ export default function DashboardHeader() {
   return (
     <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">
-        <Link href="/">
-          <Logo />
+        <Link href="/" className="text-xl font-bold text-foreground">
+          BrieflyAI
         </Link>
         <div className="flex items-center gap-4">
           {loading ? (

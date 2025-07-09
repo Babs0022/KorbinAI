@@ -2,7 +2,6 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import DashboardHeader from '@/components/layout/DashboardHeader';
-import Footer from '@/components/layout/Footer';
 
 export default function TermsOfServicePage() {
   const effectiveDate = "June 12, 2025";
@@ -76,7 +75,6 @@ export default function TermsOfServicePage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }
