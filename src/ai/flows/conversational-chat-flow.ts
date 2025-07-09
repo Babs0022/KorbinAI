@@ -80,8 +80,14 @@ const conversationalChatFlow = ai.defineFlow(
         outputSchema: ConversationalChatOutputSchema,
     },
     async (input) => {
+        // FIX: Add a robust guard clause to prevent empty history from being processed.
+        // This is the primary fix for the "at least one message is required" error.
+        if (!input.history || input.history.length === 0) {
+            throw new Error("Invalid input: The chat history sent to the AI was empty.");
+        }
+
         // Map the client-side message format to the Genkit message format.
-        const userHistory: Message[] = (input.history || []).map(msg => {
+        const userHistory: Message[] = (input.history).map(msg => {
             const content: Part[] = [{ text: msg.content }];
             // If an imageUrl exists in the history, add it as a media part.
             if (msg.imageUrl) {
@@ -92,10 +98,6 @@ const conversationalChatFlow = ai.defineFlow(
                 content,
             };
         });
-
-        if (userHistory.length === 0) {
-            throw new Error('At least one message is required in the history.');
-        }
 
         // This is the correct pattern for models that don't support a 'system' role.
         // We embed the instructions as the first turn of the conversation.
