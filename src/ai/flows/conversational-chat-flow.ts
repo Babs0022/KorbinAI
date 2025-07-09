@@ -7,7 +7,7 @@
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import type { Message } from 'genkit';
+import type { Message, Part } from 'genkit';
 import { ChatMessageSchema } from '@/types/chat';
 import { generateImage } from './generate-image-flow';
 
@@ -81,10 +81,17 @@ const conversationalChatFlow = ai.defineFlow(
     },
     async (input) => {
         // Map the client-side message format to the Genkit message format.
-        const userHistory: Message[] = (input.history || []).map(msg => ({
-            role: msg.role === 'assistant' ? 'model' : 'user',
-            content: [{ text: msg.content }],
-        }));
+        const userHistory: Message[] = (input.history || []).map(msg => {
+            const content: Part[] = [{ text: msg.content }];
+            // If an imageUrl exists in the history, add it as a media part.
+            if (msg.imageUrl) {
+                content.push({ media: { url: msg.imageUrl } });
+            }
+            return {
+                role: msg.role === 'assistant' ? 'model' : 'user',
+                content,
+            };
+        });
 
         if (userHistory.length === 0) {
             throw new Error('At least one message is required in the history.');
@@ -100,7 +107,6 @@ const conversationalChatFlow = ai.defineFlow(
 
         const response = await ai.generate({
             model: 'googleai/gemini-1.5-flash-latest',
-            // DO NOT USE the 'system' parameter here.
             history: historyWithSystemPrompt,
         });
 
