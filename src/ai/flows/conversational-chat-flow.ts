@@ -81,19 +81,27 @@ const conversationalChatFlow = ai.defineFlow(
     },
     async (input) => {
         // Map the client-side message format to the Genkit message format.
-        const fullHistory: Message[] = (input.history || []).map(msg => ({
+        const userHistory: Message[] = (input.history || []).map(msg => ({
             role: msg.role === 'assistant' ? 'model' : 'user',
             content: [{ text: msg.content }],
         }));
 
-        if (fullHistory.length === 0) {
+        if (userHistory.length === 0) {
             throw new Error('At least one message is required in the history.');
         }
 
+        // This is the correct pattern for models that don't support a 'system' role.
+        // We embed the instructions as the first turn of the conversation.
+        const historyWithSystemPrompt: Message[] = [
+            { role: 'user', content: [{ text: systemPrompt }] },
+            { role: 'model', content: [{ text: 'Understood. I will act as BrieflyAI and follow all instructions.' }] },
+            ...userHistory
+        ];
+
         const response = await ai.generate({
             model: 'googleai/gemini-1.5-flash-latest',
-            system: systemPrompt,
-            history: fullHistory,
+            // DO NOT USE the 'system' parameter here.
+            history: historyWithSystemPrompt,
         });
 
         const assistantResponseText = response.text;
