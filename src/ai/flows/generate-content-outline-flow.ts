@@ -156,28 +156,26 @@ const generateContentOutlineFlow = ai.defineFlow(
     name: 'generateContentOutlineFlow',
     inputSchema: GenerateContentOutlineInputSchema,
     outputSchema: GenerateContentOutlineOutputSchema,
-    // Make the tool available to this flow
     tools: [readNotionPage],
   },
   async (input) => {
     let sourceContent = input.mainTopic || '';
 
-    // If a Notion URL is provided, use the tool to read its content
+    // If a Notion URL is provided, it takes precedence.
     if (input.notionPageUrl) {
       try {
         const notionResult = await readNotionPage({ notionPageUrl: input.notionPageUrl });
         sourceContent = notionResult.pageContent;
       } catch (error) {
-        console.error("Failed to read Notion page:", error);
-        // Fallback to mainTopic or throw an error
-        if (!sourceContent) {
-          throw new Error("Failed to read from the provided Notion URL and no fallback topic was given.");
-        }
+        console.error("Failed to read Notion page in flow:", error);
+        // Propagate the specific error from the tool for better user feedback.
+        throw error;
       }
     }
 
-    if (!sourceContent) {
-        throw new Error("A main topic or a Notion Page URL is required to generate an outline.");
+    // After attempting to get content, if we still have nothing, then it's an error.
+    if (!sourceContent.trim()) {
+        throw new Error("A main topic or a valid, non-empty Notion Page URL is required to generate an outline.");
     }
 
     const promptInput = {
