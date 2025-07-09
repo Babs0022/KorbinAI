@@ -17,3 +17,4 @@ import './flows/generate-full-content-draft-flow';
 import './flows/generate-section-draft-flow';
 import './flows/optimize-content-flow';
 import './flows/export-to-notion-flow';
+import './flows/conversational-chat-flow';

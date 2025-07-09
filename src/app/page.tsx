@@ -3,10 +3,11 @@
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Feather, Code2, LayoutTemplate, Image, Bolt } from "lucide-react";
+import { Feather, Code2, LayoutTemplate, Image, Bolt, BrainCircuit, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import FeatureTourGuide from "@/components/shared/FeatureTourGuide";
+import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   const creationOptions = [
@@ -55,6 +56,32 @@ export default function HomePage() {
             What would you like to create today?
           </h1>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-6">
+            <Link
+                href="/chat"
+                id="feature-chat"
+                className="group lg:col-span-6"
+            >
+                <Card className="flex h-full transform flex-col items-start p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/80 rounded-xl md:flex-row md:items-center md:justify-between">
+                  <div className="flex-1">
+                    <div className="mb-4 text-primary"><BrainCircuit className="h-10 w-10" /></div>
+                    <CardHeader className="p-0">
+                      <CardTitle className="text-3xl font-semibold transition-colors duration-300 group-hover:text-primary">
+                        BrieflyAI Chat
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="mt-2 p-0">
+                      <p className="text-muted-foreground text-lg">Engage in a live conversation for ideation, content creation, coding help, and more.</p>
+                    </CardContent>
+                  </div>
+                   <div className="mt-4 md:mt-0">
+                        <Button size="lg" variant="ghost" className="text-primary">
+                            Start Chatting
+                            <ArrowRight />
+                        </Button>
+                    </div>
+                </Card>
+            </Link>
+
             {creationOptions.map((option, index) => (
               <Link
                 href={option.href}
