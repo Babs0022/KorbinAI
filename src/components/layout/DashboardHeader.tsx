@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard } from "lucide-react";
+import { Home, LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard } from "lucide-react";
 
 export default function DashboardHeader() {
   const { user, logout, loading } = useAuth();
@@ -56,6 +56,12 @@ export default function DashboardHeader() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/">
+                    <Home />
+                    Home
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/">
                     <LayoutGrid />
