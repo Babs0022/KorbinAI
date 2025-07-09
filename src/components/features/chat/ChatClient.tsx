@@ -52,17 +52,15 @@ export default function ChatClient() {
         if (!input.trim() || isLoading || !user) return;
 
         const userMessage: ChatMessage = { role: 'user', content: input };
-        const currentMessages = [...messages, userMessage]; // Capture the new state for the assistant message
+        const currentMessages = [...messages, userMessage];
+        
         setMessages(currentMessages); // Update UI
-        const currentInput = input;
         setInput('');
         setIsLoading(true);
 
         try {
-            // Pass the history *before* the new user message to the flow
             const response = await conversationalChat({
-                prompt: currentInput,
-                history: messages, 
+                history: currentMessages, 
             });
 
             const assistantResponse = response.content;

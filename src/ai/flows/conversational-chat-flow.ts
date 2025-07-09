@@ -10,9 +10,9 @@ import { z } from 'zod';
 import type { Message } from 'genkit';
 import { ChatMessageSchema } from '@/types/chat';
 
+// The input is now the entire chat history including the latest user message.
 const ConversationalChatInputSchema = z.object({
-  prompt: z.string(),
-  history: z.array(ChatMessageSchema).optional(),
+  history: z.array(ChatMessageSchema),
 });
 type ConversationalChatInput = z.infer<typeof ConversationalChatInputSchema>;
 
@@ -77,19 +77,14 @@ const conversationalChatFlow = ai.defineFlow(
         outputSchema: ConversationalChatOutputSchema,
     },
     async (input) => {
-        // Map the previous messages from the client to the Genkit message format.
+        // The input history already contains the latest user message.
         const history: Message[] = (input.history || []).map(msg => ({
             role: msg.role === 'assistant' ? 'model' : 'user',
             content: [{ text: msg.content }],
         }));
 
-        // Add the current user prompt to the history array.
-        history.push({ role: 'user', content: [{ text: input.prompt }] });
-
-
-        // If this is the first message from the user, prepend the system prompt to it.
-        // This is a reliable way to provide system instructions to models that don't
-        // support a dedicated `system` role in their chat history API.
+        // If this is the first message from the user (total history length is 1),
+        // prepend the system prompt.
         if (history.length === 1 && history[0].role === 'user') {
             const userPrompt = history[0].content[0].text;
             history[0].content[0].text = `${systemPrompt}\n\n---\n\n${userPrompt}`;
