@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -13,6 +14,11 @@ import { generateImage } from '@/ai/flows/generate-image-flow';
 import NextImage from 'next/image';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { saveChatConversation } from '@/services/projectService';
+import ChatHistorySidebar from './ChatHistorySidebar';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { PanelLeft } from 'lucide-react';
+
 
 const starterPrompts = [
     { title: "Explain a concept", prompt: "Explain quantum computing in simple terms" },
@@ -21,10 +27,18 @@ const starterPrompts = [
     { title: "Draft an email", prompt: "Draft a professional follow-up email to a client after a project meeting." }
 ];
 
-export default function ChatClient() {
+interface ChatClientProps {
+    initialChatId: string | null;
+    initialMessages: ChatMessage[];
+    onChatUpdated: (newChatId?: string) => void;
+}
+
+
+export default function ChatClient({ initialChatId, initialMessages, onChatUpdated }: ChatClientProps) {
     const { user, loading: authLoading } = useAuth();
     const { toast } = useToast();
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+    const [currentChatId, setCurrentChatId] = useState<string | null>(initialChatId);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -65,6 +79,8 @@ export default function ChatClient() {
             const assistantResponse = response.content;
             const imageMatch = assistantResponse.match(/\[IMAGE_GENERATION\](.*)\[\/IMAGE_GENERATION\]/s);
 
+            let finalMessage: ChatMessage;
+
             if (imageMatch && imageMatch[1]) {
                 const imagePrompt = imageMatch[1];
                 const imageGenerationMessage: ChatMessage = { role: 'assistant', content: `Generating an image of: "${imagePrompt}"...` };
@@ -73,20 +89,32 @@ export default function ChatClient() {
                 try {
                     const imageResult = await generateImage({ prompt: imagePrompt, count: 1 });
                     if (imageResult.imageUrls && imageResult.imageUrls.length > 0) {
-                        const finalImageMessage: ChatMessage = { role: 'assistant', content: `Here is the image you requested for "${imagePrompt}":`, imageUrl: imageResult.imageUrls[0] };
-                         setMessages(prev => [...prev.slice(0, -1), finalImageMessage]);
+                        finalMessage = { role: 'assistant', content: `Here is the image you requested for "${imagePrompt}":`, imageUrl: imageResult.imageUrls[0] };
+                         setMessages(prev => [...prev.slice(0, -1), finalMessage]);
                     } else {
                         throw new Error("AI failed to return an image.");
                     }
                 } catch (imgError) {
                      const errorMsg = imgError instanceof Error ? imgError.message : "An unknown error occurred during image generation.";
                      toast({ variant: "destructive", title: "Image Generation Failed", description: errorMsg });
-                     setMessages(prev => [...prev.slice(0, -1), { role: 'assistant', content: `Sorry, I couldn't generate the image.` }]);
+                     finalMessage = { role: 'assistant', content: `Sorry, I couldn't generate the image.` };
+                     setMessages(prev => [...prev.slice(0, -1), finalMessage]);
                 }
             } else {
-                 const finalMessage: ChatMessage = { role: 'assistant', content: assistantResponse };
+                 finalMessage = { role: 'assistant', content: assistantResponse };
                  setMessages(prev => [...prev, finalMessage]);
             }
+
+            const finalMessages = [...currentMessages, finalMessage];
+            const newChatId = await saveChatConversation(user.uid, finalMessages, currentChatId);
+            
+            if (!currentChatId) {
+                setCurrentChatId(newChatId);
+                onChatUpdated(newChatId);
+            } else {
+                onChatUpdated();
+            }
+
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : "An unknown error occurred.";
             toast({ variant: "destructive", title: "Chat Error", description: errorMsg });

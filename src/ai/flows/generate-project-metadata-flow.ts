@@ -10,7 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
-const PROJECT_TYPES = ['written-content', 'prompt', 'component-wizard', 'structured-data', 'image-generator'] as const;
+const PROJECT_TYPES = ['written-content', 'prompt', 'component-wizard', 'structured-data', 'image-generator', 'chat'] as const;
 
 const GenerateProjectMetadataInputSchema = z.object({
   type: z.enum(PROJECT_TYPES).describe('The type of content in the project.'),
@@ -42,6 +42,8 @@ Here are some examples:
 - If type is 'prompt' and content is "Create a marketing campaign for a new coffee shop", a good name would be "Coffee Shop Marketing Prompt" and summary "A prompt to generate a marketing campaign for a new coffee business."
 - If type is 'written-content' and content starts with "Introducing the new SuperWidget 5000...", a good name would be "SuperWidget 5000 Launch Announcement" and summary "A blog post announcing the launch of the new SuperWidget 5000 product."
 - If type is 'image-generator' and content is "An album of 4 generated images.", a good name would be "Generated Image Album" and summary "An album containing multiple AI-generated images."
+- If type is 'chat' and content starts with "user: Can you explain quantum computing?", a good name would be "Quantum Computing Chat" and summary "A conversation about the basics of quantum computing."
+
 
 Return ONLY a JSON object that matches the schema.
 
