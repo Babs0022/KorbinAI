@@ -9,9 +9,9 @@
  */
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import {Client} from '@notionhq/client'; // Import for demonstration
+import {Client} from '@notionhq/client';
 
-// --- MOCK NOTION READER TOOL ---
+// --- NOTION READER TOOL ---
 const ReadNotionPageInputSchema = z.object({
   notionPageUrl: z.string().url().describe("The URL of the Notion page to read."),
 });
@@ -20,10 +20,43 @@ const ReadNotionPageOutputSchema = z.object({
   pageContent: z.string().describe("The extracted text content from the Notion page."),
 });
 
+// Helper to extract the page ID from a Notion URL.
+function extractPageIdFromUrl(url: string): string {
+    // Notion page URLs often look like: https://www.notion.so/Page-Title-32characterID
+    // We want to grab that final 32-character ID.
+    const parts = url.split('?')[0].split('-');
+    const potentialId = parts[parts.length - 1];
+    
+    if (potentialId && potentialId.length >= 32) {
+        // A full 32-character ID with no hyphens is a valid v4 UUID.
+        // We'll take the last 32 characters to be safe.
+        return potentialId.slice(-32);
+    }
+    throw new Error('Invalid Notion URL. Could not extract a valid page ID.');
+}
+
+// Helper to convert an array of Notion blocks to a plain text string.
+function blocksToPlainText(blocks: any[]): string {
+  let text = '';
+  for (const block of blocks) {
+    if (block.type === 'paragraph' && block.paragraph.rich_text) {
+        text += block.paragraph.rich_text.map((t: any) => t.plain_text).join('') + '\n\n';
+    } else if (block.type === 'heading_1' && block.heading_1.rich_text) {
+        text += '# ' + block.heading_1.rich_text.map((t: any) => t.plain_text).join('') + '\n\n';
+    } else if (block.type === 'heading_2' && block.heading_2.rich_text) {
+        text += '## ' + block.heading_2.rich_text.map((t: any) => t.plain_text).join('') + '\n\n';
+    } else if (block.type === 'heading_3' && block.heading_3.rich_text) {
+        text += '### ' + block.heading_3.rich_text.map((t: any) => t.plain_text).join('') + '\n\n';
+    } else if (block.type === 'bulleted_list_item' && block.bulleted_list_item.rich_text) {
+        text += '- ' + block.bulleted_list_item.rich_text.map((t: any) => t.plain_text).join('') + '\n';
+    }
+    // Add more block types as needed (e.g., numbered lists, to-do, quotes)
+  }
+  return text.trim();
+}
+
 /**
- * MOCK TOOL: In a real application, this would use the Notion SDK to fetch
- * and parse the content of a public Notion page. For this prototype, it
- * simulates reading a page and returns mock content.
+ * A tool that uses the Notion SDK to fetch and parse the content of a Notion page.
  */
 const readNotionPage = ai.defineTool(
   {
@@ -33,22 +66,28 @@ const readNotionPage = ai.defineTool(
     outputSchema: ReadNotionPageOutputSchema,
   },
   async ({ notionPageUrl }) => {
-    console.log(`[MOCK] Reading Notion page: ${notionPageUrl}`);
-    // --- REAL IMPLEMENTATION (EXAMPLE) ---
-    // const pageId = extractPageIdFromUrl(notionPageUrl);
-    // const notion = new Client({ auth: process.env.NOTION_API_KEY });
-    // const blocks = await notion.blocks.children.list({ block_id: pageId });
-    // const pageContent = blocks.results.map(block => block.paragraph?.rich_text[0]?.plain_text || '').join('\n');
-    // return { pageContent };
-    // --- END REAL IMPLEMENTATION ---
+    const notionAuthToken = process.env.NOTION_API_KEY;
+    if (!notionAuthToken || notionAuthToken.includes('YOUR_NOTION_API_KEY_HERE') || !notionAuthToken.startsWith('secret_')) {
+      console.error("Notion API Key is not configured correctly.");
+      throw new Error("Notion integration is not configured on the server. Please ensure NOTION_API_KEY is a valid internal integration token.");
+    }
+    
+    try {
+        const pageId = extractPageIdFromUrl(notionPageUrl);
+        const notion = new Client({ auth: notionAuthToken });
+        
+        const response = await notion.blocks.children.list({ block_id: pageId });
+        const pageContent = blocksToPlainText(response.results as any[]);
 
-    // Simulate a network delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+        if (!pageContent.trim()) {
+          return { pageContent: "The Notion page appears to be empty or could not be read." };
+        }
 
-    // Return mock content for the prototype
-    return {
-      pageContent: `This is mock content read from the Notion page. The page discusses a new marketing strategy for a sustainable coffee brand. Key points include targeting Gen Z on social media, partnering with eco-friendly influencers, and launching a loyalty program based on reusable cups. The overall tone should be youthful, energetic, and environmentally conscious.`
-    };
+        return { pageContent };
+    } catch (error: any) {
+        console.error("Notion API Error while reading page:", error.body || error.message);
+        throw new Error(`Failed to read from Notion. Please ensure the URL is correct and the integration has been shared with the page. Error: ${error.code || 'API Error'}`);
+    }
   }
 );
 
