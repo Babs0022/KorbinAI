@@ -22,17 +22,40 @@ const ReadNotionPageOutputSchema = z.object({
 
 // Helper to extract the page ID from a Notion URL.
 function extractPageIdFromUrl(url: string): string {
-    // Notion page URLs often look like: https://www.notion.so/Page-Title-32characterID
-    // We want to grab that final 32-character ID.
-    const parts = url.split('?')[0].split('-');
-    const potentialId = parts[parts.length - 1];
-    
-    if (potentialId && potentialId.length >= 32) {
-        // A full 32-character ID with no hyphens is a valid v4 UUID.
-        // We'll take the last 32 characters to be safe.
-        return potentialId.slice(-32);
+    try {
+        const urlObj = new URL(url);
+        // Notion page URLs can be:
+        // - https://www.notion.so/Page-Title-Here-32characterID
+        // - https://www.notion.so/32characterID
+        // - https://www.notion.so/username/Page-Title-32characterID
+        const pathParts = urlObj.pathname.split('/').filter(p => p);
+        const lastPart = pathParts[pathParts.length - 1];
+
+        if (!lastPart) {
+            throw new Error('Could not find a valid ID segment in the Notion URL path.');
+        }
+
+        // The ID is the last 32 hexadecimal characters of the last path segment.
+        const idMatch = lastPart.match(/([a-f0-9]{32})$/);
+        if (idMatch && idMatch[1]) {
+            return idMatch[1];
+        }
+
+        // Also handle clean UUIDs that might have hyphens from copy-pasting
+        const cleanedId = lastPart.replace(/-/g, '');
+        if (cleanedId.length === 32 && /^[a-f0-9]+$/.test(cleanedId)) {
+            return cleanedId;
+        }
+        
+        throw new Error('Could not extract a valid 32-character page ID from the URL.');
+    } catch(e) {
+        // Catch potential `new URL()` errors for invalid URLs
+        if (e instanceof TypeError) {
+            throw new Error('The provided URL is not a valid format.');
+        }
+        // rethrow other errors from this function
+        throw e;
     }
-    throw new Error('Invalid Notion URL. Could not extract a valid page ID.');
 }
 
 // Helper to convert an array of Notion blocks to a plain text string.
