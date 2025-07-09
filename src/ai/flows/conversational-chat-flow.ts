@@ -77,11 +77,15 @@ const conversationalChatFlow = ai.defineFlow(
         outputSchema: ConversationalChatOutputSchema,
     },
     async (input) => {
-        // Map the client-side message format to the Genkit message format.
+        // Map the previous messages from the client to the Genkit message format.
         const history: Message[] = (input.history || []).map(msg => ({
             role: msg.role === 'assistant' ? 'model' : 'user',
             content: [{ text: msg.content }],
         }));
+
+        // Add the current user prompt to the history array.
+        history.push({ role: 'user', content: [{ text: input.prompt }] });
+
 
         // If this is the first message from the user, prepend the system prompt to it.
         // This is a reliable way to provide system instructions to models that don't
@@ -93,7 +97,7 @@ const conversationalChatFlow = ai.defineFlow(
 
         const response = await ai.generate({
             model: 'googleai/gemini-1.5-flash-latest',
-            // Pass the (potentially modified) history. The last message is the user's prompt.
+            // Pass the full history. The last message is the user's current prompt.
             history: history,
         });
 

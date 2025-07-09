@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -51,16 +52,17 @@ export default function ChatClient() {
         if (!input.trim() || isLoading || !user) return;
 
         const userMessage: ChatMessage = { role: 'user', content: input };
-        const newMessages = [...messages, userMessage];
-        setMessages(newMessages);
+        const currentMessages = [...messages, userMessage]; // Capture the new state for the assistant message
+        setMessages(currentMessages); // Update UI
         const currentInput = input;
         setInput('');
         setIsLoading(true);
 
         try {
+            // Pass the history *before* the new user message to the flow
             const response = await conversationalChat({
                 prompt: currentInput,
-                history: newMessages,
+                history: messages, 
             });
 
             const assistantResponse = response.content;
@@ -69,13 +71,13 @@ export default function ChatClient() {
             if (imageMatch && imageMatch[1]) {
                 const imagePrompt = imageMatch[1];
                 const imageGenerationMessage: ChatMessage = { role: 'assistant', content: `Generating an image of: "${imagePrompt}"...` };
-                setMessages(prev => [...prev, imageGenerationMessage]);
+                setMessages([...currentMessages, imageGenerationMessage]);
                 
                 try {
                     const imageResult = await generateImage({ prompt: imagePrompt, count: 1 });
                     if (imageResult.imageUrls && imageResult.imageUrls.length > 0) {
                         const finalImageMessage: ChatMessage = { role: 'assistant', content: `Here is the image you requested for "${imagePrompt}":`, imageUrl: imageResult.imageUrls[0] };
-                        setMessages(prev => [...prev.slice(0, -1), finalImageMessage]);
+                         setMessages(prev => [...prev.slice(0, -1), finalImageMessage]);
                     } else {
                         throw new Error("AI failed to return an image.");
                     }
