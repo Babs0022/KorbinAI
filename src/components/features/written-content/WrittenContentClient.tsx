@@ -45,6 +45,9 @@ const initialState = {
     isLoading: false,
     isSaving: false,
     projectId: null,
+    generationMode: 'full' as GenerationMode,
+    isLoadingSectionIndex: null as number | null,
+    draftedSections: new Set<number>(),
 };
 
 
@@ -59,6 +62,9 @@ export default function WrittenContentClient() {
       isLoading: boolean;
       isSaving: boolean;
       projectId: string | null;
+      generationMode: GenerationMode;
+      isLoadingSectionIndex: number | null;
+      draftedSections: Set<number>;
   }>(initialState);
 
   const { user } = useAuth();
@@ -106,14 +112,16 @@ export default function WrittenContentClient() {
     if (!user || state.finalOutline.length === 0) return;
     setState(s => ({ ...s, isLoading: true }));
 
+    const { otherAudience, ...rest } = state.contentIdea;
     const commonInput = {
+        ...rest,
         mainTopic: state.contentIdea.mainTopic!,
-        purpose: state.contentIdea.purpose!,
+        targetAudience: state.contentIdea.targetAudience === 'Other' ? otherAudience || '' : state.contentIdea.targetAudience || '',
+        keywords: state.contentIdea.keywords,
         contentType: state.contentIdea.contentType!,
-        targetAudience: state.contentIdea.targetAudience!,
+        purpose: state.contentIdea.purpose!,
         desiredTone: state.contentIdea.desiredTone!,
         desiredLength: state.contentIdea.desiredLength!,
-        keywords: state.contentIdea.keywords,
     };
 
     try {
@@ -123,24 +131,52 @@ export default function WrittenContentClient() {
                 finalOutline: state.finalOutline.map(item => item.text),
             });
             setState(s => ({ ...s, draftContent: result.generatedContent }));
-        } else {
-            // For section-by-section, we'll need to add which section is selected.
-            // For now, let's just draft the first one.
-            const firstSection = state.finalOutline[0]?.text;
-            if (!firstSection) throw new Error("No section available to draft.");
-
-            const result = await generateSectionDraft({
-                ...commonInput,
-                sectionToDraft: firstSection,
-                fullOutline: state.finalOutline.map(item => item.text),
-            });
-            setState(s => ({ ...s, draftContent: s.draftContent + '\n\n' + result.generatedSectionContent }));
         }
     } catch (error) {
         console.error("Drafting failed:", error);
         toast({ variant: 'destructive', title: 'Drafting Failed', description: error instanceof Error ? error.message : 'An unknown error occurred.' });
     } finally {
         setState(s => ({ ...s, isLoading: false }));
+    }
+  };
+  
+  const handleGenerateSection = async (index: number) => {
+    if (!user || !state.finalOutline[index]) return;
+    
+    setState(s => ({ ...s, isLoadingSectionIndex: index }));
+
+    const sectionToDraft = state.finalOutline[index].text;
+    
+    const { otherAudience, ...rest } = state.contentIdea;
+    const commonInput = {
+        ...rest,
+        mainTopic: state.contentIdea.mainTopic!,
+        targetAudience: state.contentIdea.targetAudience === 'Other' ? otherAudience || '' : state.contentIdea.targetAudience || '',
+        keywords: state.contentIdea.keywords,
+        contentType: state.contentIdea.contentType!,
+        purpose: state.contentIdea.purpose!,
+        desiredTone: state.contentIdea.desiredTone!,
+    };
+    
+    try {
+        const result = await generateSectionDraft({
+            ...commonInput,
+            sectionToDraft,
+            fullOutline: state.finalOutline.map(item => item.text),
+            priorContent: state.draftContent, // Pass the whole draft so far for context
+        });
+        
+        setState(s => ({
+            ...s,
+            draftContent: (s.draftContent ? s.draftContent + '\n\n' : '') + `## ${sectionToDraft}\n\n` + result.generatedSectionContent,
+            draftedSections: new Set(s.draftedSections).add(index),
+        }));
+
+    } catch (error) {
+        console.error("Section drafting failed:", error);
+        toast({ variant: 'destructive', title: 'Section Drafting Failed', description: error instanceof Error ? error.message : 'An unknown error occurred.' });
+    } finally {
+        setState(s => ({ ...s, isLoadingSectionIndex: null }));
     }
   };
 
@@ -229,7 +265,19 @@ export default function WrittenContentClient() {
           case 2:
               return <OutlineEditor aiGeneratedOutline={state.generatedOutline} onGenerateNewOutline={() => handleGenerateOutline(true)} onOutlineChange={handleOutlineChange} />;
           case 3:
-              return <ContentDrafting initialContent={state.draftContent} onGenerate={handleDrafting} onRegenerate={() => {}} />;
+              return <ContentDrafting 
+                        outline={state.finalOutline}
+                        content={state.draftContent}
+                        onContentChange={(newContent) => setState(s => ({ ...s, draftContent: newContent }))}
+                        onGenerate={handleDrafting}
+                        onGenerateSection={handleGenerateSection}
+                        onRegenerate={() => { /* TODO */ }}
+                        generationMode={state.generationMode}
+                        onGenerationModeChange={(mode) => setState(s => ({ ...s, generationMode: mode, draftContent: '', draftedSections: new Set() }))}
+                        isLoading={state.isLoading}
+                        isLoadingSectionIndex={state.isLoadingSectionIndex}
+                        draftedSections={state.draftedSections}
+                      />;
           case 4:
               return <ContentOptimizer originalContent={state.draftContent} suggestions={state.optimizationSuggestions} onApplyOptimization={handleOptimization} isLoading={state.isLoading} />;
           case 5:
