@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc, onSnapshot } from "firebase/firestore";
 import { LoaderCircle, User, Key, Image as ImageIcon, CreditCard } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,6 +35,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import type { UserSubscription } from "@/types/subscription";
+import { format } from 'date-fns';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -62,7 +63,9 @@ export default function AccountManagementPage() {
   const { toast } = useToast();
   const [isProfileSubmitting, setIsProfileSubmitting] = useState(false);
   const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState(user?.photoURL || avatars[0]);
+  const [selectedAvatar, setSelectedAvatar] = useState("");
+  const [subscription, setSubscription] = useState<UserSubscription | null>(null);
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
 
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -81,13 +84,30 @@ export default function AccountManagementPage() {
   useEffect(() => {
     if (user) {
       profileForm.reset({ name: user.displayName || "" });
-      // Set the selected avatar, defaulting to the first in the list if none is set.
       const currentAvatar = user.photoURL;
       if (currentAvatar && avatars.includes(currentAvatar)) {
         setSelectedAvatar(currentAvatar);
       } else {
         setSelectedAvatar(avatars[0]);
       }
+
+      setIsSubscriptionLoading(true);
+      const subDocRef = doc(db, "userSubscriptions", user.uid);
+      const unsubscribe = onSnapshot(subDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setSubscription({
+            ...data,
+            currentPeriodEnd: data.currentPeriodEnd?.toDate(),
+            currentPeriodStart: data.currentPeriodStart?.toDate(),
+          } as UserSubscription);
+        } else {
+          setSubscription(null);
+        }
+        setIsSubscriptionLoading(false);
+      });
+
+      return () => unsubscribe();
     }
   }, [user, profileForm]);
 
@@ -128,6 +148,37 @@ export default function AccountManagementPage() {
       setIsPasswordSubmitting(false);
     }
   }
+  
+  const renderSubscriptionStatus = () => {
+    if (isSubscriptionLoading) {
+      return (
+        <div className="space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+        </div>
+      );
+    }
+
+    if (subscription?.status === 'active') {
+      return (
+        <div className="space-y-1">
+          <p className="font-medium text-foreground">
+            Current Plan: <span className="capitalize text-primary">{subscription.planId}</span>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {subscription.currentPeriodEnd ? `Your plan will renew on ${format(subscription.currentPeriodEnd, 'PPP')}.` : 'Subscription is active.'}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-1">
+        <p className="font-medium text-foreground">Current Plan: <span className="text-muted-foreground">Free</span></p>
+        <p className="text-sm text-muted-foreground">Upgrade to a paid plan to unlock more features.</p>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -169,7 +220,7 @@ export default function AccountManagementPage() {
       <main className="flex flex-1 flex-col p-4 md:p-8">
         <div className="w-full max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold">Account Management</h1>
-          <p className="text-muted-foreground mt-2 mb-10">Manage your profile, password, and account information.</p>
+          <p className="text-muted-foreground mt-2 mb-10">Manage your profile, password, and subscription.</p>
 
           <div className="space-y-8">
             {/* Profile Information Card */}
@@ -291,13 +342,14 @@ export default function AccountManagementPage() {
              {/* Subscription Card */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><CreditCard /> Subscription Status</CardTitle>
+                <CardTitle className="flex items-center gap-2"><CreditCard /> Subscription</CardTitle>
+                 <CardDescription>View your current plan and manage your subscription.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                 <div>
-                    <p className="font-semibold">Current Plan: <span className="font-normal text-muted-foreground">Free Plan</span></p>
-                    {/* Add logic here later to show plan details and renewal date */}
-                 </div>
+                 {renderSubscriptionStatus()}
+                 <Button asChild>
+                    <Link href="/dashboard/billing">Manage Subscription</Link>
+                 </Button>
               </CardContent>
             </Card>
           </div>
