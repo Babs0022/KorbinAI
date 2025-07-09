@@ -10,6 +10,7 @@ import {
   signInWithPopup,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { usePathname, useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 
 interface AuthContextType {
@@ -24,6 +25,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -33,6 +37,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => unsubscribe();
   }, []);
+
+  // New effect to handle redirects based on auth and verification state
+  useEffect(() => {
+    if (loading) return; // Wait until auth state is loaded
+
+    const isAuthRoute = pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password';
+    const isVerificationRoute = pathname === '/verify-email';
+
+    // If user is not logged in, they should be on an auth route, otherwise redirect to login.
+    if (!user && !isAuthRoute && pathname !== '/terms-of-service' && pathname !== '/privacy-policy') {
+        router.replace('/login');
+        return;
+    }
+    
+    // If user is logged in...
+    if (user) {
+        // ...but not verified, and not on the verification page, force them there.
+        if (!user.emailVerified && !isVerificationRoute) {
+            router.replace('/verify-email');
+        }
+        
+        // ...and is verified, but on the verification page, send them to onboarding.
+        if (user.emailVerified && isVerificationRoute) {
+            router.replace('/onboarding');
+        }
+    }
+
+  }, [user, loading, pathname, router]);
 
   const logout = async () => {
     await firebaseSignOut(auth);

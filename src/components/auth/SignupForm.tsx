@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { LoaderCircle } from "lucide-react";
@@ -86,8 +86,13 @@ export default function SignupForm() {
         createdAt: new Date(),
         photoURL: user.photoURL // Might be null, but good to have
       });
+
+      // Send verification email
+      await sendEmailVerification(user, {
+          url: `${window.location.origin}/onboarding`, // Redirect here after verification
+      });
       
-      router.push("/");
+      router.push("/verify-email");
     } catch (error: any) {
       toast({
         variant: "destructive",
