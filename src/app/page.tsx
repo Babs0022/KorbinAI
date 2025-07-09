@@ -56,16 +56,15 @@ export default function HomePage() {
             What would you like to create today?
           </h1>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-6">
-            <Link
-                href="/chat"
+            <div
                 id="feature-chat"
                 className="group lg:col-span-6"
             >
-                <Card className="flex h-full transform flex-col items-start p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/80 rounded-xl md:flex-row md:items-center md:justify-between">
+                <Card className="flex h-full transform flex-col items-start p-6 text-left transition-all duration-300 rounded-xl md:flex-row md:items-center md:justify-between opacity-70">
                   <div className="flex-1">
                     <div className="mb-4 text-primary"><BrainCircuit className="h-10 w-10" /></div>
                     <CardHeader className="p-0">
-                      <CardTitle className="text-3xl font-semibold transition-colors duration-300 group-hover:text-primary">
+                      <CardTitle className="text-3xl font-semibold">
                         BrieflyAI Chat
                       </CardTitle>
                     </CardHeader>
@@ -74,13 +73,12 @@ export default function HomePage() {
                     </CardContent>
                   </div>
                    <div className="mt-4 md:mt-0">
-                        <Button size="lg" variant="ghost" className="text-primary">
-                            Start Chatting
-                            <ArrowRight />
+                        <Button size="lg" variant="secondary" disabled>
+                            Coming Soon
                         </Button>
                     </div>
                 </Card>
-            </Link>
+            </div>
 
             {creationOptions.map((option, index) => (
               <Link
