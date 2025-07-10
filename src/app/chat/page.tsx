@@ -52,7 +52,7 @@ export default function ChatPage() {
   const handleChatUpdated = (newProject?: Project) => {
     if (newProject) {
         // Optimistically add the new chat to the list and select it
-        setChats(prev => [newProject, ...prev]);
+        setChats(prev => [newProject, ...prev.filter(p => p.id !== newProject.id)]);
         setSelectedChatId(newProject.id);
     } else {
         // It was an update, so just refresh the list from the server

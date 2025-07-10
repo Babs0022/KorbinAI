@@ -186,14 +186,12 @@ export async function saveChatConversation(
     console.log(`New chat project ${projectRef.id} created for user ${userId}.`);
     
     // This is the clean Project object that will be returned to the client.
-    // It must conform to the ChatMessage[] type for content.
     const newProjectForClient: Project = {
         id: projectRef.id,
         userId: userId,
         name: metadata.name,
         summary: metadata.summary,
         type: 'chat',
-        // The content is now the clean `plainMessages` array which won't have `undefined` properties.
         content: plainMessages,
         createdAt: now.toISOString(), // Convert date to string for client-side serialization
         updatedAt: now.toISOString(),

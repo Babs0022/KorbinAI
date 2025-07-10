@@ -16,8 +16,8 @@ interface ChatHistorySidebarProps {
 
 export default function ChatHistorySidebar({ chats, currentChatId, onSelectChat, onNewChat }: ChatHistorySidebarProps) {
   return (
-    <div className="flex flex-col h-full bg-secondary">
-        <div className="p-4 border-b border-border">
+    <div className="flex flex-col h-full">
+        <div className="p-4 border-b">
             <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-4 w-4" />
                 Back to Creation Hub

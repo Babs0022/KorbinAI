@@ -134,9 +134,6 @@ export default function ChatClient({ initialChatId, initialMessages, onChatUpdat
                                         <NextImage src={msg.imageUrl} alt="Generated image" fill sizes="300px" className="object-cover" />
                                     </div>
                                 )}
-                                {isLoading && msg.role === 'assistant' && index === messages.length - 1 && (
-                                    <LoaderCircle className="mt-2 h-4 w-4 animate-spin" />
-                                )}
                             </div>
                              {msg.role === 'user' && (
                                 <Avatar className="w-9 h-9 border shrink-0">
@@ -146,6 +143,16 @@ export default function ChatClient({ initialChatId, initialMessages, onChatUpdat
                             )}
                         </div>
                     ))
+                )}
+                 {isLoading && (
+                    <div className="flex items-start gap-4">
+                        <Avatar className="w-9 h-9 border shrink-0">
+                            <AvatarFallback><Bot/></AvatarFallback>
+                        </Avatar>
+                        <div className="max-w-xl rounded-xl p-4 bg-secondary flex items-center">
+                           <LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" />
+                        </div>
+                    </div>
                 )}
             </div>
             
@@ -166,7 +173,7 @@ export default function ChatClient({ initialChatId, initialMessages, onChatUpdat
                         disabled={isLoading || !user || authLoading}
                     />
                     <Button type="submit" size="icon" className="absolute right-3 top-1/2 -translate-y-1/2" disabled={isLoading || !input.trim() || !user}>
-                        {isLoading ? <LoaderCircle className="animate-spin" /> : <SendHorizonal />}
+                        <SendHorizonal />
                     </Button>
                 </form>
             </div>

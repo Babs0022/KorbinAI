@@ -30,7 +30,7 @@ export const ProjectSchema = z.object({
   summary: z.string(),
   type: z.enum(['written-content', 'prompt', 'structured-data', 'image-generator', 'component-wizard', 'chat']),
   content: ProjectContentSchema,
-  createdAt: z.any(), // Firestore Timestamp
-  updatedAt: z.any(), // Firestore Timestamp
+  createdAt: z.string(), // Changed to string for client-side compatibility
+  updatedAt: z.string(), // Changed to string for client-side compatibility
 });
 export type Project = z.infer<typeof ProjectSchema>;
