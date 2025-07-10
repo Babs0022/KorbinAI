@@ -1,6 +1,5 @@
 
 import { z } from 'zod';
-import { ChatMessageSchema } from '@/types/chat';
 
 // --- Zod Schemas for Project Data Validation ---
 
@@ -19,7 +18,6 @@ export const ProjectContentSchema = z.union([
   z.string(), // For text-based content like written, prompt, structured-data
   z.array(z.string()), // For image URLs from the image generator
   ComponentWizardContentSchema, // For component wizard results
-  z.array(ChatMessageSchema), // For chat history
 ]);
 export type ProjectContent = z.infer<typeof ProjectContentSchema>;
 
@@ -28,7 +26,7 @@ export const ProjectSchema = z.object({
   userId: z.string(),
   name: z.string(),
   summary: z.string(),
-  type: z.enum(['written-content', 'prompt', 'structured-data', 'image-generator', 'component-wizard', 'chat']),
+  type: z.enum(['written-content', 'prompt', 'structured-data', 'image-generator', 'component-wizard']),
   content: ProjectContentSchema,
   createdAt: z.string(), // Changed to string for client-side compatibility
   updatedAt: z.string(), // Changed to string for client-side compatibility

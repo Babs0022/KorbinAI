@@ -5,7 +5,6 @@ import { firestoreDb, adminStorage } from '@/lib/firebase-admin';
 import { generateProjectMetadata } from '@/ai/flows/generate-project-metadata-flow';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { Project, ProjectContent } from '@/types/project';
-import type { ChatMessage } from '@/types/chat';
 import { v4 as uuidv4 } from 'uuid';
 
 interface SaveProjectInput {
@@ -117,90 +116,6 @@ export async function saveProject({ userId, type, content }: SaveProjectInput): 
   console.log(`Project ${projectRef.id} of type ${type} saved for user ${userId}.`);
   return projectRef.id;
 }
-
-
-/**
- * Saves or updates a chat conversation in Firestore.
- * @param userId The ID of the user.
- * @param messages The full array of messages in the conversation.
- * @param projectId The ID of the project if it exists, otherwise null.
- * @returns The ID of the saved or updated project, and the full project object if it was newly created.
- */
-export async function saveChatConversation(
-  userId: string,
-  messages: ChatMessage[],
-  projectId: string | null
-): Promise<{id: string; newProject?: Project}> {
-  if (!userId || messages.length === 0) {
-    throw new Error('User ID and messages are required.');
-  }
-  
-  // Explicitly create plain objects for Firestore to avoid 'undefined' values.
-  const plainMessages = messages.map(m => {
-      const message: { role: 'user' | 'assistant'; content: string; imageUrl?: string } = {
-          role: m.role,
-          content: m.content,
-      };
-      if (m.imageUrl) {
-          message.imageUrl = m.imageUrl;
-      }
-      return message;
-  });
-
-  if (projectId) {
-    // Update existing project
-    const projectRef = firestoreDb.collection('projects').doc(projectId);
-    await projectRef.update({
-      content: plainMessages,
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-    console.log(`Chat project ${projectId} updated for user ${userId}.`);
-    return { id: projectId };
-  } else {
-    // Create new project
-    const contentForMetadata = messages
-      .slice(0, 4) // Use first few messages for summary
-      .map(m => `${m.role}: ${m.content}`)
-      .join('\n');
-      
-    const metadata = await generateProjectMetadata({
-      type: 'chat',
-      content: contentForMetadata,
-    });
-
-    const projectRef = firestoreDb.collection('projects').doc();
-    const now = new Date();
-    
-    // This is the data that will be written to Firestore
-    const newProjectDataForDb = {
-      userId,
-      name: metadata.name,
-      summary: metadata.summary,
-      type: 'chat' as const,
-      content: plainMessages,
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    };
-
-    await projectRef.set(newProjectDataForDb);
-    console.log(`New chat project ${projectRef.id} created for user ${userId}.`);
-    
-    // This is the clean Project object that will be returned to the client.
-    const newProjectForClient: Project = {
-        id: projectRef.id,
-        userId: userId,
-        name: metadata.name,
-        summary: metadata.summary,
-        type: 'chat',
-        content: plainMessages,
-        createdAt: now.toISOString(), // Convert date to string for client-side serialization
-        updatedAt: now.toISOString(),
-    };
-    
-    return { id: projectRef.id, newProject: newProjectForClient };
-  }
-}
-
 
 /**
  * Fetches all projects for a given user, ordered by most recently updated.
