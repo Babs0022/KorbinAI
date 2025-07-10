@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { LoaderCircle, FolderKanban, FileText, Code, Image as ImageIcon, LayoutTemplate, ListFilter, Search, MessageSquare } from 'lucide-react';
+import { LoaderCircle, FolderKanban, FileText, Code, Image as ImageIcon, LayoutTemplate, ListFilter, Search } from 'lucide-react';
 import type { Project } from '@/services/projectService';
 import { getProjectsForUser } from '@/services/projectService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -15,7 +15,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { formatDistanceToNow } from 'date-fns';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-const projectTypes: Project['type'][] = ['written-content', 'prompt', 'structured-data', 'image-generator', 'component-wizard', 'chat'];
+const projectTypes: Project['type'][] = ['written-content', 'prompt', 'structured-data', 'image-generator', 'component-wizard'];
 
 const typeInfo: Record<Project['type'], { icon: React.ReactNode; label: string }> = {
   'written-content': { icon: <FileText className="h-4 w-4" />, label: 'Written Content' },
@@ -23,7 +23,7 @@ const typeInfo: Record<Project['type'], { icon: React.ReactNode; label: string }
   'structured-data': { icon: <Code className="h-4 w-4" />, label: 'Structured Data' },
   'image-generator': { icon: <ImageIcon className="h-4 w-4" />, label: 'Image' },
   'component-wizard': { icon: <LayoutTemplate className="h-4 w-4" />, label: 'Application' },
-  'chat': { icon: <MessageSquare className="h-4 w-4" />, label: 'Chat' },
+  'chat': { icon: <div />, label: 'Chat' }, // Empty icon/label as it will be filtered out.
 };
 
 
@@ -80,7 +80,11 @@ function ProjectsPageClient() {
         if (user) {
             setProjectsLoading(true);
             getProjectsForUser(user.uid)
-                .then(setProjects)
+                .then(allProjects => {
+                    // Filter out chat projects before setting the state
+                    const nonChatProjects = allProjects.filter(p => p.type !== 'chat');
+                    setProjects(nonChatProjects);
+                })
                 .catch(console.error)
                 .finally(() => setProjectsLoading(false));
         } else if (!authLoading) {
