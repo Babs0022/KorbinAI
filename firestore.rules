@@ -4,31 +4,34 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can read and update their own user document.
+    // Users can only read and write to their own user document.
     match /users/{userId} {
-      allow read, update: if request.auth.uid == userId;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Users can read their own subscription document. This fixes the error.
-    match /userSubscriptions/{userId} {
-      allow read: if request.auth.uid == userId;
-    }
-
-    // Users can perform all operations on their own projects.
+    // A user can read, create, and update projects that belong to them.
     match /projects/{projectId} {
-      allow read, delete, update: if request.auth.uid == resource.data.userId;
-      allow create: if request.auth.uid == request.resource.data.userId;
+      allow read, create, update: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
-    // Transactions are created by the server, but users can read their own.
+    // A user can only read their own subscription document.
+    // Writes are handled by secure Cloud Functions.
+    match /userSubscriptions/{userId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false; // Disallow client-side writes
+    }
+    
+    // Transactions can only be read by the user they belong to.
+    // Writes are handled by secure Cloud Functions.
     match /transactions/{transactionId} {
-        allow read: if request.auth.uid == resource.data.userId;
+        allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+        allow write: if false; // Disallow client-side writes
     }
 
-    // Feedback can be created by users, and they can read their own.
+    // Feedback can be created by any authenticated user, but only read by the user who created it.
     match /feedback/{feedbackId} {
-      allow create: if request.auth.uid == request.resource.data.userId;
-      allow read: if request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
     }
   }
 }
