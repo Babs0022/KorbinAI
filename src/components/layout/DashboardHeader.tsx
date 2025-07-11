@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface DashboardHeaderProps {
     variant?: 'main' | 'sidebar';
@@ -47,7 +48,10 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
         </Link>
         <Link href="/dashboard/billing" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <CreditCard />
-            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Billing</span>
+            <div className={cn("flex w-full items-center justify-between transition-opacity", state === 'collapsed' && 'opacity-0')}>
+              <span>Billing</span>
+              <Badge variant="outline" className="text-xs">Coming Soon</Badge>
+            </div>
         </Link>
         <Link href="/dashboard/account" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <User />
