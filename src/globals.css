@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 7%; /* #111111 */
+    --foreground: 0 0% 100%; /* #FFFFFF */
+    --card: 0 0% 10%; /* #1A1A1A */
+    --card-foreground: 0 0% 100%; /* #FFFFFF */
+    --popover: 0 0% 10%; /* #1A1A1A */
+    --popover-foreground: 0 0% 100%; /* #FFFFFF */
+    --primary: 158 100% 47%; /* #00F0A0 */
+    --primary-foreground: 0 0% 7%; /* #111111 */
+    --secondary: 0 0% 13%; /* #222222 */
+    --secondary-foreground: 0 0% 100%; /* #FFFFFF */
+    --muted: 0 0% 13%; /* #222222 */
+    --muted-foreground: 0 0% 40%; /* #666666 */
+    --accent: 0 0% 20%; /* #333333 */
+    --accent-foreground: 0 0% 100%; /* #FFFFFF */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 0 0% 20%; /* #333333 */
+    --input: 0 0% 27%; /* #444444 */
+    --ring: 158 100% 47%; /* #00F0A0 */
+    --radius: 0.75rem; /* 12px */
+
+    /* Custom Sidebar Colors */
+    --sidebar-background: 0 0% 9%; /* A slightly different dark for the sidebar */
+    --sidebar-foreground: 0 0% 80%; /* Softer text color */
+    --sidebar-border: 0 0% 20%;
+    --sidebar-accent: 0 0% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-ring: 158 100% 47%;
+  }
+
+  .dark {
+    /* All variables are in :root for a single, dark-only theme. */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground/70;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-foreground;
+  }
+}
+
+@layer components {
+  .tour-highlight {
+    @apply outline-primary outline-2 outline-dashed outline-offset-4 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.6)] relative z-50 transition-all duration-300;
+  }
+}

@@ -11,9 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import DashboardLayout from '@/components/layout/DashboardLayout';
 import { formatDistanceToNow } from 'date-fns';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { SidebarProvider, Sidebar, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
+import DashboardHeader from "@/components/layout/DashboardHeader";
 
 const projectTypes: Project['type'][] = ['written-content', 'prompt', 'structured-data', 'image-generator', 'component-wizard'];
 
@@ -140,61 +141,64 @@ function ProjectsPageClient() {
     }
     
     return (
-        <>
-            <div className="mb-8 flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                        placeholder="Search by name or summary..."
-                        className="pl-10 h-11"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                    />
+        <main className="flex-1 p-4 md:p-8">
+            <div className="max-w-7xl mx-auto">
+                <h1 className="text-3xl font-bold mb-2">My Projects</h1>
+                <p className="text-muted-foreground mb-8">All your saved generations in one place.</p>
+                
+                <div className="mb-8 flex flex-col md:flex-row gap-4">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by name or summary..."
+                            className="pl-10 h-11"
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="h-11">
+                                <ListFilter className="mr-2 h-4 w-4" />
+                                Filter by Type {selectedTypes.size > 0 && `(${selectedTypes.size})`}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuLabel>Project Types</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {projectTypes.map(type => (
+                                <DropdownMenuCheckboxItem
+                                    key={type}
+                                    checked={selectedTypes.has(type)}
+                                    onCheckedChange={() => handleTypeToggle(type)}
+                                >
+                                    {typeInfo[type].label}
+                                </DropdownMenuCheckboxItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="h-11">
-                            <ListFilter className="mr-2 h-4 w-4" />
-                            Filter by Type {selectedTypes.size > 0 && `(${selectedTypes.size})`}
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>Project Types</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {projectTypes.map(type => (
-                            <DropdownMenuCheckboxItem
-                                key={type}
-                                checked={selectedTypes.has(type)}
-                                onCheckedChange={() => handleTypeToggle(type)}
-                            >
-                                {typeInfo[type].label}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
 
-            {projectsLoading ? (
-                <div className="flex flex-1 items-center justify-center p-16"><LoaderCircle className="h-12 w-12 animate-spin text-primary" /></div>
-            ) : (
-                <ProjectList projects={filteredProjects} />
-            )}
-        </>
+                {projectsLoading ? (
+                    <div className="flex flex-1 items-center justify-center p-16"><LoaderCircle className="h-12 w-12 animate-spin text-primary" /></div>
+                ) : (
+                    <ProjectList projects={filteredProjects} />
+                )}
+            </div>
+        </main>
     );
 }
 
 export default function ProjectsPage() {
     return (
-        <DashboardLayout>
-            <main className="flex-1 p-4 md:p-8">
-                <div className="max-w-7xl mx-auto">
-                    <h1 className="text-3xl font-bold mb-2">My Projects</h1>
-                    <p className="text-muted-foreground mb-8">All your saved generations in one place.</p>
-                    <ProjectsPageClient />
-                </div>
-            </main>
-        </DashboardLayout>
+        <SidebarProvider>
+            <Sidebar>
+                <DashboardHeader variant="sidebar" />
+            </Sidebar>
+            <SidebarInset>
+                <DashboardHeader variant="main" />
+                <ProjectsPageClient />
+            </SidebarInset>
+        </SidebarProvider>
     );
 }
-
-    

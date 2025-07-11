@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,7 +14,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { auth, db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 
-import DashboardLayout from "@/components/layout/DashboardLayout";
+import { SidebarProvider, Sidebar, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
+import DashboardHeader from "@/components/layout/DashboardHeader";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -180,43 +182,39 @@ export default function AccountManagementPage() {
     );
   };
 
-  if (loading) {
-    return (
-      <DashboardLayout>
+  const renderContent = () => {
+    if (loading) {
+      return (
         <main className="flex flex-1 flex-col p-4 md:p-8">
-          <div className="w-full max-w-2xl mx-auto space-y-10">
-            <Skeleton className="h-10 w-72 mb-2" />
-            <Skeleton className="h-6 w-96 mb-10" />
-            <Skeleton className="h-[400px] w-full" />
-            <Skeleton className="h-[400px] w-full" />
-          </div>
+            <div className="w-full max-w-2xl mx-auto space-y-10">
+                <Skeleton className="h-10 w-72 mb-2" />
+                <Skeleton className="h-6 w-96 mb-10" />
+                <Skeleton className="h-[400px] w-full" />
+                <Skeleton className="h-[400px] w-full" />
+            </div>
         </main>
-      </DashboardLayout>
-    );
-  }
+      );
+    }
+    
+    if (!user) {
+      return (
+          <main className="flex flex-1 items-center justify-center p-4 md:p-8">
+              <Card className="w-full max-w-md text-center">
+                  <CardHeader>
+                      <CardTitle>Access Denied</CardTitle>
+                      <CardDescription>You need to be signed in to view this page.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <Button asChild>
+                          <Link href="/login">Sign In</Link>
+                      </Button>
+                  </CardContent>
+              </Card>
+          </main>
+      )
+    }
 
-  if (!user) {
     return (
-        <DashboardLayout>
-            <main className="flex flex-1 items-center justify-center p-4 md:p-8">
-                <Card className="w-full max-w-md text-center">
-                    <CardHeader>
-                        <CardTitle>Access Denied</CardTitle>
-                        <CardDescription>You need to be signed in to view this page.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button asChild>
-                            <Link href="/login">Sign In</Link>
-                        </Button>
-                    </CardContent>
-                </Card>
-            </main>
-        </DashboardLayout>
-    )
-  }
-
-  return (
-    <DashboardLayout>
       <main className="flex flex-1 flex-col p-4 md:p-8">
         <div className="w-full max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold">Account Management</h1>
@@ -355,6 +353,18 @@ export default function AccountManagementPage() {
           </div>
         </div>
       </main>
-    </DashboardLayout>
+    );
+  };
+  
+  return (
+    <SidebarProvider>
+        <Sidebar>
+            <DashboardHeader variant="sidebar" />
+        </Sidebar>
+        <SidebarInset>
+            <DashboardHeader variant="main" />
+            {renderContent()}
+        </SidebarInset>
+    </SidebarProvider>
   );
 }

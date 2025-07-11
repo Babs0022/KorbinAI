@@ -2,8 +2,8 @@
 "use client";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Feather, Code2, LayoutTemplate, Image, Bolt, BrainCircuit, ArrowRight } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Feather, Code2, LayoutTemplate, Image, Bolt, MessageSquare, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import FeatureTourGuide from "@/components/shared/FeatureTourGuide";
@@ -46,16 +46,24 @@ export default function HomePage() {
       subtitle: "JSON for components, CSV lists",
       href: "/structured-data",
     },
+    {
+      id: "feature-chat",
+      icon: <MessageSquare className="h-8 w-8" />,
+      title: "BrieflyAI Chat",
+      subtitle: "Your creative copilot for any task",
+      href: "/chat",
+    },
   ];
 
   return (
     <DashboardLayout>
-      <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
-        <div className="w-full max-w-5xl text-center">
-          <h1 className="mb-12 text-4xl font-bold md:text-5xl">
-            What would you like to create today?
-          </h1>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      <main className="flex flex-1 flex-col p-4 md:p-8">
+        <div className="w-full max-w-5xl">
+          <div className="mb-12">
+            <h1 className="text-4xl font-bold md:text-5xl">Creation Hub</h1>
+            <p className="mt-2 text-lg text-muted-foreground">What would you like to create today?</p>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {creationOptions.map((option, index) => (
               <Link
                 href={option.href}
@@ -63,16 +71,21 @@ export default function HomePage() {
                 id={option.id}
                 className="group"
               >
-                <Card className="flex h-full transform flex-col items-start p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/80 rounded-xl">
-                  <div className="mb-4 text-primary">{option.icon}</div>
-                  <CardHeader className="p-0">
-                    <CardTitle className="text-2xl font-semibold transition-colors duration-300 group-hover:text-primary">
-                      {option.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="mt-2 p-0">
-                    <p className="text-muted-foreground">{option.subtitle}</p>
-                  </CardContent>
+                <Card className="flex h-full transform flex-col justify-between p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/80 rounded-xl">
+                  <div>
+                    <div className="mb-4 text-primary">{option.icon}</div>
+                    <CardHeader className="p-0">
+                      <CardTitle className="text-xl font-semibold transition-colors duration-300 group-hover:text-primary">
+                        {option.title}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="mt-2 p-0">
+                      <p className="text-muted-foreground">{option.subtitle}</p>
+                    </CardContent>
+                  </div>
+                  <div className="mt-4 flex items-center text-sm font-medium text-primary opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    Start Creating <ArrowRight className="ml-2 h-4 w-4" />
+                  </div>
                 </Card>
               </Link>
             ))}
