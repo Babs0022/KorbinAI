@@ -33,7 +33,7 @@ export async function generateFullContentDraft(input: GenerateFullContentDraftIn
 
 const prompt = ai.definePrompt({
   name: 'generateFullContentDraftPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-pro-latest',
   input: {schema: GenerateFullContentDraftInputSchema},
   output: {schema: GenerateFullContentDraftOutputSchema},
   prompt: `You are an expert copywriter and content creator, tasked with writing a complete piece of content based on a structured plan. Your writing style must be natural and engaging, avoiding common AI-generated phrases and structures.

@@ -33,7 +33,7 @@ export async function generateStructuredData(input: GenerateStructuredDataInput)
 
 const prompt = ai.definePrompt({
   name: 'generateStructuredDataPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-pro-latest',
   input: {schema: GenerateStructuredDataInputSchema},
   output: {schema: GenerateStructuredDataOutputSchema},
   prompt: `You are an expert data generation machine. Your task is to generate or refine structured data based on the user's request.

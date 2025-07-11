@@ -85,7 +85,7 @@ ${finalInstruction}
 `;
 
     const response = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
+      model: 'googleai/gemini-1.5-pro-latest',
       prompt: prompt,
       output: { schema: OptimizeContentOutputSchema },
     });
