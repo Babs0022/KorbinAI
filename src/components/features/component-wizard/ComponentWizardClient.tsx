@@ -44,7 +44,14 @@ export default function ComponentWizardClient() {
     }
   }, [searchParams]);
   
-  const dataPoints = useMemo(() => Array.from(selectedSections).join(", "), [selectedSections]);
+  const dataPoints = useMemo(() => {
+      // Create an ordered list based on original suggestions and then custom ones
+      const orderedSelection = [
+        ...suggestedSections.filter(section => selectedSections.has(section)),
+        ...Array.from(selectedSections).filter(section => !suggestedSections.includes(section))
+      ];
+      return orderedSelection.join(', ');
+  }, [selectedSections, suggestedSections]);
 
   const handleNextStep = async () => {
     if (step === 1 && description.trim().split(/\s+/).length >= 3) {
@@ -272,7 +279,7 @@ export default function ComponentWizardClient() {
                             <div>
                                 <h4 className="font-semibold text-muted-foreground">Page Sections</h4>
                                 <div className="flex flex-wrap gap-2 mt-2">
-                                    {Array.from(selectedSections).map(section => (
+                                    {dataPoints.split(', ').filter(Boolean).map(section => (
                                         <Badge key={section} variant="secondary" className="text-base">{section}</Badge>
                                     ))}
                                 </div>
