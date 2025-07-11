@@ -36,11 +36,15 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: GenerateFullContentDraftInputSchema},
   output: {schema: GenerateFullContentDraftOutputSchema},
-  prompt: `You are an expert copywriter and content creator, tasked with writing a complete piece of content based on a structured plan.
-
-Your goal is to write a high-quality, engaging, and comprehensive "{{contentType}}". You must strictly follow the provided outline for the structure of the piece.
+  prompt: `You are an expert copywriter and content creator, tasked with writing a complete piece of content based on a structured plan. Your output format MUST be adapted to the requested "Content Type".
 
 Return ONLY a JSON object that matches the schema, with the full content in the "generatedContent" field. The content should be a single, well-formatted markdown string.
+
+**Content Type Guidance:**
+You MUST adapt your final output based on the requested "{{contentType}}".
+- **Blog Post / Article / Report / Website Page Copy:** Write in a standard long-form document format. Use markdown headings for each section from the outline.
+- **Email Series:** For each outline item (which is an email subject), write a corresponding email body. Clearly label each email with "--- Email: [Subject] ---" as a separator.
+- **Social Media Campaign:** For each outline item (which represents a post), write the social media post content. Clearly label each post with "--- Post: [Platform/Title] ---" as a separator and include relevant hashtags.
 
 **Content Specifications:**
 - **Main Topic:** "{{mainTopic}}"
@@ -57,7 +61,7 @@ Return ONLY a JSON object that matches the schema, with the full content in the 
 - {{this}}
 {{/each}}
 
-Now, write the complete piece of content. Ensure it flows logically from one section to the next and meets all the specifications provided.
+Now, write the complete piece of content. Ensure it flows logically from one section to the next and meets all the specifications provided, especially the Content Type Guidance.
 `,
 });
 

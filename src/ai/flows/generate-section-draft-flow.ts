@@ -36,9 +36,15 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: GenerateSectionDraftInputSchema},
   output: {schema: GenerateSectionDraftOutputSchema},
-  prompt: `You are an expert copywriter tasked with writing one section of a larger document. Your goal is to write a well-crafted piece of content for the specified section, ensuring it flows logically from the previous content and fits within the overall structure.
+  prompt: `You are an expert copywriter tasked with writing one section of a larger document. Your goal is to write a well-crafted piece of content for the specified section, ensuring it flows logically from the previous content and fits within the overall structure. Your output format MUST be adapted to the requested "Content Type".
 
 Return ONLY a JSON object that matches the schema, with the generated content in the "generatedSectionContent" field. The content should be a single, well-formatted markdown string. Do not include the section title itself in the output, only the body content.
+
+**Content Type Guidance:**
+You MUST adapt your output based on the requested "{{contentType}}".
+- **Blog Post / Article / Report / Website Page Copy:** Write the content for this section in a standard long-form document format.
+- **Email Series:** The section title is an email subject. Write the body content for that single email.
+- **Social Media Campaign:** The section title represents a single social media post. Write the content for that post, including relevant hashtags.
 
 **Overall Content Context:**
 - **Main Topic:** "{{mainTopic}}"
@@ -61,7 +67,7 @@ Return ONLY a JSON object that matches the schema, with the generated content in
 
 **Your Current Task:**
 Write the content ONLY for the following section: **"{{sectionToDraft}}"**.
-Ensure your writing is engaging, fits the desired tone, and seamlessly continues from the prior content if it exists.
+Ensure your writing is engaging, fits the desired tone, and seamlessly continues from the prior content if it exists. Pay close attention to the Content Type Guidance.
 `,
 });
 
