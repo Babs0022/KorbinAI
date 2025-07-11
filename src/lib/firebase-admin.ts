@@ -6,12 +6,9 @@ import admin from 'firebase-admin';
 
 // Check if the app is already initialized to prevent errors in hot-reloading environments.
 if (!admin.apps.length) {
-  // Explicitly use Application Default Credentials. This is the recommended way
-  // for Google Cloud environments like App Hosting (Cloud Run), as it ignores
-  // any potentially incorrect GOOGLE_APPLICATION_CREDENTIALS env vars.
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-  });
+  // Initialize without arguments. This directs the SDK to use Application Default Credentials,
+  // the recommended and most reliable method for Google Cloud environments like App Hosting.
+  admin.initializeApp();
 }
 
 const firestoreDb = admin.firestore();
