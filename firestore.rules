@@ -3,35 +3,44 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can manage their own user document
+
+    // Users can only read and write to their own user document.
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Users can read/write their own projects
+    // Projects can be managed only by their owner.
+    // This is broken down into specific rules for get, list, and write operations.
     match /projects/{projectId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Allow reading a single project if the user is the owner.
+      allow get: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      // Allow listing projects only when the query is filtered by the user's own UID.
+      allow list: if request.auth != null && request.auth.uid == request.query.where.userId;
+
+      // Allow creating, updating, or deleting a project if the user is the owner.
+      allow write: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
 
-    // Users can create feedback for their projects
-    match /feedback/{feedbackId} {
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
-      // Reading/updating feedback might be an admin-only task
-      allow read, update, delete: if false; 
-    }
-
-    // Users can read their own subscription status
-    match /userSubscriptions/{userId} {
-      allow get: if request.auth != null && request.auth.uid == userId;
-      // Subscriptions are only managed by backend functions, not clients
-      allow list, create, update, delete: if false;
-    }
-
-    // Users can read their own transaction history
+    // Transactions can only be read by the user they belong to.
+    // Writes should only be handled by backend services (Cloud Functions).
     match /transactions/{transactionId} {
-      allow get, list: if request.auth != null && request.resource.data.userId == request.auth.uid;
-       // Transactions are only managed by backend functions, not clients
-      allow create, update, delete: if false;
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if false; // Disallow client-side writes
+    }
+
+    // User subscriptions can only be read by the user they belong to.
+    // Writes should only be handled by backend services (Cloud Functions).
+    match /userSubscriptions/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // Disallow client-side writes
+    }
+    
+    // Feedback can be created by any authenticated user.
+    // Reading/updating/deleting feedback should be restricted to admins (not implemented here).
+    match /feedback/{feedbackId} {
+        allow create: if request.auth != null;
+        allow read, update, delete: if false; // Protect user feedback from being publicly readable
     }
   }
 }
