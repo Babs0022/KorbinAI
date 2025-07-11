@@ -1,13 +1,15 @@
 
 "use client";
 
-import { useState, KeyboardEvent } from 'react';
+import { useState, KeyboardEvent, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { X, Wand2, LoaderCircle } from 'lucide-react';
+import { generateContentSuggestions } from '@/ai/flows/generate-content-suggestions-flow';
 
 // Define the shape of the form data
 export interface ContentIdeaFormData {
@@ -44,6 +46,50 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
     });
 
     const [keywordInput, setKeywordInput] = useState('');
+    const [suggestedKeywords, setSuggestedKeywords] = useState<string[]>([]);
+    const [isSuggesting, setIsSuggesting] = useState(false);
+    const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
+
+    // Debounced effect for AI suggestions
+    useEffect(() => {
+        if (debounceTimeout) clearTimeout(debounceTimeout);
+
+        if (formData.mainTopic.trim().split(/\s+/).length < 4) {
+            setSuggestedKeywords([]);
+            return;
+        }
+
+        setIsSuggesting(true);
+        const timeout = setTimeout(async () => {
+            try {
+                const result = await generateContentSuggestions({ topic: formData.mainTopic });
+                if (result) {
+                    setSuggestedKeywords(result.suggestedKeywords || []);
+                    if (result.suggestedAudience) {
+                        // Check if the suggested audience is a custom one
+                        if (!audiences.includes(result.suggestedAudience)) {
+                            handleChange('targetAudience', 'Other');
+                            handleChange('otherAudience', result.suggestedAudience);
+                        } else {
+                            handleChange('targetAudience', result.suggestedAudience);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to get content suggestions:", error);
+                setSuggestedKeywords([]);
+            } finally {
+                setIsSuggesting(false);
+            }
+        }, 1500); // 1.5-second debounce timer
+
+        setDebounceTimeout(timeout);
+
+        return () => {
+            if (timeout) clearTimeout(timeout);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formData.mainTopic]);
 
     const handleChange = (field: keyof ContentIdeaFormData, value: any) => {
         const newData = { ...formData, [field]: value };
@@ -55,11 +101,18 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
         handleChange(field, value);
     };
 
-    const handleKeywordKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && keywordInput.trim() !== '') {
-            e.preventDefault();
-            const newKeywords = [...new Set([...formData.keywords, keywordInput.trim()])];
+    const handleAddKeyword = (keyword: string) => {
+        const trimmedKeyword = keyword.trim();
+        if (trimmedKeyword) {
+            const newKeywords = [...new Set([...formData.keywords, trimmedKeyword])];
             handleChange('keywords', newKeywords);
+        }
+    };
+
+    const handleKeywordKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddKeyword(keywordInput);
             setKeywordInput('');
         }
     };
@@ -72,10 +125,13 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
     return (
         <div className="space-y-6">
             <div className="space-y-2">
-                <Label htmlFor="mainTopic">Main Topic/Idea</Label>
+                <div className="flex justify-between items-center">
+                    <Label htmlFor="mainTopic">Main Topic/Idea</Label>
+                    {isSuggesting && <LoaderCircle className="h-4 w-4 animate-spin text-muted-foreground" />}
+                </div>
                 <Textarea
                     id="mainTopic"
-                    placeholder="What's the main idea or topic?"
+                    placeholder="What's the main idea or topic? Be descriptive for better suggestions."
                     className="min-h-[120px]"
                     value={formData.mainTopic}
                     onChange={(e) => handleChange('mainTopic', e.target.value)}
@@ -154,14 +210,17 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
 
             <div className="space-y-2">
                 <Label htmlFor="keywords">Keywords</Label>
-                <Input
-                    id="keywords"
-                    placeholder="Type a keyword and press Enter"
-                    value={keywordInput}
-                    onChange={(e) => setKeywordInput(e.target.value)}
-                    onKeyDown={handleKeywordKeyDown}
-                />
-                <div className="flex flex-wrap gap-2 pt-2">
+                <div className="flex gap-2">
+                    <Input
+                        id="keywords"
+                        placeholder="Type a keyword and press Enter"
+                        value={keywordInput}
+                        onChange={(e) => setKeywordInput(e.target.value)}
+                        onKeyDown={handleKeywordKeyDown}
+                    />
+                     <Button type="button" variant="outline" onClick={() => { handleAddKeyword(keywordInput); setKeywordInput(''); }}>Add</Button>
+                </div>
+                <div className="flex flex-wrap gap-2 pt-2 min-h-[28px]">
                     {formData.keywords.map((keyword, index) => (
                         <Badge key={index} variant="secondary" className="pl-3 pr-1 py-1">
                             {keyword}
@@ -176,6 +235,28 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
                         </Badge>
                     ))}
                 </div>
+                 {suggestedKeywords.length > 0 && (
+                    <div className="pt-2">
+                         <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                            <Wand2 className="h-4 w-4" />
+                            Suggested Keywords
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                        {suggestedKeywords.map(keyword => (
+                            <Button
+                                key={keyword}
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleAddKeyword(keyword)}
+                                className="text-xs"
+                            >
+                                + {keyword}
+                            </Button>
+                        ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
