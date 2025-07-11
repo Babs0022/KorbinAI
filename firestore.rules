@@ -4,34 +4,30 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can only read and write to their own user document.
+    // Allow users to read and write their own user data
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth.uid == userId;
     }
 
-    // A user can read, create, and update projects that belong to them.
+    // Allow users to read their own projects
     match /projects/{projectId} {
-      allow read, create, update: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read: if request.auth.uid == resource.data.userId;
+      allow create: if request.auth.uid == request.resource.data.userId;
     }
 
-    // A user can only read their own subscription document.
-    // Writes are handled by secure Cloud Functions.
+    // Allow users to read their own subscription status
     match /userSubscriptions/{userId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        allow write: if false; // Disallow client-side writes
-    }
-    
-    // Transactions can only be read by the user they belong to.
-    // Writes are handled by secure Cloud Functions.
-    match /transactions/{transactionId} {
-        allow read: if request.auth != null && request.auth.uid == resource.data.userId;
-        allow write: if false; // Disallow client-side writes
+      allow read: if request.auth.uid == userId;
     }
 
-    // Feedback can be created by any authenticated user, but only read by the user who created it.
+    // Transaction logs are write-only from the backend, no client access needed
+    match /transactions/{transactionId} {
+      allow read, write: if false;
+    }
+
+    // Feedback can be created by any authenticated user
     match /feedback/{feedbackId} {
       allow create: if request.auth != null;
-      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
     }
   }
 }
