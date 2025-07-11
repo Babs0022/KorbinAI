@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -75,23 +76,23 @@ export default function SignupForm() {
       );
       const user = userCredential.user;
 
-      // Update Firebase Auth profile
       await updateProfile(user, { displayName: values.name });
+      
+      // Send verification email before creating the doc, to ensure user exists for rules.
+      await sendEmailVerification(user, {
+          url: `${window.location.origin}/`,
+      });
 
-      // Create user document in Firestore
+      // Create user document in Firestore *after* verification is sent.
+      // This is important for the onboarding logic.
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         name: values.name,
         email: values.email,
         createdAt: new Date(),
-        photoURL: user.photoURL // Might be null, but good to have
+        photoURL: user.photoURL
       });
 
-      // Send verification email
-      await sendEmailVerification(user, {
-          url: `${window.location.origin}/onboarding`, // Redirect here after verification
-      });
-      
       router.push("/verify-email");
     } catch (error: any) {
       toast({
@@ -108,7 +109,7 @@ export default function SignupForm() {
     setIsGoogleLoading(true);
     try {
       await signInWithGoogle();
-      router.push("/");
+      // The auth context will handle redirection.
     } catch (error: any) {
       toast({
         variant: "destructive",

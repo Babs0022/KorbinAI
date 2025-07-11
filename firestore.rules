@@ -1,33 +1,35 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read/write their own user document
+    
+    // Users can only read/write their own document
     match /users/{userId} {
       allow read, write: if request.auth.uid == userId;
     }
-
-    // Users can read/write their own projects
-    match /projects/{projectId} {
-      allow read, write, delete: if request.auth.uid == resource.data.userId;
-    }
     
-    // Users can create feedback, but cannot read or modify it.
-    match /feedback/{feedbackId} {
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if false;
+    // Users can only read/write their own projects
+    match /projects/{projectId} {
+      allow read, write: if request.auth.uid == resource.data.userId;
     }
 
-    // Users can read their own subscription status
+    // Users can read/write feedback they created
+    match /feedback/{feedbackId} {
+        allow read, write: if request.auth.uid == resource.data.userId;
+    }
+
+    // Users can only read their own subscription documents
     match /userSubscriptions/{userId} {
       allow read: if request.auth.uid == userId;
-      // Disallow client-side writes for security. These are only handled by the server.
+      // Write access is typically handled by secure Cloud Functions
       allow write: if false; 
     }
-
-    // Transactions can be created server-side, but not read/updated by clients.
+    
+    // Transactions are written by Cloud Functions, only allow reads by the user who owns it
     match /transactions/{transactionId} {
-       allow read, write: if false;
+        allow read: if request.auth.uid == resource.data.userId;
+        allow write: if false;
     }
   }
 }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,23 +18,16 @@ export default function VerifyEmailPage() {
     const { toast } = useToast();
     const [isSending, setIsSending] = useState(false);
 
-    // This effect checks the verification status periodically.
+    // Effect to redirect if user state changes
     useEffect(() => {
         if (loading) return;
         if (!user) {
             router.replace("/login");
             return;
         }
-
-        const interval = setInterval(async () => {
-            await user.reload();
-            if (user.emailVerified) {
-                clearInterval(interval);
-                router.replace("/onboarding");
-            }
-        }, 3000); // Check every 3 seconds
-
-        return () => clearInterval(interval);
+        if (user.emailVerified) {
+            router.replace("/"); // Redirect verified users to the dashboard
+        }
     }, [user, loading, router]);
 
 
@@ -42,7 +36,7 @@ export default function VerifyEmailPage() {
         setIsSending(true);
         try {
             await sendEmailVerification(user, {
-                url: `${window.location.origin}/onboarding`,
+                url: `${window.location.origin}/`,
             });
             toast({
                 title: "Verification Email Sent",
@@ -64,21 +58,9 @@ export default function VerifyEmailPage() {
         router.push("/login");
     };
 
-    if (loading || !user) {
+    if (loading || !user || user.emailVerified) {
         return (
             <AuthLayout>
-                <div className="flex justify-center items-center h-48">
-                    <LoaderCircle className="h-8 w-8 animate-spin" />
-                </div>
-            </AuthLayout>
-        );
-    }
-    
-    // This case handles users who land here but are already verified.
-    if (user.emailVerified) {
-        router.replace('/onboarding');
-        return (
-             <AuthLayout>
                 <div className="flex justify-center items-center h-48">
                     <LoaderCircle className="h-8 w-8 animate-spin" />
                 </div>
@@ -101,7 +83,7 @@ export default function VerifyEmailPage() {
                 </CardHeader>
                 <CardContent className="space-y-4 text-center">
                     <p className="text-sm text-muted-foreground">
-                        Please check your inbox (and spam folder) and click the link to continue. This page will automatically redirect after you've verified.
+                        Please check your inbox (and spam folder) and click the link to continue. You can close this page after verifying.
                     </p>
                     <Button onClick={handleResendVerification} disabled={isSending} className="w-full">
                         {isSending && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}

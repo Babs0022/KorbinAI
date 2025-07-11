@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -64,7 +65,7 @@ export default function LoginForm() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      router.push("/"); // Redirect to home on successful login
+      router.push("/");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -80,7 +81,7 @@ export default function LoginForm() {
     setIsGoogleLoading(true);
     try {
       await signInWithGoogle();
-      router.push("/");
+      // The auth context will handle redirection.
     } catch (error: any) {
       toast({
         variant: "destructive",

@@ -1,21 +1,18 @@
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// This middleware is simplified to only handle basic routing cases.
+// The more complex auth logic (like email verification) is handled in the AuthContext.
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isAuthenticated = request.cookies.has('firebase-auth-setting-host');
+  
+  // Reading the auth cookie is unreliable here for server components,
+  // so we delegate auth state checking to the client-side AuthProvider.
+  // This middleware can still be useful for other purposes like geolocation, etc.
 
-  const authRoutes = ['/login', '/signup', '/forgot-password'];
-  const isAuthRoute = authRoutes.includes(pathname);
-
-  // If the user is authenticated and trying to access a login/signup page,
-  // redirect them to the home page.
-  if (isAuthenticated && isAuthRoute) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
-  // All other cases, including unauthenticated users visiting any page,
-  // are allowed to proceed.
+  // Allow all requests to proceed. The client-side AuthProvider will handle redirects.
   return NextResponse.next();
 }
 
