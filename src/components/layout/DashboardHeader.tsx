@@ -46,13 +46,13 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <FolderKanban />
             <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Projects</span>
         </Link>
-        <Link href="/dashboard/billing" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+        <div className="flex items-center gap-3 p-2 rounded-md opacity-50 cursor-not-allowed">
             <CreditCard />
             <div className={cn("flex w-full items-center justify-between transition-opacity", state === 'collapsed' && 'opacity-0')}>
               <span>Billing</span>
               <Badge variant="outline" className="text-xs">Coming Soon</Badge>
             </div>
-        </Link>
+        </div>
         <Link href="/dashboard/account" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <User />
             <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Account</span>
