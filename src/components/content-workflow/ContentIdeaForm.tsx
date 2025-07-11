@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, KeyboardEvent, useEffect } from 'react';
+import { useState, KeyboardEvent, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -50,6 +50,12 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
     const [isSuggesting, setIsSuggesting] = useState(false);
     const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
 
+    const handleChange = useCallback((field: keyof ContentIdeaFormData, value: any) => {
+        const newData = { ...formData, [field]: value };
+        setFormData(newData);
+        onDataChange(newData);
+    }, [formData, onDataChange]);
+
     // Debounced effect for AI suggestions
     useEffect(() => {
         if (debounceTimeout) clearTimeout(debounceTimeout);
@@ -89,13 +95,7 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
             if (timeout) clearTimeout(timeout);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [formData.mainTopic]);
-
-    const handleChange = (field: keyof ContentIdeaFormData, value: any) => {
-        const newData = { ...formData, [field]: value };
-        setFormData(newData);
-        onDataChange(newData);
-    };
+    }, [formData.mainTopic, handleChange]);
     
     const handleSelectChange = (field: keyof ContentIdeaFormData) => (value: string) => {
         handleChange(field, value);
