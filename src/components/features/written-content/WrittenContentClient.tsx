@@ -11,7 +11,7 @@ import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
 import ContentIdeaForm, { type ContentIdeaFormData } from '@/components/content-workflow/ContentIdeaForm';
 import OutlineEditor, { type OutlineItem } from '@/components/content-workflow/OutlineEditor';
 import ContentDrafting, { type GenerationMode } from "@/components/content-workflow/ContentDrafting";
-import ContentOptimizer, { type OptimizationSettings } from "@/components/content-workflow/ContentOptimizer";
+import ContentOptimizer, { type OptimizationOptions } from "@/components/content-workflow/ContentOptimizer";
 import ContentExporter from "@/components/content-workflow/ContentExporter";
 
 // AI Flows
@@ -108,12 +108,9 @@ export default function WrittenContentClient() {
       }
   };
 
-  const handleDrafting = async (mode: GenerationMode) => {
-    if (!user || state.finalOutline.length === 0) return;
-    setState(s => ({ ...s, isLoading: true }));
-
+  const commonDraftingInput = useCallback(() => {
     const { otherAudience, ...rest } = state.contentIdea;
-    const commonInput = {
+    return {
         ...rest,
         mainTopic: state.contentIdea.mainTopic!,
         targetAudience: state.contentIdea.targetAudience === 'Other' ? otherAudience || '' : state.contentIdea.targetAudience || '',
@@ -122,15 +119,19 @@ export default function WrittenContentClient() {
         purpose: state.contentIdea.purpose!,
         desiredTone: state.contentIdea.desiredTone!,
         desiredLength: state.contentIdea.desiredLength!,
+        finalOutline: state.finalOutline.map(item => item.text),
     };
+  }, [state.contentIdea, state.finalOutline]);
+
+
+  const handleDrafting = async (mode: GenerationMode) => {
+    if (!user || state.finalOutline.length === 0) return;
+    setState(s => ({ ...s, isLoading: true, draftContent: '', draftedSections: new Set() }));
 
     try {
         if (mode === 'full') {
-            const result = await generateFullContentDraft({
-                ...commonInput,
-                finalOutline: state.finalOutline.map(item => item.text),
-            });
-            setState(s => ({ ...s, draftContent: result.generatedContent }));
+            const result = await generateFullContentDraft(commonDraftingInput());
+            setState(s => ({ ...s, draftContent: result.generatedContent, draftedSections: new Set(s.finalOutline.map((_, i) => i)) }));
         }
     } catch (error) {
         console.error("Drafting failed:", error);
@@ -147,23 +148,12 @@ export default function WrittenContentClient() {
 
     const sectionToDraft = state.finalOutline[index].text;
     
-    const { otherAudience, ...rest } = state.contentIdea;
-    const commonInput = {
-        ...rest,
-        mainTopic: state.contentIdea.mainTopic!,
-        targetAudience: state.contentIdea.targetAudience === 'Other' ? otherAudience || '' : state.contentIdea.targetAudience || '',
-        keywords: state.contentIdea.keywords,
-        contentType: state.contentIdea.contentType!,
-        purpose: state.contentIdea.purpose!,
-        desiredTone: state.contentIdea.desiredTone!,
-    };
-    
     try {
         const result = await generateSectionDraft({
-            ...commonInput,
+            ...(commonDraftingInput()),
             sectionToDraft,
             fullOutline: state.finalOutline.map(item => item.text),
-            priorContent: state.draftContent, // Pass the whole draft so far for context
+            priorContent: state.draftContent,
         });
         
         setState(s => ({
@@ -180,19 +170,24 @@ export default function WrittenContentClient() {
     }
   };
 
-  const handleOptimization = async (settings: OptimizationSettings) => {
+  const handleRegenerate = async () => {
+    if (state.generationMode === 'full') {
+        await handleDrafting('full');
+    } else {
+        toast({title: "Regeneration in section mode is not yet implemented."});
+        // Here you could potentially clear the last section and regenerate it
+    }
+  };
+
+  const handleOptimization = async (optimizations: OptimizationOptions, tone: string) => {
     setState(s => ({ ...s, isLoading: true, optimizationSuggestions: '' }));
     try {
-        const optimizationPromises: Promise<any>[] = [];
-        if (settings.optimizeSeo) optimizationPromises.push(optimizeContent({ content: state.draftContent, optimizationType: 'seo' }));
-        if (settings.improveReadability) optimizationPromises.push(optimizeContent({ content: state.draftContent, optimizationType: 'readability' }));
-        if (settings.adjustTone) optimizationPromises.push(optimizeContent({ content: state.draftContent, optimizationType: 'tone', toneParameter: settings.newTone }));
-        if (settings.generateCta) optimizationPromises.push(optimizeContent({ content: state.draftContent, optimizationType: 'cta' }));
-        if (settings.suggestHeadlines) optimizationPromises.push(optimizeContent({ content: state.draftContent, optimizationType: 'headlines' }));
-
-        const results = await Promise.all(optimizationPromises);
-        const allSuggestions = results.map(r => r.optimizedContent).join('\n\n---\n\n');
-        setState(s => ({ ...s, optimizationSuggestions: allSuggestions }));
+        const result = await optimizeContent({
+            content: state.draftContent,
+            optimizations,
+            toneParameter: tone,
+        });
+        setState(s => ({ ...s, optimizationSuggestions: result.optimizedContent }));
         
     } catch (error) {
         console.error("Optimization failed:", error);
@@ -200,6 +195,11 @@ export default function WrittenContentClient() {
     } finally {
         setState(s => ({ ...s, isLoading: false }));
     }
+  };
+
+  const handleApplyOptimizationChanges = (newContent: string) => {
+    setState(s => ({ ...s, draftContent: newContent, optimizationSuggestions: '' }));
+    toast({ title: 'Changes Applied!', description: 'Your draft has been updated with the AI suggestions.' });
   };
 
   const handleSave = async () => {
@@ -271,7 +271,7 @@ export default function WrittenContentClient() {
                         onContentChange={(newContent) => setState(s => ({ ...s, draftContent: newContent }))}
                         onGenerate={handleDrafting}
                         onGenerateSection={handleGenerateSection}
-                        onRegenerate={() => { /* TODO */ }}
+                        onRegenerate={handleRegenerate}
                         generationMode={state.generationMode}
                         onGenerationModeChange={(mode) => setState(s => ({ ...s, generationMode: mode, draftContent: '', draftedSections: new Set() }))}
                         isLoading={state.isLoading}
@@ -279,7 +279,13 @@ export default function WrittenContentClient() {
                         draftedSections={state.draftedSections}
                       />;
           case 4:
-              return <ContentOptimizer originalContent={state.draftContent} suggestions={state.optimizationSuggestions} onApplyOptimization={handleOptimization} isLoading={state.isLoading} />;
+              return <ContentOptimizer 
+                        originalContent={state.draftContent} 
+                        suggestions={state.optimizationSuggestions} 
+                        onRunOptimization={handleOptimization} 
+                        onApplyChanges={handleApplyOptimizationChanges}
+                        isLoading={state.isLoading} 
+                      />;
           case 5:
               return <ContentExporter 
                         finalContent={state.draftContent} 
@@ -297,7 +303,10 @@ export default function WrittenContentClient() {
     if (state.isLoading) return true;
     if (currentStep === 1 && !isStep1Complete) return true;
     if (currentStep === 2 && state.finalOutline.length === 0) return true;
-    if (currentStep === 3 && state.draftContent.trim() === '') return true;
+    if (currentStep === 3) {
+        if (state.generationMode === 'full' && state.draftedSections.size === 0) return true;
+        if (state.generationMode === 'section' && state.draftedSections.size < state.finalOutline.length) return true;
+    }
     if (currentStep === 5) return true; // No "Next" on the last step
     return false;
   };

@@ -113,11 +113,11 @@ export default function ContentDrafting({
           onChange={(e) => onContentChange(e.target.value)}
           placeholder="Your generated content will appear here..."
           className="min-h-[500px] text-base leading-relaxed p-4 bg-secondary"
-          readOnly={generationMode === 'section'}
+          readOnly={generationMode === 'section' && draftedSections.size > 0}
         />
         <div className="absolute bottom-3 right-3 flex items-center gap-4">
             <span className="text-sm text-muted-foreground">{wordCount} words</span>
-            <Button variant="ghost" size="icon" onClick={onRegenerate} title="Re-generate content">
+            <Button variant="ghost" size="icon" onClick={onRegenerate} disabled={isLoading || isLoadingSectionIndex !== null} title="Re-generate content">
                 <RefreshCw className="h-4 w-4" />
             </Button>
         </div>

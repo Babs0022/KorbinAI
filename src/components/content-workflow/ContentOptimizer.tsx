@@ -8,23 +8,23 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Wand2 } from 'lucide-react';
+import { Wand2, LoaderCircle, Check } from 'lucide-react';
+import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
 
-export interface OptimizationSettings {
-  optimizeSeo: boolean;
-  improveReadability: boolean;
-  adjustTone: boolean;
-  newTone: string;
-  generateCta: boolean;
-  suggestHeadlines: boolean;
+export interface OptimizationOptions {
+  seo: boolean;
+  readability: boolean;
+  tone: boolean;
+  cta: boolean;
+  headlines: boolean;
 }
 
 interface ContentOptimizerProps {
   originalContent: string;
-  // This prop will eventually receive the results of the optimization.
   suggestions?: string; 
   isLoading?: boolean;
-  onApplyOptimization: (settings: OptimizationSettings) => void;
+  onRunOptimization: (settings: OptimizationOptions, tone: string) => void;
+  onApplyChanges: (newContent: string) => void;
 }
 
 const toneOptions = ["More Humorous", "More Formal", "More Persuasive", "More Casual", "More Empathetic"];
@@ -33,30 +33,36 @@ export default function ContentOptimizer({
     originalContent, 
     suggestions, 
     isLoading,
-    onApplyOptimization 
+    onRunOptimization,
+    onApplyChanges,
 }: ContentOptimizerProps) {
-  const [settings, setSettings] = useState<OptimizationSettings>({
-    optimizeSeo: false,
-    improveReadability: true,
-    adjustTone: false,
-    newTone: toneOptions[0],
-    generateCta: false,
-    suggestHeadlines: false,
+  const [options, setOptions] = useState<OptimizationOptions>({
+    seo: false,
+    readability: true,
+    tone: false,
+    cta: false,
+    headlines: false,
   });
+  const [tone, setTone] = useState(toneOptions[0]);
 
-  const handleSwitchChange = (field: keyof OptimizationSettings) => (checked: boolean) => {
-    setSettings(prev => ({ ...prev, [field]: checked }));
-  };
-
-  const handleToneChange = (newTone: string) => {
-    setSettings(prev => ({ ...prev, newTone }));
+  const handleSwitchChange = (field: keyof OptimizationOptions) => (checked: boolean) => {
+    setOptions(prev => ({ ...prev, [field]: checked }));
   };
   
   const handleApplyClick = () => {
-    onApplyOptimization(settings);
+    onRunOptimization(options, tone);
   };
 
-  const isAnyOptimizationSelected = Object.values(settings).some(value => typeof value === 'boolean' && value);
+  const handleApplyChanges = () => {
+    if (!suggestions) return;
+    // This is a simplified approach. It assumes the first part of a suggestion
+    // before a '---' is the main content to apply.
+    const mainContent = suggestions.split('---')[0].trim();
+    onApplyChanges(mainContent);
+  };
+
+  const isAnyOptimizationSelected = Object.values(options).some(value => value);
+  const isRewriteOptimization = options.seo || options.readability || options.tone;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -87,32 +93,32 @@ export default function ContentOptimizer({
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border p-4">
                 <Label htmlFor="seo-switch" className="flex-grow">Optimize for SEO</Label>
-                <Switch id="seo-switch" checked={settings.optimizeSeo} onCheckedChange={handleSwitchChange('optimizeSeo')} />
+                <Switch id="seo-switch" checked={options.seo} onCheckedChange={handleSwitchChange('seo')} />
             </div>
              <div className="flex items-center justify-between rounded-lg border p-4">
                 <Label htmlFor="readability-switch" className="flex-grow">Improve Readability</Label>
-                <Switch id="readability-switch" checked={settings.improveReadability} onCheckedChange={handleSwitchChange('improveReadability')} />
+                <Switch id="readability-switch" checked={options.readability} onCheckedChange={handleSwitchChange('readability')} />
             </div>
              <div className="flex items-center justify-between rounded-lg border p-4">
                 <Label htmlFor="cta-switch" className="flex-grow">Generate Call to Action (CTA)</Label>
-                <Switch id="cta-switch" checked={settings.generateCta} onCheckedChange={handleSwitchChange('generateCta')} />
+                <Switch id="cta-switch" checked={options.cta} onCheckedChange={handleSwitchChange('cta')} />
             </div>
             <div className="flex items-center justify-between rounded-lg border p-4">
                 <Label htmlFor="headlines-switch" className="flex-grow">Suggest Relevant Headlines</Label>
-                <Switch id="headlines-switch" checked={settings.suggestHeadlines} onCheckedChange={handleSwitchChange('suggestHeadlines')} />
+                <Switch id="headlines-switch" checked={options.headlines} onCheckedChange={handleSwitchChange('headlines')} />
             </div>
             <div className="rounded-lg border p-4 space-y-3">
                 <div className="flex items-center justify-between">
                     <Label htmlFor="tone-switch" className="flex-grow">Adjust Tone</Label>
-                    <Switch id="tone-switch" checked={settings.adjustTone} onCheckedChange={handleSwitchChange('adjustTone')} />
+                    <Switch id="tone-switch" checked={options.tone} onCheckedChange={handleSwitchChange('tone')} />
                 </div>
-                {settings.adjustTone && (
-                    <Select value={settings.newTone} onValueChange={handleToneChange}>
+                {options.tone && (
+                    <Select value={tone} onValueChange={setTone}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a new tone" />
                         </SelectTrigger>
                         <SelectContent>
-                            {toneOptions.map(tone => <SelectItem key={tone} value={tone}>{tone}</SelectItem>)}
+                            {toneOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 )}
@@ -122,19 +128,37 @@ export default function ContentOptimizer({
         
         <div className="flex justify-end">
             <Button size="lg" onClick={handleApplyClick} disabled={!isAnyOptimizationSelected || isLoading}>
-                <Wand2 className="mr-2 h-4 w-4" />
-                {isLoading ? 'Optimizing...' : 'Apply Optimizations'}
+                {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                {isLoading ? 'Optimizing...' : 'Run AI Optimizer'}
             </Button>
         </div>
 
         <Card>
             <CardHeader>
-                <CardTitle>AI Suggestions</CardTitle>
-                <CardDescription>Suggestions and changes will appear here.</CardDescription>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>AI Suggestions</CardTitle>
+                        <CardDescription>Suggestions and changes will appear here.</CardDescription>
+                    </div>
+                     {isRewriteOptimization && suggestions && (
+                        <Button variant="outline" onClick={handleApplyChanges} disabled={isLoading}>
+                            <Check className="mr-2 h-4 w-4" />
+                            Apply Changes
+                        </Button>
+                    )}
+                </div>
             </CardHeader>
             <CardContent>
-                <div className="min-h-[150px] rounded-md bg-secondary p-4 text-sm">
-                    {suggestions || "No suggestions yet. Apply an optimization to see results."}
+                 <div className="min-h-[200px] max-h-[40vh] overflow-y-auto rounded-md bg-secondary p-4 text-sm">
+                    {isLoading ? (
+                        <div className="flex items-center justify-center h-full">
+                            <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                    ) : suggestions ? (
+                        <MarkdownRenderer>{suggestions}</MarkdownRenderer>
+                    ) : (
+                        <p className="text-muted-foreground">No suggestions yet. Run the optimizer to see results.</p>
+                    )}
                 </div>
             </CardContent>
         </Card>

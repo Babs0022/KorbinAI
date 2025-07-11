@@ -40,7 +40,7 @@ const prompt = ai.definePrompt({
 
 **CRITICAL INSTRUCTION: Do NOT use the em dash (—) in your writing. Find alternative ways to structure your sentences.**
 
-Return ONLY a JSON object that matches the schema, with the generated content in the "generatedSectionContent" field. The content should be a single, well-formatted markdown string. Do not include the section title itself in the output, only the body content.
+Return ONLY a JSON object that matches the schema, with the generated content in the "generatedSectionContent" field. **Do not include the section title itself in the output, only the body content.**
 
 **Content Type Guidance:**
 You MUST adapt your output based on the requested "{{contentType}}".

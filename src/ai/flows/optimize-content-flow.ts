@@ -10,12 +10,16 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
-const OptimizationTypeSchema = z.enum(['seo', 'readability', 'tone', 'cta', 'headlines']);
-
 const OptimizeContentInputSchema = z.object({
   content: z.string().describe('The current content string to be optimized.'),
-  optimizationType: OptimizationTypeSchema.describe("The type of optimization to perform."),
-  toneParameter: z.string().optional().describe("The new tone, required if optimizationType is 'tone'."),
+  optimizations: z.object({
+      seo: z.boolean().optional().describe("If true, optimize for SEO."),
+      readability: z.boolean().optional().describe("If true, improve readability."),
+      tone: z.boolean().optional().describe("If true, adjust the tone."),
+      cta: z.boolean().optional().describe("If true, generate CTA suggestions."),
+      headlines: z.boolean().optional().describe("If true, suggest headlines."),
+  }),
+  toneParameter: z.string().optional().describe("The new tone, required if optimizations.tone is true."),
 });
 export type OptimizeContentInput = z.infer<typeof OptimizeContentInputSchema>;
 
@@ -35,33 +39,39 @@ const optimizeContentFlow = ai.defineFlow(
     outputSchema: OptimizeContentOutputSchema,
   },
   async (input) => {
-    let instruction = '';
-    const baseInstruction = "Your writing style must be natural and engaging. **CRITICAL: Do NOT use the em dash (—) in your writing. Find alternative ways to structure your sentences.**"
+    
+    const instructions: string[] = [];
 
-    switch (input.optimizationType) {
-      case 'seo':
-        instruction = `Analyze the original content and rewrite it to be better optimized for search engines (SEO). Focus on naturally incorporating relevant keywords, improving semantic structure with clear headings if appropriate, and ensuring the language is clear and targets user search intent. The core message must remain the same. Return ONLY the fully rewritten, SEO-optimized content. ${baseInstruction}`;
-        break;
-      case 'readability':
-        instruction = `Analyze the original content and rewrite it to improve readability. Focus on simplifying complex sentences, breaking up long paragraphs, reducing jargon, and improving the overall flow. The goal is to make the content easier for a general audience to understand. Return ONLY the fully rewritten, more readable content. ${baseInstruction}`;
-        break;
-      case 'tone':
-        if (!input.toneParameter) {
-          throw new Error("toneParameter is required for 'tone' optimization type.");
-        }
-        instruction = `Rewrite the original content to have a '${input.toneParameter}' tone. The core message and information must be preserved, but the style, voice, and vocabulary should be adjusted to match the new tone. Return ONLY the fully rewritten content in the new tone. ${baseInstruction}`;
-        break;
-      case 'cta':
-        instruction = `Based on the original content, generate a list of 3-5 compelling and relevant call-to-action (CTA) phrases that would be appropriate for the end of the content. The CTAs should encourage the reader to take the next logical step. Return ONLY a markdown-formatted list of the CTA suggestions.`;
-        break;
-      case 'headlines':
-        instruction = `Based on the original content, generate a list of 5-7 engaging and relevant headlines or titles for this piece of content. The headlines should be attention-grabbing and accurately reflect the content's topic. Return ONLY a markdown-formatted list of the headline suggestions.`;
-        break;
-      default:
-        throw new Error(`Unsupported optimization type: ${input.optimizationType}`);
+    if (input.optimizations.seo) {
+        instructions.push(`- **SEO Optimization:** Rewrite the content to be better optimized for search engines. Focus on naturally incorporating relevant keywords, improving semantic structure, and ensuring the language targets user search intent. The core message must remain the same.`);
+    }
+    if (input.optimizations.readability) {
+        instructions.push(`- **Improve Readability:** Rewrite the content to be more readable. Focus on simplifying complex sentences, breaking up long paragraphs, and reducing jargon.`);
+    }
+    if (input.optimizations.tone && input.toneParameter) {
+        instructions.push(`- **Adjust Tone:** Rewrite the content to have a '${input.toneParameter}' tone. The core message and information must be preserved, but the style and vocabulary should be adjusted to match the new tone.`);
+    }
+    if (input.optimizations.cta) {
+        instructions.push(`- **Generate CTAs:** Based on the content, generate a list of 3-5 compelling and relevant call-to-action (CTA) phrases.`);
+    }
+    if (input.optimizations.headlines) {
+        instructions.push(`- **Suggest Headlines:** Based on the content, generate a list of 5-7 engaging and relevant headlines or titles.`);
     }
 
-    const prompt = `You are an expert copy editor and content strategist. Your task is to optimize the following text based on a specific instruction.
+    // Determine the primary task: rewriting the content or generating suggestions.
+    const isRewriting = input.optimizations.seo || input.optimizations.readability || input.optimizations.tone;
+    const isSuggesting = input.optimizations.cta || input.optimizations.headlines;
+
+    let finalInstruction;
+    if (isRewriting) {
+        finalInstruction = `Please perform the following tasks on the original content. Combine all content-rewriting tasks (SEO, readability, tone) into a single, cohesive, rewritten piece of text. If suggestion tasks (CTAs, headlines) are also selected, append them at the very end, separated by '---'. Your writing style must be natural and engaging. **CRITICAL: Do NOT use the em dash (—).**\n\n${instructions.join('\n')}`;
+    } else if (isSuggesting) {
+        finalInstruction = `Please generate suggestions based on the original content, following these instructions. Present each set of suggestions under its own markdown heading (e.g., '### Call-to-Action Suggestions').\n\n${instructions.join('\n')}`;
+    } else {
+        return { optimizedContent: "No optimization was selected." };
+    }
+
+    const prompt = `You are an expert copy editor and content strategist. Your task is to optimize the following text based on a specific set of instructions.
 
 Return ONLY a JSON object that matches the schema, with the result in the "optimizedContent" field. The result should be a markdown-formatted string.
 
@@ -70,8 +80,8 @@ Original Content:
 ${input.content}
 ---
 
-Instruction:
-${instruction}
+Instructions:
+${finalInstruction}
 `;
 
     const response = await ai.generate({
