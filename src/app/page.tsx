@@ -3,7 +3,7 @@
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Feather, Code2, LayoutTemplate, Image, Bolt, MessageSquare, ArrowRight } from "lucide-react";
+import { Feather, Code2, LayoutTemplate, Image, Bolt, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import FeatureTourGuide from "@/components/shared/FeatureTourGuide";
@@ -45,13 +45,6 @@ export default function HomePage() {
       title: "Structured Data",
       subtitle: "JSON for components, CSV lists",
       href: "/structured-data",
-    },
-    {
-      id: "feature-chat",
-      icon: <MessageSquare className="h-8 w-8" />,
-      title: "BrieflyAI Chat",
-      subtitle: "Your creative copilot for any task",
-      href: "/chat",
     },
   ];
 

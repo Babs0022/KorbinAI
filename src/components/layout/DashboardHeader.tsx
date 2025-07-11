@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Home, LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, MessageSquare } from "lucide-react";
+import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
@@ -40,10 +40,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
         <Link href="/" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <LayoutGrid />
             <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Dashboard</span>
-        </Link>
-        <Link href="/chat" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
-            <MessageSquare />
-            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Chat</span>
         </Link>
         <Link href="/dashboard/projects" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <FolderKanban />
