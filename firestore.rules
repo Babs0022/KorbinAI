@@ -3,33 +3,35 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Users can only read/write their own document
+    // Users can manage their own user document
     match /users/{userId} {
-      allow read, write: if request.auth.uid == userId;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-    
-    // Users can only read/write their own projects
+
+    // Users can read/write their own projects
     match /projects/{projectId} {
-      allow read, write: if request.auth.uid == resource.data.userId;
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
-    // Users can read/write feedback they created
+    // Users can create feedback for their projects
     match /feedback/{feedbackId} {
-        allow read, write: if request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Reading/updating feedback might be an admin-only task
+      allow read, update, delete: if false; 
     }
 
-    // Users can only read their own subscription documents
+    // Users can read their own subscription status
     match /userSubscriptions/{userId} {
-      allow read: if request.auth.uid == userId;
-      // Write access is typically handled by secure Cloud Functions
-      allow write: if false; 
+      allow get: if request.auth != null && request.auth.uid == userId;
+      // Subscriptions are only managed by backend functions, not clients
+      allow list, create, update, delete: if false;
     }
-    
-    // Transactions are written by Cloud Functions, only allow reads by the user who owns it
+
+    // Users can read their own transaction history
     match /transactions/{transactionId} {
-        allow read: if request.auth.uid == resource.data.userId;
-        allow write: if false;
+      allow get, list: if request.auth != null && request.resource.data.userId == request.auth.uid;
+       // Transactions are only managed by backend functions, not clients
+      allow create, update, delete: if false;
     }
   }
 }
