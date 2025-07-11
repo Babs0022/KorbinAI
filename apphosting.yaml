@@ -4,36 +4,38 @@ runConfig:
   minInstances: 0
 
 # Environment variables and secrets.
-# IMPORTANT: You must replace the placeholder values below with your actual
-# API keys for the deployed application to function correctly.
+# IMPORTANT: The secret names below must be created in Google Cloud Secret
+# Manager for the deployed application to function correctly.
 env:
   # Firebase SDK configuration (client-side)
-  # CRITICAL: Go to your Firebase project settings, find your Web App, and copy the API Key here.
-  # This is required for user login and authentication to work.
+  # These are now references to secrets stored in Secret Manager.
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: "AIzaSyBVHOI_nXcxs3JRyXhghG44u7WpLM0U4YA"
+    secret: FIREBASE_API_KEY
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    value: brieflyai-gtgc2.firebaseapp.com
+    secret: FIREBASE_AUTH_DOMAIN
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    value: brieflyai-gtgc2
+    secret: FIREBASE_PROJECT_ID
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: "brieflyai-gtgc2.appspot.com"
+    secret: FIREBASE_STORAGE_BUCKET
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    value: "429810342473"
+    secret: FIREBASE_MESSAGING_SENDER_ID
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    value: "1:429810342473:web:b25b7915db5e6006f97d98"
+    secret: FIREBASE_APP_ID
   
   # Gemini API Key (server-side for Genkit AI flows)
-  # CRITICAL: Go to Google AI Studio (aistudio.google.com) to generate an API key and paste it here.
-  # This is required for all AI features, including saving projects, to work.
+  # This is a reference to a secret stored in Secret Manager.
   - variable: GEMINI_API_KEY
-    value: "AIzaSyDW9pe-n-Q7NFxhBD3O3K5Z1Mp9kSzYt_I"
+    secret: GEMINI_API_KEY
 
   # Paystack Public Key (client-side for initiating payments)
-  # CRITICAL: Go to your Paystack Dashboard -> Settings -> API Keys & Webhooks to find your "Public key".
-  # This is required for the billing page to work.
+  # This is a reference to a secret stored in Secret Manager.
   - variable: NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
-    value: "pk_live_6eebe3887afe15dff519d1f6434edcd015a4e169"
+    secret: PAYSTACK_PUBLIC_KEY
+    
+  # NOWPayments API Key (client-side)
+  # This is a reference to a secret stored in Secret Manager.
+  - variable: NEXT_PUBLIC_NOWPAYMENTS_API_KEY
+    secret: NOWPAYMENTS_API_KEY
 
   # Support Email for contact links
   - variable: NEXT_PUBLIC_SUPPORT_EMAIL
