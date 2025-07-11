@@ -39,7 +39,7 @@ export async function generateApp(input: GenerateAppInput): Promise<GenerateAppO
 
 const prompt = ai.definePrompt({
   name: 'generateAppPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-pro-latest',
   input: {schema: GenerateAppInputSchema},
   output: {schema: GenerateAppOutputSchema},
   prompt: `You are an expert Next.js developer specializing in creating beautiful, production-ready applications using ShadCN UI and Tailwind CSS. Your task is to generate the files for a web application based on a structured request.
