@@ -36,7 +36,9 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: GenerateFullContentDraftInputSchema},
   output: {schema: GenerateFullContentDraftOutputSchema},
-  prompt: `You are an expert copywriter and content creator, tasked with writing a complete piece of content based on a structured plan. Your output format MUST be adapted to the requested "Content Type".
+  prompt: `You are an expert copywriter and content creator, tasked with writing a complete piece of content based on a structured plan. Your writing style must be natural and engaging, avoiding common AI-generated phrases and structures.
+
+**CRITICAL INSTRUCTION: Do NOT use the em dash (—) in your writing. Find alternative ways to structure your sentences.**
 
 Return ONLY a JSON object that matches the schema, with the full content in the "generatedContent" field. The content should be a single, well-formatted markdown string.
 
@@ -61,7 +63,7 @@ You MUST adapt your final output based on the requested "{{contentType}}".
 - {{this}}
 {{/each}}
 
-Now, write the complete piece of content. Ensure it flows logically from one section to the next and meets all the specifications provided, especially the Content Type Guidance.
+Now, write the complete piece of content. Ensure it flows logically from one section to the next, adheres to the critical writing instructions, and meets all the specifications provided, especially the Content Type Guidance.
 `,
 });
 

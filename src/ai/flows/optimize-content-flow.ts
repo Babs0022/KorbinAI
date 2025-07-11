@@ -36,19 +36,20 @@ const optimizeContentFlow = ai.defineFlow(
   },
   async (input) => {
     let instruction = '';
+    const baseInstruction = "Your writing style must be natural and engaging. **CRITICAL: Do NOT use the em dash (—) in your writing. Find alternative ways to structure your sentences.**"
 
     switch (input.optimizationType) {
       case 'seo':
-        instruction = `Analyze the original content and rewrite it to be better optimized for search engines (SEO). Focus on naturally incorporating relevant keywords, improving semantic structure with clear headings if appropriate, and ensuring the language is clear and targets user search intent. The core message must remain the same. Return ONLY the fully rewritten, SEO-optimized content.`;
+        instruction = `Analyze the original content and rewrite it to be better optimized for search engines (SEO). Focus on naturally incorporating relevant keywords, improving semantic structure with clear headings if appropriate, and ensuring the language is clear and targets user search intent. The core message must remain the same. Return ONLY the fully rewritten, SEO-optimized content. ${baseInstruction}`;
         break;
       case 'readability':
-        instruction = `Analyze the original content and rewrite it to improve readability. Focus on simplifying complex sentences, breaking up long paragraphs, reducing jargon, and improving the overall flow. The goal is to make the content easier for a general audience to understand. Return ONLY the fully rewritten, more readable content.`;
+        instruction = `Analyze the original content and rewrite it to improve readability. Focus on simplifying complex sentences, breaking up long paragraphs, reducing jargon, and improving the overall flow. The goal is to make the content easier for a general audience to understand. Return ONLY the fully rewritten, more readable content. ${baseInstruction}`;
         break;
       case 'tone':
         if (!input.toneParameter) {
           throw new Error("toneParameter is required for 'tone' optimization type.");
         }
-        instruction = `Rewrite the original content to have a '${input.toneParameter}' tone. The core message and information must be preserved, but the style, voice, and vocabulary should be adjusted to match the new tone. Return ONLY the fully rewritten content in the new tone.`;
+        instruction = `Rewrite the original content to have a '${input.toneParameter}' tone. The core message and information must be preserved, but the style, voice, and vocabulary should be adjusted to match the new tone. Return ONLY the fully rewritten content in the new tone. ${baseInstruction}`;
         break;
       case 'cta':
         instruction = `Based on the original content, generate a list of 3-5 compelling and relevant call-to-action (CTA) phrases that would be appropriate for the end of the content. The CTAs should encourage the reader to take the next logical step. Return ONLY a markdown-formatted list of the CTA suggestions.`;
