@@ -6,6 +6,8 @@ import { generateApp, type GenerateAppInput } from '@/ai/flows/generate-componen
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import ComponentResultDisplay from '@/components/wizards/ComponentResultDisplay';
 
+export const dynamic = 'force-dynamic';
+
 // This is the main component that fetches the data on the server
 async function GeneratedApp({ searchParams }: { searchParams: GenerateAppInput }) {
   try {
