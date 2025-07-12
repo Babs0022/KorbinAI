@@ -64,7 +64,11 @@ export default function HomePage() {
                 id={option.id}
                 className="group"
               >
-                <Card className="flex h-full transform flex-col justify-between p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/80 rounded-xl">
+                <Card className={cn(
+                  "flex h-full transform flex-col justify-between p-6 text-left transition-all duration-300 rounded-xl",
+                  "bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/20 to-card",
+                  "hover:-translate-y-2 hover:border-primary"
+                )}>
                   <div>
                     <div className="mb-4 text-primary">{option.icon}</div>
                     <CardHeader className="p-0">
