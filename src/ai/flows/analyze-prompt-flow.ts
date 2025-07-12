@@ -20,7 +20,7 @@ export async function analyzePrompt(input: AnalyzePromptInput): Promise<AnalyzeP
 
 const promptTemplate = ai.definePrompt({
   name: 'analyzePromptPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-pro-latest',
   input: {schema: AnalyzePromptInputSchema},
   output: {schema: AnalyzePromptOutputSchema},
   prompt: `You are a helpful assistant that directs users to the correct tool for their task.
