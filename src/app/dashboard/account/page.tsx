@@ -39,6 +39,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { UserSubscription } from "@/types/subscription";
 import { format } from 'date-fns';
+import { Badge } from "@/components/ui/badge";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -345,9 +346,12 @@ export default function AccountManagementPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                  {renderSubscriptionStatus()}
-                 <Button asChild>
-                    <Link href="/dashboard/billing">Manage Subscription</Link>
-                 </Button>
+                 <div className="relative w-fit">
+                    <Button asChild>
+                        <Link href="/dashboard/billing">Manage Subscription</Link>
+                    </Button>
+                    <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>
+                 </div>
               </CardContent>
             </Card>
           </div>

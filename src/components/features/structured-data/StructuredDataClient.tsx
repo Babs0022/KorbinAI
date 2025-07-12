@@ -426,11 +426,13 @@ export default function StructuredDataClient() {
             </Card>
 
             <div className="flex justify-center md:justify-end md:pt-8 relative">
-                <Button onClick={handleSave} disabled={isSaving || !!projectId} size="lg">
-                    <Save className="mr-2 h-4 w-4" />
-                    {projectId ? 'Saved' : 'Save Project'}
-                </Button>
-                 {isSaving && <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>}
+                <div className="relative">
+                    <Button disabled={true} size="lg">
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Project
+                    </Button>
+                    <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>
+                </div>
             </div>
           </div>
         </div>

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Save, Copy, Download, FileText, RefreshCw, ThumbsUp, ThumbsDown, Check } from 'lucide-react';
 import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 interface ContentExporterProps {
   finalContent: string;
@@ -132,10 +133,13 @@ export default function ContentExporter({
             <RefreshCw className="mr-2 h-4 w-4" />
             Start New Content
         </Button>
-        <Button onClick={onSaveContent} disabled={isSaving}>
-            {isSaving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Save to My Projects
-        </Button>
+        <div className="relative">
+          <Button disabled={true}>
+              <Save className="mr-2 h-4 w-4" />
+              Save to My Projects
+          </Button>
+          <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>
+        </div>
       </div>
     </div>
   );
