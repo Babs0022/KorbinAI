@@ -1,11 +1,22 @@
 
 'use server';
 
-import { firestoreDb, adminStorage } from '@/lib/firebase-admin';
+import admin from 'firebase-admin';
 import { generateProjectMetadata } from '@/ai/flows/generate-project-metadata-flow';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { Project, ProjectContent } from '@/types/project';
 import { v4 as uuidv4 } from 'uuid';
+
+/**
+ * Initializes the Firebase Admin SDK if not already initialized.
+ * This is a helper function to ensure the SDK is ready for use in server-side functions.
+ */
+function initializeAdmin() {
+  if (admin.apps.length === 0) {
+    admin.initializeApp();
+  }
+}
+
 
 interface SaveProjectInput {
   userId: string;
@@ -20,12 +31,13 @@ interface SaveProjectInput {
  * @returns A promise that resolves to an array of public URLs for the uploaded images.
  */
 async function uploadImagesToStorage(userId: string, dataUris: string[]): Promise<string[]> {
+  initializeAdmin();
   const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
   if (!bucketName) {
     console.error('Firebase Storage bucket name is not configured in environment variables (NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET).');
     throw new Error('Firebase Storage bucket name is not configured on the server.');
   }
-  const bucket = adminStorage.bucket(bucketName);
+  const bucket = admin.storage().bucket(bucketName);
 
   const uploadPromises = dataUris.map(async (dataUri) => {
     // Extract mime type and base64 data from the data URI
@@ -70,6 +82,7 @@ async function uploadImagesToStorage(userId: string, dataUris: string[]): Promis
  * This is called by client components when the user clicks "Save Project".
  */
 export async function saveProject({ userId, type, content }: SaveProjectInput): Promise<string> {
+  initializeAdmin();
   if (!userId || !type || !content) {
     throw new Error('User ID, type, and content are required to save a project.');
   }
@@ -99,7 +112,7 @@ export async function saveProject({ userId, type, content }: SaveProjectInput): 
     content: contentForMetadata,
   });
   
-  const projectRef = firestoreDb.collection('projects').doc();
+  const projectRef = admin.firestore().collection('projects').doc();
 
   const newProjectData = {
     userId,
@@ -122,7 +135,8 @@ export async function saveProject({ userId, type, content }: SaveProjectInput): 
  * Used by the "My Projects" page.
  */
 export async function getProjectsForUser(userId: string): Promise<Project[]> {
-  const snapshot = await firestoreDb.collection('projects')
+  initializeAdmin();
+  const snapshot = await admin.firestore().collection('projects')
     .where('userId', '==', userId)
     .orderBy('updatedAt', 'desc')
     .get();
@@ -148,7 +162,8 @@ export async function getProjectsForUser(userId: string): Promise<Project[]> {
  * Note: This does not check for user ownership. Page-level security should handle that.
  */
 export async function getProjectById(projectId: string): Promise<Project | null> {
-    const docRef = firestoreDb.collection('projects').doc(projectId);
+    initializeAdmin();
+    const docRef = admin.firestore().collection('projects').doc(projectId);
     const docSnap = await docRef.get();
 
     if (!docSnap.exists) {
