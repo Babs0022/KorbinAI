@@ -24,4 +24,4 @@ All generated assets can be saved as **Projects**, allowing you to keep your wor
 
 The core value of BrieflyAI is **accelerating the product creation lifecycle**. It streamlines the entire workflow—from ideation to execution—within one intelligent platform. By integrating the tools needed to generate text, images, data, and code, BrieflyAI empowers you to bring your digital ideas to life faster and more efficiently than ever before.
 
-To get started, simply visit the home page and choose what you'd like to create today.
+To get started, simply visit the dash.brieflyai.xyz and choose what you'd like to create today.
