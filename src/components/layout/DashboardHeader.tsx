@@ -14,10 +14,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard } from "lucide-react";
+import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, FileText, Shield, PanelLeft } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 interface DashboardHeaderProps {
     variant?: 'main' | 'sidebar';
@@ -63,6 +64,17 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
         <Link href="/dashboard/settings" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <Settings />
             <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Settings</span>
+        </Link>
+        
+        <Separator className="my-2" />
+
+        <Link href="/terms-of-service" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+            <FileText />
+            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Terms of Service</span>
+        </Link>
+        <Link href="/privacy-policy" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+            <Shield />
+            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Privacy Policy</span>
         </Link>
     </nav>
   );
@@ -124,7 +136,12 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-sm">
       <div className="flex h-16 items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-2">
-            <SidebarTrigger />
+            <SidebarTrigger>
+                <Button variant="ghost" size="icon">
+                    <PanelLeft />
+                    <span className="sr-only">Toggle Sidebar</span>
+                </Button>
+            </SidebarTrigger>
             <div className="h-6 border-l mx-2 hidden md:block"></div>
             <h1 className="text-lg font-semibold">Dashboard</h1>
         </div>
