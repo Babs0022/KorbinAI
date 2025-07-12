@@ -22,7 +22,14 @@
     "rewrites": [
       {
         "source": "**",
-        "app": {}
+        "app": {
+          "secretEnvironmentVariables": [
+            {
+              "key": "NEXT_PUBLIC_FIREBASE_API_KEY",
+              "secret": "NEXT_PUBLIC_FIREBASE_API_KEY"
+            }
+          ]
+        }
       }
     ]
   }
