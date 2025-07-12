@@ -3,44 +3,59 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Users can only read and write to their own user document.
+    
+    // --- User Data ---
+    // Users can only read and write their own user document.
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Projects can be managed only by their owner.
-    // This is broken down into specific rules for get, list, and write operations.
+    // --- Projects (Metadata) ---
+    // Handles rules for the 'projects' collection which stores metadata.
     match /projects/{projectId} {
-      // Allow reading a single project if the user is the owner.
+      // Allow a user to get a single project if they are the owner.
       allow get: if request.auth != null && resource.data.userId == request.auth.uid;
-
-      // Allow listing projects only when the query is filtered by the user's own UID.
-      allow list: if request.auth != null && request.auth.uid == request.query.where.userId;
-
-      // Allow creating, updating, or deleting a project if the user is the owner.
-      allow write: if request.auth != null && request.auth.uid == request.resource.data.userId;
-    }
-
-    // Transactions can only be read by the user they belong to.
-    // Writes should only be handled by backend services (Cloud Functions).
-    match /transactions/{transactionId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow write: if false; // Disallow client-side writes
-    }
-
-    // User subscriptions can only be read by the user they belong to.
-    // Writes should only be handled by backend services (Cloud Functions).
-    match /userSubscriptions/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if false; // Disallow client-side writes
+      
+      // Allow a user to list projects only if they are querying by their own userId.
+      allow list: if request.auth != null && request.query.where[0][0] == 'userId' && request.query.where[0][2] == request.auth.uid;
+      
+      // Allow a user to create, update, or delete a project if they are the owner.
+      allow create, update, delete: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
     
-    // Feedback can be created by any authenticated user.
-    // Reading/updating/deleting feedback should be restricted to admins (not implemented here).
+    // --- Generations (Content) ---
+    // Handles rules for the 'generations' collection which stores raw content.
+    match /generations/{generationId} {
+        // Users can read their own generation data.
+        allow get: if request.auth != null && resource.data.userId == request.auth.uid;
+        // Creation should be handled by server-side logic (e.g., Cloud Functions or Server Actions).
+        // Disallow direct client creation to prevent misuse.
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+        // Generally, generations should be immutable from the client.
+        allow update, delete: if false;
+    }
+
+    // --- Feedback ---
     match /feedback/{feedbackId} {
-        allow create: if request.auth != null;
-        allow read, update, delete: if false; // Protect user feedback from being publicly readable
+      // Only allow authenticated users to create feedback.
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      // Nobody can read, update, or delete feedback from the client.
+      allow read, update, delete: if false;
+    }
+
+    // --- User Subscriptions ---
+    // Handled by server-side functions. Client can only read their own.
+    match /userSubscriptions/{userId} {
+      allow get: if request.auth != null && request.auth.uid == userId;
+      allow list, create, update, delete: if false;
+    }
+
+    // --- Transactions ---
+    // Handled by server-side functions. Client can only read their own.
+    match /transactions/{transactionId} {
+      allow get: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow list: if request.auth != null && request.query.where[0][0] == 'userId' && request.query.where[0][2] == request.auth.uid;
+      allow create, update, delete: if false;
     }
   }
 }
