@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Initializes the Firebase Admin SDK if not already initialized.
- * This is a helper function to ensure the SDK is ready for use in server-side functions.
+ * This function is called before any admin operation.
  */
 function initializeAdmin() {
   if (admin.apps.length === 0) {
@@ -31,7 +31,7 @@ interface SaveProjectInput {
  * @returns A promise that resolves to an array of public URLs for the uploaded images.
  */
 async function uploadImagesToStorage(userId: string, dataUris: string[]): Promise<string[]> {
-  initializeAdmin();
+  initializeAdmin(); // Ensure admin is initialized
   const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
   if (!bucketName) {
     console.error('Firebase Storage bucket name is not configured in environment variables (NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET).');
@@ -82,7 +82,7 @@ async function uploadImagesToStorage(userId: string, dataUris: string[]): Promis
  * This is called by client components when the user clicks "Save Project".
  */
 export async function saveProject({ userId, type, content }: SaveProjectInput): Promise<string> {
-  initializeAdmin();
+  initializeAdmin(); // Ensure admin is initialized
   if (!userId || !type || !content) {
     throw new Error('User ID, type, and content are required to save a project.');
   }
@@ -135,7 +135,7 @@ export async function saveProject({ userId, type, content }: SaveProjectInput): 
  * Used by the "My Projects" page.
  */
 export async function getProjectsForUser(userId: string): Promise<Project[]> {
-  initializeAdmin();
+  initializeAdmin(); // Ensure admin is initialized
   const snapshot = await admin.firestore().collection('projects')
     .where('userId', '==', userId)
     .orderBy('updatedAt', 'desc')
@@ -162,7 +162,7 @@ export async function getProjectsForUser(userId: string): Promise<Project[]> {
  * Note: This does not check for user ownership. Page-level security should handle that.
  */
 export async function getProjectById(projectId: string): Promise<Project | null> {
-    initializeAdmin();
+    initializeAdmin(); // Ensure admin is initialized
     const docRef = admin.firestore().collection('projects').doc(projectId);
     const docSnap = await docRef.get();
 

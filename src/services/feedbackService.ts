@@ -29,7 +29,7 @@ interface SubmitFeedbackInput {
  * @returns {Promise<string>} The ID of the newly created feedback document.
  */
 export async function submitFeedback({ userId, projectId, rating, comment }: SubmitFeedbackInput): Promise<string> {
-  initializeAdmin();
+  initializeAdmin(); // Ensure admin is initialized
   if (!userId || !projectId || !rating) {
     throw new Error('User ID, Project ID, and rating are required to submit feedback.');
   }
