@@ -43,20 +43,18 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <LayoutGrid />
             <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Dashboard</span>
         </Link>
-        <div className="flex items-center gap-3 p-2 rounded-md opacity-50 cursor-not-allowed">
+        <Link href="/dashboard/projects" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <FolderKanban />
             <div className={cn("flex w-full items-center justify-between transition-opacity", state === 'collapsed' && 'opacity-0')}>
               <span>Projects</span>
-              <Badge variant="outline" className="text-xs">Coming Soon</Badge>
             </div>
-        </div>
-        <div className="flex items-center gap-3 p-2 rounded-md opacity-50 cursor-not-allowed">
+        </Link>
+        <Link href="/dashboard/billing" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <CreditCard />
             <div className={cn("flex w-full items-center justify-between transition-opacity", state === 'collapsed' && 'opacity-0')}>
               <span>Billing</span>
-              <Badge variant="outline" className="text-xs">Coming Soon</Badge>
             </div>
-        </div>
+        </Link>
         <Link href="/dashboard/account" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <User />
             <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Account</span>
@@ -68,14 +66,14 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
         
         <Separator className="my-2" />
 
-        <Link href="/terms-of-service" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+        <a href="https://brieflyai.xyz/terms" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <FileText />
             <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Terms of Service</span>
-        </Link>
-        <Link href="/privacy-policy" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+        </a>
+        <a href="https://brieflyai.xyz/privacy" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <Shield />
             <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Privacy Policy</span>
-        </Link>
+        </a>
     </nav>
   );
 
