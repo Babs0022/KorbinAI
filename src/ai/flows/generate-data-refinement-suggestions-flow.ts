@@ -34,12 +34,12 @@ const prompt = ai.definePrompt({
     *   If it's a configuration object, suggest adding common keys like "version" or "lastUpdated".
     *   If the data contains things that could be translated, suggest "Translate all string values to [another language]".
     *   Always include a general suggestion like "Sanitize the data for professional presentation" or "Check for and fix any formatting errors".
-3.  **Format the Output:** For each suggestion, provide a short, user-friendly `label` for a button and a clear, explicit `instruction` for another AI to execute.
+3.  **Format the Output:** For each suggestion, provide a short, user-friendly 'label' for a button and a clear, explicit 'instruction' for another AI to execute.
 
 **Example:**
--   **Input Data:** `[{"name": "Laptop", "price": 1200}, {"name": "Mouse", "price": 25}]`
+-   **Input Data:** \`[{"name": "Laptop", "price": 1200}, {"name": "Mouse", "price": 25}]\`
 -   **Output:**
-    ```json
+    \`\`\`json
     {
       "suggestions": [
         { "label": "Add 5 more products", "instruction": "Add 5 more product records to the list, keeping the same structure." },
@@ -47,7 +47,7 @@ const prompt = ai.definePrompt({
         { "label": "Sort by price", "instruction": "Sort the list of products by the 'price' field in descending order." }
       ]
     }
-    ```
+    \`\`\`
 
 Return ONLY a JSON object that matches the schema.
 
