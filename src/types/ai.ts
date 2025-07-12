@@ -1,9 +1,24 @@
+
 /**
  * @fileoverview Centralized type definitions and Zod schemas for all AI flows.
  * This file does not contain 'use server' and can be safely imported by client and server components.
  */
 
 import { z } from 'zod';
+
+// === General Content Idea ===
+export const ContentIdeaFormDataSchema = z.object({
+  contentType: z.string(),
+  mainTopic: z.string(),
+  purpose: z.string(),
+  targetAudience: z.string(),
+  otherAudience: z.string().optional(),
+  desiredTone: z.string(),
+  desiredLength: z.string(),
+  keywords: z.array(z.string()),
+});
+export type ContentIdeaFormData = z.infer<typeof ContentIdeaFormDataSchema>;
+
 
 // === analyze-prompt-flow ===
 const ToolEnum = z.enum(['image-generator', 'written-content', 'component-wizard', 'structured-data', 'none']);
@@ -102,11 +117,10 @@ export type GenerateFullContentDraftOutput = z.infer<typeof GenerateFullContentD
 export const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('A detailed text description of the image to generate, or instructions on how to modify the context images.'),
   imageDataUris: z.array(z.string()).optional().describe("An optional array of images to use as context for the generation, as data URIs. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
-  count: z.number().min(1).max(4).default(1).describe('The number of images to generate.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 export const GenerateImageOutputSchema = z.object({
-  imageUrls: z.array(z.string()).describe('An array of data URIs for the generated images.'),
+  imageUrl: z.string().describe('A data URI for the generated image.'),
 });
 export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 
