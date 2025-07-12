@@ -88,29 +88,31 @@ export async function saveProject({ userId, type, content }: SaveProjectInput): 
   }
 
   let finalContent: ProjectContent = content;
-  let contentForMetadata: string;
+  let metadata: { name: string; summary: string };
 
-  // If the project is an image generation, upload images to storage first
+  // Handle different project types
   if (type === 'image-generator' && Array.isArray(content) && content.every(item => typeof item === 'string')) {
     const publicUrls = await uploadImagesToStorage(userId, content as string[]);
-    finalContent = publicUrls; // The content to be saved is now the array of public URLs
-    contentForMetadata = `An album of ${publicUrls.length} generated images.`;
-  } else if (typeof content === 'string') {
-    contentForMetadata = content;
-  } else if (Array.isArray(content)) {
-    // This case would be for other potential array content types in the future.
-    contentForMetadata = `An album of ${content.length} items.`;
-  } else if (typeof content === 'object' && content && 'files' in content) {
-    const fileList = (content.files as { filePath: string }[]).map(f => f.filePath).join(', ');
-    contentForMetadata = `An application with files: ${fileList}`;
+    finalContent = publicUrls;
+    metadata = {
+      name: `Generated Image Album`,
+      summary: `An album containing ${publicUrls.length} AI-generated image(s).`,
+    };
   } else {
-    contentForMetadata = 'A saved project with unspecified content.';
+    // For text-based content, generate metadata using AI
+    let contentForMetadata: string;
+    if (typeof content === 'string') {
+      contentForMetadata = content;
+    } else if (Array.isArray(content)) {
+      contentForMetadata = `An album of ${content.length} items.`;
+    } else if (typeof content === 'object' && content && 'files' in content) {
+      const fileList = (content.files as { filePath: string }[]).map(f => f.filePath).join(', ');
+      contentForMetadata = `An application with files: ${fileList}`;
+    } else {
+      contentForMetadata = 'A saved project with unspecified content.';
+    }
+    metadata = await generateProjectMetadata({ type, content: contentForMetadata });
   }
-
-  const metadata = await generateProjectMetadata({
-    type: type,
-    content: contentForMetadata,
-  });
   
   const projectRef = admin.firestore().collection('projects').doc();
 
