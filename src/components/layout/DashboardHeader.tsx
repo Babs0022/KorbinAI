@@ -42,10 +42,13 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <LayoutGrid />
             <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Dashboard</span>
         </Link>
-        <Link href="/dashboard/projects" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+        <div className="flex items-center gap-3 p-2 rounded-md opacity-50 cursor-not-allowed">
             <FolderKanban />
-            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Projects</span>
-        </Link>
+            <div className={cn("flex w-full items-center justify-between transition-opacity", state === 'collapsed' && 'opacity-0')}>
+              <span>Projects</span>
+              <Badge variant="outline" className="text-xs">Coming Soon</Badge>
+            </div>
+        </div>
         <div className="flex items-center gap-3 p-2 rounded-md opacity-50 cursor-not-allowed">
             <CreditCard />
             <div className={cn("flex w-full items-center justify-between transition-opacity", state === 'collapsed' && 'opacity-0')}>
@@ -121,15 +124,10 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-sm">
       <div className="flex h-16 items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-2">
-            <SidebarTrigger className="md:hidden" />
-            <div className="hidden md:block">
-                <SidebarTrigger />
-            </div>
+            <SidebarTrigger />
             <div className="h-6 border-l mx-2 hidden md:block"></div>
             <h1 className="text-lg font-semibold">Dashboard</h1>
         </div>
-        
-        {/* User menu for main header is now in the sidebar */}
       </div>
     </header>
   );
