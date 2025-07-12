@@ -2,23 +2,16 @@
 'use server';
 /**
  * @fileOverview A flow for generating JSON schema suggestions based on a description.
- *
- * - generateJsonSchemaSuggestions - A function that suggests a schema.
- * - GenerateJsonSchemaSuggestionsInput - The input type for the function.
- * - GenerateJsonSchemaSuggestionsOutput - The return type for the function.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-const GenerateJsonSchemaSuggestionsInputSchema = z.object({
-  description: z.string().describe('A plain English description of the data to generate.'),
-});
-export type GenerateJsonSchemaSuggestionsInput = z.infer<typeof GenerateJsonSchemaSuggestionsInputSchema>;
-
-const GenerateJsonSchemaSuggestionsOutputSchema = z.object({
-  suggestedSchema: z.string().describe("A suggested JSON schema or example structure based on the description."),
-});
-export type GenerateJsonSchemaSuggestionsOutput = z.infer<typeof GenerateJsonSchemaSuggestionsOutputSchema>;
+import {
+    GenerateJsonSchemaSuggestionsInputSchema,
+    GenerateJsonSchemaSuggestionsOutputSchema,
+    type GenerateJsonSchemaSuggestionsInput,
+    type GenerateJsonSchemaSuggestionsOutput,
+} from '@/types/ai';
 
 export async function generateJsonSchemaSuggestions(input: GenerateJsonSchemaSuggestionsInput): Promise<GenerateJsonSchemaSuggestionsOutput> {
   return generateJsonSchemaSuggestionsFlow(input);

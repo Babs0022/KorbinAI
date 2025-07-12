@@ -2,27 +2,17 @@
 'use server';
 /**
  * @fileOverview An AI flow that analyzes a generated prompt and suggests the best tool to execute it.
- *
- * - analyzePrompt - A function that suggests a tool based on prompt content.
- * - AnalyzePromptInput - Input type.
- * - AnalyzePromptOutput - Output type.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-const ToolEnum = z.enum(['image-generator', 'written-content', 'component-wizard', 'structured-data', 'none']);
-
-const AnalyzePromptInputSchema = z.object({
-  prompt: z.string().describe('The generated prompt to be analyzed.'),
-});
-export type AnalyzePromptInput = z.infer<typeof AnalyzePromptInputSchema>;
-
-const AnalyzePromptOutputSchema = z.object({
-  tool: ToolEnum.describe("The most appropriate tool for the given prompt."),
-  suggestion: z.string().describe("A user-friendly call to action, e.g., 'Execute this with our Image Generator' or 'Create this page with the App Builder'. If no tool is suitable, this should be an empty string."),
-});
-export type AnalyzePromptOutput = z.infer<typeof AnalyzePromptOutputSchema>;
+import {
+    AnalyzePromptInputSchema,
+    AnalyzePromptOutputSchema,
+    type AnalyzePromptInput,
+    type AnalyzePromptOutput
+} from '@/types/ai';
 
 export async function analyzePrompt(input: AnalyzePromptInput): Promise<AnalyzePromptOutput> {
   return analyzePromptFlow(input);

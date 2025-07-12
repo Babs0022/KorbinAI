@@ -15,7 +15,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { saveProject } from '@/services/projectService';
-import { generateImage, type GenerateImageInput } from "@/ai/flows/generate-image-flow";
+import { generateImage } from "@/ai/flows/generate-image-flow";
+import type { GenerateImageInput } from "@/types/ai";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 

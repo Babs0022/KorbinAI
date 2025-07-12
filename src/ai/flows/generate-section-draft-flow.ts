@@ -2,30 +2,16 @@
 'use server';
 /**
  * @fileOverview A flow for drafting a single section of content based on a full outline.
- *
- * - generateSectionDraft - Generates the written content for a single outline section.
- * - GenerateSectionDraftInput - The input type for the function.
- * - GenerateSectionDraftOutput - The return type for the function.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-const GenerateSectionDraftInputSchema = z.object({
-  sectionToDraft: z.string().describe('The specific outline section title to be drafted.'),
-  fullOutline: z.array(z.string()).describe('The complete list of all section titles in the outline.'),
-  mainTopic: z.string().describe('The main topic of the entire piece of content.'),
-  priorContent: z.string().optional().describe('The content that was generated for the previous sections, to ensure a smooth transition.'),
-  contentType: z.string().describe("The type of content (e.g., 'Blog Post')."),
-  purpose: z.string().describe('The goal or objective of the content.'),
-  targetAudience: z.string().describe('The intended audience.'),
-  desiredTone: z.string().describe('The desired tone of voice.'),
-});
-export type GenerateSectionDraftInput = z.infer<typeof GenerateSectionDraftInputSchema>;
-
-const GenerateSectionDraftOutputSchema = z.object({
-  generatedSectionContent: z.string().describe("The written content for the specified section, formatted as a markdown string."),
-});
-export type GenerateSectionDraftOutput = z.infer<typeof GenerateSectionDraftOutputSchema>;
+import {
+    GenerateSectionDraftInputSchema,
+    GenerateSectionDraftOutputSchema,
+    type GenerateSectionDraftInput,
+    type GenerateSectionDraftOutput,
+} from '@/types/ai';
 
 export async function generateSectionDraft(input: GenerateSectionDraftInput): Promise<GenerateSectionDraftOutput> {
   return generateSectionDraftFlow(input);

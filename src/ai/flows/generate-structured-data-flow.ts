@@ -1,31 +1,18 @@
 
-
 'use server';
 /**
  * @fileOverview A flow for generating and refining structured data like JSON or CSV.
- * 
- * - generateStructuredData - A function that generates or refines data based on a description.
- * - GenerateStructuredDataInput - The input type for the function.
- * - GenerateStructuredDataOutput - The return type for the function.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-const GenerateStructuredDataInputSchema = z.object({
-  description: z.string().describe('A plain English description of the data to generate.'),
-  format: z.string().describe("The desired output format (e.g., 'JSON', 'CSV', 'KML', 'XML')."),
-  schemaDefinition: z.string().optional().describe('An optional schema or example of the desired structure (e.g., a JSON schema, an example XML/KML structure).'),
-  imageDataUris: z.array(z.string()).optional().describe("An optional array of images provided as context, as data URIs. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
-  originalData: z.string().optional().describe('Existing data to be refined. If present, the flow will refine this data instead of generating new data from the topic.'),
-  refinementInstruction: z.string().optional().describe("The instruction for refining the data (e.g., 'Add 10 more records', 'Add a unique ID field')."),
-});
-export type GenerateStructuredDataInput = z.infer<typeof GenerateStructuredDataInputSchema>;
-
-const GenerateStructuredDataOutputSchema = z.object({
-  generatedData: z.string().describe('The complete, formatted structured data (e.g., a JSON object, a CSV string, or an XML/KML document).'),
-});
-export type GenerateStructuredDataOutput = z.infer<typeof GenerateStructuredDataOutputSchema>;
+import {
+    GenerateStructuredDataInputSchema,
+    GenerateStructuredDataOutputSchema,
+    type GenerateStructuredDataInput,
+    type GenerateStructuredDataOutput,
+} from '@/types/ai';
 
 export async function generateStructuredData(input: GenerateStructuredDataInput): Promise<GenerateStructuredDataOutput> {
   return generateStructuredDataFlow(input);

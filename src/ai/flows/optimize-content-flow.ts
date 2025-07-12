@@ -2,31 +2,16 @@
 'use server';
 /**
  * @fileOverview A flow for optimizing written content in various ways.
- *
- * - optimizeContent - Optimizes content for SEO, readability, tone, etc.
- * - OptimizeContentInput - The input type for the function.
- * - OptimizeContentOutput - The return type for the function.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-const OptimizeContentInputSchema = z.object({
-  content: z.string().describe('The current content string to be optimized.'),
-  optimizations: z.object({
-      seo: z.boolean().optional().describe("If true, optimize for SEO."),
-      readability: z.boolean().optional().describe("If true, improve readability."),
-      tone: z.boolean().optional().describe("If true, adjust the tone."),
-      cta: z.boolean().optional().describe("If true, generate CTA suggestions."),
-      headlines: z.boolean().optional().describe("If true, suggest headlines."),
-  }),
-  toneParameter: z.string().optional().describe("The new tone, required if optimizations.tone is true."),
-});
-export type OptimizeContentInput = z.infer<typeof OptimizeContentInputSchema>;
-
-const OptimizeContentOutputSchema = z.object({
-  optimizedContent: z.string().describe("The optimized content or a list of suggestions, formatted as a markdown string."),
-});
-export type OptimizeContentOutput = z.infer<typeof OptimizeContentOutputSchema>;
+import {
+    OptimizeContentInputSchema,
+    OptimizeContentOutputSchema,
+    type OptimizeContentInput,
+    type OptimizeContentOutput,
+} from '@/types/ai';
 
 export async function optimizeContent(input: OptimizeContentInput): Promise<OptimizeContentOutput> {
   return optimizeContentFlow(input);

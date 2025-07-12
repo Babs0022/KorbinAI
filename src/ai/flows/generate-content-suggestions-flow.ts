@@ -1,25 +1,18 @@
+
 'use server';
 /**
  * @fileOverview A flow for generating intelligent suggestions for the written content creator.
- *
- * - generateContentSuggestions - Suggests audience and keywords based on a topic.
- * - GenerateContentSuggestionsInput - Input type.
- * - GenerateContentSuggestionsOutput - Output type.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-const GenerateContentSuggestionsInputSchema = z.object({
-  topic: z.string().describe('The main topic or message of the content.'),
-});
-export type GenerateContentSuggestionsInput = z.infer<typeof GenerateContentSuggestionsInputSchema>;
-
-const GenerateContentSuggestionsOutputSchema = z.object({
-  suggestedAudience: z.string().describe("A suggested target audience for this topic (e.g., 'Software Developers', 'Small Business Owners')."),
-  suggestedKeywords: z.array(z.string()).describe("An array of 3-5 suggested keywords relevant to the topic."),
-});
-export type GenerateContentSuggestionsOutput = z.infer<typeof GenerateContentSuggestionsOutputSchema>;
+import {
+    GenerateContentSuggestionsInputSchema,
+    GenerateContentSuggestionsOutputSchema,
+    type GenerateContentSuggestionsInput,
+    type GenerateContentSuggestionsOutput,
+} from '@/types/ai';
 
 export async function generateContentSuggestions(input: GenerateContentSuggestionsInput): Promise<GenerateContentSuggestionsOutput> {
   return generateContentSuggestionsFlow(input);

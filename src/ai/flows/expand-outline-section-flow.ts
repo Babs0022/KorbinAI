@@ -2,25 +2,16 @@
 'use server';
 /**
  * @fileOverview A flow for expanding a single section of a content outline.
- *
- * - expandOutlineSection - Generates detailed points for a specific outline section.
- * - ExpandOutlineSectionInput - The input type for the function.
- * - ExpandOutlineSectionOutput - The return type for the function.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-const ExpandOutlineSectionInputSchema = z.object({
-  currentOutlineSectionText: z.string().describe('The specific section title to be expanded.'),
-  fullContentTopic: z.string().describe('The main topic of the entire piece of content.'),
-  fullContentOutline: z.array(z.string()).describe('The complete list of all section titles in the outline.'),
-});
-export type ExpandOutlineSectionInput = z.infer<typeof ExpandOutlineSectionInputSchema>;
-
-const ExpandOutlineSectionOutputSchema = z.object({
-  expandedContent: z.string().describe("A markdown-formatted string containing detailed sub-points or a brief paragraph for the given section."),
-});
-export type ExpandOutlineSectionOutput = z.infer<typeof ExpandOutlineSectionOutputSchema>;
+import {
+    ExpandOutlineSectionInputSchema,
+    ExpandOutlineSectionOutputSchema,
+    type ExpandOutlineSectionInput,
+    type ExpandOutlineSectionOutput,
+} from '@/types/ai';
 
 export async function expandOutlineSection(input: ExpandOutlineSectionInput): Promise<ExpandOutlineSectionOutput> {
   return expandOutlineSectionFlow(input);

@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { X, Wand2, LoaderCircle } from 'lucide-react';
 import { generateContentSuggestions } from '@/ai/flows/generate-content-suggestions-flow';
+import type { GenerateContentSuggestionsInput } from '@/types/ai';
 
 // Define the shape of the form data
 export interface ContentIdeaFormData {

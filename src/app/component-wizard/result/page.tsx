@@ -2,7 +2,8 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, FileWarning, LoaderCircle } from 'lucide-react';
-import { generateApp, type GenerateAppInput } from '@/ai/flows/generate-component-flow';
+import { generateApp } from '@/ai/flows/generate-component-flow';
+import type { GenerateAppInput } from '@/types/ai';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import ComponentResultDisplay from '@/components/wizards/ComponentResultDisplay';
 

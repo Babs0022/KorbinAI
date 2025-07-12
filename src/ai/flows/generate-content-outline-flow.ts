@@ -2,29 +2,16 @@
 'use server';
 /**
  * @fileOverview A flow for generating a content outline from a detailed idea.
- *
- * - generateContentOutline - Generates a structured outline.
- * - GenerateContentOutlineInput - The input type for the function.
- * - GenerateContentOutlineOutput - The return type for the function.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-const GenerateContentOutlineInputSchema = z.object({
-  contentType: z.string().describe("The type of content (e.g., 'Blog Post')."),
-  mainTopic: z.string().describe('The core topic of the content.'),
-  purpose: z.string().describe('The goal or objective of the content.'),
-  targetAudience: z.string().describe('The intended audience.'),
-  desiredTone: z.string().describe('The desired tone of voice.'),
-  desiredLength: z.string().describe('The approximate desired length.'),
-  keywords: z.array(z.string()).optional().describe('A list of keywords to include.'),
-});
-export type GenerateContentOutlineInput = z.infer<typeof GenerateContentOutlineInputSchema>;
-
-const GenerateContentOutlineOutputSchema = z.object({
-  outline: z.array(z.string()).describe("An array of logical section titles for the content outline."),
-});
-export type GenerateContentOutlineOutput = z.infer<typeof GenerateContentOutlineOutputSchema>;
+import {
+    GenerateContentOutlineInputSchema,
+    GenerateContentOutlineOutputSchema,
+    type GenerateContentOutlineInput,
+    type GenerateContentOutlineOutput,
+} from '@/types/ai';
 
 export async function generateContentOutline(input: GenerateContentOutlineInput): Promise<GenerateContentOutlineOutput> {
   return generateContentOutlineFlow(input);

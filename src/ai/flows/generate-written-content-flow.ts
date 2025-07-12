@@ -1,38 +1,18 @@
 
-
 'use server';
 /**
  * @fileOverview A flow for generating and refining written content based on user specifications.
- * 
- * - generateWrittenContent - A function that generates or refines content like blog posts, emails, etc.
- * - GenerateWrittenContentInput - The input type for the function.
- * - GenerateWrittenContentOutput - The return type for the function.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-const GenerateWrittenContentInputSchema = z.object({
-  contentType: z.string().describe("The type of content to generate (e.g., 'Blog Post', 'Email')."),
-  tone: z.string().describe("The desired tone of voice (e.g., 'Professional', 'Casual', 'Witty')."),
-  topic: z.string().describe('The main topic or message of the content.'),
-  audience: z.string().optional().describe('The target audience for the content.'),
-  keywords: z.string().optional().describe('A comma-separated list of keywords to include.'),
-  imageDataUris: z.array(z.string()).optional().describe("An optional array of images provided as context, as data URIs. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
-  outputFormat: z.string().optional().describe("The desired output format (e.g., 'JSON', 'Markdown', 'HTML'). Defaults to Markdown if not specified."),
-  examples: z.array(z.object({
-    input: z.string().describe("An example of a user's input."),
-    output: z.string().describe("The corresponding desired output for the example input.")
-  })).optional().describe("An array of few-shot examples to guide the model's response style and structure."),
-  originalContent: z.string().optional().describe('Existing content to be refined. If present, the flow will refine this content instead of generating new content from the topic.'),
-  refinementInstruction: z.string().optional().describe("The instruction for refining the content (e.g., 'Make it shorter', 'Change the tone to witty')."),
-});
-export type GenerateWrittenContentInput = z.infer<typeof GenerateWrittenContentInputSchema>;
-
-const GenerateWrittenContentOutputSchema = z.object({
-  generatedContent: z.string().describe('The complete, formatted written content.'),
-});
-export type GenerateWrittenContentOutput = z.infer<typeof GenerateWrittenContentOutputSchema>;
+import {
+    GenerateWrittenContentInputSchema,
+    GenerateWrittenContentOutputSchema,
+    type GenerateWrittenContentInput,
+    type GenerateWrittenContentOutput,
+} from '@/types/ai';
 
 export async function generateWrittenContent(input: GenerateWrittenContentInput): Promise<GenerateWrittenContentOutput> {
   return generateWrittenContentFlow(input);

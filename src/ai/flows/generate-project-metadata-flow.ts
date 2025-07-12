@@ -2,27 +2,16 @@
 'use server';
 /**
  * @fileOverview An AI flow that generates a name and summary for a piece of content.
- *
- * - generateProjectMetadata - A function that generates metadata for a project.
- * - GenerateProjectMetadataInput - Input type.
- * - GenerateProjectMetadataOutput - Output type.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-const PROJECT_TYPES = ['written-content', 'prompt', 'component-wizard', 'structured-data', 'image-generator'] as const;
-
-const GenerateProjectMetadataInputSchema = z.object({
-  type: z.enum(PROJECT_TYPES).describe('The type of content in the project.'),
-  content: z.string().describe('The generated content to be summarized.'),
-});
-export type GenerateProjectMetadataInput = z.infer<typeof GenerateProjectMetadataInputSchema>;
-
-const GenerateProjectMetadataOutputSchema = z.object({
-  name: z.string().describe("A short, descriptive name for the project (3-5 words)."),
-  summary: z.string().describe("A one-sentence summary of the project content."),
-});
-export type GenerateProjectMetadataOutput = z.infer<typeof GenerateProjectMetadataOutputSchema>;
+import {
+    GenerateProjectMetadataInputSchema,
+    GenerateProjectMetadataOutputSchema,
+    type GenerateProjectMetadataInput,
+    type GenerateProjectMetadataOutput,
+} from '@/types/ai';
 
 export async function generateProjectMetadata(input: GenerateProjectMetadataInput): Promise<GenerateProjectMetadataOutput> {
   return generateProjectMetadataFlow(input);

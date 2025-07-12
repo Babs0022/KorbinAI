@@ -2,27 +2,18 @@
 'use server';
 /**
  * @fileOverview A flow for generating images from a text prompt, optionally with image context.
- * 
- * - generateImage - A function that takes a prompt and generates one or more images.
- * - GenerateImageInput - The input type for the function.
- * - GenerateImageOutput - The return type for the function.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 
 import {ai} from '@/ai/genkit';
 import type {Part} from 'genkit';
-import {z} from 'zod';
-
-const GenerateImageInputSchema = z.object({
-  prompt: z.string().describe('A detailed text description of the image to generate, or instructions on how to modify the context images.'),
-  imageDataUris: z.array(z.string()).optional().describe("An optional array of images to use as context for the generation, as data URIs. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
-  count: z.number().min(1).max(4).default(1).describe('The number of images to generate.'),
-});
-export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
-
-const GenerateImageOutputSchema = z.object({
-  imageUrls: z.array(z.string()).describe('An array of data URIs for the generated images.'),
-});
-export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
+import {
+    GenerateImageInputSchema,
+    GenerateImageOutputSchema,
+    type GenerateImageInput,
+    type GenerateImageOutput,
+} from '@/types/ai';
 
 export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
   return generateImageFlow(input);

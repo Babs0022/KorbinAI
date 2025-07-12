@@ -2,30 +2,16 @@
 'use server';
 /**
  * @fileOverview A flow for generating a full content draft from an outline.
- *
- * - generateFullContentDraft - Generates a complete piece of content.
- * - GenerateFullContentDraftInput - The input type for the function.
- * - GenerateFullContentDraftOutput - The return type for the function.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-const GenerateFullContentDraftInputSchema = z.object({
-  finalOutline: z.array(z.string()).describe("The finalized list of section titles for the content outline."),
-  contentType: z.string().describe("The type of content (e.g., 'Blog Post')."),
-  mainTopic: z.string().describe('The core topic of the content.'),
-  purpose: z.string().describe('The goal or objective of the content.'),
-  targetAudience: z.string().describe('The intended audience.'),
-  desiredTone: z.string().describe('The desired tone of voice.'),
-  desiredLength: z.string().describe('The approximate desired length.'),
-  keywords: z.array(z.string()).optional().describe('A list of keywords to include.'),
-});
-export type GenerateFullContentDraftInput = z.infer<typeof GenerateFullContentDraftInputSchema>;
-
-const GenerateFullContentDraftOutputSchema = z.object({
-  generatedContent: z.string().describe("The full, final generated content as a single markdown string."),
-});
-export type GenerateFullContentDraftOutput = z.infer<typeof GenerateFullContentDraftOutputSchema>;
+import {
+    GenerateFullContentDraftInputSchema,
+    GenerateFullContentDraftOutputSchema,
+    type GenerateFullContentDraftInput,
+    type GenerateFullContentDraftOutput,
+} from '@/types/ai';
 
 export async function generateFullContentDraft(input: GenerateFullContentDraftInput): Promise<GenerateFullContentDraftOutput> {
   return generateFullContentDraftFlow(input);

@@ -1,31 +1,18 @@
 
-
 'use server';
 /**
  * @fileOverview A flow for generating optimized AI prompts based on user requirements.
- * 
- * - generatePrompt - A function that takes a description and generates a detailed prompt.
- * - GeneratePromptInput - The input type for the function.
- * - GeneratePromptOutput - The return type for the function.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-// Define the input schema with Zod
-const GeneratePromptInputSchema = z.object({
-  taskDescription: z.string().describe('A plain English description of the task the user wants to accomplish.'),
-  imageDataUris: z.array(z.string()).optional().describe("An optional array of images provided as context, as data URIs. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
-  targetModel: z.string().optional().describe("The specific AI model this prompt is for (e.g., 'Gemini 1.5 Pro', 'Claude 3 Opus')."),
-  outputFormat: z.string().optional().describe("The desired format for the AI's output (e.g., 'JSON', 'Markdown', 'a bulleted list')."),
-});
-export type GeneratePromptInput = z.infer<typeof GeneratePromptInputSchema>;
-
-// Define the output schema with Zod
-const GeneratePromptOutputSchema = z.object({
-  generatedPrompt: z.string().describe('The complete, optimized prompt ready to be used.'),
-});
-export type GeneratePromptOutput = z.infer<typeof GeneratePromptOutputSchema>;
+import {
+    GeneratePromptInputSchema,
+    GeneratePromptOutputSchema,
+    type GeneratePromptInput,
+    type GeneratePromptOutput,
+} from '@/types/ai';
 
 // Export the main function that the client will call
 export async function generatePrompt(input: GeneratePromptInput): Promise<GeneratePromptOutput> {

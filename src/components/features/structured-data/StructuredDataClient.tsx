@@ -18,8 +18,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { generateStructuredData, type GenerateStructuredDataInput } from "@/ai/flows/generate-structured-data-flow";
+import { generateStructuredData } from "@/ai/flows/generate-structured-data-flow";
 import { generateJsonSchemaSuggestions } from "@/ai/flows/generate-json-schema-suggestions-flow";
+import type { GenerateStructuredDataInput } from "@/types/ai";
 import GenerationResultCard from "@/components/shared/GenerationResultCard";
 
 export default function StructuredDataClient() {

@@ -2,23 +2,16 @@
 'use server';
 /**
  * @fileOverview A flow for generating output format suggestions for the prompt generator.
- *
- * - generatePromptFormatSuggestions - A function that suggests formats based on a task.
- * - GeneratePromptFormatSuggestionsInput - The input type for the function.
- * - GeneratePromptFormatSuggestionsOutput - The return type for the function.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-const GeneratePromptFormatSuggestionsInputSchema = z.object({
-  taskDescription: z.string().describe('A plain English description of the task the user wants to accomplish.'),
-});
-export type GeneratePromptFormatSuggestionsInput = z.infer<typeof GeneratePromptFormatSuggestionsInputSchema>;
-
-const GeneratePromptFormatSuggestionsOutputSchema = z.object({
-  suggestions: z.array(z.string()).describe("An array of 3-4 suggested output formats (e.g., 'JSON', 'Markdown', 'Bulleted list')."),
-});
-export type GeneratePromptFormatSuggestionsOutput = z.infer<typeof GeneratePromptFormatSuggestionsOutputSchema>;
+import {
+    GeneratePromptFormatSuggestionsInputSchema,
+    GeneratePromptFormatSuggestionsOutputSchema,
+    type GeneratePromptFormatSuggestionsInput,
+    type GeneratePromptFormatSuggestionsOutput,
+} from '@/types/ai';
 
 export async function generatePromptFormatSuggestions(input: GeneratePromptFormatSuggestionsInput): Promise<GeneratePromptFormatSuggestionsOutput> {
   return generatePromptFormatSuggestionsFlow(input);

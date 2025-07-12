@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
 
 // Workflow components
-import ContentIdeaForm, { type ContentIdeaFormData } from '@/components/content-workflow/ContentIdeaForm';
+import ContentIdeaForm from '@/components/content-workflow/ContentIdeaForm';
 import OutlineEditor, { type OutlineItem } from '@/components/content-workflow/OutlineEditor';
 import ContentDrafting, { type GenerationMode } from "@/components/content-workflow/ContentDrafting";
 import ContentOptimizer, { type OptimizationOptions } from "@/components/content-workflow/ContentOptimizer";
@@ -19,6 +19,8 @@ import { generateContentOutline } from "@/ai/flows/generate-content-outline-flow
 import { generateFullContentDraft } from "@/ai/flows/generate-full-content-draft-flow";
 import { generateSectionDraft } from "@/ai/flows/generate-section-draft-flow";
 import { optimizeContent } from "@/ai/flows/optimize-content-flow";
+import type { ContentIdeaFormData } from "@/types/ai";
+
 
 // Services
 import { saveProject } from "@/services/projectService";
@@ -92,7 +94,7 @@ export default function WrittenContentClient() {
       }
       
       try {
-          const { otherAudience, ...rest } = state.contentIdea;
+          const { otherAudience, ...rest } = state.contentIdea as any; // Cast to any to handle otherAudience
           const result = await generateContentOutline({
             ...rest,
             mainTopic: state.contentIdea.mainTopic!,
@@ -109,7 +111,7 @@ export default function WrittenContentClient() {
   };
 
   const commonDraftingInput = useCallback(() => {
-    const { otherAudience, ...rest } = state.contentIdea;
+    const { otherAudience, ...rest } = state.contentIdea as any;
     return {
         ...rest,
         mainTopic: state.contentIdea.mainTopic!,
@@ -261,7 +263,7 @@ export default function WrittenContentClient() {
 
       switch (currentStep) {
           case 1:
-              return <ContentIdeaForm onDataChange={handleDataChange} initialData={state.contentIdea} />;
+              return <ContentIdeaForm onDataChange={handleDataChange} initialData={state.contentIdea as ContentIdeaFormData} />;
           case 2:
               return <OutlineEditor aiGeneratedOutline={state.generatedOutline} onGenerateNewOutline={() => handleGenerateOutline(true)} onOutlineChange={handleOutlineChange} />;
           case 3:

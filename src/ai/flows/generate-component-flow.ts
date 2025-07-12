@@ -1,36 +1,18 @@
 
-
 'use server';
 /**
  * @fileOverview A flow for generating multi-file React applications based on user descriptions.
- *
- * - generateApp - A function that generates a React application structure.
- * - GenerateAppInput - The input type for the generateApp function.
- * - GenerateAppOutput - The return type for the generateApp function.
+ * This file contains the server-side logic and exports only the main async function.
+ * Type definitions are in `src/types/ai.ts`.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
-
-const GenerateAppInputSchema = z.object({
-  description: z.string().describe('A plain English description of the application or page to build.'),
-  style: z.string().describe("The visual style of the brand (e.g., 'Minimalist & Modern', 'Playful & Creative')."),
-  dataPoints: z.string().optional().describe('A comma-separated list of specific page sections the app should include (e.g., Hero, Features, Testimonials). This is the primary guide for page structure.'),
-  generationMode: z.enum(['new', 'existing']).describe("Determines whether to generate a full new application or add to an existing one."),
-});
-export type GenerateAppInput = z.infer<typeof GenerateAppInputSchema>;
-
-const FileOutputSchema = z.object({
-    filePath: z.string().describe("The full, absolute path for the file, e.g., 'src/app/page.tsx' or 'package.json' for new apps."),
-    componentCode: z.string().describe("The full TSX/TS/JSON code for the file, including all necessary imports and content."),
-    instructions: z.string().describe("A one-sentence, beginner-friendly explanation of this file's purpose. Assume the user has never coded before. For example: 'This is the main page of your app.' or 'This file lists your project's dependencies.'"),
-});
-
-const GenerateAppOutputSchema = z.object({
-  files: z.array(FileOutputSchema).describe("An array of all the files needed for the application."),
-  finalInstructions: z.string().describe("A final summary of what the user should do next, like running 'npm install && npm run dev'. Do not tell them to just run npm install."),
-});
-export type GenerateAppOutput = z.infer<typeof GenerateAppOutputSchema>;
+import {
+    GenerateAppInputSchema,
+    GenerateAppOutputSchema,
+    type GenerateAppInput,
+    type GenerateAppOutput
+} from '@/types/ai';
 
 
 export async function generateApp(input: GenerateAppInput): Promise<GenerateAppOutput> {

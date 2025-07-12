@@ -16,9 +16,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { generatePrompt, type GeneratePromptInput } from "@/ai/flows/generate-prompt-flow";
+import { generatePrompt } from "@/ai/flows/generate-prompt-flow";
 import { generatePromptFormatSuggestions } from "@/ai/flows/generate-prompt-format-suggestions-flow";
-import { analyzePrompt, type AnalyzePromptOutput } from "@/ai/flows/analyze-prompt-flow";
+import { analyzePrompt } from "@/ai/flows/analyze-prompt-flow";
+import type { GeneratePromptInput, AnalyzePromptOutput } from "@/types/ai";
 import GenerationResultCard from "@/components/shared/GenerationResultCard";
 
 export default function PromptGeneratorClient() {
