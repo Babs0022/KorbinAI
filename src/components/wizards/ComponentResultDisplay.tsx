@@ -11,6 +11,7 @@ import DownloadZipButton from './DownloadZipButton';
 import { Button } from '@/components/ui/button';
 import { LoaderCircle, Save } from 'lucide-react';
 import { ToastAction } from "@/components/ui/toast";
+import { Badge } from '@/components/ui/badge';
 
 interface File {
   filePath: string;
@@ -67,10 +68,13 @@ export default function ComponentResultDisplay({ result }: ComponentResultDispla
       <MultiCodeDisplay files={result.files} finalInstructions={result.finalInstructions} />
       <div className="flex justify-end gap-4">
         <DownloadZipButton files={result.files} />
-        <Button onClick={handleSave} disabled={!user || isSaving || !!projectId} size="lg">
-          {isSaving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-          {projectId ? 'Project Saved' : 'Save Project'}
-        </Button>
+        <div className="relative">
+          <Button disabled={true} size="lg">
+            <Save className="mr-2 h-4 w-4" />
+            Save Project
+          </Button>
+          <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>
+        </div>
       </div>
     </div>
   );

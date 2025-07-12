@@ -21,6 +21,7 @@ import { generatePromptFormatSuggestions } from "@/ai/flows/generate-prompt-form
 import { analyzePrompt } from "@/ai/flows/analyze-prompt-flow";
 import type { GeneratePromptInput, AnalyzePromptOutput } from "@/types/ai";
 import GenerationResultCard from "@/components/shared/GenerationResultCard";
+import { Badge } from "@/components/ui/badge";
 
 export default function PromptGeneratorClient() {
   // Form State
@@ -337,10 +338,13 @@ export default function PromptGeneratorClient() {
               </Card>
             ) : <div />}
 
-            <Button onClick={handleSave} disabled={isSaving || !!projectId} size="lg">
-              {isSaving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {projectId ? 'Saved' : 'Save Project'}
-            </Button>
+            <div className="relative">
+              <Button disabled={true} size="lg">
+                <Save className="mr-2 h-4 w-4" />
+                Save Project
+              </Button>
+              <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>
+            </div>
           </div>
         </div>
       )}

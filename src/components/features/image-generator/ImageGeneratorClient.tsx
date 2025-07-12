@@ -19,6 +19,7 @@ import { generateImage } from "@/ai/flows/generate-image-flow";
 import type { GenerateImageInput } from "@/types/ai";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
 
 const styleOptions = [
   { value: "photorealistic", label: "Photorealistic" },
@@ -304,11 +305,12 @@ export default function ImageGeneratorClient() {
                             </button>
                             ))}
                         </div>
-                        <div className="flex justify-center">
-                            <Button onClick={handleSave} disabled={isSaving || !!projectId} size="lg">
-                                {isSaving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                {projectId ? 'Saved' : 'Save Project'}
+                        <div className="flex justify-center relative">
+                            <Button disabled={true} size="lg">
+                                <Save className="mr-2 h-4 w-4" />
+                                Save Project
                             </Button>
+                            <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>
                         </div>
                     </div>
                 )}

@@ -22,6 +22,7 @@ import { generateStructuredData } from "@/ai/flows/generate-structured-data-flow
 import { generateJsonSchemaSuggestions } from "@/ai/flows/generate-json-schema-suggestions-flow";
 import type { GenerateStructuredDataInput } from "@/types/ai";
 import GenerationResultCard from "@/components/shared/GenerationResultCard";
+import { Badge } from "@/components/ui/badge";
 
 export default function StructuredDataClient() {
   const searchParams = useSearchParams();
@@ -411,11 +412,12 @@ export default function StructuredDataClient() {
               </CardContent>
             </Card>
 
-            <div className="flex justify-center md:justify-end md:pt-8">
-               <Button onClick={handleSave} disabled={isSaving || !!projectId} size="lg">
-                  {isSaving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  {projectId ? 'Saved' : 'Save Project'}
+            <div className="flex justify-center md:justify-end md:pt-8 relative">
+                <Button disabled={true} size="lg">
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Project
                 </Button>
+                <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>
             </div>
           </div>
         </div>
