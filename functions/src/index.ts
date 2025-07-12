@@ -10,10 +10,10 @@ import { PaystackChargeSuccessData } from "./types";
 // --- Initialization ---
 const corsHandler = cors({ origin: true });
 
+// Initialize without arguments to automatically use Application Default Credentials.
+// This is the standard and most reliable method for Cloud Functions.
 if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-    });
+    admin.initializeApp();
 }
 
 // --- Webhook Handlers ---

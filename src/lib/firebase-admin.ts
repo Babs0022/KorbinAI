@@ -1,4 +1,6 @@
 
+'use server';
+
 import admin from 'firebase-admin';
 
 // This file is intended for server-side code (e.g., Genkit flows, API routes).
@@ -6,12 +8,10 @@ import admin from 'firebase-admin';
 
 // Check if the app is already initialized to prevent errors in hot-reloading environments.
 if (!admin.apps.length) {
-  // Initialize by explicitly using Application Default Credentials.
+  // Initialize without arguments to automatically use Application Default Credentials.
   // This is the recommended and most reliable method for Google Cloud environments
-  // like App Hosting and helps avoid issues with incorrect environment variable paths.
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-  });
+  // like App Hosting and helps avoid issues with incorrect environment variables.
+  admin.initializeApp();
 }
 
 const firestoreDb = admin.firestore();
