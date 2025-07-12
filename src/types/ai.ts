@@ -95,6 +95,23 @@ export const GenerateContentSuggestionsOutputSchema = z.object({
 export type GenerateContentSuggestionsOutput = z.infer<typeof GenerateContentSuggestionsOutputSchema>;
 
 
+// === generate-data-refinement-suggestions-flow ===
+export const GenerateDataRefinementSuggestionsInputSchema = z.object({
+  data: z.string().describe('The structured data string (e.g., JSON, CSV) to be analyzed.'),
+  format: z.string().describe("The format of the data (e.g., 'json', 'csv')."),
+});
+export type GenerateDataRefinementSuggestionsInput = z.infer<typeof GenerateDataRefinementSuggestionsInputSchema>;
+const RefinementSuggestionSchema = z.object({
+  label: z.string().describe("A short, user-friendly label for a button (e.g., 'Add 5 more items')."),
+  instruction: z.string().describe("The detailed instruction for another AI to execute (e.g., 'Add 5 more records to the list, keeping the same structure.')."),
+});
+export type RefinementSuggestion = z.infer<typeof RefinementSuggestionSchema>;
+export const GenerateDataRefinementSuggestionsOutputSchema = z.object({
+  suggestions: z.array(RefinementSuggestionSchema).describe("An array of contextual refinement suggestions."),
+});
+export type GenerateDataRefinementSuggestionsOutput = z.infer<typeof GenerateDataRefinementSuggestionsOutputSchema>;
+
+
 // === generate-full-content-draft-flow ===
 export const GenerateFullContentDraftInputSchema = z.object({
   finalOutline: z.array(z.string()).describe("The finalized list of section titles for the content outline."),
@@ -117,10 +134,11 @@ export type GenerateFullContentDraftOutput = z.infer<typeof GenerateFullContentD
 export const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('A detailed text description of the image to generate, or instructions on how to modify the context images.'),
   imageDataUris: z.array(z.string()).optional().describe("An optional array of images to use as context for the generation, as data URIs. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+  count: z.number().int().min(1).max(4).default(1).describe("The number of images to generate."),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 export const GenerateImageOutputSchema = z.object({
-  imageUrl: z.string().describe('A data URI for the generated image.'),
+  imageUrls: z.array(z.string()).describe('An array of data URIs for the generated images.'),
 });
 export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 

@@ -20,7 +20,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { generateStructuredData } from "@/ai/flows/generate-structured-data-flow";
 import { generateJsonSchemaSuggestions } from "@/ai/flows/generate-json-schema-suggestions-flow";
-import type { GenerateStructuredDataInput } from "@/types/ai";
+import { generateDataRefinementSuggestions } from "@/ai/flows/generate-data-refinement-suggestions-flow";
+import type { GenerateStructuredDataInput, RefinementSuggestion } from "@/types/ai";
 import GenerationResultCard from "@/components/shared/GenerationResultCard";
 import { Badge } from "@/components/ui/badge";
 
@@ -42,8 +43,9 @@ export default function StructuredDataClient() {
   const [projectId, setProjectId] = useState<string | null>(null);
 
   // Suggestion State
-  const [suggestion, setSuggestion] = useState("");
-  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [schemaSuggestion, setSchemaSuggestion] = useState("");
+  const [refinementSuggestions, setRefinementSuggestions] = useState<RefinementSuggestion[]>([]);
+  const [isSuggestingSchema, setIsSuggestingSchema] = useState(false);
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const { toast } = useToast();
@@ -60,20 +62,20 @@ export default function StructuredDataClient() {
     if (debounceTimeout) clearTimeout(debounceTimeout);
     
     if (format !== 'json' || description.trim().split(/\s+/).length < 4) {
-      setSuggestion("");
+      setSchemaSuggestion("");
       return;
     }
 
-    setIsSuggesting(true);
+    setIsSuggestingSchema(true);
     const timeout = setTimeout(async () => {
       try {
         const result = await generateJsonSchemaSuggestions({ description });
-        setSuggestion(result.suggestedSchema || "");
+        setSchemaSuggestion(result.suggestedSchema || "");
       } catch (error) {
         console.error("Failed to get schema suggestions:", error);
-        setSuggestion("");
+        setSchemaSuggestion("");
       } finally {
-        setIsSuggesting(false);
+        setIsSuggestingSchema(false);
       }
     }, 1000);
 
@@ -107,10 +109,21 @@ export default function StructuredDataClient() {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  const getRefinementSuggestions = async (data: string, dataFormat: string) => {
+    try {
+        const result = await generateDataRefinementSuggestions({ data, format: dataFormat });
+        setRefinementSuggestions(result.suggestions || []);
+    } catch (error) {
+        console.error("Failed to get refinement suggestions:", error);
+        setRefinementSuggestions([]);
+    }
+  };
+
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setGeneratedData("");
+    setRefinementSuggestions([]);
     setIsLoading(true);
     setProjectId(null); // Reset save state
 
@@ -144,6 +157,7 @@ export default function StructuredDataClient() {
           }
         }
         setGeneratedData(finalData);
+        await getRefinementSuggestions(finalData, format);
       } else {
         throw new Error("The AI did not return any data.");
       }
@@ -184,6 +198,7 @@ export default function StructuredDataClient() {
           }
         }
         setGeneratedData(finalData);
+        await getRefinementSuggestions(finalData, format);
         toast({ title: "Data Refined", description: "The data has been updated." });
       } else {
         throw new Error("The AI did not return any refined data.");
@@ -230,12 +245,6 @@ export default function StructuredDataClient() {
       setIsSaving(false);
     }
   };
-
-  const refinementOptions = [
-    { label: "Add 10 more records", instruction: "Add 10 more records to the list, keeping the same structure." },
-    { label: "Add unique ID field", instruction: "Add a new field to each record called 'id' with a unique identifier (e.g., a UUID or an incrementing number)." },
-    { label: "Sanitize data", instruction: "Review all data and sanitize it for a professional presentation. For example, ensure names are capitalized correctly and emails look realistic." },
-  ];
 
   return (
     <>
@@ -322,7 +331,7 @@ export default function StructuredDataClient() {
                   <h3 className="text-lg font-medium text-white">
                     Schema/Example <span className="font-normal text-muted-foreground">(optional)</span>
                   </h3>
-                  {isSuggesting && format === 'json' && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                  {isSuggestingSchema && format === 'json' && <LoaderCircle className="h-4 w-4 animate-spin" />}
                 </div>
                 <Textarea
                   id="schemaDefinition"
@@ -333,7 +342,7 @@ export default function StructuredDataClient() {
                   onChange={(e) => setSchemaDefinition(e.target.value)}
                   disabled={format === 'csv'}
                 />
-                {format === 'json' && suggestion && (
+                {format === 'json' && schemaSuggestion && (
                   <div className="mt-2 rounded-md border border-dashed border-primary/50 bg-secondary p-2">
                       <div className="flex items-center justify-between gap-2">
                           <p className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -345,7 +354,7 @@ export default function StructuredDataClient() {
                               type="button"
                               variant="ghost"
                               size="sm"
-                              onClick={() => setSchemaDefinition(suggestion)}
+                              onClick={() => setSchemaDefinition(schemaSuggestion)}
                           >
                               Use Schema
                           </Button>
@@ -398,26 +407,30 @@ export default function StructuredDataClient() {
                 <CardDescription>Not quite right? Let's try improving it.</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-3">
-                {refinementOptions.map(opt => (
-                  <Button 
-                    key={opt.instruction}
-                    variant="secondary"
-                    onClick={() => handleRefine(opt.instruction)}
-                    disabled={!!isRefining}
-                  >
-                    {isRefining === opt.instruction && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                    {opt.label}
-                  </Button>
-                ))}
+                {refinementSuggestions.length > 0 ? (
+                    refinementSuggestions.map(opt => (
+                    <Button 
+                        key={opt.instruction}
+                        variant="secondary"
+                        onClick={() => handleRefine(opt.instruction)}
+                        disabled={!!isRefining}
+                    >
+                        {isRefining === opt.instruction && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                        {opt.label}
+                    </Button>
+                    ))
+                ) : (
+                    <p className="text-sm text-muted-foreground">No suggestions available for this data structure.</p>
+                )}
               </CardContent>
             </Card>
 
             <div className="flex justify-center md:justify-end md:pt-8 relative">
-                <Button disabled={true} size="lg">
+                <Button onClick={handleSave} disabled={isSaving || !!projectId} size="lg">
                     <Save className="mr-2 h-4 w-4" />
-                    Save Project
+                    {projectId ? 'Saved' : 'Save Project'}
                 </Button>
-                <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>
+                 {isSaving && <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>}
             </div>
           </div>
         </div>
