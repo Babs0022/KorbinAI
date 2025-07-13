@@ -74,16 +74,16 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
                     setSuggestedKeywords(result.suggestedKeywords || []);
                     if (result.suggestedAudience) {
                         const newAudience = result.suggestedAudience;
-                        setFormData(prev => {
-                            const isCustom = !audiences.includes(newAudience);
-                            const updatedData = {
-                                ...prev,
-                                targetAudience: isCustom ? 'Other' : newAudience,
-                                otherAudience: isCustom ? newAudience : prev.otherAudience
-                            };
-                            onDataChange(updatedData);
-                            return updatedData;
-                        });
+                        const isCustom = !audiences.includes(newAudience);
+
+                        const updatedData = {
+                            ...formData,
+                            targetAudience: isCustom ? 'Other' : newAudience,
+                            otherAudience: isCustom ? newAudience : formData.otherAudience
+                        };
+
+                        setFormData(updatedData);
+                        onDataChange(updatedData);
                     }
                 }
             } catch (error) {
@@ -92,7 +92,7 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
             } finally {
                 setIsSuggesting(false);
             }
-        }, 1500); // 1.5-second debounce timer
+        }, 1500);
 
         setDebounceTimeout(timeout);
 
@@ -100,7 +100,7 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
             if (timeout) clearTimeout(timeout);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [formData.mainTopic]);
+    }, [formData.mainTopic, onDataChange]);
     
     const handleSelectChange = (field: keyof ContentIdeaFormData) => (value: string) => {
         handleChange(field, value);
