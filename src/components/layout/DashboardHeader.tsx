@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, FileText, Shield, PanelLeft, Sun, Moon } from "lucide-react";
+import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, FileText, Shield, PanelLeft, Sun, Moon, Mail } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,19 @@ import { useTheme } from "next-themes";
 interface DashboardHeaderProps {
     variant?: 'main' | 'sidebar';
 }
+
+const XIcon = (props: React.ComponentProps<'svg'>) => (
+    <svg
+      role="img"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-4 w-4 fill-current"
+      {...props}
+    >
+      <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.931ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+    </svg>
+);
+
 
 function ThemeToggle() {
     const { setTheme, theme } = useTheme();
@@ -45,6 +58,7 @@ function ThemeToggle() {
 export default function DashboardHeader({ variant = 'main' }: DashboardHeaderProps) {
   const { user, logout, loading } = useAuth();
   const { state } = useSidebar();
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'team@brieflyai.xyz';
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
@@ -92,6 +106,17 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
         <a href="https://brieflyai.xyz/privacy" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <Shield />
             <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Privacy Policy</span>
+        </a>
+
+        <Separator className="my-2" />
+
+         <a href="https://x.com/trybrieflyai" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+            <XIcon />
+            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Follow on X</span>
+        </a>
+         <a href={`mailto:${supportEmail}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+            <Mail />
+            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Contact Support</span>
         </a>
     </nav>
   );
