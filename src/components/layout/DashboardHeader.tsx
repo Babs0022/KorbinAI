@@ -14,15 +14,33 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, FileText, Shield, PanelLeft } from "lucide-react";
+import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, FileText, Shield, PanelLeft, Sun, Moon } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useTheme } from "next-themes";
 
 interface DashboardHeaderProps {
     variant?: 'main' | 'sidebar';
 }
+
+function ThemeToggle() {
+    const { setTheme, theme } = useTheme();
+
+    return (
+        <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+        >
+            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
+        </Button>
+    )
+}
+
 
 export default function DashboardHeader({ variant = 'main' }: DashboardHeaderProps) {
   const { user, logout, loading } = useAuth();
@@ -81,10 +99,13 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   if (variant === 'sidebar') {
     return (
         <div className="flex flex-col h-full">
-            <div className="flex items-center gap-2 p-4 border-b">
+            <div className="flex items-center justify-between gap-2 p-4 border-b">
                  <Link href="/" className="text-xl font-bold text-foreground">
                     BrieflyAI
                 </Link>
+                <div className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>
+                    <ThemeToggle />
+                </div>
             </div>
             <div className="flex-1 overflow-y-auto">
                 <SidebarNav />
@@ -143,6 +164,9 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             </SidebarTrigger>
             <div className="h-6 border-l mx-2 hidden md:block"></div>
             <h1 className="text-lg font-semibold">Dashboard</h1>
+        </div>
+        <div className="md:hidden">
+            <ThemeToggle />
         </div>
       </div>
     </header>
