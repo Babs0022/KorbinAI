@@ -123,6 +123,3 @@ dist/
 .yarn/build-state.yml
 .yarn/install-state.json
 .pnp.*
-
-# App Hosting
-apphosting.yaml
