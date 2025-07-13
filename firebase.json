@@ -23,14 +23,15 @@
       {
         "source": "**",
         "app": {
-          "secretEnvironmentVariables": [
-            {
-              "key": "NEXT_PUBLIC_FIREBASE_API_KEY",
-              "secret": "NEXT_PUBLIC_FIREBASE_API_KEY"
-            }
-          ]
+          "backendId": "studio",
+          "region": "us-central1"
         }
       }
+    ]
+  },
+  "apphosting": {
+    "backends": [
+      "studio"
     ]
   }
 }

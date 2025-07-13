@@ -51,11 +51,11 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
     const [isSuggesting, setIsSuggesting] = useState(false);
     const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
 
-    const handleChange = useCallback((field: keyof ContentIdeaFormData, value: any) => {
+    const handleChange = (field: keyof ContentIdeaFormData, value: any) => {
         const newData = { ...formData, [field]: value };
         setFormData(newData);
         onDataChange(newData);
-    }, [formData, onDataChange]);
+    };
 
     // Debounced effect for AI suggestions
     useEffect(() => {
@@ -73,13 +73,17 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
                 if (result) {
                     setSuggestedKeywords(result.suggestedKeywords || []);
                     if (result.suggestedAudience) {
-                        // Check if the suggested audience is a custom one
-                        if (!audiences.includes(result.suggestedAudience)) {
-                            handleChange('targetAudience', 'Other');
-                            handleChange('otherAudience', result.suggestedAudience);
-                        } else {
-                            handleChange('targetAudience', result.suggestedAudience);
-                        }
+                        const newAudience = result.suggestedAudience;
+                        setFormData(prev => {
+                            const isCustom = !audiences.includes(newAudience);
+                            const updatedData = {
+                                ...prev,
+                                targetAudience: isCustom ? 'Other' : newAudience,
+                                otherAudience: isCustom ? newAudience : prev.otherAudience
+                            };
+                            onDataChange(updatedData);
+                            return updatedData;
+                        });
                     }
                 }
             } catch (error) {
@@ -96,7 +100,7 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
             if (timeout) clearTimeout(timeout);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [formData.mainTopic, handleChange]);
+    }, [formData.mainTopic]);
     
     const handleSelectChange = (field: keyof ContentIdeaFormData) => (value: string) => {
         handleChange(field, value);
