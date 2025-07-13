@@ -39,4 +39,4 @@ env:
 
   # Support Email for contact links
   - variable: NEXT_PUBLIC_SUPPORT_EMAIL
-    value: "team@brieflyai.xyz"
+    value: "elijah@brieflyai.xyz"

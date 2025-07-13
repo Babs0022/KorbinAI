@@ -58,7 +58,7 @@ function ThemeToggle() {
 export default function DashboardHeader({ variant = 'main' }: DashboardHeaderProps) {
   const { user, logout, loading } = useAuth();
   const { state } = useSidebar();
-  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'team@brieflyai.xyz';
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'elijah@brieflyai.xyz';
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
