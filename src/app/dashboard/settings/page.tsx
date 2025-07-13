@@ -31,27 +31,6 @@ export default function SettingsPage() {
 
                 <Card>
                     <CardHeader>
-                    <CardTitle>Appearance</CardTitle>
-                    <CardDescription>
-                        Customize the look and feel of the application.
-                    </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-6">
-                    <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                        <Label htmlFor="theme">Dark Mode</Label>
-                        <p className="text-xs text-muted-foreground">
-                            The app is currently in dark mode. Light mode is coming
-                            soon.
-                        </p>
-                        </div>
-                        <div>
-                        <Switch defaultChecked={true} disabled id="theme" />
-                        </div>
-                    </div>
-                    </CardContent>
-
-                    <CardHeader>
                     <CardTitle>Notifications</CardTitle>
                     <CardDescription>
                         Manage how you receive notifications from us.
