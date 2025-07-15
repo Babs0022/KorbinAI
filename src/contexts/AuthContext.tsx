@@ -23,6 +23,18 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to manage the session cookie
+async function setSessionCookie(token: string | null) {
+  const method = token ? 'POST' : 'DELETE';
+  const body = token ? JSON.stringify({ idToken: token }) : undefined;
+
+  await fetch('/api/auth/session', {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body,
+  });
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,13 +45,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         // User is signed in.
-        // Check verification status
+        const token = await user.getIdToken();
+        await setSessionCookie(token);
+        setUser(user);
+        
         if (!user.emailVerified && pathname !== '/verify-email') {
           router.replace('/verify-email');
-        } else {
-            setUser(user);
         }
       } else {
+        // User is signed out.
+        await setSessionCookie(null);
         setUser(null);
       }
       setLoading(false);
@@ -71,7 +86,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           createdAt: new Date(),
         });
       }
-      // Explicitly redirect to the dashboard after successful sign-in
       router.push('/');
       return user;
     } catch (error) {
@@ -79,7 +93,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw error;
     }
   };
-
 
   const value: AuthContextType = {
     user,
