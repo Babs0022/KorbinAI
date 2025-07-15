@@ -71,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           createdAt: new Date(),
         });
       }
+      // Explicitly redirect to the dashboard after successful sign-in
       router.push('/');
       return user;
     } catch (error) {
