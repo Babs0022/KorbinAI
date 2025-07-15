@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -69,6 +70,42 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
       .toUpperCase();
   };
 
+  const UserMenu = () => {
+    if (loading) {
+      return <Skeleton className="h-10 w-10 rounded-md" />;
+    }
+    if (user) {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-10 w-10 rounded-md p-0">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
+                <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+                <Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Account</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={logout} className="text-destructive focus:text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
+    return null;
+  };
+
   const SidebarNav = () => (
     <nav className="flex flex-col gap-2 p-2">
         <Link href="/" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
@@ -85,7 +122,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <CreditCard />
             <div className={cn("flex w-full items-center justify-between transition-opacity", state === 'collapsed' && 'opacity-0')}>
               <span>Billing</span>
-               <Badge variant="secondary" className="absolute right-2 top-1/2 -translate-y-1/2">Soon</Badge>
             </div>
         </Link>
         <Link href="/dashboard/account" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
@@ -136,7 +172,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <div className="p-2 border-t">
                 {loading ? (
                     <div className="flex items-center gap-3 p-2">
-                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <Skeleton className="h-10 w-10 rounded-md" />
                         <Skeleton className="h-4 w-24" />
                     </div>
                 ) : user ? (
@@ -191,8 +227,9 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <div className="h-6 border-l mx-2 hidden md:block"></div>
             <h1 className="text-lg font-semibold hidden md:block">Dashboard</h1>
         </div>
-        <div className="md:hidden">
+        <div className="flex items-center gap-2">
             <ThemeToggle />
+            <UserMenu />
         </div>
       </div>
     </header>
