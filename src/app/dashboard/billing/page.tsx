@@ -1,28 +1,179 @@
 
 "use client";
 
-import { CreditCard } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Check, CreditCard, Sparkles } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { usePaystackPayment } from "react-paystack";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { UserSubscription } from "@/types/subscription";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+
+const proPlan = {
+    name: "Pro Plan",
+    price: 15, // $15
+    priceId: "PLN_PRO_ANNUAL_BRIEFLYAI", // Paystack Plan Code
+    billingCycle: "annually",
+    features: [
+        "Unlimited Written Content Generation",
+        "Unlimited Prompt Generation",
+        "Unlimited Web Page/App Generation",
+        "Unlimited Image Generation",
+        "Unlimited Structured Data Generation",
+        "Access to All Future Tools",
+        "Priority Support",
+    ],
+};
+
+const CurrentPlanCard = ({ subscription }: { subscription: UserSubscription }) => (
+    <Card className="border-primary bg-primary/5">
+        <CardHeader>
+            <CardTitle>Your Current Plan</CardTitle>
+            <CardDescription>You have full access to all features.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="space-y-2">
+                <p className="font-semibold text-xl">
+                    BrieflyAI Pro <Badge variant="outline" className="ml-2 align-middle">Active</Badge>
+                </p>
+                <p className="text-muted-foreground">
+                    Your subscription will renew on {format(subscription.currentPeriodEnd, 'PPP')}.
+                </p>
+            </div>
+        </CardContent>
+        <CardFooter>
+             <p className="text-xs text-muted-foreground">To manage your subscription, please contact support.</p>
+        </CardFooter>
+    </Card>
+);
+
 
 export default function BillingPage() {
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [subscription, setSubscription] = useState<UserSubscription | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const paystackConfig = {
+        reference: new Date().getTime().toString(),
+        email: user?.email || "",
+        amount: proPlan.price * 100, // Amount in kobo
+        plan: proPlan.priceId,
+        publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
+    };
+    
+    const initializePayment = usePaystackPayment(paystackConfig);
+
+    useEffect(() => {
+        if (!user) {
+            setIsLoading(false);
+            return;
+        }
+        
+        const subDocRef = doc(db, "userSubscriptions", user.uid);
+        const unsubscribe = onSnapshot(subDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                setSubscription({
+                    ...data,
+                    currentPeriodEnd: data.currentPeriodEnd?.toDate(),
+                    currentPeriodStart: data.currentPeriodStart?.toDate(),
+                } as UserSubscription);
+            } else {
+                setSubscription(null);
+            }
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [user]);
+
+    const onPaystackSuccess = (reference: any) => {
+      toast({
+        title: "Payment Successful!",
+        description: "Your subscription is now active. Refreshing page...",
+      });
+      // The webhook will handle the subscription update.
+      // A page reload can show the new status.
+      setTimeout(() => window.location.reload(), 2000);
+    };
+
+    const onPaystackClose = () => {
+      toast({
+        variant: "default",
+        title: "Payment Closed",
+        description: "You can complete your subscription at any time.",
+      });
+    };
+    
+    if (isLoading) {
+        return (
+            <DashboardLayout>
+                <main className="flex-1 p-4 md:p-8">
+                     <div className="max-w-md mx-auto">
+                        <Skeleton className="h-[450px] w-full" />
+                    </div>
+                </main>
+            </DashboardLayout>
+        );
+    }
+    
+    if (subscription && subscription.status === 'active') {
+         return (
+             <DashboardLayout>
+                <main className="flex-1 p-4 md:p-8">
+                    <div className="max-w-md mx-auto">
+                        <CurrentPlanCard subscription={subscription} />
+                    </div>
+                </main>
+            </DashboardLayout>
+         )
+    }
+
     return (
         <DashboardLayout>
             <main className="flex-1 p-4 md:p-8">
-                <div className="max-w-4xl mx-auto">
-                     <Card className="w-full text-center mt-16 border-dashed">
-                        <CardHeader>
+                <div className="max-w-md mx-auto">
+                     <Card className="w-full text-center shadow-lg">
+                        <CardHeader className="pb-4">
                             <div className="mx-auto w-fit rounded-full bg-primary/10 p-4 mb-4">
-                                <CreditCard className="h-10 w-10 text-primary" />
+                                <Sparkles className="h-10 w-10 text-primary" />
                             </div>
-                            <CardTitle className="text-3xl">Billing is Coming Soon!</CardTitle>
+                            <CardTitle className="text-3xl">BrieflyAI Pro</CardTitle>
                             <CardDescription className="text-lg text-muted-foreground">
-                                We're preparing a simple and clear billing system for you.
+                                Unlock all features and supercharge your creativity.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
-                           <p>Soon, you'll be able to manage your subscription and payment details right here.</p>
+                        <CardContent className="space-y-8">
+                            <p className="text-5xl font-bold">
+                                ${proPlan.price}
+                                <span className="text-lg font-normal text-muted-foreground">/ year</span>
+                            </p>
+                            <ul className="space-y-3 text-left">
+                                {proPlan.features.map(feature => (
+                                    <li key={feature} className="flex items-center gap-3">
+                                        <Check className="h-5 w-5 text-primary" />
+                                        <span>{feature}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                             <Button size="lg" className="w-full text-lg" onClick={() => initializePayment({onSuccess: onPaystackSuccess, onClose: onPaystackClose})}>
+                                <CreditCard className="mr-2 h-5 w-5" />
+                                Upgrade to Pro
+                            </Button>
                         </CardContent>
+                         <CardFooter>
+                            <p className="text-xs text-muted-foreground mx-auto">
+                                Payments are securely processed by Paystack. You can cancel anytime.
+                            </p>
+                         </CardFooter>
                     </Card>
                 </div>
             </main>

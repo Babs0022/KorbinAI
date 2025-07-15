@@ -346,12 +346,9 @@ export default function AccountManagementPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                  {renderSubscriptionStatus()}
-                 <div className="relative w-fit">
-                    <Button asChild>
-                        <Link href="/dashboard/billing">Manage Subscription</Link>
-                    </Button>
-                    <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>
-                 </div>
+                 <Button asChild>
+                    <Link href="/dashboard/billing">Manage Subscription</Link>
+                </Button>
               </CardContent>
             </Card>
           </div>

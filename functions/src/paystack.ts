@@ -1,3 +1,4 @@
+
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 import Paystack from "paystack-node";
@@ -14,38 +15,19 @@ const paystack = new Paystack(PAYSTACK_SECRET_KEY);
 
 const planDetails: Record<string, {
     name: string;
-    monthly: { amount: number; plan_code: string; };
     annually: { amount: number; plan_code: string; };
 }> = {
-    premium: {
-        name: "BrieflyAI Premium",
-        monthly: {
+    pro: {
+        name: "BrieflyAI Pro",
+        annually: {
             amount: 15 * 100, // 15 USD in cents
-            plan_code: "PLN_PREMIUM_MONTHLY_EXAMPLE",
+            plan_code: "PLN_PRO_ANNUAL_BRIEFLYAI",
         },
-        annually: {
-            amount: 150 * 100, // 150 USD in cents
-            plan_code: "PLN_PREMIUM_ANNUALLY_EXAMPLE",
-        },
-    },
-    unlimited: {
-        name: "BrieflyAI Unlimited",
-        monthly: {
-            amount: 30 * 100, // 30 USD in cents
-            plan_code: "PLN_UNLIMITED_MONTHLY_EXAMPLE",
-        },
-        annually: {
-            amount: 300 * 100, // 300 USD in cents
-            plan_code: "PLN_UNLIMITED_ANNUALLY_EXAMPLE",
-        }
     },
 };
 
-function findPlanDetailsByCode(planCode: string): { planId: string | null; billingCycle: 'monthly' | 'annually' | null } {
+function findPlanDetailsByCode(planCode: string): { planId: string | null; billingCycle: 'annually' | null } {
     for (const [planId, details] of Object.entries(planDetails)) {
-        if (details.monthly.plan_code === planCode) {
-            return { planId, billingCycle: 'monthly' };
-        }
         if (details.annually.plan_code === planCode) {
             return { planId, billingCycle: 'annually' };
         }
@@ -108,6 +90,7 @@ export async function processChargeSuccessEvent(eventData: PaystackChargeSuccess
             currentPeriodEndDate.setFullYear(currentPeriodEndDate.getFullYear() + 1);
             logger.info(`[Paystack] Setting annual subscription end date for user ${userId}: ${currentPeriodEndDate.toISOString()}`);
         } else {
+            // Fallback for monthly if ever re-introduced, or default
             currentPeriodEndDate.setMonth(currentPeriodEndDate.getMonth() + 1);
             logger.info(`[Paystack] Setting monthly subscription end date for user ${userId}: ${currentPeriodEndDate.toISOString()}`);
         }
@@ -117,6 +100,7 @@ export async function processChargeSuccessEvent(eventData: PaystackChargeSuccess
             planId,
             email: customer?.email,
             status: "active",
+            paymentMethod: "card",
             currentPeriodStart: admin.firestore.Timestamp.fromDate(paidAtDate),
             currentPeriodEnd: admin.firestore.Timestamp.fromDate(currentPeriodEndDate),
             paystackReference: reference,
@@ -136,6 +120,7 @@ export async function processChargeSuccessEvent(eventData: PaystackChargeSuccess
             amount,
             currency,
             status: "success",
+            paymentMethod: "card",
             paystackReference: reference,
             paidAt: admin.firestore.Timestamp.fromDate(paidAtDate),
             createdAt: admin.firestore.FieldValue.serverTimestamp(),

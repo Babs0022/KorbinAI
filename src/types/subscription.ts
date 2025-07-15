@@ -1,8 +1,9 @@
+
 import { z } from 'zod';
 
 export const UserSubscriptionSchema = z.object({
   userId: z.string(),
-  planId: z.enum(['premium', 'unlimited']),
+  planId: z.enum(['pro', 'premium', 'unlimited']),
   email: z.string().email().optional(),
   status: z.enum(['active', 'cancelled', 'past_due']),
   currentPeriodStart: z.date(),
