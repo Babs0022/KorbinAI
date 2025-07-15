@@ -1,18 +1,29 @@
 
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import {NextResponse} from 'next/server';
+import type {NextRequest} from 'next/server';
 
-// This middleware is simplified to only handle basic routing cases.
-// The more complex auth logic (like email verification) is handled in the AuthContext.
+const PROTECTED_ROUTES = ['/', '/dashboard', '/component-wizard', '/image-generator', '/prompt-generator', '/structured-data', '/written-content'];
+const AUTH_ROUTES = ['/login', '/signup', '/forgot-password', '/verify-email'];
+
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  
-  // Reading the auth cookie is unreliable here for server components,
-  // so we delegate auth state checking to the client-side AuthProvider.
-  // This middleware can still be useful for other purposes like geolocation, etc.
+  const {pathname} = request.nextUrl;
+  const authToken = request.cookies.get('firebaseIdToken');
 
-  // Allow all requests to proceed. The client-side AuthProvider will handle redirects.
+  // If user is unauthenticated and trying to access a protected route, redirect to login
+  if (!authToken && PROTECTED_ROUTES.some(p => pathname.startsWith(p) && p !== '/')) {
+      if (pathname === '/') {
+        // Allow access to root if it's the specific path, but not sub-paths if it were a group
+      } else {
+        return NextResponse.redirect(new URL('/login', request.url));
+      }
+  }
+
+  // If user is authenticated and trying to access an auth route, redirect to dashboard
+  if (authToken && AUTH_ROUTES.includes(pathname)) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+  
   return NextResponse.next();
 }
 
@@ -25,6 +36,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - public assets (favicon, logo, etc.)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|logo.svg).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|icon.png|manifest.json).*)',
   ],
 };

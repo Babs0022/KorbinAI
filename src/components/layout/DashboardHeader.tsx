@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -20,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
+import Logo from "../shared/Logo";
 
 interface DashboardHeaderProps {
     variant?: 'main' | 'sidebar';
@@ -125,9 +125,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     return (
         <div className="flex flex-col h-full">
             <div className="flex items-center justify-between gap-2 p-4 border-b">
-                 <Link href="/" className="text-xl font-bold text-foreground">
-                    BrieflyAI
-                </Link>
+                 <Logo />
                 <div className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>
                     <ThemeToggle />
                 </div>
@@ -187,8 +185,11 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <span className="sr-only">Toggle Sidebar</span>
                 </Button>
             </SidebarTrigger>
+            <div className="md:hidden">
+                <Logo />
+            </div>
             <div className="h-6 border-l mx-2 hidden md:block"></div>
-            <h1 className="text-lg font-semibold">Dashboard</h1>
+            <h1 className="text-lg font-semibold hidden md:block">Dashboard</h1>
         </div>
         <div className="md:hidden">
             <ThemeToggle />

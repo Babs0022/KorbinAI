@@ -34,13 +34,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (user) {
         // User is signed in.
         // Check verification status
-        if (!user.emailVerified) {
-          if (pathname !== '/verify-email') {
-            router.replace('/verify-email');
-          }
+        if (!user.emailVerified && pathname !== '/verify-email') {
+          router.replace('/verify-email');
+        } else {
+            setUser(user);
         }
+      } else {
+        setUser(null);
       }
-      setUser(user);
       setLoading(false);
     });
 

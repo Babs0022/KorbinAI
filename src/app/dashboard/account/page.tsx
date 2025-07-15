@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { doc, updateDoc, getDoc, onSnapshot } from "firebase/firestore";
-import { LoaderCircle, User, Key, Image as ImageIcon, CreditCard } from "lucide-react";
+import { LoaderCircle, User, Key, Image as ImageIcon, CreditCard, Eye, EyeOff } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { auth, db } from "@/lib/firebase";
@@ -69,6 +69,10 @@ export default function AccountManagementPage() {
   const [selectedAvatar, setSelectedAvatar] = useState("");
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
+  
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -300,7 +304,14 @@ export default function AccountManagementPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Current Password</FormLabel>
-                          <FormControl><Input type="password" {...field} /></FormControl>
+                          <div className="relative">
+                            <FormControl>
+                                <Input type={showCurrentPassword ? "text" : "password"} {...field} />
+                            </FormControl>
+                            <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
+                                {showCurrentPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -311,7 +322,14 @@ export default function AccountManagementPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>New Password (min. 6 characters)</FormLabel>
-                          <FormControl><Input type="password" {...field} /></FormControl>
+                           <div className="relative">
+                            <FormControl>
+                                <Input type={showNewPassword ? "text" : "password"} {...field} />
+                            </FormControl>
+                            <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
+                                {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -322,7 +340,14 @@ export default function AccountManagementPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Confirm New Password</FormLabel>
-                          <FormControl><Input type="password" {...field} /></FormControl>
+                           <div className="relative">
+                            <FormControl>
+                                <Input type={showConfirmPassword ? "text" : "password"} {...field} />
+                            </FormControl>
+                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
+                                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
