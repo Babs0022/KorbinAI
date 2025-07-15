@@ -1,4 +1,5 @@
 
+
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 import Paystack from "paystack-node";
@@ -15,10 +16,15 @@ const paystack = new Paystack(PAYSTACK_SECRET_KEY);
 
 const planDetails: Record<string, {
     name: string;
+    monthly: { amount: number; plan_code: string; };
     annually: { amount: number; plan_code: string; };
 }> = {
     pro: {
         name: "BrieflyAI Pro",
+        monthly: {
+            amount: 15 * 100, // $15 in cents
+            plan_code: "PLN_PRO_MONTHLY_BRIEFLYAI",
+        },
         annually: {
             amount: 162 * 100, // $162 in cents ($15/mo * 12, discounted 10%)
             plan_code: "PLN_PRO_ANNUAL_BRIEFLYAI",
@@ -26,8 +32,11 @@ const planDetails: Record<string, {
     },
 };
 
-function findPlanDetailsByCode(planCode: string): { planId: string | null; billingCycle: 'annually' | null } {
+function findPlanDetailsByCode(planCode: string): { planId: string | null; billingCycle: 'monthly' | 'annually' | null } {
     for (const [planId, details] of Object.entries(planDetails)) {
+        if (details.monthly.plan_code === planCode) {
+            return { planId, billingCycle: 'monthly' };
+        }
         if (details.annually.plan_code === planCode) {
             return { planId, billingCycle: 'annually' };
         }
@@ -63,7 +72,7 @@ export async function processChargeSuccessEvent(eventData: PaystackChargeSuccess
     }
     logger.info(`[Paystack] Found Email: ${email} and Plan Code: ${planCode}.`);
 
-    const { planId } = findPlanDetailsByCode(planCode);
+    const { planId, billingCycle } = findPlanDetailsByCode(planCode);
 
     if (!planId) {
         logger.error(`[Paystack] CRITICAL: Could not match plan code ${planCode} to a known plan.`);
@@ -86,11 +95,11 @@ export async function processChargeSuccessEvent(eventData: PaystackChargeSuccess
         const paidAtDate = new Date(paid_at || Date.now());
         const currentPeriodEndDate = new Date(paidAtDate.getTime());
 
-        if (interval === 'annually') {
+        if (interval === 'annually' || billingCycle === 'annually') {
             currentPeriodEndDate.setFullYear(currentPeriodEndDate.getFullYear() + 1);
             logger.info(`[Paystack] Setting annual subscription end date for user ${userId}: ${currentPeriodEndDate.toISOString()}`);
         } else {
-            // Fallback for monthly if ever re-introduced, or default
+            // Fallback for monthly
             currentPeriodEndDate.setMonth(currentPeriodEndDate.getMonth() + 1);
             logger.info(`[Paystack] Setting monthly subscription end date for user ${userId}: ${currentPeriodEndDate.toISOString()}`);
         }
@@ -101,6 +110,7 @@ export async function processChargeSuccessEvent(eventData: PaystackChargeSuccess
             email: customer?.email,
             status: "active",
             paymentMethod: "card",
+            billingCycle,
             currentPeriodStart: admin.firestore.Timestamp.fromDate(paidAtDate),
             currentPeriodEnd: admin.firestore.Timestamp.fromDate(currentPeriodEndDate),
             paystackReference: reference,
