@@ -6,34 +6,40 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Feather, Code2, LayoutTemplate, Image, Bolt, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import FeatureTourGuide from "@/components/shared/FeatureTourGuide";
 
 export default function HomePage() {
   const creationOptions = [
     {
+      id: "feature-written-content",
       icon: <Feather className="h-8 w-8" />,
       title: "Written Content",
       subtitle: "Blog posts, emails, social media updates",
       href: "/written-content",
     },
     {
+      id: "feature-prompt-generator",
       icon: <Bolt className="h-8 w-8" />,
       title: "Prompt Generator",
       subtitle: "Craft optimized prompts for any task",
       href: "/prompt-generator",
     },
     {
+      id: "feature-web-page-app",
       icon: <LayoutTemplate className="h-8 w-8" />,
       title: "Web Page / App",
       subtitle: "Full landing pages, dashboards, etc.",
       href: "/component-wizard",
     },
     {
+      id: "feature-image-generator",
       icon: <Image className="h-8 w-8" />,
       title: "Image Generator",
       subtitle: "Create unique images from text",
       href: "/image-generator",
     },
     {
+      id: "feature-structured-data",
       icon: <Code2 className="h-8 w-8" />,
       title: "Structured Data",
       subtitle: "JSON for components, CSV lists",
@@ -54,6 +60,7 @@ export default function HomePage() {
               <Link
                 href={option.href}
                 key={option.title}
+                id={option.id}
                 className="group"
               >
                 <Card className={cn(
@@ -81,6 +88,7 @@ export default function HomePage() {
           </div>
         </div>
       </main>
+      <FeatureTourGuide />
     </DashboardLayout>
   );
 }

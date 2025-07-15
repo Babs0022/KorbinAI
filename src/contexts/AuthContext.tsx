@@ -33,19 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         // User is signed in.
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-        const isNewUser = !userDoc.exists();
-
         // Check verification status
         if (!user.emailVerified) {
           if (pathname !== '/verify-email') {
             router.replace('/verify-email');
           }
-        } else if (isNewUser) {
-           if (pathname !== '/onboarding') {
-              router.replace('/onboarding');
-           }
         }
       }
       setUser(user);
@@ -77,10 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           photoURL: user.photoURL,
           createdAt: new Date(),
         });
-        router.push('/onboarding');
-      } else {
-        router.push('/');
       }
+      router.push('/');
       return user;
     } catch (error) {
       console.error("Error during Google sign-in:", error);
