@@ -1,6 +1,7 @@
 
 
 
+
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 import Paystack from "paystack-node";
@@ -24,11 +25,11 @@ const planDetails: Record<string, {
         name: "BrieflyAI Pro",
         monthly: {
             amount: 20 * 100, // $20 in cents
-            plan_code: "PLN_PRO_MONTHLY_BRIEFLYAI",
+            plan_code: "PLN_apm944j0mz7armb",
         },
         annually: {
             amount: 216 * 100, // $216 in cents ($20/mo * 12, discounted 10%)
-            plan_code: "PLN_PRO_ANNUAL_BRIEFLYAI",
+            plan_code: "PLN_up61lgvt7wozomg",
         },
     },
 };

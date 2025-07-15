@@ -22,7 +22,7 @@ const planDetails = {
     monthly: {
         name: "Pro Plan (Monthly)",
         price: 20,
-        priceId: "PLN_PRO_MONTHLY_BRIEFLYAI",
+        priceId: "PLN_apm944j0mz7armb",
         billingCycle: "monthly",
         priceString: "$20",
         priceSuffix: "/ month",
@@ -40,7 +40,7 @@ const planDetails = {
     annually: {
         name: "Pro Plan (Annually)",
         price: 216,
-        priceId: "PLN_PRO_ANNUAL_BRIEFLYAI",
+        priceId: "PLN_up61lgvt7wozomg",
         billingCycle: "annually",
         priceString: "$216",
         priceSuffix: "/ year",
