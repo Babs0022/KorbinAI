@@ -20,7 +20,7 @@ const planDetails: Record<string, {
     pro: {
         name: "BrieflyAI Pro",
         annually: {
-            amount: 15 * 100, // 15 USD in cents
+            amount: 162 * 100, // $162 in cents ($15/mo * 12, discounted 10%)
             plan_code: "PLN_PRO_ANNUAL_BRIEFLYAI",
         },
     },

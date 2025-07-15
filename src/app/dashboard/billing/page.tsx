@@ -18,10 +18,12 @@ import { Badge } from "@/components/ui/badge";
 
 const proPlan = {
     name: "Pro Plan",
-    price: 15, // $15
+    price: 162, // $162 ($15/mo * 12, with 10% discount)
     priceId: "PLN_PRO_ANNUAL_BRIEFLYAI", // Paystack Plan Code
     billingCycle: "annually",
     features: [
+        "Based on a $15/month value",
+        "Billed annually with a 10% discount",
         "Unlimited Written Content Generation",
         "Unlimited Prompt Generation",
         "Unlimited Web Page/App Generation",
