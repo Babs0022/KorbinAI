@@ -21,10 +21,10 @@ import { Switch } from "@/components/ui/switch";
 const planDetails = {
     monthly: {
         name: "Pro Plan (Monthly)",
-        price: 15,
+        price: 20,
         priceId: "PLN_PRO_MONTHLY_BRIEFLYAI",
         billingCycle: "monthly",
-        priceString: "$15",
+        priceString: "$20",
         priceSuffix: "/ month",
         features: [
             "Billed month-to-month",
@@ -39,13 +39,13 @@ const planDetails = {
     },
     annually: {
         name: "Pro Plan (Annually)",
-        price: 162,
+        price: 216,
         priceId: "PLN_PRO_ANNUAL_BRIEFLYAI",
         billingCycle: "annually",
-        priceString: "$162",
+        priceString: "$216",
         priceSuffix: "/ year",
         features: [
-            "Based on a $15/month value",
+            "Based on a $20/month value",
             "Billed annually with a 10% discount",
             "Unlimited Written Content Generation",
             "Unlimited Prompt Generation",
