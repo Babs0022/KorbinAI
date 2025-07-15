@@ -11,12 +11,8 @@ export function middleware(request: NextRequest) {
   const authToken = request.cookies.get('firebaseIdToken');
 
   // If user is unauthenticated and trying to access a protected route, redirect to login
-  if (!authToken && PROTECTED_ROUTES.some(p => pathname.startsWith(p) && p !== '/')) {
-      if (pathname === '/') {
-        // Allow access to root if it's the specific path, but not sub-paths if it were a group
-      } else {
-        return NextResponse.redirect(new URL('/login', request.url));
-      }
+  if (!authToken && PROTECTED_ROUTES.includes(pathname)) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // If user is authenticated and trying to access an auth route, redirect to dashboard
