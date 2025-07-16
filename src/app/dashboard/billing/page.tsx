@@ -97,7 +97,7 @@ export default function BillingPage() {
             return;
         }
         
-        const subDocRef = doc(db, "users", user.uid, "subscriptions", "paystack");
+        const subDocRef = doc(db, "userSubscriptions", user.uid);
         const unsubscribe = onSnapshot(subDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
@@ -217,18 +217,17 @@ export default function BillingPage() {
                                     </li>
                                 ))}
                             </ul>
-                             <Button size="lg" className="w-full text-lg" onClick={handleUpgrade} disabled={isProcessing}>
-                                {isProcessing ? (
-                                    <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
-                                ) : (
+                            <div className="relative">
+                                <Button size="lg" className="w-full text-lg" disabled={true}>
                                     <CreditCard className="mr-2 h-5 w-5" />
-                                )}
-                                Upgrade to Pro
-                            </Button>
+                                    Upgrade to Pro
+                                </Button>
+                                <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>
+                            </div>
                         </CardContent>
                          <CardFooter>
                             <p className="text-xs text-muted-foreground mx-auto">
-                                Payments are securely processed by Paystack. You can cancel anytime.
+                                Payments are securely processed. You can cancel anytime.
                             </p>
                          </CardFooter>
                     </Card>
