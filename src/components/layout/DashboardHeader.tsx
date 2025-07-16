@@ -118,13 +118,13 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
               <span>Projects</span>
             </div>
         </Link>
-        <Link href="/dashboard/billing" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent relative">
+        <div className="flex items-center gap-3 p-2 rounded-md text-muted-foreground/50 cursor-not-allowed relative">
             <CreditCard />
             <div className={cn("flex w-full items-center justify-between transition-opacity", state === 'collapsed' && 'opacity-0')}>
               <span>Billing</span>
                <Badge variant="secondary" className="absolute right-2 top-1/2 -translate-y-1/2">Soon</Badge>
             </div>
-        </Link>
+        </div>
         <Link href="/dashboard/account" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <User />
             <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Account</span>
@@ -226,7 +226,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 <Logo />
             </div>
             <div className="h-6 border-l mx-2 hidden md:block"></div>
-            <Logo showText={false} />
+            <Logo />
         </div>
         <div className="flex items-center gap-2">
             <ThemeToggle />
