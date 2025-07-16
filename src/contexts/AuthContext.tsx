@@ -49,8 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await setSessionCookie(token);
         setUser(user);
         
-        if (!user.emailVerified && pathname !== '/verify-email') {
-          router.replace('/verify-email');
+        // Redirect to the main page if not already there
+        if (pathname !== '/') {
+          router.replace('/');
         }
       } else {
         // User is signed out.
@@ -86,7 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           createdAt: new Date(),
         });
       }
-      router.push('/');
       return user;
     } catch (error) {
       console.error("Error during Google sign-in:", error);

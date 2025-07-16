@@ -2,7 +2,7 @@
 import {NextResponse} from 'next/server';
 import type {NextRequest} from 'next/server';
 
-const PROTECTED_ROUTES = ['/', '/dashboard', '/dashboard/account', '/dashboard/billing', '/dashboard/settings', '/component-wizard', '/image-generator', '/prompt-generator', '/structured-data', '/written-content'];
+const PROTECTED_ROUTES = ['/'];
 const AUTH_ROUTES = ['/login', '/signup', '/forgot-password', '/verify-email'];
 
 
@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // If user is authenticated and trying to access an auth route, redirect to dashboard
+  // If user is authenticated and trying to access an auth route, redirect to the root
   if (authToken && AUTH_ROUTES.includes(pathname)) {
     return NextResponse.redirect(new URL('/', request.url));
   }
