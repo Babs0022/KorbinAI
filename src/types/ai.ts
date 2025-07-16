@@ -6,6 +6,20 @@
 
 import { z } from 'zod';
 
+// === Conversational Chat Flow ===
+export const MessageSchema = z.object({
+  role: z.enum(['user', 'model']),
+  content: z.string(),
+});
+export type Message = z.infer<typeof MessageSchema>;
+
+export const ConversationalChatInputSchema = z.object({
+  history: z.array(MessageSchema).describe('The conversation history.'),
+  prompt: z.string().describe('The latest user prompt.'),
+});
+export type ConversationalChatInput = z.infer<typeof ConversationalChatInputSchema>;
+
+
 // === General Content Idea ===
 export const ContentIdeaFormDataSchema = z.object({
   contentType: z.string(),
