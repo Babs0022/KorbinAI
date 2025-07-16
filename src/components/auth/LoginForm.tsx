@@ -66,7 +66,7 @@ export default function LoginForm() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      router.push("/");
+      // The AuthContext will now handle redirection automatically.
     } catch (error: any) {
       toast({
         variant: "destructive",

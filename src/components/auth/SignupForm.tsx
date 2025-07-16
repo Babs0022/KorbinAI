@@ -94,7 +94,7 @@ export default function SignupForm() {
         photoURL: user.photoURL
       });
 
-      router.push("/verify-email");
+      // The AuthContext will now handle redirection automatically.
     } catch (error: any) {
       toast({
         variant: "destructive",
