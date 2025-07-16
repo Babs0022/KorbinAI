@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           router.replace(verificationRoute);
         }
       } else if (publicRoutes.includes(pathname) || pathname === verificationRoute) {
-        router.replace('/dashboard');
+        router.replace('/');
       }
 
     } else {
@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           createdAt: new Date(),
         });
       }
-      router.push('/dashboard');
+      router.push('/');
       return user;
     } catch (error) {
       console.error(`Error during ${provider.providerId} sign-in:`, error);
@@ -130,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     // Send verification email
-    await sendEmailVerification(user, { url: `${window.location.origin}/dashboard` });
+    await sendEmailVerification(user, { url: `${window.location.origin}/` });
 
     // Let the onAuthStateChanged listener handle the redirect to /verify-email
   };

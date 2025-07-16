@@ -108,7 +108,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
 
   const SidebarNav = () => (
     <nav className="flex flex-col gap-2 p-2">
-        <Link href="/dashboard" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+        <Link href="/" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <LayoutGrid />
             <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Dashboard</span>
         </Link>
