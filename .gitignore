@@ -26,8 +26,8 @@ yarn-error.log*
 firestore-debug.log*
 
 # local env files
-.env*
 .env
+.env*
 !.env.example
 
 # vercel
