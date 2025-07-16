@@ -1,16 +1,16 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { Check, CreditCard, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Check, CreditCard, Sparkles, LoaderCircle } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { usePaystackPayment } from "react-paystack";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { UserSubscription } from "@/types/subscription";
 import { format } from "date-fns";
@@ -21,9 +21,8 @@ import { Switch } from "@/components/ui/switch";
 const planDetails = {
     monthly: {
         name: "Pro Plan (Monthly)",
-        price: 20,
-        priceId: "PLN_apm944j0mz7armb",
-        billingCycle: "monthly",
+        planId: "pro",
+        billingCycle: "monthly" as const,
         priceString: "$20",
         priceSuffix: "/ month",
         features: [
@@ -39,9 +38,8 @@ const planDetails = {
     },
     annually: {
         name: "Pro Plan (Annually)",
-        price: 216,
-        priceId: "PLN_up61lgvt7wozomg",
-        billingCycle: "annually",
+        planId: "pro",
+        billingCycle: "annually" as const,
         priceString: "$216",
         priceSuffix: "/ year",
         features: [
@@ -67,11 +65,13 @@ const CurrentPlanCard = ({ subscription }: { subscription: UserSubscription }) =
         <CardContent>
             <div className="space-y-2">
                 <p className="font-semibold text-xl">
-                    BrieflyAI Pro <Badge variant="outline" className="ml-2 align-middle capitalize">{subscription.billingCycle || 'Active'}</Badge>
+                    BrieflyAI Pro <Badge variant="outline" className="ml-2 align-middle capitalize">{subscription.billingCycle}</Badge>
                 </p>
-                <p className="text-muted-foreground">
-                    Your subscription will renew on {format(subscription.currentPeriodEnd, 'PPP')}.
-                </p>
+                {subscription.currentPeriodEnd && (
+                    <p className="text-muted-foreground">
+                        Your subscription will renew on {format(subscription.currentPeriodEnd, 'PPP')}.
+                    </p>
+                )}
             </div>
         </CardContent>
         <CardFooter>
@@ -86,19 +86,10 @@ export default function BillingPage() {
     const { toast } = useToast();
     const [subscription, setSubscription] = useState<UserSubscription | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isProcessing, setIsProcessing] = useState(false);
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'annually'>('annually');
 
     const selectedPlan = planDetails[billingCycle];
-
-    const paystackConfig = useMemo(() => ({
-        reference: new Date().getTime().toString(),
-        email: user?.email || "",
-        amount: selectedPlan.price * 100, // Amount in kobo
-        plan: selectedPlan.priceId,
-        publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
-    }), [user, selectedPlan]);
-    
-    const initializePayment = usePaystackPayment(paystackConfig);
 
     useEffect(() => {
         if (!user) {
@@ -106,13 +97,14 @@ export default function BillingPage() {
             return;
         }
         
-        const subDocRef = doc(db, "userSubscriptions", user.uid);
+        const subDocRef = doc(db, "users", user.uid, "subscriptions", "paystack");
         const unsubscribe = onSnapshot(subDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 setSubscription({
                     ...data,
                     currentPeriodEnd: data.currentPeriodEnd?.toDate(),
+                    startedAt: data.startedAt?.toDate(),
                     currentPeriodStart: data.currentPeriodStart?.toDate(),
                 } as UserSubscription);
             } else {
@@ -124,21 +116,43 @@ export default function BillingPage() {
         return () => unsubscribe();
     }, [user]);
 
-    const onPaystackSuccess = (reference: any) => {
-      toast({
-        title: "Payment Successful!",
-        description: "Your subscription is now active. Refreshing page...",
-      });
-      setTimeout(() => window.location.reload(), 2000);
-    };
+    const handleUpgrade = async () => {
+        if (!user) {
+            toast({
+                variant: "destructive",
+                title: "Authentication Error",
+                description: "You must be signed in to upgrade your plan.",
+            });
+            return;
+        }
+        
+        setIsProcessing(true);
 
-    const onPaystackClose = () => {
-      toast({
-        variant: "default",
-        title: "Payment Closed",
-        description: "You can complete your subscription at any time.",
-      });
-    };
+        try {
+            const functions = getFunctions();
+            const initializePayment = httpsCallable(functions, 'initializePaystackPayment');
+            const result = await initializePayment({ 
+                planId: selectedPlan.planId, 
+                billingCycle: selectedPlan.billingCycle 
+            });
+            
+            const { authorization_url } = result.data as { authorization_url: string };
+
+            if (authorization_url) {
+                window.location.href = authorization_url;
+            } else {
+                throw new Error("Could not retrieve payment URL.");
+            }
+
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: "Payment Error",
+                description: error.message || "An unexpected error occurred. Please try again.",
+            });
+            setIsProcessing(false);
+        }
+    }
     
     if (isLoading) {
         return (
@@ -203,8 +217,12 @@ export default function BillingPage() {
                                     </li>
                                 ))}
                             </ul>
-                             <Button size="lg" className="w-full text-lg" onClick={() => initializePayment({onSuccess: onPaystackSuccess, onClose: onPaystackClose})}>
-                                <CreditCard className="mr-2 h-5 w-5" />
+                             <Button size="lg" className="w-full text-lg" onClick={handleUpgrade} disabled={isProcessing}>
+                                {isProcessing ? (
+                                    <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
+                                ) : (
+                                    <CreditCard className="mr-2 h-5 w-5" />
+                                )}
                                 Upgrade to Pro
                             </Button>
                         </CardContent>

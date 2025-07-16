@@ -1,1 +1,15 @@
-// This component has been cleared as it is no longer used.
+import Logo from "@/components/shared/Logo";
+import MainHeader from "@/components/layout/MainHeader";
+
+export default function MarketingLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <MainHeader />
+      <main className="flex-1">{children}</main>
+    </div>
+  );
+}

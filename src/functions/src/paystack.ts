@@ -1,12 +1,7 @@
-
-import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 import Paystack from "paystack-node";
+import { https, logger } from "firebase-functions/v1";
 import { PaystackChargeSuccessData } from "./types";
-
-if (admin.apps.length === 0) {
-    admin.initializeApp();
-}
 
 const db = admin.firestore();
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
@@ -17,139 +12,121 @@ if (!PAYSTACK_SECRET_KEY) {
 
 const paystack = new Paystack(PAYSTACK_SECRET_KEY);
 
-const planDetails: Record<string, {
+type PlanId = 'pro';
+type BillingCycle = 'monthly' | 'annually';
+
+const planDetails: Record<PlanId, {
     name: string;
     monthly: { amount: number; plan_code: string; };
     annually: { amount: number; plan_code: string; };
 }> = {
-    premium: {
-        name: "BrieflyAI Premium",
+    pro: {
+        name: "BrieflyAI Pro",
         monthly: {
-            amount: 15 * 100, // 15 USD in cents
-            plan_code: "PLN_PREMIUM_MONTHLY_EXAMPLE",
+            amount: 20 * 100, // $20 in cents
+            plan_code: "PLN_apm944j0mz7armb",
         },
         annually: {
-            amount: 150 * 100, // 150 USD in cents
-            plan_code: "PLN_PREMIUM_ANNUALLY_EXAMPLE",
+            amount: 216 * 100, // $216 in cents ($20/mo * 12, discounted 10%)
+            plan_code: "PLN_up61lgvt7wozomg",
         },
-    },
-    unlimited: {
-        name: "BrieflyAI Unlimited",
-        monthly: {
-            amount: 30 * 100, // 30 USD in cents
-            plan_code: "PLN_UNLIMITED_MONTHLY_EXAMPLE",
-        },
-        annually: {
-            amount: 300 * 100, // 300 USD in cents
-            plan_code: "PLN_UNLIMITED_ANNUALLY_EXAMPLE",
-        }
     },
 };
 
-function findPlanDetailsByCode(planCode: string): { planId: string | null; billingCycle: 'monthly' | 'annually' | null } {
-    for (const [planId, details] of Object.entries(planDetails)) {
+export async function initializePayment(data: any, context: https.CallableContext) {
+    if (!context.auth) {
+        throw new https.HttpsError("unauthenticated", "You must be logged in to make a purchase.");
+    }
+
+    const { planId, billingCycle } = data;
+    const { uid, email } = context.auth.token;
+
+    if (!planId || !billingCycle || !planDetails[planId as PlanId] || !planDetails[planId as PlanId][billingCycle as BillingCycle]) {
+        throw new https.HttpsError("invalid-argument", "The function must be called with a valid 'planId' and 'billingCycle'.");
+    }
+    
+    if (!email) {
+        throw new https.HttpsError("invalid-argument", "User email is not available.");
+    }
+
+    const plan = planDetails[planId as PlanId][billingCycle as BillingCycle];
+
+    try {
+        const response = await paystack.transaction.initialize({
+            email: email,
+            amount: plan.amount.toString(),
+            plan: plan.plan_code,
+            metadata: {
+                user_id: uid,
+                plan_id: planId,
+                billing_cycle: billingCycle,
+            },
+        });
+
+        if (response.status && response.data) {
+            return { authorization_url: response.data.authorization_url };
+        } else {
+            throw new https.HttpsError("internal", "Could not initialize payment with Paystack.", response.message);
+        }
+    } catch (error) {
+        logger.error("Paystack API call failed:", error);
+        throw new https.HttpsError("internal", "An error occurred while initializing the payment.");
+    }
+}
+
+export function findPlanDetailsByCode(planCode: string): { planId: PlanId | null; billingCycle: BillingCycle | null } {
+    for (const planId in planDetails) {
+        const details = planDetails[planId as PlanId];
         if (details.monthly.plan_code === planCode) {
-            return { planId, billingCycle: 'monthly' };
+            return { planId: planId as PlanId, billingCycle: 'monthly' };
         }
         if (details.annually.plan_code === planCode) {
-            return { planId, billingCycle: 'annually' };
+            return { planId: planId as PlanId, billingCycle: 'annually' };
         }
     }
     return { planId: null, billingCycle: null };
 }
 
-export async function processChargeSuccessEvent(eventData: PaystackChargeSuccessData): Promise<void> {
-    logger.info(`[Paystack] Processing 'charge.success' for reference: ${eventData.reference}`);
+export async function handleSuccessfulPayment(data: PaystackChargeSuccessData) {
+    const { customer, plan: planCode, authorization, metadata } = data;
+    const userId = metadata?.user_id;
 
-    try {
-        const verification = await paystack.transaction.verify({ reference: eventData.reference });
-        if (!verification.status || verification.data?.status !== 'success') {
-            logger.error(`[Paystack] Transaction verification failed or status was not success for reference: ${eventData.reference}`, verification);
-            return;
-        }
-         logger.info(`[Paystack] Transaction successfully verified for reference: ${eventData.reference}`);
-    } catch (error) {
-        logger.error(`[Paystack] Error during transaction verification for reference: ${eventData.reference}`, error);
+    if (!userId) {
+        logger.error("User ID not found in webhook metadata");
         return;
     }
 
+    const { planId, billingCycle } = findPlanDetailsByCode(planCode);
 
-    const { reference, customer, amount, currency, paid_at, plan, plan_object } = eventData;
-
-    const email = customer?.email;
-    const planCode = plan_object?.plan_code || plan?.plan_code;
-    const interval = plan_object?.interval || plan?.interval;
-
-    if (!email || !planCode) {
-        logger.error(`[Paystack] CRITICAL: Missing email or plan_code in payload for reference ${reference}. Cannot process.`, { email, planCode, data: eventData });
+    if (!planId || !billingCycle) {
+        logger.error(`Plan details not found for plan code: ${planCode}`);
         return;
     }
-    logger.info(`[Paystack] Found Email: ${email} and Plan Code: ${planCode}.`);
-
-    const { planId } = findPlanDetailsByCode(planCode);
-
-    if (!planId) {
-        logger.error(`[Paystack] CRITICAL: Could not match plan code ${planCode} to a known plan.`);
-        return;
-    }
-    logger.info(`[Paystack] Matched to Internal Plan ID: ${planId} with interval: ${interval}.`);
-
-    let userRecord: admin.auth.UserRecord;
-    try {
-        userRecord = await admin.auth().getUserByEmail(email);
-        logger.info(`[Paystack] Found user UID ${userRecord.uid} for email ${email}.`);
-    } catch (error) {
-        logger.error(`[Paystack] CRITICAL: Could not find a user with email ${email}. A user must sign up in BrieflyAI with this email first.`, { email, error });
-        return; // Stop processing if no user can be found
+    
+    const expiresAt = new Date();
+    if (billingCycle === 'monthly') {
+        expiresAt.setMonth(expiresAt.getMonth() + 1);
+    } else {
+        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
     }
 
-    const userId = userRecord.uid;
+    const subscriptionData = {
+        userId,
+        email: customer.email,
+        planId,
+        billingCycle,
+        status: "active",
+        provider: "paystack",
+        paystack: {
+            customerCode: customer.customer_code,
+            subscriptionCode: authorization.authorization_code,
+            planCode,
+        },
+        startedAt: admin.firestore.Timestamp.now(),
+        currentPeriodStart: admin.firestore.Timestamp.now(),
+        currentPeriodEnd: admin.firestore.Timestamp.fromDate(expiresAt),
+    };
 
-    try {
-        const paidAtDate = new Date(paid_at || Date.now());
-        const currentPeriodEndDate = new Date(paidAtDate.getTime());
-
-        if (interval === 'annually') {
-            currentPeriodEndDate.setFullYear(currentPeriodEndDate.getFullYear() + 1);
-            logger.info(`[Paystack] Setting annual subscription end date for user ${userId}: ${currentPeriodEndDate.toISOString()}`);
-        } else {
-            currentPeriodEndDate.setMonth(currentPeriodEndDate.getMonth() + 1);
-            logger.info(`[Paystack] Setting monthly subscription end date for user ${userId}: ${currentPeriodEndDate.toISOString()}`);
-        }
-
-        const subscriptionData = {
-            userId,
-            planId,
-            email: customer?.email,
-            status: "active",
-            currentPeriodStart: admin.firestore.Timestamp.fromDate(paidAtDate),
-            currentPeriodEnd: admin.firestore.Timestamp.fromDate(currentPeriodEndDate),
-            paystackReference: reference,
-            amountPaid: amount,
-            currency,
-            lastEventTimestamp: admin.firestore.FieldValue.serverTimestamp(),
-        };
-
-        logger.info(`[Paystack] Preparing to write subscription data for user ${userId}:`, subscriptionData);
-        await db.collection("userSubscriptions").doc(String(userId)).set(subscriptionData, { merge: true });
-
-        const transactionRef = db.collection("transactions").doc(reference);
-        await transactionRef.set({
-            userId,
-            planId,
-            email: customer?.email,
-            amount,
-            currency,
-            status: "success",
-            paystackReference: reference,
-            paidAt: admin.firestore.Timestamp.fromDate(paidAtDate),
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
-
-        logger.info(`[Paystack] SUCCESS: Updated subscription for user ${userId} (plan: ${planId}, ref: ${reference}).`);
-
-    } catch (error) {
-        logger.error(`[Paystack] FIRESTORE ERROR: Failed to write subscription/transaction data for reference ${reference}:`, error);
-    }
+    await db.collection("users").doc(userId).collection("subscriptions").doc("paystack").set(subscriptionData, { merge: true });
+    logger.info(`Subscription for user ${userId} has been created/updated.`);
 }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -6,7 +7,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { LoaderCircle } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { LoaderCircle } from "lucide-react";
+import Logo from "@/components/shared/Logo";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -35,7 +37,7 @@ const formSchema = z.object({
 export default function ForgotPasswordForm() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isSent, setIsSent] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,66 +48,76 @@ export default function ForgotPasswordForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    setIsSent(false);
     try {
       await sendPasswordResetEmail(auth, values.email);
-      setIsSent(true);
-      toast({
-        title: "Password Reset Email Sent",
-        description: "Please check your inbox for instructions.",
-      });
+      setIsSuccess(true);
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error Sending Email",
+        title: "Error",
         description: error.message,
       });
     } finally {
       setIsLoading(false);
     }
   }
+  
+  if (isSuccess) {
+    return (
+        <Card>
+            <CardHeader className="items-center">
+                <Logo />
+                <CardTitle className="text-2xl pt-4">Check Your Email</CardTitle>
+                <CardDescription>
+                    We've sent a password reset link to your email address.
+                </CardDescription>
+            </CardHeader>
+            <CardFooter>
+                 <Button asChild className="w-full">
+                    <Link href="/login">Back to Login</Link>
+                </Button>
+            </CardFooter>
+        </Card>
+    )
+  }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-2xl">Forgot Password</CardTitle>
+      <CardHeader className="items-center">
+        <Logo />
+        <CardTitle className="text-2xl pt-4">Forgot Password</CardTitle>
         <CardDescription>
-          Enter your email and we'll send you a link to reset your password.
+          No worries, we'll send you reset instructions.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {isSent ? (
-            <div className="text-center p-4 bg-secondary rounded-md">
-                <p>If an account with that email exists, a reset link has been sent.</p>
-            </div>
-        ) : (
-            <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                        <Input placeholder="name@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <Button type="submit" className="w-full" disabled={isLoading}>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="name@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                 Send Reset Link
-                </Button>
-            </form>
-            </Form>
-        )}
+            </Button>
+          </form>
+        </Form>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex-col items-start gap-4">
         <div className="text-center text-sm text-muted-foreground w-full">
+          Remember your password?{" "}
           <Link href="/login" className="text-primary hover:underline">
-            Back to Sign In
+            Sign in
           </Link>
         </div>
       </CardFooter>
