@@ -26,7 +26,7 @@ yarn-error.log*
 firestore-debug.log*
 
 # local env files
-.env
+<<<<<<<<< Temporary merge branch 1
 .env*
 !.env.example
 
