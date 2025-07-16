@@ -3,7 +3,7 @@
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Feather, Code2, LayoutTemplate, Image, Bolt, ArrowRight } from "lucide-react";
+import { Feather, Code2, LayoutTemplate, Image, Bolt, ArrowRight, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import FeatureTourGuide from "@/components/shared/FeatureTourGuide";
@@ -23,6 +23,13 @@ export default function HomePage() {
       title: "Prompt Generator",
       subtitle: "Craft optimized prompts for any task",
       href: "/prompt-generator",
+    },
+    {
+      id: "feature-conversational-chat",
+      icon: <MessageSquare className="h-8 w-8" />,
+      title: "Conversational Chat",
+      subtitle: "Engage in back-and-forth dialogue",
+      href: "/chat",
     },
     {
       id: "feature-web-page-app",
