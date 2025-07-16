@@ -27,6 +27,7 @@ firestore-debug.log*
 
 # local env files
 .env*
+.env
 !.env.example
 
 # vercel
