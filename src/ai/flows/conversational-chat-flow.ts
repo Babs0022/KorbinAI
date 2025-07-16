@@ -30,12 +30,17 @@ const conversationalChatFlow = ai.defineFlow(
   async ({ history, prompt }) => {
     const response = await ai.generate({
       model: 'googleai/gemini-1.5-pro-latest',
-      system: "You are Briefly, a friendly and helpful AI assistant from BrieflyAI. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. Don't be overly robotic or formal. Be creative and helpful.",
-      history: history.map((msg: Message) => ({
+      prompt: prompt,
+      history: [
+        {
+          role: 'system',
+          content: [{ text: "You are Briefly, a friendly and helpful AI assistant from BrieflyAI. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. Don't be overly robotic or formal. Be creative and helpful." }],
+        },
+        ...history.map((msg: Message) => ({
           role: msg.role,
           content: [{ text: msg.content }],
       })),
-      prompt: prompt,
+      ],
     });
 
     return response.text;
