@@ -1,10 +1,11 @@
 {
     "name": "BrieflyAI",
     "short_name": "BrieflyAI",
+    "description": "The AI copilot that turns plain English into production-ready code and professional content.",
     "start_url": "/",
     "display": "standalone",
-    "theme_color": "#111111",
-    "background_color": "#111111",
+    "theme_color": "#22C55E",
+    "background_color": "#0A0A0A",
     "icons": [
         {
             "src": "/icon.png",

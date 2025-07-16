@@ -74,7 +74,6 @@ export default function LoginForm() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      router.push("/dashboard");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -90,7 +89,6 @@ export default function LoginForm() {
     setIsGoogleLoading(true);
     try {
       await signInWithGoogle();
-      // The auth context will handle redirection.
     } catch (error: any) {
       toast({
         variant: "destructive",

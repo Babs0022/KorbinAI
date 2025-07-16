@@ -7,7 +7,7 @@ interface LogoProps {
 
 const Logo = ({ showText = true }: LogoProps) => {
   return (
-    (<Link href="/" className="flex items-center space-x-2">
+    <Link href="/" className="flex items-center space-x-2">
       <Image
         src="/icon.png"
         alt="BrieflyAI Logo"
@@ -16,7 +16,7 @@ const Logo = ({ showText = true }: LogoProps) => {
         className="h-8 w-8"
       />
       {showText && <span className="text-xl font-bold">BrieflyAI</span>}
-    </Link>)
+    </Link>
   );
 };
 

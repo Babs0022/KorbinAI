@@ -79,7 +79,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
          <DropdownMenu>
             <DropdownMenuTrigger asChild>
                  <Button variant="ghost" className="relative h-10 w-10 p-0">
-                    <Avatar className="h-10 w-10 rounded-md">
+                    <Avatar className="h-10 w-10">
                         <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
                         <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                     </Avatar>
@@ -118,13 +118,13 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
               <span>Projects</span>
             </div>
         </Link>
-        <div className="flex items-center gap-3 p-2 rounded-md opacity-50 cursor-not-allowed relative">
+        <Link href="/dashboard/billing" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent relative">
             <CreditCard />
             <div className={cn("flex w-full items-center justify-between transition-opacity", state === 'collapsed' && 'opacity-0')}>
               <span>Billing</span>
                <Badge variant="secondary" className="absolute right-2 top-1/2 -translate-y-1/2">Soon</Badge>
             </div>
-        </div>
+        </Link>
         <Link href="/dashboard/account" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <User />
             <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Account</span>
@@ -180,7 +180,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                              <Button variant="ghost" className="w-full justify-start items-center gap-3 p-2 h-auto">
-                                <Avatar className="h-10 w-10 rounded-md">
+                                <Avatar className="h-10 w-10">
                                     <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
                                     <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                                 </Avatar>
@@ -222,6 +222,9 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <span className="sr-only">Toggle Sidebar</span>
                 </Button>
             </SidebarTrigger>
+            <div className="md:hidden">
+                <Logo />
+            </div>
             <div className="h-6 border-l mx-2 hidden md:block"></div>
             <Logo showText={false} />
         </div>

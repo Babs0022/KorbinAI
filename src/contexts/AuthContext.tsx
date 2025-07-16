@@ -32,6 +32,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const publicRoutes = ['/login', '/signup', '/forgot-password'];
 const verificationRoute = '/verify-email';
 
+// Helper function to manage the session cookie
+async function setSessionCookie(token: string | null) {
+  const method = token ? 'POST' : 'DELETE';
+  const body = token ? JSON.stringify({ idToken: token }) : undefined;
+
+  await fetch('/api/auth/session', {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body,
+  });
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,6 +53,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const handleUser = useCallback(async (rawUser: User | null) => {
     if (rawUser) {
       // User is signed in
+      const token = await rawUser.getIdToken();
+      await setSessionCookie(token);
+
       const userDocRef = doc(db, "users", rawUser.uid);
       const userDoc = await getDoc(userDocRef);
 
@@ -63,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     } else {
       // User is signed out
+      await setSessionCookie(null);
       setUser(null);
       if (!publicRoutes.includes(pathname) && pathname !== verificationRoute) {
         // router.replace('/login');
@@ -78,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await firebaseSignOut(auth);
+    await setSessionCookie(null);
     router.push('/login');
   };
   
@@ -98,7 +115,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           createdAt: new Date(),
         });
       }
-      router.push('/');
       return user;
     } catch (error) {
       console.error(`Error during ${provider.providerId} sign-in:`, error);
@@ -134,7 +150,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Let the onAuthStateChanged listener handle the redirect to /verify-email
   };
-
 
   const value: AuthContextType = {
     user,
