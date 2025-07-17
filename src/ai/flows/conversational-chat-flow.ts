@@ -30,7 +30,6 @@ const conversationalChatFlow = ai.defineFlow(
   async ({ history, prompt }) => {
     const response = await ai.generate({
       model: 'googleai/gemini-1.5-pro-latest',
-      prompt: prompt,
       history: [
         {
           role: 'system',
@@ -43,8 +42,9 @@ Do not be overly robotic or formal. Be creative and helpful.` }],
         ...history.map((msg: Message) => ({
           role: msg.role,
           content: [{ text: msg.content }],
-      })),
+        })),
       ],
+      prompt: prompt,
     });
 
     return response.text;
