@@ -8,7 +8,6 @@ import {
   signOut as firebaseSignOut,
   type User,
   GoogleAuthProvider,
-  GithubAuthProvider,
   signInWithPopup,
   createUserWithEmailAndPassword,
   sendEmailVerification,
@@ -23,7 +22,6 @@ interface AuthContextType {
   loading: boolean;
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<User>;
-  signInWithGitHub: () => Promise<User>;
   signup: (email: string, password: string) => Promise<void>;
 }
 
@@ -31,16 +29,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const publicRoutes = ['/login', '/signup', '/forgot-password'];
 const verificationRoute = '/verify-email';
-const protectedRoutes = [
-    '/',
-    '/component-wizard',
-    '/image-generator',
-    '/prompt-generator',
-    '/structured-data',
-    '/written-content',
-    '/chat',
-    '/dashboard'
-];
 
 
 // Helper function to manage the session cookie
@@ -106,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // onAuthStateChanged will handle the rest
   };
   
-  const handleSocialSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
+  const handleSocialSignIn = async (provider: GoogleAuthProvider) => {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
@@ -131,7 +119,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithGoogle = () => handleSocialSignIn(new GoogleAuthProvider());
-  const signInWithGitHub = () => handleSocialSignIn(new GithubAuthProvider());
   
   const signup = async (email: string, password: string) => {
     if (!email || !password) return;
@@ -164,7 +151,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     logout,
     signInWithGoogle,
-    signInWithGitHub,
     signup,
   };
 
