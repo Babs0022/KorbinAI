@@ -17,13 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import DashboardHeader from "@/components/layout/DashboardHeader";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -40,6 +34,7 @@ import { cn } from "@/lib/utils";
 import type { UserSubscription } from "@/types/subscription";
 import { format } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -225,13 +220,11 @@ export default function AccountManagementPage() {
           <h1 className="text-3xl font-bold">Account Management</h1>
           <p className="text-muted-foreground mt-2 mb-10">Manage your profile, password, and subscription.</p>
 
-          <div className="space-y-8">
-            {/* Profile Information Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><User /> Profile Information</CardTitle>
-              </CardHeader>
-              <CardContent>
+          <div className="space-y-12">
+            {/* Profile Information Section */}
+            <div className="space-y-6">
+                <h2 className="text-2xl font-semibold flex items-center gap-3"><User /> Profile Information</h2>
+                <Separator />
                 <Form {...profileForm}>
                   <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
                     <div className="flex flex-col items-center gap-6">
@@ -287,15 +280,12 @@ export default function AccountManagementPage() {
                     </div>
                   </form>
                 </Form>
-              </CardContent>
-            </Card>
+            </div>
 
-            {/* Change Password Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Key /> Change Password</CardTitle>
-              </CardHeader>
-              <CardContent>
+            {/* Change Password Section */}
+            <div className="space-y-6">
+                <h2 className="text-2xl font-semibold flex items-center gap-3"><Key /> Change Password</h2>
+                <Separator />
                 <Form {...passwordForm}>
                   <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-6">
                     <FormField
@@ -360,16 +350,14 @@ export default function AccountManagementPage() {
                     </div>
                   </form>
                 </Form>
-              </CardContent>
-            </Card>
+            </div>
 
-             {/* Subscription Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><CreditCard /> Subscription</CardTitle>
-                 <CardDescription>View your current plan and manage your subscription.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+             {/* Subscription Section */}
+            <div className="space-y-6">
+                <h2 className="text-2xl font-semibold flex items-center gap-3"><CreditCard /> Subscription</h2>
+                <p className="text-muted-foreground">View your current plan and manage your subscription.</p>
+                <Separator />
+                <div className="p-6 rounded-lg border bg-secondary/50 space-y-4">
                  {renderSubscriptionStatus()}
                  <div className="relative w-fit">
                     <Button disabled={true}>
@@ -377,8 +365,8 @@ export default function AccountManagementPage() {
                     </Button>
                     <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>
                 </div>
-              </CardContent>
-            </Card>
+                </div>
+            </div>
           </div>
         </div>
       </main>

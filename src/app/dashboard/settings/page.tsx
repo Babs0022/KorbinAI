@@ -1,17 +1,11 @@
 
 "use client";
 
-import { SidebarProvider, Sidebar, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import DashboardHeader from "@/components/layout/DashboardHeader";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 
 export default function SettingsPage() {
   return (
@@ -29,14 +23,12 @@ export default function SettingsPage() {
                     coming soon)
                 </p>
 
-                <Card>
-                    <CardHeader>
-                    <CardTitle>Notifications</CardTitle>
-                    <CardDescription>
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">Notifications</h2>
+                    <p className="text-muted-foreground">
                         Manage how you receive notifications from us.
-                    </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4 pt-6">
+                    </p>
+                    <Separator />
                     <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
                         <div className="space-y-0.5">
                         <Label htmlFor="product-updates">Product Updates</Label>
@@ -55,8 +47,7 @@ export default function SettingsPage() {
                         </div>
                         <Switch id="weekly-digest" disabled />
                     </div>
-                    </CardContent>
-                </Card>
+                </div>
                 </div>
             </main>
         </SidebarInset>

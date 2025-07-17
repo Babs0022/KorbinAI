@@ -11,14 +11,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Form,
   FormControl,
   FormField,
@@ -93,15 +85,17 @@ export default function SignupForm() {
 
 
   return (
-    <Card>
-      <CardHeader className="items-center">
-        <Logo />
-        <CardTitle className="text-2xl pt-4">Create an Account</CardTitle>
-        <CardDescription>
+    <div className="space-y-6">
+      <div className="space-y-2 text-center">
+        <div className="flex justify-center">
+            <Logo />
+        </div>
+        <h1 className="text-2xl font-bold pt-4">Create an Account</h1>
+        <p className="text-muted-foreground">
           Get started for free. No credit card required.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+        </p>
+      </div>
+      <div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -141,7 +135,7 @@ export default function SignupForm() {
                 <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">
+                <span className="bg-background px-2 text-muted-foreground">
                 Or continue with
                 </span>
             </div>
@@ -156,8 +150,8 @@ export default function SignupForm() {
                 Sign up with Google
             </Button>
         </div>
-      </CardContent>
-      <CardFooter className="flex-col items-start gap-4">
+      </div>
+      <div className="space-y-4">
         <div className="text-sm text-muted-foreground">
             By signing up, you agree to our{" "}
             <a href="https://brieflyai.xyz/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
@@ -175,7 +169,7 @@ export default function SignupForm() {
             Sign in
           </Link>
         </div>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }

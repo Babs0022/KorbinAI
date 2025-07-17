@@ -14,14 +14,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Form,
   FormControl,
   FormField,
@@ -95,15 +87,17 @@ export default function LoginForm() {
 
 
   return (
-    <Card>
-      <CardHeader className="items-center">
-        <Logo />
-        <CardTitle className="text-2xl pt-4">Welcome Back</CardTitle>
-        <CardDescription>
+    <div className="space-y-6">
+      <div className="space-y-2 text-center">
+        <div className="flex justify-center">
+            <Logo />
+        </div>
+        <h1 className="text-2xl font-bold pt-4">Welcome Back</h1>
+        <p className="text-muted-foreground">
           Enter your credentials to access your account.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+        </p>
+      </div>
+      
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -151,7 +145,7 @@ export default function LoginForm() {
                 <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">
+                <span className="bg-background px-2 text-muted-foreground">
                 Or continue with
                 </span>
             </div>
@@ -166,15 +160,12 @@ export default function LoginForm() {
                 Sign in with Google
             </Button>
         </div>
-      </CardContent>
-      <CardFooter className="flex-col items-start gap-4">
-        <div className="text-center text-sm text-muted-foreground w-full">
+      <div className="text-center text-sm text-muted-foreground w-full">
           Don't have an account?{" "}
           <Link href="/signup" className="text-primary hover:underline">
             Sign up
           </Link>
         </div>
-      </CardFooter>
-    </Card>
+    </div>
   );
 }
