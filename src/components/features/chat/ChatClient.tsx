@@ -11,7 +11,7 @@ import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
 import { type Message } from "@/types/ai";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import MarkdownRenderer from "@/components/shared/MarkdownRenderer";
 import { cn } from "@/lib/utils";
@@ -32,7 +32,6 @@ interface ChatInputFormProps {
 const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, className }, ref) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     
-    // Each form instance needs its own useForm hook.
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -45,13 +44,20 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
         form.reset();
     };
 
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            form.handleSubmit(handleFormSubmit)();
+        }
+    };
+
     return (
         <div className={cn("w-full max-w-4xl mx-auto", className)}>
             <FormProvider {...form}>
                 <form
                     ref={ref}
                     onSubmit={form.handleSubmit(handleFormSubmit)}
-                    className="relative"
+                    className="rounded-lg border bg-secondary"
                 >
                     <FormField
                     control={form.control}
@@ -59,26 +65,26 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                     render={({ field }) => (
                         <FormItem>
                         <FormControl>
-                            <Input
-                            placeholder="ask briefly"
-                            className="text-base h-36 pl-12 pr-14 rounded-lg bg-secondary"
-                            autoComplete="off"
-                            disabled={isLoading}
-                            {...field}
+                            <Textarea
+                                placeholder="ask briefly"
+                                className="text-base min-h-[120px] bg-secondary border-0 focus-visible:ring-0 resize-none"
+                                autoComplete="off"
+                                disabled={isLoading}
+                                onKeyDown={handleKeyDown}
+                                {...field}
                             />
                         </FormControl>
                         </FormItem>
                     )}
                     />
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => fileInputRef.current?.click()} disabled>
+                    <div className="flex items-center justify-between p-2 border-t">
+                        <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled>
                             <ImagePlus className="h-5 w-5 text-muted-foreground" />
                             <span className="sr-only">Upload image</span>
                         </Button>
                         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" disabled />
-                    </div>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                        <Button type="submit" size="icon" className="rounded-lg h-10 w-10" disabled={isLoading}>
+                        
+                        <Button type="submit" size="sm" className="rounded-lg" disabled={isLoading}>
                             {isLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
                             <span className="sr-only">Send</span>
                         </Button>
@@ -107,12 +113,10 @@ export default function ChatClient() {
 
   const handleNewMessage = async (values: FormValues) => {
     const userMessage: Message = { role: "user", content: values.message };
-    // Use a functional update to get the latest messages state
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
     try {
-      // Pass the *updated* history to the AI flow
       const response = await conversationalChat({
         history: [...messages, userMessage],
         prompt: values.message,
