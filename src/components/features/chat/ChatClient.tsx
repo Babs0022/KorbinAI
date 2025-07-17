@@ -142,63 +142,70 @@ export default function ChatClient() {
     return name.split(" ").map((n) => n[0]).join("").toUpperCase();
   };
 
-  if (messages.length === 0) {
-    return (
-        <div className="flex h-screen flex-col items-center justify-end p-4">
-            <ChatInputForm onSubmit={handleNewMessage} isLoading={isLoading} />
+  const renderContent = () => {
+    if (messages.length === 0) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center p-4">
+          {/* This space is intentionally left blank for a clean initial view */}
         </div>
-    )
-  }
+      );
+    }
+
+    return (
+      <div className="w-full max-w-2xl mx-auto space-y-6">
+          {messages.map((message, index) => (
+              <div
+              key={index}
+              className={cn(
+                  "flex items-start gap-4",
+                  message.role === "user" ? "justify-end" : "justify-start"
+              )}
+              >
+              {message.role === "model" && (
+                  <Avatar className="h-9 w-9">
+                      <AvatarImage src="/icon.png" alt="BrieflyAI" data-ai-hint="logo icon" />
+                      <AvatarFallback>B</AvatarFallback>
+                  </Avatar>
+              )}
+              <div
+                  className={cn(
+                    "max-w-xl",
+                    message.role === "user"
+                      ? "rounded-xl bg-primary text-primary-foreground p-3 shadow-md"
+                      : "" // No bubble styling for the model's response
+                  )}
+              >
+                  <MarkdownRenderer>{message.content}</MarkdownRenderer>
+              </div>
+                  {message.role === "user" && user && (
+                  <Avatar className="h-9 w-9">
+                      <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
+                      <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                  </Avatar>
+              )}
+              </div>
+          ))}
+              {isLoading && (
+              <div className="flex items-start gap-4 justify-start">
+              <Avatar className="h-9 w-9">
+                  <AvatarImage src="/icon.png" alt="BrieflyAI" data-ai-hint="logo icon" />
+                  <AvatarFallback>B</AvatarFallback>
+              </Avatar>
+              <div className="max-w-xl flex items-center">
+                  <LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+              </div>
+          )}
+          <div ref={messagesEndRef} />
+      </div>
+    );
+  };
+
 
   return (
     <div className="flex h-screen flex-col">
         <div className="flex-1 overflow-y-auto p-4 md:p-6">
-            <div className="w-full max-w-3xl mx-auto space-y-6">
-                {messages.map((message, index) => (
-                    <div
-                    key={index}
-                    className={cn(
-                        "flex items-start gap-4",
-                        message.role === "user" ? "justify-end" : ""
-                    )}
-                    >
-                    {message.role === "model" && (
-                        <Avatar className="h-9 w-9">
-                            <AvatarImage src="/icon.png" alt="BrieflyAI" data-ai-hint="logo icon" />
-                            <AvatarFallback>B</AvatarFallback>
-                        </Avatar>
-                    )}
-                    <div
-                        className={cn(
-                        "max-w-xl rounded-xl px-4 py-3 shadow-md",
-                        message.role === "user"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary"
-                        )}
-                    >
-                        <MarkdownRenderer>{message.content}</MarkdownRenderer>
-                    </div>
-                        {message.role === "user" && user && (
-                        <Avatar className="h-9 w-9">
-                            <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
-                            <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                        </Avatar>
-                    )}
-                    </div>
-                ))}
-                    {isLoading && (
-                    <div className="flex items-start gap-4">
-                    <Avatar className="h-9 w-9">
-                        <AvatarImage src="/icon.png" alt="BrieflyAI" data-ai-hint="logo icon" />
-                        <AvatarFallback>B</AvatarFallback>
-                    </Avatar>
-                    <div className="max-w-xl rounded-xl px-4 py-3 bg-secondary flex items-center">
-                        <LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" />
-                    </div>
-                    </div>
-                )}
-                <div ref={messagesEndRef} />
-            </div>
+          {renderContent()}
         </div>
         <div className="sticky bottom-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-8 px-4">
             <ChatInputForm onSubmit={handleNewMessage} isLoading={isLoading} />
