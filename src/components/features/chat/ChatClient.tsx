@@ -61,7 +61,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                         <FormControl>
                             <Input
                             placeholder="ask briefly"
-                            className="text-base py-7 pl-12 pr-14 rounded-full bg-secondary"
+                            className="text-base py-7 pl-12 pr-14 rounded-lg bg-secondary"
                             autoComplete="off"
                             disabled={isLoading}
                             {...field}
@@ -71,14 +71,14 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                     )}
                     />
                     <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => fileInputRef.current?.click()} disabled>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => fileInputRef.current?.click()} disabled>
                             <ImagePlus className="h-5 w-5 text-muted-foreground" />
                             <span className="sr-only">Upload image</span>
                         </Button>
                         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" disabled />
                     </div>
                     <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                        <Button type="submit" size="icon" className="rounded-full h-10 w-10" disabled={isLoading}>
+                        <Button type="submit" size="icon" className="rounded-lg h-10 w-10" disabled={isLoading}>
                             {isLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
                             <span className="sr-only">Send</span>
                         </Button>
