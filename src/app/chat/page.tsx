@@ -15,15 +15,6 @@ export default function ChatPage() {
           <ArrowLeft className="h-4 w-4" />
           Back to Creation Hub
         </Link>
-
-        <div className="text-center">
-          <h1 className="mb-2 text-4xl font-bold md:text-5xl">
-            Chat with Briefly
-          </h1>
-          <p className="mb-12 text-lg text-muted-foreground">
-            Your conversational AI assistant. Ask me anything!
-          </p>
-        </div>
         
         <Suspense fallback={<div>Loading...</div>}>
             <ChatClient />

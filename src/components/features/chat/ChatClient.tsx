@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect, forwardRef, memo } from "react";
-import { useForm, FormProvider, useFormContext } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { LoaderCircle, Send, ImagePlus } from "lucide-react";
@@ -46,7 +46,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     };
 
     return (
-        <div className={cn("w-full max-w-2xl mx-auto", className)}>
+        <div className={cn("w-full max-w-3xl mx-auto", className)}>
             <FormProvider {...form}>
                 <form
                     ref={ref}
@@ -60,8 +60,8 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                         <FormItem>
                         <FormControl>
                             <Input
-                            placeholder="Message Briefly..."
-                            className="text-base py-6 pl-12 pr-14 rounded-full bg-secondary"
+                            placeholder="ask briefly"
+                            className="text-base py-7 pl-12 pr-14 rounded-full bg-secondary"
                             autoComplete="off"
                             disabled={isLoading}
                             {...field}
@@ -78,7 +78,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" disabled />
                     </div>
                     <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                        <Button type="submit" size="icon" className="rounded-full" disabled={isLoading}>
+                        <Button type="submit" size="icon" className="rounded-full h-10 w-10" disabled={isLoading}>
                             {isLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
                             <span className="sr-only">Send</span>
                         </Button>
