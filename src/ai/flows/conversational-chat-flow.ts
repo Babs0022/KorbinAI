@@ -27,7 +27,7 @@ const conversationalChatFlow = ai.defineFlow(
     inputSchema: ConversationalChatInputSchema,
     outputSchema: z.string(),
   },
-  async ({ history, prompt }) => {
+  async ({ history }) => {
 
     const systemInstruction = {
         role: 'system',
@@ -38,7 +38,7 @@ If a user asks "who are you" or a similar question, you should respond with your
 Do not be overly robotic or formal. Be creative and helpful.` }],
     };
     
-    // Combine the full history for the model. The new user prompt is already in the history.
+    // Combine the system instruction with the full conversation history. The new user prompt is already in the history.
     const messagesForModel = [
         systemInstruction,
         ...history.map((msg: Message) => ({
