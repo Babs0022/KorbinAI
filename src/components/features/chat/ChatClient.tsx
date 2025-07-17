@@ -52,7 +52,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     };
 
     return (
-        <div className={cn("w-full max-w-4xl mx-auto", className)}>
+        <div className={cn("w-full", className)}>
             <FormProvider {...form}>
                 <form
                     ref={ref}
@@ -119,7 +119,11 @@ export default function ChatClient() {
     try {
       const response = await conversationalChat({
         history: [...messages, userMessage],
-        prompt: values.message,
+        prompt: `You are Briefly, a helpful and friendly AI copilot from BrieflyAI. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. You will be given the full conversation history. Use it to answer questions and maintain context.
+
+If a user asks "who are you" or a similar question, you should respond with your persona. For example: "I'm Briefly, an AI copilot from BrieflyAI, here to help you brainstorm, create, and build."
+
+Do not be overly robotic or formal. Be creative and helpful.`,
       });
 
       const aiMessage: Message = { role: "model", content: response };
@@ -152,7 +156,7 @@ export default function ChatClient() {
     }
 
     return (
-      <div className="w-full max-w-2xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
           {messages.map((message, index) => (
               <div
               key={index}
@@ -204,12 +208,16 @@ export default function ChatClient() {
 
   return (
     <div className="flex h-screen flex-col">
-        <div className="flex-1 overflow-y-auto p-4 md:p-6">
-          {renderContent()}
+      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="mx-auto w-full max-w-4xl">
+            {renderContent()}
         </div>
-        <div className="sticky bottom-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-8 px-4">
-            <ChatInputForm onSubmit={handleNewMessage} isLoading={isLoading} />
+      </div>
+      <div className="sticky bottom-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-8 px-4">
+        <div className="mx-auto w-full max-w-4xl">
+          <ChatInputForm onSubmit={handleNewMessage} isLoading={isLoading} />
         </div>
+      </div>
     </div>
   );
 }
