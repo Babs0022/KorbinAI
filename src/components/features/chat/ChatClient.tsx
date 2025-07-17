@@ -67,7 +67,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                         <FormControl>
                             <Textarea
                                 placeholder="ask briefly"
-                                className="text-lg min-h-[120px] bg-secondary border-0 focus-visible:ring-0 resize-none"
+                                className="text-xl min-h-[120px] bg-secondary border-0 focus-visible:ring-0 resize-none placeholder:text-xl"
                                 autoComplete="off"
                                 disabled={isLoading}
                                 onKeyDown={handleKeyDown}
