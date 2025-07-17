@@ -28,23 +28,28 @@ const conversationalChatFlow = ai.defineFlow(
     outputSchema: z.string(),
   },
   async ({ history, prompt }) => {
-    const response = await ai.generate({
-      model: 'googleai/gemini-1.5-pro-latest',
-      history: [
-        {
-          role: 'system',
-          content: [{ text: `You are Briefly, a helpful and friendly AI copilot from BrieflyAI. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. You will be given the full conversation history. Use it to answer questions and maintain context.
+
+    const systemInstruction = {
+        role: 'system',
+        content: [{ text: `You are Briefly, a helpful and friendly AI copilot from BrieflyAI. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. You will be given the full conversation history. Use it to answer questions and maintain context.
 
 If a user asks "who are you" or a similar question, you should respond with your persona. For example: "I'm Briefly, an AI copilot from BrieflyAI, here to help you brainstorm, create, and build."
 
 Do not be overly robotic or formal. Be creative and helpful.` }],
-        },
+    };
+    
+    // Combine the full history for the model. The new user prompt is already in the history.
+    const messagesForModel = [
+        systemInstruction,
         ...history.map((msg: Message) => ({
           role: msg.role,
           content: [{ text: msg.content }],
         })),
-      ],
-      prompt: prompt,
+      ];
+
+    const response = await ai.generate({
+      model: 'googleai/gemini-1.5-pro-latest',
+      history: messagesForModel,
     });
 
     return response.text;
