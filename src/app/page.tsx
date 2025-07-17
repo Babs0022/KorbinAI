@@ -24,13 +24,13 @@ export default function HomePage() {
       subtitle: "Craft optimized prompts for any task",
       href: "/prompt-generator",
     },
-    {
-      id: "feature-conversational-chat",
-      icon: <MessageSquare className="h-8 w-8" />,
-      title: "Conversational Chat",
-      subtitle: "Engage in back-and-forth dialogue",
-      href: "/chat",
-    },
+    // {
+    //   id: "feature-conversational-chat",
+    //   icon: <MessageSquare className="h-8 w-8" />,
+    //   title: "Conversational Chat",
+    //   subtitle: "Engage in back-and-forth dialogue",
+    //   href: "/chat",
+    // },
     {
       id: "feature-web-page-app",
       icon: <LayoutTemplate className="h-8 w-8" />,
