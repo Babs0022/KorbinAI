@@ -226,7 +226,9 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 <Logo />
             </div>
             <div className="h-6 border-l mx-2 hidden md:block"></div>
-            <Logo />
+            <div className="hidden md:block">
+                <Logo />
+            </div>
         </div>
         <div className="flex items-center gap-2">
             <ThemeToggle />
