@@ -144,7 +144,7 @@ export default function ChatClient() {
 
   if (messages.length === 0) {
     return (
-        <div className="flex h-screen flex-col items-center justify-end pb-8">
+        <div className="flex h-screen flex-col items-center justify-end p-4">
             <ChatInputForm onSubmit={handleNewMessage} isLoading={isLoading} />
         </div>
     )
@@ -152,8 +152,8 @@ export default function ChatClient() {
 
   return (
     <div className="flex h-screen flex-col">
-        <div className="flex-1 overflow-y-auto p-6">
-            <div className="w-full max-w-4xl mx-auto space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
+            <div className="w-full max-w-3xl mx-auto space-y-6">
                 {messages.map((message, index) => (
                     <div
                     key={index}
@@ -200,7 +200,7 @@ export default function ChatClient() {
                 <div ref={messagesEndRef} />
             </div>
         </div>
-        <div className="sticky bottom-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-8">
+        <div className="sticky bottom-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-8 px-4">
             <ChatInputForm onSubmit={handleNewMessage} isLoading={isLoading} />
         </div>
     </div>
