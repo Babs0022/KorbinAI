@@ -314,35 +314,34 @@ export default function WrittenContentClient() {
   };
 
   return (
-    <Card className="w-full rounded-xl">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>Content Wizard</CardTitle>
-          <span className="text-sm text-muted-foreground">
-            Step {currentStep} of {steps.length}
-          </span>
+    <div>
+        <div className="mb-6">
+            <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">{steps[currentStep - 1].name}</h2>
+            <span className="text-sm text-muted-foreground">
+                Step {currentStep} of {steps.length}
+            </span>
+            </div>
+            <Progress value={progressPercentage} className="w-full mt-2" />
         </div>
-        <CardDescription>{steps[currentStep - 1].name}</CardDescription>
-        <Progress value={progressPercentage} className="w-full mt-2" />
-      </CardHeader>
-      
-      <CardContent className="min-h-[400px] p-6">
-        {renderStepContent()}
-      </CardContent>
-      
-      <CardFooter className="flex justify-between">
-        <Button onClick={handlePrevious} disabled={currentStep === 1} variant="outline">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Previous
-        </Button>
-        {currentStep < steps.length && (
-            <Button onClick={handleNext} disabled={getNextButtonDisabledState()}>
-                {state.isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {currentStep === 1 ? 'Generate Outline' : 'Next'}
-                <ArrowRight className="ml-2 h-4 w-4" />
+        
+        <div className="min-h-[400px]">
+            {renderStepContent()}
+        </div>
+        
+        <div className="flex justify-between mt-8">
+            <Button onClick={handlePrevious} disabled={currentStep === 1} variant="outline">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Previous
             </Button>
-        )}
-      </CardFooter>
-    </Card>
+            {currentStep < steps.length && (
+                <Button onClick={handleNext} disabled={getNextButtonDisabledState()}>
+                    {state.isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {currentStep === 1 ? 'Generate Outline' : 'Next'}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+            )}
+        </div>
+    </div>
   );
 }

@@ -138,8 +138,7 @@ export default function ComponentWizardClient() {
           ))}
         </div>
 
-        <Card className="w-full rounded-xl">
-          <CardContent className="p-6">
+        <div className="w-full">
             <form onSubmit={handleSubmit} className="space-y-8">
               {step === 1 && (
                 <div className="space-y-8 animate-fade-in">
@@ -307,8 +306,7 @@ export default function ComponentWizardClient() {
                 </div>
               )}
             </form>
-          </CardContent>
-        </Card>
+        </div>
     </>
   );
 }

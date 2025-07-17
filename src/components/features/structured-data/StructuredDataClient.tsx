@@ -248,137 +248,135 @@ export default function StructuredDataClient() {
 
   return (
     <>
-      <Card className="w-full rounded-xl">
-        <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium text-white">
-                What data do you want to generate?
-              </h3>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="e.g., 'A list of 5 fantasy book characters with names, classes, and levels' or 'A CSV of 10 sample customers with first name, last name, and email'."
-                className="min-h-[120px] text-base"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-              />
-            </div>
+      <div className="w-full">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium text-white">
+              What data do you want to generate?
+            </h3>
+            <Textarea
+              id="description"
+              name="description"
+              placeholder="e.g., 'A list of 5 fantasy book characters with names, classes, and levels' or 'A CSV of 10 sample customers with first name, last name, and email'."
+              className="min-h-[120px] text-base"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
+            />
+          </div>
 
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-white">
+              Add Context Images <span className="font-normal text-muted-foreground">(optional)</span>
+            </h3>
+            <div className="flex flex-wrap gap-4">
+              {images.map((image, index) => (
+                <div key={index} className="relative w-32 h-32">
+                  <NextImage src={image} alt={`Image preview ${index + 1}`} fill sizes="128px" className="object-cover rounded-lg" data-ai-hint="context image" />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -top-2 -right-2 h-7 w-7 rounded-full z-10"
+                    onClick={() => removeImage(index)}
+                  >
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Remove image</span>
+                  </Button>
+                </div>
+              ))}
+              
+              <Label htmlFor="image-upload" className="flex flex-col items-center justify-center w-32 h-32 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-accent">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <ImagePlus className="w-8 h-8 text-muted-foreground" />
+                  <span className="sr-only">Add image</span>
+                </div>
+                <Input id="image-upload" type="file" className="hidden" accept="image/png, image/jpeg" onChange={handleImageChange} multiple />
+              </Label>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-white">
-                Add Context Images <span className="font-normal text-muted-foreground">(optional)</span>
+                Output Format
               </h3>
-              <div className="flex flex-wrap gap-4">
-                {images.map((image, index) => (
-                  <div key={index} className="relative w-32 h-32">
-                    <NextImage src={image} alt={`Image preview ${index + 1}`} fill sizes="128px" className="object-cover rounded-lg" data-ai-hint="context image" />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute -top-2 -right-2 h-7 w-7 rounded-full z-10"
-                      onClick={() => removeImage(index)}
-                    >
-                      <X className="h-4 w-4" />
-                      <span className="sr-only">Remove image</span>
-                    </Button>
-                  </div>
-                ))}
-                
-                <Label htmlFor="image-upload" className="flex flex-col items-center justify-center w-32 h-32 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-accent">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <ImagePlus className="w-8 h-8 text-muted-foreground" />
-                    <span className="sr-only">Add image</span>
-                  </div>
-                  <Input id="image-upload" type="file" className="hidden" accept="image/png, image/jpeg" onChange={handleImageChange} multiple />
-                </Label>
-              </div>
+              <RadioGroup
+                value={format}
+                onValueChange={setFormat}
+                className="flex flex-wrap items-center gap-6 pt-1"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="json" id="format-json" />
+                  <Label htmlFor="format-json" className="text-base">JSON</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="csv" id="format-csv" />
+                  <Label htmlFor="format-csv" className="text-base">CSV</Label>
+                </div>
+                 <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="kml" id="format-kml" />
+                  <Label htmlFor="format-kml" className="text-base">KML</Label>
+                </div>
+                 <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="xml" id="format-xml" />
+                  <Label htmlFor="format-xml" className="text-base">XML</Label>
+                </div>
+              </RadioGroup>
             </div>
             
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-              <div className="space-y-4">
+            <div className="space-y-2">
+               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-medium text-white">
-                  Output Format
+                  Schema/Example <span className="font-normal text-muted-foreground">(optional)</span>
                 </h3>
-                <RadioGroup
-                  value={format}
-                  onValueChange={setFormat}
-                  className="flex flex-wrap items-center gap-6 pt-1"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="json" id="format-json" />
-                    <Label htmlFor="format-json" className="text-base">JSON</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="csv" id="format-csv" />
-                    <Label htmlFor="format-csv" className="text-base">CSV</Label>
-                  </div>
-                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="kml" id="format-kml" />
-                    <Label htmlFor="format-kml" className="text-base">KML</Label>
-                  </div>
-                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="xml" id="format-xml" />
-                    <Label htmlFor="format-xml" className="text-base">XML</Label>
-                  </div>
-                </RadioGroup>
+                {isSuggestingSchema && format === 'json' && <LoaderCircle className="h-4 w-4 animate-spin" />}
               </div>
-              
-              <div className="space-y-2">
-                 <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-medium text-white">
-                    Schema/Example <span className="font-normal text-muted-foreground">(optional)</span>
-                  </h3>
-                  {isSuggestingSchema && format === 'json' && <LoaderCircle className="h-4 w-4 animate-spin" />}
+              <Textarea
+                id="schemaDefinition"
+                name="schemaDefinition"
+                placeholder={`e.g., {\n  "name": "string",\n  "level": "number"\n} or an XML structure`}
+                className="min-h-[100px] font-mono text-xs"
+                value={schemaDefinition}
+                onChange={(e) => setSchemaDefinition(e.target.value)}
+                disabled={format === 'csv'}
+              />
+              {format === 'json' && schemaSuggestion && (
+                <div className="mt-2 rounded-md border border-dashed border-primary/50 bg-secondary p-2">
+                    <div className="flex items-center justify-between gap-2">
+                        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Sparkles className="h-4 w-4 text-primary" />
+                            <span className="font-semibold text-primary">Suggestion:</span>{" "}
+                            We can generate a schema for you.
+                        </p>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSchemaDefinition(schemaSuggestion)}
+                        >
+                            Use Schema
+                        </Button>
+                    </div>
                 </div>
-                <Textarea
-                  id="schemaDefinition"
-                  name="schemaDefinition"
-                  placeholder={`e.g., {\n  "name": "string",\n  "level": "number"\n} or an XML structure`}
-                  className="min-h-[100px] font-mono text-xs"
-                  value={schemaDefinition}
-                  onChange={(e) => setSchemaDefinition(e.target.value)}
-                  disabled={format === 'csv'}
-                />
-                {format === 'json' && schemaSuggestion && (
-                  <div className="mt-2 rounded-md border border-dashed border-primary/50 bg-secondary p-2">
-                      <div className="flex items-center justify-between gap-2">
-                          <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Sparkles className="h-4 w-4 text-primary" />
-                              <span className="font-semibold text-primary">Suggestion:</span>{" "}
-                              We can generate a schema for you.
-                          </p>
-                          <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setSchemaDefinition(schemaSuggestion)}
-                          >
-                              Use Schema
-                          </Button>
-                      </div>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
+          </div>
 
-            <div className="flex justify-end pt-4">
-              <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !!isRefining || !user}>
-                {isLoading ? (
-                  <>
-                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  "Generate Data"
-                )}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          <div className="flex justify-end pt-4">
+            <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !!isRefining || !user}>
+              {isLoading ? (
+                <>
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                "Generate Data"
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
 
       {isLoading && (
         <div className="mt-12 flex flex-col items-center justify-center gap-4 text-center animate-fade-in">

@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { useSearchParams } from "next/navigation";
 import { LoaderCircle, Download, Save, ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -165,8 +164,7 @@ export default function ImageGeneratorClient() {
     <>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             <form onSubmit={handleSubmit} className="space-y-8 lg:col-span-4">
-                <Card className="w-full rounded-xl sticky top-8">
-                <CardContent className="p-6 space-y-6">
+                <div className="space-y-6 sticky top-8">
                     <div className="space-y-2">
                         <Label htmlFor="prompt" className="text-lg font-medium text-white">1. Describe your vision</Label>
                         <Textarea
@@ -259,8 +257,7 @@ export default function ImageGeneratorClient() {
                         "Generate"
                     )}
                     </Button>
-                </CardContent>
-                </Card>
+                </div>
             </form>
 
             <div className="lg:col-span-8">
