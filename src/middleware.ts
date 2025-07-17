@@ -16,25 +16,17 @@ const PROTECTED_ROUTES = [
     '/dashboard/settings',
     '/dashboard/billing',
 ];
-const AUTH_ROUTES = ['/login', '/signup', '/forgot-password'];
-const VERIFICATION_ROUTE = '/verify-email';
-
 
 export function middleware(request: NextRequest) {
   const {pathname} = request.nextUrl;
   const authToken = request.cookies.get('firebaseIdToken');
 
   const isProtectedRoute = PROTECTED_ROUTES.some(route => pathname.startsWith(route));
-  const isAuthRoute = AUTH_ROUTES.includes(pathname);
 
   // If user is unauthenticated and trying to access a protected route, redirect to login
   if (!authToken && isProtectedRoute) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
-  // If user is authenticated and trying to access an auth route, redirect to the root
-  if (authToken && isAuthRoute) {
-    return NextResponse.redirect(new URL('/', request.url));
+    const loginUrl = new URL('/login', request.url)
+    return NextResponse.redirect(loginUrl);
   }
   
   return NextResponse.next();
@@ -48,7 +40,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - public assets (favicon, logo, etc.)
+     * - auth routes (so they don't get redirected)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|icon.png|manifest.json).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|icon.png|manifest.json|login|signup|forgot-password|verify-email).*)',
   ],
 };

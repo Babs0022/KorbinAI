@@ -31,6 +31,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const publicRoutes = ['/login', '/signup', '/forgot-password'];
 const verificationRoute = '/verify-email';
+const protectedRoutes = [
+    '/',
+    '/component-wizard',
+    '/image-generator',
+    '/prompt-generator',
+    '/structured-data',
+    '/written-content',
+    '/chat',
+    '/dashboard'
+];
+
 
 // Helper function to manage the session cookie
 async function setSessionCookie(token: string | null) {
@@ -53,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const handleUser = useCallback(async (rawUser: User | null) => {
     if (rawUser) {
       // User is signed in
-      const token = await rawUser.getIdToken();
+      const token = await rawUser.getIdToken(true); // Force refresh
       await setSessionCookie(token);
 
       const userDocRef = doc(db, "users", rawUser.uid);
@@ -80,9 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // User is signed out
       await setSessionCookie(null);
       setUser(null);
-      if (!publicRoutes.includes(pathname) && pathname !== verificationRoute) {
-        router.replace('/login');
-      }
+      // Let middleware handle redirects for logged-out users.
     }
     setLoading(false);
   }, [pathname, router]);
@@ -94,8 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await firebaseSignOut(auth);
-    await setSessionCookie(null);
-    router.push('/login');
+    // onAuthStateChanged will handle the rest
   };
   
   const handleSocialSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
