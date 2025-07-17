@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await setSessionCookie(null);
       setUser(null);
       if (!publicRoutes.includes(pathname) && pathname !== verificationRoute) {
-        // router.replace('/login');
+        router.replace('/login');
       }
     }
     setLoading(false);
