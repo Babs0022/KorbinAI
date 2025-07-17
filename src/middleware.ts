@@ -2,21 +2,38 @@
 import {NextResponse} from 'next/server';
 import type {NextRequest} from 'next/server';
 
-const PROTECTED_ROUTES = ['/'];
-const AUTH_ROUTES = ['/login', '/signup', '/forgot-password', '/verify-email'];
+const PROTECTED_ROUTES = [
+    '/',
+    '/component-wizard',
+    '/component-wizard/result',
+    '/image-generator',
+    '/prompt-generator',
+    '/structured-data',
+    '/written-content',
+    '/chat',
+    '/dashboard/projects',
+    '/dashboard/account',
+    '/dashboard/settings',
+    '/dashboard/billing',
+];
+const AUTH_ROUTES = ['/login', '/signup', '/forgot-password'];
+const VERIFICATION_ROUTE = '/verify-email';
 
 
 export function middleware(request: NextRequest) {
   const {pathname} = request.nextUrl;
   const authToken = request.cookies.get('firebaseIdToken');
 
+  const isProtectedRoute = PROTECTED_ROUTES.some(route => pathname.startsWith(route));
+  const isAuthRoute = AUTH_ROUTES.includes(pathname);
+
   // If user is unauthenticated and trying to access a protected route, redirect to login
-  if (!authToken && PROTECTED_ROUTES.includes(pathname)) {
+  if (!authToken && isProtectedRoute) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // If user is authenticated and trying to access an auth route, redirect to the root
-  if (authToken && AUTH_ROUTES.includes(pathname)) {
+  if (authToken && isAuthRoute) {
     return NextResponse.redirect(new URL('/', request.url));
   }
   
