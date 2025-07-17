@@ -46,7 +46,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     };
 
     return (
-        <div className={cn("w-full max-w-3xl mx-auto", className)}>
+        <div className={cn("w-full max-w-4xl mx-auto", className)}>
             <FormProvider {...form}>
                 <form
                     ref={ref}
@@ -61,7 +61,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                         <FormControl>
                             <Input
                             placeholder="ask briefly"
-                            className="text-base h-24 pl-12 pr-14 rounded-lg bg-secondary"
+                            className="text-base h-36 pl-12 pr-14 rounded-lg bg-secondary"
                             autoComplete="off"
                             disabled={isLoading}
                             {...field}
