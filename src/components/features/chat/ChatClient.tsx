@@ -57,7 +57,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                 <form
                     ref={ref}
                     onSubmit={form.handleSubmit(handleFormSubmit)}
-                    className="rounded-lg border bg-secondary"
+                    className="rounded-xl border bg-secondary"
                 >
                     <FormField
                     control={form.control}
@@ -67,7 +67,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                         <FormControl>
                             <Textarea
                                 placeholder="ask briefly"
-                                className="text-xl min-h-[120px] bg-secondary border-0 focus-visible:ring-0 resize-none placeholder:text-xl"
+                                className="text-xl min-h-[90px] bg-secondary border-0 focus-visible:ring-0 resize-none placeholder:text-xl"
                                 autoComplete="off"
                                 disabled={isLoading}
                                 onKeyDown={handleKeyDown}
