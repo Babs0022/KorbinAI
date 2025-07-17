@@ -144,14 +144,14 @@ export default function ChatClient() {
 
   if (messages.length === 0) {
     return (
-        <div className="flex h-[80vh] flex-col items-center justify-end pb-8">
+        <div className="flex h-screen flex-col items-center justify-end pb-8">
             <ChatInputForm onSubmit={handleNewMessage} isLoading={isLoading} />
         </div>
     )
   }
 
   return (
-    <div className="flex h-[80vh] flex-col">
+    <div className="flex h-screen flex-col">
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {messages.map((message, index) => (
             <div
