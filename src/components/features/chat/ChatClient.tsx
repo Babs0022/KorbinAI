@@ -67,7 +67,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                         <FormControl>
                             <Textarea
                                 placeholder="ask briefly"
-                                className="text-base min-h-[120px] bg-secondary border-0 focus-visible:ring-0 resize-none"
+                                className="text-lg min-h-[120px] bg-secondary border-0 focus-visible:ring-0 resize-none"
                                 autoComplete="off"
                                 disabled={isLoading}
                                 onKeyDown={handleKeyDown}
@@ -77,7 +77,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                         </FormItem>
                     )}
                     />
-                    <div className="flex items-center justify-between p-2 border-t">
+                    <div className="flex items-center justify-between p-2">
                         <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled>
                             <ImagePlus className="h-5 w-5 text-muted-foreground" />
                             <span className="sr-only">Upload image</span>
