@@ -76,14 +76,17 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
                         const newAudience = result.suggestedAudience;
                         const isCustom = !audiences.includes(newAudience);
 
-                        const updatedData = {
-                            ...formData,
-                            targetAudience: isCustom ? 'Other' : newAudience,
-                            otherAudience: isCustom ? newAudience : formData.otherAudience
-                        };
-
-                        setFormData(updatedData);
-                        onDataChange(updatedData);
+                        // Use a functional update to avoid issues with stale state
+                        setFormData(currentData => {
+                           const updatedData = {
+                                ...currentData,
+                                targetAudience: isCustom ? 'Other' : newAudience,
+                                otherAudience: isCustom ? newAudience : currentData.otherAudience
+                            };
+                            // Manually call onDataChange here since we are in a functional update
+                            onDataChange(updatedData);
+                            return updatedData;
+                        });
                     }
                 }
             } catch (error) {
@@ -100,7 +103,7 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
             if (timeout) clearTimeout(timeout);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [formData.mainTopic, onDataChange]);
+    }, [formData.mainTopic]);
     
     const handleSelectChange = (field: keyof ContentIdeaFormData) => (value: string) => {
         handleChange(field, value);
