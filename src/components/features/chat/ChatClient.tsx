@@ -152,51 +152,53 @@ export default function ChatClient() {
 
   return (
     <div className="flex h-screen flex-col">
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {messages.map((message, index) => (
-            <div
-            key={index}
-            className={cn(
-                "flex items-start gap-4",
-                message.role === "user" ? "justify-end" : ""
-            )}
-            >
-            {message.role === "model" && (
-                <Avatar className="h-9 w-9">
-                    <AvatarImage src="/icon.png" alt="BrieflyAI" data-ai-hint="logo icon" />
-                    <AvatarFallback>B</AvatarFallback>
-                </Avatar>
-            )}
-            <div
-                className={cn(
-                "max-w-xl rounded-xl px-4 py-3 shadow-md",
-                message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary"
+        <div className="flex-1 overflow-y-auto p-6">
+            <div className="w-full max-w-4xl mx-auto space-y-6">
+                {messages.map((message, index) => (
+                    <div
+                    key={index}
+                    className={cn(
+                        "flex items-start gap-4",
+                        message.role === "user" ? "justify-end" : ""
+                    )}
+                    >
+                    {message.role === "model" && (
+                        <Avatar className="h-9 w-9">
+                            <AvatarImage src="/icon.png" alt="BrieflyAI" data-ai-hint="logo icon" />
+                            <AvatarFallback>B</AvatarFallback>
+                        </Avatar>
+                    )}
+                    <div
+                        className={cn(
+                        "max-w-xl rounded-xl px-4 py-3 shadow-md",
+                        message.role === "user"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary"
+                        )}
+                    >
+                        <MarkdownRenderer>{message.content}</MarkdownRenderer>
+                    </div>
+                        {message.role === "user" && user && (
+                        <Avatar className="h-9 w-9">
+                            <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
+                            <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                        </Avatar>
+                    )}
+                    </div>
+                ))}
+                    {isLoading && (
+                    <div className="flex items-start gap-4">
+                    <Avatar className="h-9 w-9">
+                        <AvatarImage src="/icon.png" alt="BrieflyAI" data-ai-hint="logo icon" />
+                        <AvatarFallback>B</AvatarFallback>
+                    </Avatar>
+                    <div className="max-w-xl rounded-xl px-4 py-3 bg-secondary flex items-center">
+                        <LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                    </div>
                 )}
-            >
-                <MarkdownRenderer>{message.content}</MarkdownRenderer>
+                <div ref={messagesEndRef} />
             </div>
-                {message.role === "user" && user && (
-                <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
-                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                </Avatar>
-            )}
-            </div>
-        ))}
-            {isLoading && (
-            <div className="flex items-start gap-4">
-            <Avatar className="h-9 w-9">
-                <AvatarImage src="/icon.png" alt="BrieflyAI" data-ai-hint="logo icon" />
-                <AvatarFallback>B</AvatarFallback>
-            </Avatar>
-            <div className="max-w-xl rounded-xl px-4 py-3 bg-secondary flex items-center">
-                <LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-            </div>
-        )}
-        <div ref={messagesEndRef} />
         </div>
         <div className="sticky bottom-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-8">
             <ChatInputForm onSubmit={handleNewMessage} isLoading={isLoading} />
