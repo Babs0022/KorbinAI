@@ -140,7 +140,7 @@ export default function ChatClient() {
 
   if (messages.length === 0) {
     return (
-        <div className="flex h-[70vh] flex-col items-center justify-center">
+        <div className="flex h-[80vh] flex-col items-center justify-end pb-8">
             <ChatInputForm onSubmit={handleNewMessage} isLoading={isLoading} />
         </div>
     )
