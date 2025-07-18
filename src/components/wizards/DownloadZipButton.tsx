@@ -15,17 +15,26 @@ interface File {
 interface DownloadZipButtonProps {
   files: File[];
   projectName?: string;
+  disabled?: boolean;
 }
 
-export default function DownloadZipButton({ files, projectName = 'brieflyai-app' }: DownloadZipButtonProps) {
+export default function DownloadZipButton({ files, projectName = 'brieflyai-app', disabled = false }: DownloadZipButtonProps) {
   const { toast } = useToast();
 
   const handleDownload = async () => {
+    if (disabled || !files || files.length === 0 || !files[0].componentCode) {
+        toast({
+            variant: 'destructive',
+            title: 'Download Failed',
+            description: 'There is no code to download.',
+        });
+        return;
+    }
+    
     try {
         const zip = new JSZip();
 
         files.forEach(file => {
-          // JSZip handles creating folder structures from the path
           zip.file(file.filePath, file.componentCode);
         });
 
@@ -46,7 +55,7 @@ export default function DownloadZipButton({ files, projectName = 'brieflyai-app'
   };
 
   return (
-    <Button onClick={handleDownload} variant="outline" size="lg">
+    <Button onClick={handleDownload} variant="outline" size="lg" disabled={disabled}>
       <Download className="mr-2 h-4 w-4" />
       Download as .zip
     </Button>

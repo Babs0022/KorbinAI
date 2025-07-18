@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { AlertCircle } from 'lucide-react';
 
 interface CodePreviewProps {
-  htmlContent?: string;
+  htmlContent: string;
+  children?: React.ReactNode;
 }
 
-export default function CodePreview({ htmlContent }: CodePreviewProps) {
+export default function CodePreview({ htmlContent, children }: CodePreviewProps) {
   return (
     <Card>
       <CardHeader>
@@ -20,6 +21,7 @@ export default function CodePreview({ htmlContent }: CodePreviewProps) {
       </CardHeader>
       <CardContent>
         <div className="relative w-full h-[600px] overflow-hidden rounded-lg border bg-background">
+          {children}
           {htmlContent ? (
             <iframe
               srcDoc={htmlContent}
