@@ -6,15 +6,15 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { saveProject } from '@/services/projectService';
-import MultiCodeDisplay from './CodeDisplay';
 import DownloadZipButton from './DownloadZipButton';
 import { Button } from '@/components/ui/button';
-import { LoaderCircle, Save, Terminal } from 'lucide-react';
+import { LoaderCircle, Save } from 'lucide-react';
 import { ToastAction } from "@/components/ui/toast";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import MarkdownRenderer from '../shared/MarkdownRenderer';
 import CodePreview from './CodePreview';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Card, CardContent } from '../ui/card';
 
 interface File {
   filePath: string;
@@ -33,6 +33,8 @@ export default function ComponentResultDisplay({ result }: ComponentResultDispla
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
+
+  const mainHtmlFile = result.files.find(file => file.filePath.endsWith('.html'));
   
   const handleSave = async () => {
     if (!user || !result) return;
@@ -65,12 +67,6 @@ export default function ComponentResultDisplay({ result }: ComponentResultDispla
     }
   }
 
-  const readmeFile = result.files.find(file => file.filePath.toLowerCase().endsWith('readme.md'));
-  const mainPageFile = result.files.find(file => file.filePath.endsWith('page.tsx'));
-  const globalsCssFile = result.files.find(file => file.filePath.endsWith('globals.css'));
-  const tailwindConfigFile = result.files.find(file => file.filePath.endsWith('tailwind.config.ts'));
-
-
   return (
     <div className="space-y-6">
        <Tabs defaultValue="preview" className="w-full">
@@ -79,33 +75,31 @@ export default function ComponentResultDisplay({ result }: ComponentResultDispla
           <TabsTrigger value="code">Code</TabsTrigger>
         </TabsList>
         <TabsContent value="preview" className="mt-6">
-          <CodePreview 
-            mainPageFile={mainPageFile} 
-            globalsCssFile={globalsCssFile}
-            tailwindConfigFile={tailwindConfigFile}
-          />
+          <CodePreview htmlContent={mainHtmlFile?.componentCode} />
         </TabsContent>
         <TabsContent value="code" className="mt-6">
-           <MultiCodeDisplay files={result.files} />
+           <Card>
+              <CardContent className="p-0">
+                 <div className="h-[600px] overflow-auto rounded-lg border bg-secondary">
+                    <SyntaxHighlighter
+                      language="html"
+                      style={vscDarkPlus}
+                      customStyle={{ margin: 0, backgroundColor: 'transparent', height: '100%' }}
+                      codeTagProps={{
+                        style: {
+                          fontFamily: "var(--font-code, monospace)",
+                          fontSize: "0.875rem",
+                        },
+                      }}
+                      className="!p-4 h-full"
+                    >
+                      {mainHtmlFile?.componentCode || '<!-- No code generated -->'}
+                    </SyntaxHighlighter>
+                 </div>
+              </CardContent>
+           </Card>
         </TabsContent>
       </Tabs>
-
-      {readmeFile && (
-        <Card className="bg-card/50">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Terminal />
-                    README & Final Steps
-                </CardTitle>
-                <CardDescription>Follow these instructions to get your new application running.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="prose prose-sm dark:prose-invert max-w-none rounded-md bg-secondary p-4 max-h-[400px] overflow-y-auto">
-                    <MarkdownRenderer>{readmeFile.componentCode}</MarkdownRenderer>
-                </div>
-            </CardContent>
-        </Card>
-      )}
 
       <div className="flex justify-end gap-4 pt-4">
         <DownloadZipButton files={result.files} />

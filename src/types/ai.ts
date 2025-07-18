@@ -69,13 +69,13 @@ export const GenerateAppInputSchema = z.object({
 });
 export type GenerateAppInput = z.infer<typeof GenerateAppInputSchema>;
 const FileOutputSchema = z.object({
-  filePath: z.string().describe("The full, absolute path for the file, e.g., 'src/app/page.tsx' or 'package.json' for new apps."),
-  componentCode: z.string().describe("The full TSX/TS/JSON/MD code for the file, including all necessary imports and content."),
-  instructions: z.string().describe("A one-sentence, beginner-friendly explanation of this file's purpose. Assume the user has never coded before. For example: 'This is the main page of your app.' or 'This file lists your project's dependencies.'"),
+  filePath: z.string().describe("The full path for the file, which should be 'index.html'."),
+  componentCode: z.string().describe("The full HTML code for the file."),
+  instructions: z.string().describe("A one-sentence, beginner-friendly explanation of this file's purpose."),
 });
 export const GenerateAppOutputSchema = z.object({
-  files: z.array(FileOutputSchema).describe("An array of all the files needed for the application."),
-  finalInstructions: z.string().optional().describe("A final summary of what the user should do next, like running 'npm install && npm run dev'. This is being deprecated in favor of including a README.md in the files array."),
+  files: z.array(FileOutputSchema).describe("An array containing a single file object for the generated HTML."),
+  finalInstructions: z.string().optional().describe("This field is deprecated in favor of a self-contained HTML file."),
 });
 export type GenerateAppOutput = z.infer<typeof GenerateAppOutputSchema>;
 
