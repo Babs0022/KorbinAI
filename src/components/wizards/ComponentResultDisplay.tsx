@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -33,8 +33,6 @@ export default function ComponentResultDisplay({ searchParams }: { searchParams:
   const [isSaving, setIsSaving] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
   
-  const workerRef = useRef<Worker>();
-
   useEffect(() => {
     // Start the generation process
     async function startGeneration() {
@@ -43,10 +41,19 @@ export default function ComponentResultDisplay({ searchParams }: { searchParams:
       setFinalCode(null);
 
       try {
+        const body: GenerateAppInput = {
+            description: searchParams.description,
+            dataPoints: searchParams.dataPoints,
+        };
+
+        if (!body.description) {
+            throw new Error("Description is required.");
+        }
+
         const response = await fetch('/api/generate-app-stream', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(searchParams),
+          body: JSON.stringify(body),
         });
 
         if (!response.ok || !response.body) {
@@ -76,9 +83,6 @@ export default function ComponentResultDisplay({ searchParams }: { searchParams:
 
     startGeneration();
 
-    return () => {
-        // Cleanup logic if needed when component unmounts
-    }
   }, [searchParams]);
 
   const handleSave = async () => {
