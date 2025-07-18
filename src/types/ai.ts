@@ -63,9 +63,7 @@ export type ExpandOutlineSectionOutput = z.infer<typeof ExpandOutlineSectionOutp
 // === generate-component-flow ===
 export const GenerateAppInputSchema = z.object({
   description: z.string().describe('A plain English description of the application or page to build.'),
-  style: z.string().describe("The visual style of the brand (e.g., 'Minimalist & Modern', 'Playful & Creative')."),
   dataPoints: z.string().optional().describe('A comma-separated list of specific page sections the app should include (e.g., Hero, Features, Testimonials). This is the primary guide for page structure.'),
-  generationMode: z.enum(['new', 'existing']).describe("Determines whether to generate a full new application or add to an existing one."),
 });
 export type GenerateAppInput = z.infer<typeof GenerateAppInputSchema>;
 const FileOutputSchema = z.object({
@@ -75,30 +73,19 @@ const FileOutputSchema = z.object({
 });
 export const GenerateAppOutputSchema = z.object({
   files: z.array(FileOutputSchema).describe("An array containing a single file object for the generated HTML."),
-  finalInstructions: z.string().optional().describe("This field is deprecated in favor of a self-contained HTML file."),
 });
 export type GenerateAppOutput = z.infer<typeof GenerateAppOutputSchema>;
 
 
 // === generate-content-outline-flow ===
-export const GenerateStrategicBriefInputSchema = z.object({
-  topic: z.string(),
-  targetAudience: z.string(),
-  purpose: z.string(),
-});
-export type GenerateStrategicBriefInput = z.infer<typeof GenerateStrategicBriefInputSchema>;
-
-export const GenerateStrategicBriefOutputSchema = z.object({
-    audiencePersona: z.string(),
-    bigIdea: z.string(),
-    readerTransformation: z.string(),
-    writingPersona: z.string(),
-});
-export type GenerateStrategicBriefOutput = z.infer<typeof GenerateStrategicBriefOutputSchema>;
-
-// === generate-content-outline-flow ===
 export const GenerateContentOutlineInputSchema = z.object({
-  brief: GenerateStrategicBriefOutputSchema
+  contentType: z.string().describe("The type of content (e.g., 'Blog Post', 'Email')."),
+  mainTopic: z.string().describe('The core topic of the content.'),
+  purpose: z.string().describe('The goal or objective of the content.'),
+  targetAudience: z.string().describe('The intended audience.'),
+  desiredTone: z.string().describe('The desired tone of voice.'),
+  desiredLength: z.string().describe('The approximate desired length.'),
+  keywords: z.array(z.string()).optional().describe('A list of keywords to include.'),
 });
 export type GenerateContentOutlineInput = z.infer<typeof GenerateContentOutlineInputSchema>;
 
@@ -303,3 +290,20 @@ export const OptimizeContentOutputSchema = z.object({
   optimizedContent: z.string().describe("The optimized content or a list of suggestions, formatted as a markdown string."),
 });
 export type OptimizeContentOutput = z.infer<typeof OptimizeContentOutputSchema>;
+
+
+// === generate-content-outline-flow (OLD) ===
+export const GenerateStrategicBriefInputSchema = z.object({
+  topic: z.string().describe("The user's topic for the content."),
+  targetAudience: z.string().describe("The user's stated target audience."),
+  purpose: z.string().describe("The user's stated purpose or desired tone."),
+});
+export type GenerateStrategicBriefInput = z.infer<typeof GenerateStrategicBriefInputSchema>;
+
+export const GenerateStrategicBriefOutputSchema = z.object({
+    audiencePersona: z.string(),
+    bigIdea: z.string(),
+    readerTransformation: z.string(),
+    writingPersona: z.string(),
+});
+export type GenerateStrategicBriefOutput = z.infer<typeof GenerateStrategicBriefOutputSchema>;

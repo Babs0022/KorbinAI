@@ -32,20 +32,20 @@ You will generate a single file named \`index.html\`. This file must contain all
 
 [USER CONFIGURATION]
 - **App Description:** "{{description}}"
-- **Visual Style:** "{{style}}"
+- **Visual Style:** "Dark Mode, modern, clean"
 - **Page Sections / Components:** "{{dataPoints}}"
 
 [GENERATION DIRECTIVES]
 1.  **Define the Structure (HTML):** Create the necessary HTML elements to build the user interface based on the requested components. The HTML should be inside the <body> tag.
-2.  **Apply Styles (CSS):** Write all CSS rules inside a single \`<style>\` tag within the \`<head>\`. The styling should be clean, modern, and reflect the user's chosen visual style. Use Flexbox or Grid for layout. Make it responsive. Use dark mode styling.
+2.  **Apply Styles (CSS):** Write all CSS rules inside a single \`<style>\` tag within the \`<head>\`. The styling should be clean, modern, and reflect a dark mode theme. Use Flexbox or Grid for layout. Make it responsive.
 3.  **Implement Logic (JavaScript):** Write all JavaScript code inside a single \`<script>\` tag at the end of the \`<body>\`. The JavaScript must be clean, well-commented, and should not use any external libraries (no jQuery, React, etc.).
     *   **Select Elements:** Use \`document.querySelector()\` or \`document.getElementById()\` to grab the HTML elements needed for interactivity.
     *   **Add Event Listeners:** Use \`.addEventListener()\` to listen for user actions (e.g., 'click', 'submit').
     *   **Execute Functions:** Write functions that perform the application's logic (e.g., updating a display, adding an item to a list, performing a calculation).
 4.  **Final Delivery (CRITICAL):**
-    -   You MUST return a valid JSON object matching the output schema.
-    -   The \`files\` array should contain ONLY ONE object for \`index.html\`.
-    -   The code must be the complete and final version of the single HTML file, properly formatted and indented.
+    *   You MUST return a valid JSON object matching the output schema.
+    *   The \`files\` array should contain ONLY ONE object for \`index.html\`.
+    *   The code must be the complete and final version of the single HTML file, properly formatted and indented.
 
 Execute the generation based on these precise instructions.
 `,
