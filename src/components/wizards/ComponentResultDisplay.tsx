@@ -66,7 +66,10 @@ export default function ComponentResultDisplay({ result }: ComponentResultDispla
   }
 
   const readmeFile = result.files.find(file => file.filePath.toLowerCase().endsWith('readme.md'));
-  const mainPageFile = result.files.find(file => file.filePath.endsWith('app/page.tsx'));
+  const mainPageFile = result.files.find(file => file.filePath.endsWith('page.tsx'));
+  const globalsCssFile = result.files.find(file => file.filePath.endsWith('globals.css'));
+  const tailwindConfigFile = result.files.find(file => file.filePath.endsWith('tailwind.config.ts'));
+
 
   return (
     <div className="space-y-6">
@@ -76,7 +79,11 @@ export default function ComponentResultDisplay({ result }: ComponentResultDispla
           <TabsTrigger value="code">Code</TabsTrigger>
         </TabsList>
         <TabsContent value="preview" className="mt-6">
-          <CodePreview mainPageFile={mainPageFile} />
+          <CodePreview 
+            mainPageFile={mainPageFile} 
+            globalsCssFile={globalsCssFile}
+            tailwindConfigFile={tailwindConfigFile}
+          />
         </TabsContent>
         <TabsContent value="code" className="mt-6">
            <MultiCodeDisplay files={result.files} />
