@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { generateSectionSuggestions } from "@/ai/flows/generate-section-suggestions-flow";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 const STEPS = [
   { step: 1, title: "The Core Idea", icon: <Wand2 /> },
@@ -24,6 +24,7 @@ export default function ComponentWizardClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const [step, setStep] = useState(1);
   const [description, setDescription] = useState("");
@@ -46,12 +47,28 @@ export default function ComponentWizardClient() {
     if (step === 1 && description.trim().split(/\s+/).length >= 5) {
       setIsSuggesting(true);
       try {
-        const result = await generateSectionSuggestions({ description });
+        const response = await fetch('/api/generate-sections', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to get suggestions');
+        }
+
+        const result = await response.json();
         const initialSections = result.suggestions || [];
         setSuggestedSections(initialSections);
         setFinalSections(new Set(initialSections));
       } catch (error) {
         console.error("Failed to get suggestions:", error);
+        toast({
+            variant: "destructive",
+            title: "Architecture Failed",
+            description: error instanceof Error ? error.message : "An unknown error occurred.",
+        });
         setSuggestedSections([]);
         setFinalSections(new Set());
       } finally {
