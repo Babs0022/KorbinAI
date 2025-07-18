@@ -128,8 +128,6 @@ export default function ComponentWizardClient() {
       dataPoints: JSON.stringify(orderedSections),
     });
 
-    // In a future step, this will push to a page that generates file-by-file.
-    // For now, it will go to the old result page.
     router.push(`/component-wizard/result?${params.toString()}`);
   };
 
