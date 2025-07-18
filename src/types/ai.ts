@@ -70,27 +70,38 @@ export const GenerateAppInputSchema = z.object({
 export type GenerateAppInput = z.infer<typeof GenerateAppInputSchema>;
 const FileOutputSchema = z.object({
   filePath: z.string().describe("The full, absolute path for the file, e.g., 'src/app/page.tsx' or 'package.json' for new apps."),
-  componentCode: z.string().describe("The full TSX/TS/JSON code for the file, including all necessary imports and content."),
+  componentCode: z.string().describe("The full TSX/TS/JSON/MD code for the file, including all necessary imports and content."),
   instructions: z.string().describe("A one-sentence, beginner-friendly explanation of this file's purpose. Assume the user has never coded before. For example: 'This is the main page of your app.' or 'This file lists your project's dependencies.'"),
 });
 export const GenerateAppOutputSchema = z.object({
   files: z.array(FileOutputSchema).describe("An array of all the files needed for the application."),
-  finalInstructions: z.string().describe("A final summary of what the user should do next, like running 'npm install && npm run dev'. Do not tell them to just run npm install."),
+  finalInstructions: z.string().optional().describe("A final summary of what the user should do next, like running 'npm install && npm run dev'. This is being deprecated in favor of including a README.md in the files array."),
 });
 export type GenerateAppOutput = z.infer<typeof GenerateAppOutputSchema>;
 
 
 // === generate-content-outline-flow ===
+export const GenerateStrategicBriefInputSchema = z.object({
+  topic: z.string(),
+  targetAudience: z.string(),
+  purpose: z.string(),
+});
+export type GenerateStrategicBriefInput = z.infer<typeof GenerateStrategicBriefInputSchema>;
+
+export const GenerateStrategicBriefOutputSchema = z.object({
+    audiencePersona: z.string(),
+    bigIdea: z.string(),
+    readerTransformation: z.string(),
+    writingPersona: z.string(),
+});
+export type GenerateStrategicBriefOutput = z.infer<typeof GenerateStrategicBriefOutputSchema>;
+
+// === generate-content-outline-flow ===
 export const GenerateContentOutlineInputSchema = z.object({
-  contentType: z.string().describe("The type of content (e.g., 'Blog Post')."),
-  mainTopic: z.string().describe('The core topic of the content.'),
-  purpose: z.string().describe('The goal or objective of the content.'),
-  targetAudience: z.string().describe('The intended audience.'),
-  desiredTone: z.string().describe('The desired tone of voice.'),
-  desiredLength: z.string().describe('The approximate desired length.'),
-  keywords: z.array(z.string()).optional().describe('A list of keywords to include.'),
+  brief: GenerateStrategicBriefOutputSchema
 });
 export type GenerateContentOutlineInput = z.infer<typeof GenerateContentOutlineInputSchema>;
+
 export const GenerateContentOutlineOutputSchema = z.object({
   outline: z.array(z.string()).describe("An array of logical section titles for the content outline."),
 });

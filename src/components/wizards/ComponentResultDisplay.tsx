@@ -11,6 +11,9 @@ import DownloadZipButton from './DownloadZipButton';
 import { Button } from '@/components/ui/button';
 import { LoaderCircle, Save } from 'lucide-react';
 import { ToastAction } from "@/components/ui/toast";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import MarkdownRenderer from '../shared/MarkdownRenderer';
+import { Terminal } from 'lucide-react';
 
 interface File {
   filePath: string;
@@ -21,7 +24,7 @@ interface File {
 interface ComponentResultDisplayProps {
   result: {
     files: File[];
-    finalInstructions: string;
+    finalInstructions?: string; // Make optional as it's being replaced by README
   }
 }
 
@@ -62,9 +65,29 @@ export default function ComponentResultDisplay({ result }: ComponentResultDispla
     }
   }
 
+  const readmeFile = result.files.find(file => file.filePath.toLowerCase() === 'readme.md');
+
   return (
     <div className="space-y-6">
-      <MultiCodeDisplay files={result.files} finalInstructions={result.finalInstructions} />
+      <MultiCodeDisplay files={result.files} />
+
+      {readmeFile && (
+        <Card className="bg-card/50">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Terminal />
+                    README & Final Steps
+                </CardTitle>
+                <CardDescription>Follow these instructions to get your new application running.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="prose prose-sm dark:prose-invert max-w-none rounded-md bg-secondary p-4">
+                    <MarkdownRenderer>{readmeFile.componentCode}</MarkdownRenderer>
+                </div>
+            </CardContent>
+        </Card>
+      )}
+
       <div className="flex justify-end gap-4">
         <DownloadZipButton files={result.files} />
         <Button onClick={handleSave} disabled={isSaving || !user || !!projectId} size="lg">

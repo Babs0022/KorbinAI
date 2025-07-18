@@ -24,54 +24,40 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-pro-latest',
   input: {schema: GenerateAppInputSchema},
   output: {schema: GenerateAppOutputSchema},
-  prompt: `You are an expert Next.js developer specializing in creating beautiful, production-ready applications using ShadCN UI and Tailwind CSS. Your task is to generate the files for a web application based on a structured request.
+  prompt: `[ROLE & MISSION]
+You are the "BrieflyAI Architect," an expert AI system designer integrated within Firebase Studio. Your mission is to receive a user's high-level description of a web application and transform it into a complete, multi-file, runnable, and production-ready front-end prototype. You are a specialist in modern web architecture (React, Next.js, TypeScript, Tailwind CSS). Your primary directive is to act as an expert co-pilot, translating a non-technical vision into a professional-grade codebase.
 
-Pay close attention to the **Generation Mode** and the requested **Page Sections**.
+[CORE WORKFLOW: From User Input to Generated Code]
+This prompt represents the final step of the generation process. The user has already provided their inputs, and you have already (in a previous step) inferred the necessary components and had them confirmed by the user. Your task now is to execute the final code generation based on the structured input provided below.
 
----
-### User Request
+[USER CONFIGURATION]
 - **App Description:** "{{description}}"
 - **Visual Style:** "{{style}}"
 - **Generation Mode:** {{generationMode}}
-{{#if dataPoints}}
-- **Page Sections:** "{{dataPoints}}"
-{{/if}}
----
+- **Page Sections / Components:** "{{dataPoints}}"
 
-### Core Instructions
-
-1.  **Structure from Sections**: The "Page Sections" are your primary guide. For the main page, create one React component for EACH section listed in 'dataPoints'.
+[GENERATION DIRECTIVES]
+1.  **File Structure:** The "Page Sections / Components" list is your primary guide for file creation. Create one React component file for EACH item in the list.
     -   Place new section components in \`src/components/sections/\`. For example, a "Hero" section becomes \`src/components/sections/HeroSection.tsx\`.
-    -   The main page file (e.g., \`src/app/page.tsx\`) should import these section components and render them in order.
+    -   The main page file (e.g., \`src/app/page.tsx\`) should import these section components and render them in the specified order.
 
-2.  **Use High-Quality UI Components**:
-    -   Build the UI using **ShadCN components** (\`@/components/ui/*\`) like \`<Card>\`, \`<Button>\`, \`<Input>\`, etc. This is mandatory for professional results.
-    -   Use **Lucide React icons** for iconography.
-    -   Use Tailwind CSS for all styling. Do not use inline styles.
-    -   Use placeholder images from \`https://placehold.co/<width>x<height>.png\`. Add a \`data-ai-hint\` attribute with one or two keywords for the image.
+2.  **Technical Specifications:**
+    -   **Framework:** Use React with the Next.js App Router. All components must be server components by default unless client-side interactivity is absolutely necessary.
+    -   **Language:** Use TypeScript (.tsx for components).
+    -   **Styling:** Use Tailwind CSS for all styling. Adhere to the user's selected **Visual Style**.
+    -   **UI Components**: Build the UI using **ShadCN components** (\`@/components/ui/*\`) for professional results (e.g., \`<Card>\`, \`<Button>\`). Use **Lucide React icons** for iconography. Use placeholder images from \`https://placehold.co/<width>x<height>.png\`, and add a \`data-ai-hint\` attribute with one or two keywords.
 
-3.  **Generation Mode Logic**:
+3.  **Generation Mode Logic:**
+    -   **If Mode is 'existing'**: Generate ONLY the files for the new page and its section components. File paths MUST start with \`src/\`. DO NOT generate \`package.json\`, config files, or \`layout.tsx\`.
+    -   **If Mode is 'new'**: Generate ALL files for a COMPLETE, standalone Next.js app. This includes root files like \`package.json\`, \`next.config.ts\`, \`tailwind.config.ts\`, and \`components.json\`, plus all necessary \`src\` files (\`layout.tsx\`, \`globals.css\`, page, etc.). Ensure the \`package.json\` includes all necessary dependencies for a ShadCN project.
 
-    -   **If Mode is 'existing'**:
-        -   Generate ONLY the files for the new page and its section components.
-        -   All file paths MUST start with \`src/\`. The main page should be at a new route like \`src/app/new-page/page.tsx\`, unless the description implies changing the homepage.
-        -   DO NOT generate \`package.json\`, config files, or \`layout.tsx\`. Assume ShadCN is already installed.
-
-    -   **If Mode is 'new'**:
-        -   Generate ALL files for a COMPLETE, standalone Next.js app.
-        -   **Root Files**: Paths like \`package.json\`, \`next.config.ts\`, \`tailwind.config.ts\`, \`components.json\` must be at the root (no \`src/\` prefix).
-        -   **Source Files**: App code, components, and styles must be in \`src/\`.
-        -   **Dependencies**: \`package.json\` must include everything needed for a ShadCN project: \`next\`, \`react\`, \`tailwindcss\`, \`lucide-react\`, \`class-variance-authority\`, \`clsx\`, \`tailwind-merge\`, \`tailwindcss-animate\`, and all necessary \`@radix-ui/*\` packages. Add TypeScript dev dependencies.
-        -   **Configuration**: Generate valid configs, including \`components.json\` for ShadCN.
-        -   **Styling**: Generate \`src/app/globals.css\` with a theme matching the user's chosen **Visual Style**.
-        -   **Layout**: Generate a root \`src/app/layout.tsx\`.
-
-4.  **Output Format**:
-    -   You MUST return a valid JSON object matching the schema.
-    -   Provide the FULL, complete code for every file.
+4.  **Final Delivery (CRITICAL):**
+    -   You MUST return a valid JSON object matching the output schema.
+    -   Provide the FULL, complete code for every file. Do not use placeholders like "// ...".
     -   For each file, include a simple, one-sentence explanation of its purpose.
+    -   **Generate a README.md file.** This file MUST include a "Final Steps" section with simple, clear, numbered instructions for a non-technical user on how to download the project, run \`npm install\`, and then run \`npm run dev\` to see their new application.
 
-Generate the application files now based on these detailed instructions.
+Execute the generation based on these precise instructions.
 `,
 });
 
@@ -93,14 +79,14 @@ const generateAppFlow = ai.defineFlow(
     // Clean up the code and ensure plain objects by explicitly creating them.
     const cleanedFiles = aiOutput.files.map(file => ({
         filePath: String(file.filePath),
-        componentCode: String(file.componentCode).replace(/^```(tsx|typescript|ts|jsx|js|json)?\n?/, '').replace(/\n?```$/, ''),
+        componentCode: String(file.componentCode).replace(/^```(tsx|typescript|ts|jsx|js|json|md)?\n?/, '').replace(/\n?```$/, ''),
         instructions: String(file.instructions),
     }));
     
     // Construct a new, clean object to prevent passing complex Genkit objects.
     const finalOutput: GenerateAppOutput = {
         files: cleanedFiles,
-        finalInstructions: String(aiOutput.finalInstructions),
+        finalInstructions: aiOutput.finalInstructions ? String(aiOutput.finalInstructions) : "See README.md for final steps.",
     };
 
     return finalOutput;
