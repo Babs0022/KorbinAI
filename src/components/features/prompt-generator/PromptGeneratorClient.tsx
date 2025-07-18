@@ -12,7 +12,6 @@ import { ToastAction } from "@/components/ui/toast";
 import { saveProject } from '@/services/projectService';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +20,6 @@ import { generatePromptFormatSuggestions } from "@/ai/flows/generate-prompt-form
 import { analyzePrompt } from "@/ai/flows/analyze-prompt-flow";
 import type { GeneratePromptInput, AnalyzePromptOutput } from "@/types/ai";
 import GenerationResultCard from "@/components/shared/GenerationResultCard";
-import { Badge } from "@/components/ui/badge";
 
 export default function PromptGeneratorClient() {
   // Form State
@@ -184,126 +182,122 @@ export default function PromptGeneratorClient() {
 
 
   return (
-    <>
-      <div className="w-full">
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium text-white">
-              What task do you want the AI to perform?
-            </h3>
-            <Textarea
-              id="task-description"
-              name="taskDescription"
-              placeholder="e.g., 'Write a tweet about our new product launch' or 'Summarize a long article about climate change'."
-              className="min-h-[120px] text-base"
-              value={taskDescription}
-              onChange={(e) => setTaskDescription(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-white">
-              Add Context Images <span className="font-normal text-muted-foreground">(optional)</span>
-            </h3>
-            <div className="flex flex-wrap gap-4">
-              {images.map((image, index) => (
-                <div key={index} className="relative w-32 h-32">
-                  <NextImage src={image} alt={`Image preview ${index + 1}`} fill sizes="128px" className="object-cover rounded-lg" data-ai-hint="context image" />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute -top-2 -right-2 h-7 w-7 rounded-full z-10"
-                    onClick={() => removeImage(index)}
-                  >
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Remove image</span>
-                  </Button>
-                </div>
-              ))}
-              
-              <Label htmlFor="image-upload" className="flex flex-col items-center justify-center w-32 h-32 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-accent">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <ImagePlus className="w-8 h-8 text-muted-foreground" />
-                  <span className="sr-only">Add image</span>
-                </div>
-                <Input id="image-upload" type="file" className="hidden" accept="image/png, image/jpeg" onChange={handleImageChange} multiple />
-              </Label>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium text-white">
-                Target AI Model <span className="font-normal text-muted-foreground">(optional)</span>
-              </h3>
-              <Input 
-                id="target-model" 
-                name="targetModel" 
-                placeholder="e.g., 'Gemini 1.5 Pro'" 
-                className="text-base" 
-                value={targetModel}
-                onChange={(e) => setTargetModel(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-medium text-white">
-                  Desired Output Format <span className="font-normal text-muted-foreground">(optional)</span>
-                </h3>
-                {isSuggesting && <LoaderCircle className="h-4 w-4 animate-spin" />}
-              </div>
-              <Input 
-                id="output-format" 
-                name="outputFormat" 
-                placeholder="e.g., 'JSON with 'name' and 'summary' keys'" 
-                className="text-base" 
-                value={outputFormat}
-                onChange={(e) => setOutputFormat(e.target.value)}
-              />
-               {formatSuggestions.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-2">
-                      {formatSuggestions.map(suggestion => (
-                          <Button
-                              key={suggestion}
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setOutputFormat(suggestion)}
-                              className="text-xs"
-                          >
-                              <Sparkles className="mr-1 h-3 w-3 text-primary" /> {suggestion}
-                          </Button>
-                      ))}
-                  </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-4">
-            <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !user}>
-              {isLoading ? (
-                <>
-                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                "Generate Prompt"
-              )}
-            </Button>
-          </div>
-        </form>
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <h3 className="text-lg font-medium text-white">
+          What task do you want the AI to perform?
+        </h3>
+        <Textarea
+          id="task-description"
+          name="taskDescription"
+          placeholder="e.g., 'Write a tweet about our new product launch' or 'Summarize a long article about climate change'."
+          className="min-h-[120px] text-base"
+          value={taskDescription}
+          onChange={(e) => setTaskDescription(e.target.value)}
+          required
+        />
       </div>
 
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium text-white">
+          Add Context Images <span className="font-normal text-muted-foreground">(optional)</span>
+        </h3>
+        <div className="flex flex-wrap gap-4">
+          {images.map((image, index) => (
+            <div key={index} className="relative w-32 h-32">
+              <NextImage src={image} alt={`Image preview ${index + 1}`} fill sizes="128px" className="object-cover rounded-lg" data-ai-hint="context image" />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute -top-2 -right-2 h-7 w-7 rounded-full z-10"
+                onClick={() => removeImage(index)}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Remove image</span>
+              </Button>
+            </div>
+          ))}
+          
+          <Label htmlFor="image-upload" className="flex flex-col items-center justify-center w-32 h-32 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-accent">
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <ImagePlus className="w-8 h-8 text-muted-foreground" />
+              <span className="sr-only">Add image</span>
+            </div>
+            <Input id="image-upload" type="file" className="hidden" accept="image/png, image/jpeg" onChange={handleImageChange} multiple />
+          </Label>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="space-y-2">
+          <h3 className="text-lg font-medium text-white">
+            Target AI Model <span className="font-normal text-muted-foreground">(optional)</span>
+          </h3>
+          <Input 
+            id="target-model" 
+            name="targetModel" 
+            placeholder="e.g., 'Gemini 1.5 Pro'" 
+            className="text-base" 
+            value={targetModel}
+            onChange={(e) => setTargetModel(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-medium text-white">
+              Desired Output Format <span className="font-normal text-muted-foreground">(optional)</span>
+            </h3>
+            {isSuggesting && <LoaderCircle className="h-4 w-4 animate-spin" />}
+          </div>
+          <Input 
+            id="output-format" 
+            name="outputFormat" 
+            placeholder="e.g., 'JSON with 'name' and 'summary' keys'" 
+            className="text-base" 
+            value={outputFormat}
+            onChange={(e) => setOutputFormat(e.target.value)}
+          />
+           {formatSuggestions.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                  {formatSuggestions.map(suggestion => (
+                      <Button
+                          key={suggestion}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setOutputFormat(suggestion)}
+                          className="text-xs"
+                      >
+                          <Sparkles className="mr-1 h-3 w-3 text-primary" /> {suggestion}
+                      </Button>
+                  ))}
+              </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex justify-end pt-4">
+        <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !user}>
+          {isLoading ? (
+            <>
+              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            "Generate Prompt"
+          )}
+        </Button>
+      </div>
+    
       {isLoading && !generatedPrompt && (
-        <div className="flex items-center justify-center pt-12">
+        <div className="mt-12 flex items-center justify-center">
             <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
         </div>
       )}
 
       {generatedPrompt && (
-        <div className="mt-12 space-y-8">
+        <div className="mt-12 space-y-8 animate-fade-in">
           <GenerationResultCard
             title="Your Generated Prompt"
             content={generatedPrompt}
@@ -311,41 +305,28 @@ export default function PromptGeneratorClient() {
           />
 
           <div className="flex justify-between items-center">
-            {toolSuggestion && toolSuggestion.tool !== 'none' && toolMap[toolSuggestion.tool] ? (
-              <Card className="rounded-xl bg-primary/10 border border-dashed border-primary/50 animate-fade-in">
-                <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <Sparkles className="h-8 w-8 text-primary shrink-0" />
-                        <div className="text-center sm:text-left">
-                            <h3 className="text-lg font-semibold text-white">Let's Create!</h3>
-                            <p className="text-muted-foreground">{toolSuggestion.suggestion}</p>
-                        </div>
-                    </div>
-                    <Button size="lg" className="shrink-0" asChild>
-                      <Link
-                          href={{
-                              pathname: toolMap[toolSuggestion.tool].href,
-                              query: { [toolMap[toolSuggestion.tool].queryParam]: generatedPrompt },
-                          }}
-                      >
-                          Try It Now
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                </CardContent>
-              </Card>
-            ) : <div />}
+             {toolSuggestion && toolSuggestion.tool !== 'none' && toolMap[toolSuggestion.tool] ? (
+                 <Link
+                    href={{
+                        pathname: toolMap[toolSuggestion.tool].href,
+                        query: { [toolMap[toolSuggestion.tool].queryParam]: generatedPrompt },
+                    }}
+                    passHref
+                  >
+                  <Button size="lg" variant="outline">
+                    {toolSuggestion.suggestion}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                 </Link>
+             ) : <div />}
 
-            <div className="relative">
-              <Button disabled={true} size="lg">
-                <Save className="mr-2 h-4 w-4" />
-                Save Project
-              </Button>
-              <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>
-            </div>
+            <Button onClick={handleSave} disabled={isSaving || !user || !!projectId} size="lg">
+              {isSaving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {projectId ? 'Saved!' : 'Save Project'}
+            </Button>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

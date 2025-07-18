@@ -3,7 +3,6 @@
 
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
 
@@ -314,7 +313,7 @@ export default function WrittenContentClient() {
   };
 
   return (
-    <div>
+    <div className="space-y-8">
         <div className="mb-6">
             <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">{steps[currentStep - 1].name}</h2>
