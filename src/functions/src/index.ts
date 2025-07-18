@@ -2,7 +2,10 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions/v1";
 import { initializePayment, handleSuccessfulPayment } from "./paystack";
 
-admin.initializeApp();
+// Ensure Firebase Admin is initialized only once.
+if (admin.apps.length === 0) {
+    admin.initializeApp();
+}
 
 // Callable function to initialize a payment
 export const initializePaystackPayment = functions.https.onCall(initializePayment);

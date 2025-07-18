@@ -3,6 +3,11 @@ import Paystack from "paystack-node";
 import { https, logger } from "firebase-functions/v1";
 import { PaystackChargeSuccessData } from "./types";
 
+// Ensure Firebase Admin is initialized only once.
+if (admin.apps.length === 0) {
+    admin.initializeApp();
+}
+
 const db = admin.firestore();
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 
