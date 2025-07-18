@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LoaderCircle, Sparkles, Wand2, ChevronsRight, FileCode2, Code, FileTree, Plus, X } from "lucide-react";
+import { LoaderCircle, Sparkles, Wand2, ChevronsRight, FileCode2, Code, LayoutTemplate, Plus, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 
 const STEPS = [
   { step: 1, title: "The Core Idea", icon: <Wand2 /> },
-  { step: 2, title: "Architecture", icon: <FileTree /> },
+  { step: 2, title: "Architecture", icon: <LayoutTemplate /> },
   { step: 3, title: "Build & Preview", icon: <Code /> },
 ];
 
@@ -108,7 +108,7 @@ export default function ComponentWizardClient() {
     
     const params = new URLSearchParams({
       description,
-      components: JSON.stringify(orderedSections),
+      dataPoints: JSON.stringify(orderedSections),
     });
 
     // In a future step, this will push to a page that generates file-by-file.
@@ -253,7 +253,7 @@ export default function ComponentWizardClient() {
                         Generating...
                         </>
                     ) : (
-                        "Generate Project Files"
+                        "Generate Project"
                     )}
                     </Button>
                 </div>
