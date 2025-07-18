@@ -9,11 +9,12 @@ import { saveProject } from '@/services/projectService';
 import MultiCodeDisplay from './CodeDisplay';
 import DownloadZipButton from './DownloadZipButton';
 import { Button } from '@/components/ui/button';
-import { LoaderCircle, Save } from 'lucide-react';
+import { LoaderCircle, Save, Terminal } from 'lucide-react';
 import { ToastAction } from "@/components/ui/toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MarkdownRenderer from '../shared/MarkdownRenderer';
-import { Terminal } from 'lucide-react';
+import CodePreview from './CodePreview';
 
 interface File {
   filePath: string;
@@ -24,7 +25,6 @@ interface File {
 interface ComponentResultDisplayProps {
   result: {
     files: File[];
-    finalInstructions?: string; // Make optional as it's being replaced by README
   }
 }
 
@@ -65,11 +65,23 @@ export default function ComponentResultDisplay({ result }: ComponentResultDispla
     }
   }
 
-  const readmeFile = result.files.find(file => file.filePath.toLowerCase() === 'readme.md');
+  const readmeFile = result.files.find(file => file.filePath.toLowerCase().endsWith('readme.md'));
+  const mainPageFile = result.files.find(file => file.filePath.endsWith('app/page.tsx'));
 
   return (
     <div className="space-y-6">
-      <MultiCodeDisplay files={result.files} />
+       <Tabs defaultValue="preview" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="preview">Preview</TabsTrigger>
+          <TabsTrigger value="code">Code</TabsTrigger>
+        </TabsList>
+        <TabsContent value="preview" className="mt-6">
+          <CodePreview mainPageFile={mainPageFile} />
+        </TabsContent>
+        <TabsContent value="code" className="mt-6">
+           <MultiCodeDisplay files={result.files} />
+        </TabsContent>
+      </Tabs>
 
       {readmeFile && (
         <Card className="bg-card/50">
@@ -81,14 +93,14 @@ export default function ComponentResultDisplay({ result }: ComponentResultDispla
                 <CardDescription>Follow these instructions to get your new application running.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="prose prose-sm dark:prose-invert max-w-none rounded-md bg-secondary p-4">
+                <div className="prose prose-sm dark:prose-invert max-w-none rounded-md bg-secondary p-4 max-h-[400px] overflow-y-auto">
                     <MarkdownRenderer>{readmeFile.componentCode}</MarkdownRenderer>
                 </div>
             </CardContent>
         </Card>
       )}
 
-      <div className="flex justify-end gap-4">
+      <div className="flex justify-end gap-4 pt-4">
         <DownloadZipButton files={result.files} />
         <Button onClick={handleSave} disabled={isSaving || !user || !!projectId} size="lg">
           {isSaving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
