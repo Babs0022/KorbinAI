@@ -1,7 +1,6 @@
-
 'use server';
 /**
- * @fileOverview A flow for generating single-file HTML prototypes based on user descriptions.
+ * @fileOverview A flow for generating single-file interactive HTML prototypes based on user descriptions.
  * This file contains the server-side logic and exports only the main async function.
  * Type definitions are in `src/types/ai.ts`.
  */
@@ -25,10 +24,10 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateAppInputSchema},
   output: {schema: GenerateAppOutputSchema},
   prompt: `[ROLE & MISSION]
-You are the "BrieflyAI Architect," an expert AI system designer. Your mission is to take a user's high-level description of a web page and transform it into a single, complete, runnable, and visually impressive HTML prototype file.
+You are the "BrieflyAI Architect," an expert AI system designer. Your mission is to take a user's high-level description and transform it into a single, complete, runnable, and interactive HTML file. The file must be self-contained with no external dependencies.
 
-[CORE WORKFLOW: From User Input to Single HTML File]
-Your task is to generate a single HTML file based on the user's description.
+[CORE WORKFLOW: From User Input to Single Interactive HTML File]
+You will generate a single file named \`index.html\`. This file must contain all the necessary HTML for structure, CSS for styling, and JavaScript for interactivity.
 
 [USER CONFIGURATION]
 - **App Description:** "{{description}}"
@@ -36,22 +35,16 @@ Your task is to generate a single HTML file based on the user's description.
 - **Page Sections / Components:** "{{dataPoints}}"
 
 [GENERATION DIRECTIVES]
-1.  **Single File Output:** You MUST generate a single file named \`index.html\`.
-2.  **Self-Contained HTML:** The file MUST be a complete, self-contained HTML document.
-    -   **Use Tailwind CSS via CDN:** Include the Tailwind CSS script in the \`<head>\` section: \`<script src="https://cdn.tailwindcss.com"></script>\`.
-    -   **No External CSS:** Do NOT create a separate CSS file. All styling must be done with Tailwind classes directly in the HTML elements.
-    -   **Dark Mode by Default:** The root \`<html>\` tag should have the \`class="dark"\` attribute.
-    -   **Structure:** Combine all the requested "Page Sections / Components" into the \`<body>\` of the HTML file in a logical order.
-3.  **Component Styling:**
-    -   Use standard HTML tags (\`<div>\`, \`<h2>\`, \`<p>\`, \`<button>\`, etc.).
-    -   Apply Tailwind CSS classes to replicate the visual appearance of professional UI components (like ShadCN). Use rounded corners, shadows, and modern color palettes.
-    -   The background color of the body should be a dark gray (e.g., \`bg-gray-900\`) and text should be light (e.g., \`text-gray-200\`).
-    -   Use Lucide React icons by embedding their SVG source directly. You can find SVG source for icons on the lucide.dev website. For example, a checkmark icon would be \`<svg ...><path d="M20 6 9 17l-5-5"/></svg>\`.
-    -   Use placeholder images from \`https://placehold.co/<width>x<height>.png\`, and add a \`data-ai-hint\` attribute with one or two keywords.
+1.  **Define the Structure (HTML):** Create the necessary HTML elements to build the user interface based on the requested components.
+2.  **Apply Styles (CSS):** Write all CSS rules inside a single \`<style>\` tag within the \`<head>\`. The styling should be clean, modern, and reflect the user's chosen visual style. Use Flexbox or Grid for layout. Make it responsive.
+3.  **Implement Logic (JavaScript):** Write all JavaScript code inside a single \`<script>\` tag at the end of the \`<body>\`. The JavaScript must be clean, well-commented, and should not use any external libraries (no jQuery, React, etc.).
+    *   **Select Elements:** Use \`document.querySelector()\` or \`document.getElementById()\` to grab the HTML elements needed for interactivity.
+    *   **Add Event Listeners:** Use \`.addEventListener()\` to listen for user actions (e.g., 'click', 'submit').
+    *   **Execute Functions:** Write functions that perform the application's logic (e.g., updating a display, adding an item to a list, performing a calculation).
 4.  **Final Delivery (CRITICAL):**
     -   You MUST return a valid JSON object matching the output schema.
     -   The \`files\` array should contain ONLY ONE object for \`index.html\`.
-    -   Provide the FULL, complete code for the \`index.html\` file.
+    -   The code must be the complete and final version of the single HTML file.
 
 Execute the generation based on these precise instructions.
 `,

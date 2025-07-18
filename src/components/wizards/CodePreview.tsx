@@ -13,9 +13,9 @@ export default function CodePreview({ htmlContent }: CodePreviewProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Component Preview</CardTitle>
+        <CardTitle>Interactive Preview</CardTitle>
         <CardDescription>
-          This is a static HTML preview of your generated page.
+          This is a live, interactive preview of your generated application.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -24,7 +24,7 @@ export default function CodePreview({ htmlContent }: CodePreviewProps) {
             <iframe
               srcDoc={htmlContent}
               title="Component Preview"
-              sandbox="allow-scripts" // Allow scripts for Tailwind CDN
+              sandbox="allow-scripts allow-forms" // Allow scripts and forms for interactivity
               className="w-full h-full border-0"
             />
           ) : (
