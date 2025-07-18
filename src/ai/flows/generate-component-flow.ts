@@ -21,7 +21,7 @@ export async function generateApp(input: GenerateAppInput): Promise<GenerateAppO
 
 const prompt = ai.definePrompt({
   name: 'generateAppPrompt',
-  model: 'googleai/gemini-1.5-pro-latest',
+  model: 'googleai/gemini-2.5-pro',
   input: {schema: GenerateAppInputSchema},
   output: {schema: GenerateAppOutputSchema},
   prompt: `[ROLE & MISSION]
