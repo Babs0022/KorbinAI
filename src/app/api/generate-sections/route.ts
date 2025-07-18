@@ -5,10 +5,10 @@ import { cookies } from 'next/headers';
 import admin from 'firebase-admin';
 
 // Initialize Firebase Admin SDK
+// This must be done without arguments to use Application Default Credentials
+// which works for both local development (via gcloud auth) and deployed environments.
 if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-    });
+    admin.initializeApp();
 }
 
 export async function POST(request: NextRequest) {
