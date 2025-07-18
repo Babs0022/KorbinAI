@@ -84,6 +84,7 @@ export default function ComponentResultDisplay({ result }: ComponentResultDispla
                     <SyntaxHighlighter
                       language="html"
                       style={vscDarkPlus}
+                      showLineNumbers={true}
                       customStyle={{ margin: 0, backgroundColor: 'transparent', height: '100%' }}
                       codeTagProps={{
                         style: {
