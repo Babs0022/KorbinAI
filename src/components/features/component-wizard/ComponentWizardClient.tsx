@@ -157,127 +157,125 @@ export default function ComponentWizardClient() {
         ))}
       </div>
 
-      <div className="w-full">
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {step === 1 && (
-            <div className="space-y-8 animate-fade-in">
-              <div className="grid w-full items-center gap-2">
-                <h3 className="text-xl font-medium text-white">In plain English, describe the application you want to build.</h3>
-                <p className="text-muted-foreground">Be descriptive! The more detail you provide, the better the AI can architect your project.</p>
-                <Textarea
-                  id="component-description"
-                  placeholder="e.g., 'A modern landing page for a new AI-powered mobile app that helps with scheduling' or 'A user dashboard for an e-commerce store that shows recent orders and account details.'"
-                  className="min-h-[150px] text-base"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="flex justify-end pt-4">
-                <Button type="button" size="lg" className="text-lg" onClick={handleNextStep} disabled={description.trim().split(/\s+/).length < 5 || isSuggesting}>
-                   {isSuggesting ? (
-                      <>
-                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                        Architecting...
-                      </>
-                    ) : (
-                      <>
-                        Next: Architecture
-                        <ChevronsRight className="ml-2 h-4 w-4" />
-                      </>
-                    )}
-                </Button>
-              </div>
+      <form onSubmit={handleSubmit} className="w-full">
+        {step === 1 && (
+          <div className="space-y-8 animate-fade-in">
+            <div className="grid w-full items-center gap-2">
+              <h3 className="text-xl font-medium text-white">In plain English, describe the application you want to build.</h3>
+              <p className="text-muted-foreground">Be descriptive! The more detail you provide, the better the AI can architect your project.</p>
+              <Textarea
+                id="component-description"
+                placeholder="e.g., 'A modern landing page for a new AI-powered mobile app that helps with scheduling' or 'A user dashboard for an e-commerce store that shows recent orders and account details.'"
+                className="min-h-[150px] text-base"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+              />
             </div>
-          )}
-          
-          {step === 2 && (
-             <div className="space-y-8 animate-fade-in">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Proposed Architecture</CardTitle>
-                        <CardDescription>The AI has proposed the following pages and components based on your description. Review, add, or remove items to finalize the plan.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-3">
-                            {suggestedSections.filter(s => finalSections.has(s)).map(section => (
-                                <div key={section} className="flex items-center justify-between gap-2 p-3 rounded-md bg-secondary">
-                                    <span className="font-medium">{section}</span>
-                                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive/70 hover:text-destructive" onClick={() => handleRemoveSection(section)}>
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="pt-4 space-y-3">
-                            <Label>Add a new page or component</Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    placeholder="e.g., 'Settings Page' or 'Header Component'"
-                                    value={customSection}
-                                    onChange={(e) => setCustomSection(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomSection(); }}}
-                                />
-                                <Button type="button" variant="outline" onClick={handleAddCustomSection}>
-                                    <Plus className="mr-2 h-4 w-4"/>
-                                    Add
-                                </Button>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-                
-                <div className="flex justify-between pt-4">
-                    <Button type="button" variant="outline" size="lg" onClick={() => setStep(1)}>Back</Button>
-                    <Button type="button" size="lg" className="text-lg" onClick={handleNextStep} disabled={finalSections.size === 0}>
-                        Next: Build & Preview
-                        <ChevronsRight className="ml-2 h-4 w-4" />
-                    </Button>
-                </div>
-             </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-8 animate-fade-in">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Final Blueprint</CardTitle>
-                        <CardDescription>This is the final plan for your application. We will now generate the file structure and then build each component.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <h4 className="font-semibold text-muted-foreground">Core Idea</h4>
-                            <p className="rounded-md bg-secondary p-3 mt-1">{description}</p>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold text-muted-foreground">Pages & Components</h4>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {suggestedSections.filter(s => finalSections.has(s)).map(section => (
-                                    <Badge key={section} variant="secondary" className="text-base">{section}</Badge>
-                                ))}
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <div className="flex justify-between pt-4">
-                    <Button type="button" variant="outline" size="lg" onClick={() => setStep(2)}>Back</Button>
-                    <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !user}>
-                    {isLoading ? (
-                        <>
-                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                        Generating...
-                        </>
-                    ) : (
-                        "Generate Project"
-                    )}
-                    </Button>
-                </div>
+            <div className="flex justify-end pt-4">
+              <Button type="button" size="lg" className="text-lg" onClick={handleNextStep} disabled={description.trim().split(/\s+/).length < 5 || isSuggesting}>
+                 {isSuggesting ? (
+                    <>
+                      <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                      Architecting...
+                    </>
+                  ) : (
+                    <>
+                      Next: Architecture
+                      <ChevronsRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+              </Button>
             </div>
-          )}
-        </form>
-      </div>
+          </div>
+        )}
+        
+        {step === 2 && (
+           <div className="space-y-8 animate-fade-in">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Proposed Architecture</CardTitle>
+                      <CardDescription>The AI has proposed the following pages and components based on your description. Review, add, or remove items to finalize the plan.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                      <div className="space-y-3">
+                          {suggestedSections.filter(s => finalSections.has(s)).map(section => (
+                              <div key={section} className="flex items-center justify-between gap-2 p-3 rounded-md bg-secondary">
+                                  <span className="font-medium">{section}</span>
+                                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive/70 hover:text-destructive" onClick={() => handleRemoveSection(section)}>
+                                      <X className="h-4 w-4" />
+                                  </Button>
+                              </div>
+                          ))}
+                      </div>
+
+                      <div className="pt-4 space-y-3">
+                          <Label>Add a new page or component</Label>
+                          <div className="flex gap-2">
+                              <Input
+                                  placeholder="e.g., 'Settings Page' or 'Header Component'"
+                                  value={customSection}
+                                  onChange={(e) => setCustomSection(e.target.value)}
+                                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomSection(); }}}
+                              />
+                              <Button type="button" variant="outline" onClick={handleAddCustomSection}>
+                                  <Plus className="mr-2 h-4 w-4"/>
+                                  Add
+                              </Button>
+                          </div>
+                      </div>
+                  </CardContent>
+              </Card>
+              
+              <div className="flex justify-between pt-4">
+                  <Button type="button" variant="outline" size="lg" onClick={() => setStep(1)}>Back</Button>
+                  <Button type="button" size="lg" className="text-lg" onClick={handleNextStep} disabled={finalSections.size === 0}>
+                      Next: Build & Preview
+                      <ChevronsRight className="ml-2 h-4 w-4" />
+                  </Button>
+              </div>
+           </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-8 animate-fade-in">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Final Blueprint</CardTitle>
+                      <CardDescription>This is the final plan for your application. We will now generate the file structure and then build each component.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                      <div>
+                          <h4 className="font-semibold text-muted-foreground">Core Idea</h4>
+                          <p className="rounded-md bg-secondary p-3 mt-1">{description}</p>
+                      </div>
+                      <div>
+                          <h4 className="font-semibold text-muted-foreground">Pages & Components</h4>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                              {suggestedSections.filter(s => finalSections.has(s)).map(section => (
+                                  <Badge key={section} variant="secondary" className="text-base">{section}</Badge>
+                              ))}
+                          </div>
+                      </div>
+                  </CardContent>
+              </Card>
+
+              <div className="flex justify-between pt-4">
+                  <Button type="button" variant="outline" size="lg" onClick={() => setStep(2)}>Back</Button>
+                  <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !user}>
+                  {isLoading ? (
+                      <>
+                      <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                      </>
+                  ) : (
+                      "Generate Project"
+                  )}
+                  </Button>
+              </div>
+          </div>
+        )}
+      </form>
     </>
   );
 }
