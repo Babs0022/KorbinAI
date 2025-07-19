@@ -22,20 +22,6 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "app": {
-          "backendId": "studio",
-          "region": "us-central1"
-        }
-      }
-    ]
-  },
-  "apphosting": {
-    "backends": [
-      "studio"
     ]
   }
 }

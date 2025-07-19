@@ -17,9 +17,9 @@ import {
 import { saveAgentLog } from '@/services/agentLogService';
 import type { AgentExecutionInput } from '@/types/ai';
 
-export const AgentExecutionInputSchema = z.object({
-  userId: z.string().optional().describe('The ID of the user making the request.'),
-  prompt: z.string().describe('The user\'s high-level request for the agent to perform.'),
+const AgentExecutionInputSchema = z.object({
+  userId: z.string().optional().describe("The ID of the user making the request."),
+  prompt: z.string().describe("The user's high-level request for the agent to perform."),
 });
 
 // Export the main async function that calls the flow
