@@ -7,9 +7,11 @@ import type { AgentLog, AgentLogInput } from '@/types/agent';
 
 /**
  * Initializes the Firebase Admin SDK if not already initialized.
+ * This is the standard method for server-side environments like Cloud Functions or App Hosting.
  */
 function initializeAdmin() {
   if (admin.apps.length === 0) {
+    // Initialize without arguments to automatically use Application Default Credentials
     admin.initializeApp();
   }
 }

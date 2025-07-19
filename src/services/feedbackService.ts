@@ -7,10 +7,11 @@ import type { FeedbackRating } from '@/types/feedback';
 
 /**
  * Initializes the Firebase Admin SDK if not already initialized.
- * This is a helper function to ensure the SDK is ready for use in server-side functions.
+ * This is the standard method for server-side environments like Cloud Functions or App Hosting.
  */
 function initializeAdmin() {
   if (admin.apps.length === 0) {
+    // Initialize without arguments to automatically use Application Default Credentials
     admin.initializeApp();
   }
 }
