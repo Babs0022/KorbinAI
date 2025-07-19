@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, forwardRef, memo } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { LoaderCircle, Send, ImagePlus, X } from "lucide-react";
+import { LoaderCircle, Send, ImagePlus, X, ChevronDown, MessageSquare, Bot } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
@@ -18,6 +18,12 @@ import MarkdownRenderer from "@/components/shared/MarkdownRenderer";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 
 const formSchema = z.object({
@@ -27,6 +33,7 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+type ChatMode = 'chat' | 'agent';
 
 interface ChatInputFormProps {
   onSubmit: (values: FormValues, image?: string) => void;
@@ -40,6 +47,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [mode, setMode] = useState<ChatMode>('chat');
     
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -99,8 +107,37 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                     onSubmit={form.handleSubmit(handleFormSubmit)}
                     className="rounded-xl border bg-secondary"
                 >
+                    <div className="flex items-center justify-between p-2 pt-1 pb-0">
+                       <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="gap-2">
+                              {mode === 'chat' ? (
+                                <>
+                                  <MessageSquare /> Chat
+                                </>
+                              ) : (
+                                <>
+                                  <Bot /> Agent
+                                </>
+                              )}
+                              <ChevronDown className="h-4 w-4 opacity-50" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuItem onSelect={() => setMode('chat')}>
+                              <MessageSquare className="mr-2" />
+                              Chat
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setMode('agent')}>
+                              <Bot className="mr-2" />
+                              Agent
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+
                     {imagePreview && (
-                        <div className="relative p-2">
+                        <div className="relative p-2 pt-0">
                             <Image src={imagePreview} alt="Image preview" width={90} height={90} className="rounded-lg" />
                             <Button
                                 type="button"
@@ -125,7 +162,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                         <FormItem>
                         <FormControl>
                             <Textarea
-                                placeholder="ask briefly"
+                                placeholder={mode === 'chat' ? "Ask Briefly anything..." : "Tell the agent what to do..."}
                                 className="text-xl min-h-[90px] bg-secondary border-0 focus-visible:ring-0 resize-none placeholder:text-xl"
                                 autoComplete="off"
                                 disabled={isLoading}
