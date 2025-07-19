@@ -11,7 +11,6 @@ import type { AgentLog, AgentLogInput } from '@/types/agent';
  */
 function initializeAdmin() {
   if (admin.apps.length === 0) {
-    // Initialize without arguments to automatically use Application Default Credentials
     admin.initializeApp();
   }
 }

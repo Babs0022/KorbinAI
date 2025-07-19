@@ -11,7 +11,6 @@ import type { FeedbackRating } from '@/types/feedback';
  */
 function initializeAdmin() {
   if (admin.apps.length === 0) {
-    // Initialize without arguments to automatically use Application Default Credentials
     admin.initializeApp();
   }
 }

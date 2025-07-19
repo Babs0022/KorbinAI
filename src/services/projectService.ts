@@ -13,7 +13,6 @@ import { v4 as uuidv4 } from 'uuid';
  */
 function initializeAdmin() {
   if (admin.apps.length === 0) {
-    // Initialize without arguments to automatically use Application Default Credentials
     admin.initializeApp();
   }
 }
