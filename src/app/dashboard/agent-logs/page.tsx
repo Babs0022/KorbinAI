@@ -94,14 +94,14 @@ export default function AgentLogsPage() {
         <DashboardLayout>
             <main className="flex-1 p-4 md:p-8">
                 <div className="w-full max-w-4xl mx-auto">
-                     <div className="flex items-center justify-between mb-8">
+                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
                         <div>
                             <h1 className="text-4xl font-bold">Agent Logs</h1>
                             <p className="mt-2 text-lg text-muted-foreground">
                                 Follow the agent's step-by-step progress for each request.
                             </p>
                         </div>
-                        <Button variant="outline" onClick={fetchLogs} disabled={isLoading}>
+                        <Button variant="outline" onClick={fetchLogs} disabled={isLoading} className="w-full sm:w-auto">
                             <ListRestart className="mr-2 h-4 w-4" />
                             Refresh Logs
                         </Button>
@@ -122,17 +122,17 @@ export default function AgentLogsPage() {
                                 return (
                                     <AccordionItem key={traceId} value={traceId} className="border-b-0">
                                         <AccordionTrigger className="p-4 rounded-lg bg-secondary/50 hover:bg-secondary/80 hover:no-underline data-[state=open]:rounded-b-none">
-                                            <div className="flex items-center gap-4 text-left w-full">
-                                                <div className={cn("mt-1", statusIcons[finalStatus].color)}>
+                                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-left w-full">
+                                                <div className={cn("mt-1 sm:mt-0", statusIcons[finalStatus].color)}>
                                                     {statusIcons[finalStatus].icon}
                                                 </div>
-                                                <div className="flex-1">
-                                                    <p className="font-mono text-sm font-semibold text-foreground truncate">{parentLog.message}</p>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-mono text-sm font-semibold text-foreground break-words">{parentLog.message}</p>
                                                     <p className="text-xs text-muted-foreground mt-1">
                                                         {formatDistanceToNow(new Date(parentLog.metadata.timestamp), { addSuffix: true })}
                                                     </p>
                                                 </div>
-                                                <Badge variant="outline" className="hidden sm:inline-block">{parentLog.flowName}</Badge>
+                                                <Badge variant="outline" className="shrink-0">{parentLog.flowName}</Badge>
                                             </div>
                                         </AccordionTrigger>
                                         <AccordionContent className="bg-secondary/30 rounded-b-lg p-4">
@@ -142,15 +142,15 @@ export default function AgentLogsPage() {
                                                         <div className={cn("mt-1", logIcons[log.level].color)}>
                                                             {logIcons[log.level].icon}
                                                         </div>
-                                                        <div className="flex-1">
-                                                            <p className="font-mono text-sm text-foreground">{log.message}</p>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-mono text-sm text-foreground break-words">{log.message}</p>
                                                             <p className="text-xs text-muted-foreground mt-1">
                                                                 {format(new Date(log.metadata.timestamp), "HH:mm:ss.SSS")}
                                                             </p>
                                                              {log.data && (
                                                                 <details className="mt-2">
                                                                     <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">View Data</summary>
-                                                                    <pre className="mt-1 text-xs bg-background p-2 rounded-md overflow-x-auto">
+                                                                    <pre className="mt-1 text-xs bg-background p-2 rounded-md overflow-x-auto whitespace-pre-wrap break-all">
                                                                         {JSON.stringify(log.data, null, 2)}
                                                                     </pre>
                                                                 </details>
