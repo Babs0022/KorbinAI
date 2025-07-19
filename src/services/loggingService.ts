@@ -4,7 +4,7 @@
 import admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { v4 as uuidv4 } from 'uuid';
-import type { BrieflyLog, LogInput } from '@/types/logs';
+import { BrieflyLog, LogInput, BrieflyLogSchema } from '@/types/logs'; // Import the new schema
 
 // Initialize Firebase Admin SDK if not already initialized
 if (admin.apps.length === 0) {
@@ -13,41 +13,54 @@ if (admin.apps.length === 0) {
 const db = admin.firestore();
 
 /**
- * Saves a new structured log entry to Firestore.
- * This provides more detailed and queryable logs than the previous agentLogService.
+ * Saves a new, detailed agent log entry to Firestore.
+ * This function is designed to capture the "thought process" of the agent.
  * 
- * @param {LogInput} logInput - The structured log data to save.
+ * @param {LogInput} logInput - The structured log data conforming to the new schema.
  * @returns {Promise<string>} The ID of the newly created log document.
  */
 export async function createLog(logInput: LogInput): Promise<string> {
-    if (!logInput.traceId) {
-        console.warn('createLog called without a traceId. This log will not be grouped.');
-        logInput.traceId = uuidv4();
-    }
-    
-    if (!logInput.flowName || !logInput.message || !logInput.source) {
-        throw new Error('Flow name, message, and source are required for logging.');
+    // Validate required fields for agent logging
+    if (!logInput.traceId || !logInput.flowName || !logInput.phase || !logInput.stepName || !logInput.message || !logInput.source) {
+        throw new Error('traceId, flowName, phase, stepName, message, and source are required fields for logging.');
     }
 
     const logId = uuidv4();
     const logRef = db.collection('logs').doc(logId);
 
+    // Construct the log object according to the new BrieflyLogSchema
     const newLogData: Omit<BrieflyLog, 'id'> = {
         traceId: logInput.traceId,
         flowName: logInput.flowName,
+        userId: logInput.userId,
+        
+        // Agent-specific fields
+        phase: logInput.phase,
+        stepName: logInput.stepName,
+        
         level: logInput.level || 'info',
-        status: logInput.status || 'completed',
+        status: logInput.status || 'started',
         message: logInput.message,
+        
+        // Ensure data is structured correctly
+        data: logInput.data || {},
+
         metadata: {
             source: logInput.source,
             timestamp: FieldValue.serverTimestamp(),
             ...(logInput.executionTimeMs && { executionTimeMs: logInput.executionTimeMs }),
         },
-        ...(logInput.userId && { userId: logInput.userId }),
-        ...(logInput.data && { data: logInput.data }),
     };
 
-    await logRef.set(newLogData);
+    // Validate the constructed object against the Zod schema before sending it to Firestore
+    const validation = BrieflyLogSchema.omit({ id: true }).safeParse(newLogData);
+
+    if (!validation.success) {
+        console.error("Log validation failed:", validation.error.errors);
+        throw new Error(`Log data failed validation: ${validation.error.message}`);
+    }
+
+    await logRef.set(validation.data);
     return logRef.id;
 }
 
