@@ -21,7 +21,7 @@ export default function StructuredDataPage() {
             Briefly for Analysts
           </h1>
           <p className="mb-12 text-lg text-muted-foreground">
-            Describe the data you need, and our AI will generate and refine it with you.
+            Describe the data you need, and I'll generate and refine it with you.
           </p>
         </div>
         

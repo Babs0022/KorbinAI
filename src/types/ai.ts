@@ -42,7 +42,7 @@ export const AnalyzePromptInputSchema = z.object({
 export type AnalyzePromptInput = z.infer<typeof AnalyzePromptInputSchema>;
 export const AnalyzePromptOutputSchema = z.object({
   tool: ToolEnum.describe("The most appropriate tool for the given prompt."),
-  suggestion: z.string().describe("A user-friendly call to action, e.g., 'Execute this with our Image Generator'. If no tool is suitable, this should be an empty string."),
+  suggestion: z.string().describe("A user-friendly call to action, e.g., 'Let's bring this to life with the Image Generator'. If no tool is suitable, this should be an empty string."),
 });
 export type AnalyzePromptOutput = z.infer<typeof AnalyzePromptOutputSchema>;
 

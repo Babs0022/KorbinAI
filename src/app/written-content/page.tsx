@@ -21,7 +21,7 @@ export default function WrittenContentPage() {
             Briefly for Creators
           </h1>
           <p className="mb-12 text-lg text-muted-foreground">
-            Describe the content you want to create, and our AI will write and refine it with you.
+            Describe the content you want to create, and I'll write and refine it with you.
           </p>
         </div>
         

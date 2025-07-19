@@ -21,7 +21,7 @@ export default function ImageGeneratorPage() {
             Briefly for Artists
           </h1>
           <p className="mb-12 text-lg text-muted-foreground">
-            Describe your vision, choose a style, and let the AI bring it to life.
+            Describe your vision, choose a style, and I'll bring it to life.
           </p>
         </div>
 

@@ -21,7 +21,7 @@ export default function PromptGeneratorPage() {
             Briefly for Prompters
           </h1>
           <p className="mb-12 text-lg text-muted-foreground">
-            Describe a task, and our AI will craft an optimized prompt for you.
+            Describe a task, and I'll craft an optimized prompt for you.
           </p>
         </div>
         
