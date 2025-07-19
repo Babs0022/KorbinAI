@@ -49,33 +49,48 @@ Here are the tools available to you:
 - **brieflyStructuredDataGenerator**: Use this for requests to create data in a specific format like JSON or CSV.
 
 Analyze the user's prompt and execute the most appropriate tool. After the tool returns a result, your job is complete. You should then present the final output to the user in a clear and concise way. Do not just return the raw tool output. For example, if you generate an image, say "I have generated an image for you:" and then present the image URL.
-
-User's Request: "${prompt}"
 `;
+    let response;
+    try {
+      response = await ai.generate({
+        model: 'googleai/gemini-1.5-pro-latest',
+        system: systemPrompt,
+        prompt: `User's Request: "${prompt}"`,
+        tools: [
+          brieflyWrittenContentGenerator,
+          brieflyPromptGenerator,
+          brieflyImageGenerator,
+          brieflyStructuredDataGenerator,
+        ],
+      });
 
-    const response = await ai.generate({
-      model: 'googleai/gemini-1.5-pro-latest',
-      system: systemPrompt,
-      tools: [
-        brieflyWrittenContentGenerator,
-        brieflyPromptGenerator,
-        brieflyImageGenerator,
-        brieflyStructuredDataGenerator,
-      ],
-    });
+      console.log('Genkit Response:', JSON.stringify(response, null, 2));
+
+    } catch (error) {
+      console.error('Error calling ai.generate():', error);
+      const errorForFirestore = error instanceof Error ? { name: error.name, message: error.message, stack: error.stack } : { data: JSON.stringify(error) };
+      await saveAgentLog({ userId, type: 'error', message: 'Agent failed to generate a response.', data: errorForFirestore });
+      throw new Error('The agent failed to generate a response. Please check the logs for more details.');
+    }
     
-    const toolOutput = response.toolCalls();
+    if (!response || !response.choices || response.choices.length === 0) {
+      console.error('Invalid response from ai.generate():', response);
+      await saveAgentLog({ userId, type: 'error', message: 'Agent received an invalid response from the AI.', data: { response: JSON.parse(JSON.stringify(response)) } });
+      throw new Error('The agent received an invalid response from the AI. Please check the logs for more details.');
+    }
+
+    const toolCalls = response.choices[0].message.toolCalls;
     
     // Check if the model decided to use a tool
-    if (toolOutput && toolOutput.length > 0) {
-        await saveAgentLog({ userId, type: 'info', message: `Agent decided to use tool: ${toolOutput[0].toolName}.` });
-        const toolResult = await response.callTools();
+    if (toolCalls && toolCalls.length > 0) {
+        await saveAgentLog({ userId, type: 'info', message: `Agent decided to use tool: ${toolCalls[0].toolName}.` });
+        const toolResult = await response.choices[0].callTools();
         await saveAgentLog({ userId, type: 'result', message: `Tool returned a result.`, data: toolResult[0].output });
 
         // Generate a final, user-friendly response based on the tool's output
         const finalResponse = await ai.generate({
             model: 'googleai/gemini-1.5-pro-latest',
-            prompt: `The user asked me to: "${prompt}". I used the ${toolOutput[0].toolName} tool and got this result. Please formulate a friendly and clear final response to the user, presenting this result. If the result is an image URL, embed it using markdown. Result: ${JSON.stringify(toolResult[0].output)}`
+            prompt: `The user asked me to: "${prompt}". I've used the ${toolCalls[0].toolName} tool and got this result. Please formulate a friendly and clear final response to the user, presenting this result. If the result is an image URL, embed it using markdown. Result: ${JSON.stringify(toolResult[0].output)}`
         });
 
         await saveAgentLog({ userId, type: 'finish', message: 'Agent finished execution.' });

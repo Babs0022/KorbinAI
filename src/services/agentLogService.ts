@@ -1,15 +1,9 @@
 
 'use server';
 
-import admin from 'firebase-admin';
+import { db } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { AgentLog, AgentLogInput } from '@/types/agent';
-
-// Initialize Firebase Admin SDK if not already initialized
-if (admin.apps.length === 0) {
-  admin.initializeApp();
-}
-const db = admin.firestore();
 
 /**
  * Saves a new log entry for an agent's execution to Firestore.
@@ -23,11 +17,21 @@ export async function saveAgentLog(logInput: AgentLogInput): Promise<string> {
 
   const logRef = db.collection('agentLogs').doc();
 
-  const newLogData = {
-    ...logInput,
+  // Explicitly build the data object to avoid undefined fields.
+  const newLogData: { [key: string]: any } = {
+    type: logInput.type,
+    message: logInput.message,
     timestamp: FieldValue.serverTimestamp(),
   };
 
+  if (logInput.userId) {
+    newLogData.userId = logInput.userId;
+  }
+  if (logInput.data) {
+    newLogData.data = logInput.data;
+  }
+
+  // Firestore does not allow `undefined` values.
   await logRef.set(newLogData);
   return logRef.id;
 }
