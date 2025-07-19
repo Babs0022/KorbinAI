@@ -5,15 +5,11 @@ import admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { FeedbackRating } from '@/types/feedback';
 
-/**
- * Initializes the Firebase Admin SDK if not already initialized.
- * This is the standard method for server-side environments like Cloud Functions or App Hosting.
- */
-function initializeAdmin() {
-  if (admin.apps.length === 0) {
-    admin.initializeApp();
-  }
+// Initialize Firebase Admin SDK if not already initialized
+if (admin.apps.length === 0) {
+  admin.initializeApp();
 }
+const db = admin.firestore();
 
 interface SubmitFeedbackInput {
   userId: string;
@@ -29,12 +25,11 @@ interface SubmitFeedbackInput {
  * @returns {Promise<string>} The ID of the newly created feedback document.
  */
 export async function submitFeedback({ userId, projectId, rating, comment }: SubmitFeedbackInput): Promise<string> {
-  initializeAdmin(); // Ensure admin is initialized
   if (!userId || !projectId || !rating) {
     throw new Error('User ID, Project ID, and rating are required to submit feedback.');
   }
 
-  const feedbackRef = admin.firestore().collection('feedback').doc();
+  const feedbackRef = db.collection('feedback').doc();
 
   const newFeedbackData = {
     userId,

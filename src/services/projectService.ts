@@ -7,15 +7,11 @@ import { FieldValue } from 'firebase-admin/firestore';
 import type { Project, ProjectContent } from '@/types/project';
 import { v4 as uuidv4 } from 'uuid';
 
-/**
- * Initializes the Firebase Admin SDK if not already initialized.
- * This is the standard method for server-side environments like Cloud Functions or App Hosting.
- */
-function initializeAdmin() {
-  if (admin.apps.length === 0) {
-    admin.initializeApp();
-  }
+// Initialize Firebase Admin SDK if not already initialized
+if (admin.apps.length === 0) {
+  admin.initializeApp();
 }
+const db = admin.firestore();
 
 interface SaveProjectInput {
   userId: string;
@@ -30,7 +26,6 @@ interface SaveProjectInput {
  * @returns A promise that resolves to an array of public URLs for the uploaded images.
  */
 async function uploadImagesToStorage(userId: string, dataUris: string[]): Promise<string[]> {
-  initializeAdmin();
   const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
   if (!bucketName) {
     console.error('Firebase Storage bucket name is not configured (NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET).');
@@ -67,7 +62,6 @@ async function uploadImagesToStorage(userId: string, dataUris: string[]): Promis
  * and `projects` for metadata, linked by a `generationId`.
  */
 export async function saveProject({ userId, type, content }: SaveProjectInput): Promise<string> {
-  initializeAdmin();
   if (!userId || !type || !content) {
     throw new Error('User ID, type, and content are required.');
   }
@@ -80,7 +74,7 @@ export async function saveProject({ userId, type, content }: SaveProjectInput): 
   }
   
   // 1. Save the raw content to the 'generations' collection
-  const generationRef = admin.firestore().collection('generations').doc();
+  const generationRef = db.collection('generations').doc();
   await generationRef.set({
     userId,
     type,
@@ -112,7 +106,7 @@ export async function saveProject({ userId, type, content }: SaveProjectInput): 
   }
 
   // 3. Save the metadata to the 'projects' collection, linking to the generation
-  const projectRef = admin.firestore().collection('projects').doc();
+  const projectRef = db.collection('projects').doc();
   await projectRef.set({
     userId,
     generationId: generationRef.id,
@@ -133,8 +127,7 @@ export async function saveProject({ userId, type, content }: SaveProjectInput): 
  * This is used by the "My Projects" page.
  */
 export async function getProjectsForUser(userId: string): Promise<Project[]> {
-  initializeAdmin();
-  const snapshot = await admin.firestore().collection('projects')
+  const snapshot = await db.collection('projects')
     .where('userId', '==', userId)
     .orderBy('updatedAt', 'desc')
     .get();
@@ -161,8 +154,7 @@ export async function getProjectsForUser(userId: string): Promise<Project[]> {
  * @returns A promise that resolves to the project with its content, or null if not found.
  */
 export async function getProjectById(projectId: string): Promise<Project | null> {
-    initializeAdmin();
-    const projectRef = admin.firestore().collection('projects').doc(projectId);
+    const projectRef = db.collection('projects').doc(projectId);
     const projectSnap = await projectRef.get();
 
     if (!projectSnap.exists) {
@@ -174,7 +166,7 @@ export async function getProjectById(projectId: string): Promise<Project | null>
     // Fetch the associated generation content
     let content: ProjectContent | null = null;
     if (projectData.generationId) {
-        const generationRef = admin.firestore().collection('generations').doc(projectData.generationId);
+        const generationRef = db.collection('generations').doc(projectData.generationId);
         const generationSnap = await generationRef.get();
         if (generationSnap.exists) {
             content = generationSnap.data()?.content;
