@@ -205,7 +205,7 @@ export default function AgentLogsPage() {
                                                             <div className="flex-1 min-w-0 pb-8 -mt-1.5">
                                                                 <div className="flex flex-wrap items-center gap-3">
                                                                     <Badge variant="secondary">{log.phase}</Badge>
-                                                                    <span className="text-xs text-muted-foreground">{log.stepName}</span>
+                                                                    <span className="text-xs text-muted-foreground">{log.flowName}</span>
                                                                 </div>
                                                                 <p className="text-sm text-muted-foreground mt-1 break-words">{log.message}</p>
                                                                 <DataViewer data={log.data} />
