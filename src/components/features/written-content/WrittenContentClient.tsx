@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
 import Logo from "@/components/shared/Logo";
+import AnimatedLoadingText from "@/components/shared/AnimatedLoadingText";
 
 // Workflow components
 import ContentIdeaForm from '@/components/content-workflow/ContentIdeaForm';
@@ -257,7 +258,7 @@ export default function WrittenContentClient() {
               <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
                   <div className="flex items-center gap-4">
                      <Logo />
-                     <p className="text-xl text-muted-foreground">Briefly is thinking...</p>
+                     <AnimatedLoadingText />
                   </div>
               </div>
           );

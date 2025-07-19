@@ -21,6 +21,7 @@ import { analyzePrompt } from "@/ai/flows/analyze-prompt-flow";
 import type { GeneratePromptInput, AnalyzePromptOutput } from "@/types/ai";
 import GenerationResultCard from "@/components/shared/GenerationResultCard";
 import Logo from "@/components/shared/Logo";
+import AnimatedLoadingText from "@/components/shared/AnimatedLoadingText";
 
 export default function PromptGeneratorClient() {
   // Form State
@@ -279,7 +280,7 @@ export default function PromptGeneratorClient() {
       </div>
 
       <div className="flex justify-end pt-4">
-        <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !user}>
+        <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !user} onClick={handleSubmit}>
           {isLoading ? (
             <>
               <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
@@ -295,7 +296,7 @@ export default function PromptGeneratorClient() {
         <div className="mt-12 flex items-center justify-center">
             <div className="flex items-center gap-4">
                 <Logo />
-                <p className="text-xl text-muted-foreground">Briefly is thinking...</p>
+                <AnimatedLoadingText />
             </div>
         </div>
       )}

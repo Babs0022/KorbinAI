@@ -19,6 +19,7 @@ import type { GenerateImageInput } from "@/types/ai";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import Logo from "@/components/shared/Logo";
+import AnimatedLoadingText from "@/components/shared/AnimatedLoadingText";
 
 const styleOptions = [
   { value: "photorealistic", label: "Photorealistic" },
@@ -263,11 +264,9 @@ export default function ImageGeneratorClient() {
             <div className="lg:col-span-8">
                 {isLoading && (
                     <div className="flex h-full items-center justify-center rounded-xl border border-dashed p-16">
-                        <div className="text-center">
-                            <div className="flex items-center justify-center gap-4">
-                               <Logo />
-                               <p className="text-xl text-muted-foreground">Briefly is thinking...</p>
-                            </div>
+                        <div className="flex items-center justify-center gap-4">
+                            <Logo />
+                            <AnimatedLoadingText />
                         </div>
                     </div>
                 )}

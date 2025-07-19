@@ -23,6 +23,7 @@ import { generateDataRefinementSuggestions } from "@/ai/flows/generate-data-refi
 import type { GenerateStructuredDataInput, RefinementSuggestion } from "@/types/ai";
 import GenerationResultCard from "@/components/shared/GenerationResultCard";
 import Logo from "@/components/shared/Logo";
+import AnimatedLoadingText from "@/components/shared/AnimatedLoadingText";
 
 export default function StructuredDataClient() {
   const searchParams = useSearchParams();
@@ -379,7 +380,7 @@ export default function StructuredDataClient() {
         <div className="mt-12 flex flex-col items-center justify-center gap-4 text-center animate-fade-in">
           <div className="flex items-center gap-4">
              <Logo />
-             <p className="text-xl text-muted-foreground">Briefly is thinking...</p>
+             <AnimatedLoadingText />
           </div>
         </div>
       )}

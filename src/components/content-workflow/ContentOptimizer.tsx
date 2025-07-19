@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Wand2, LoaderCircle, Check } from 'lucide-react';
 import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
 import Logo from '@/components/shared/Logo';
+import AnimatedLoadingText from '@/components/shared/AnimatedLoadingText';
 
 export interface OptimizationOptions {
   seo: boolean;
@@ -155,7 +156,7 @@ export default function ContentOptimizer({
                         <div className="flex items-center justify-center h-full">
                            <div className="flex items-center gap-4">
                                 <Logo />
-                                <p className="text-muted-foreground">Briefly is thinking...</p>
+                                <AnimatedLoadingText />
                             </div>
                         </div>
                     ) : suggestions ? (
