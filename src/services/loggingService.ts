@@ -1,11 +1,16 @@
 
 'use server';
 
-import { db } from '@/lib/firebase-admin';
+import admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import { nanoid } from 'nanoid';
+import { v4 as uuidv4 } from 'uuid';
 import type { BrieflyLog, LogInput } from '@/types/logs';
 
+// Initialize Firebase Admin SDK if not already initialized
+if (admin.apps.length === 0) {
+  admin.initializeApp();
+}
+const db = admin.firestore();
 
 /**
  * Saves a new structured log entry to Firestore.
@@ -15,19 +20,23 @@ import type { BrieflyLog, LogInput } from '@/types/logs';
  * @returns {Promise<string>} The ID of the newly created log document.
  */
 export async function createLog(logInput: LogInput): Promise<string> {
-    if (!logInput.traceId || !logInput.flowName || !logInput.message || !logInput.source) {
-        throw new Error('Trace ID, flow name, message, and source are required for logging.');
+    if (!logInput.traceId) {
+        console.warn('createLog called without a traceId. This log will not be grouped.');
+        logInput.traceId = uuidv4();
+    }
+    
+    if (!logInput.flowName || !logInput.message || !logInput.source) {
+        throw new Error('Flow name, message, and source are required for logging.');
     }
 
-    const logId = nanoid();
+    const logId = uuidv4();
     const logRef = db.collection('logs').doc(logId);
 
-    const newLogData: BrieflyLog = {
-        id: logId,
+    const newLogData: Omit<BrieflyLog, 'id'> = {
         traceId: logInput.traceId,
         flowName: logInput.flowName,
-        level: logInput.level,
-        status: logInput.status,
+        level: logInput.level || 'info',
+        status: logInput.status || 'completed',
         message: logInput.message,
         metadata: {
             source: logInput.source,
@@ -53,21 +62,25 @@ export async function getLogsForUser(userId: string): Promise<BrieflyLog[]> {
     const snapshot = await db.collection('logs')
       .where('userId', '==', userId)
       .orderBy('metadata.timestamp', 'desc')
+      .limit(100) // Limit to the last 100 log entries to avoid performance issues
       .get();
   
     if (snapshot.empty) {
       return [];
     }
   
-    return snapshot.docs.map(doc => {
-      const data = doc.data() as BrieflyLog; // Cast to BrieflyLog
+    const logs = snapshot.docs.map(doc => {
+      const data = doc.data();
       return {
+        id: doc.id,
         ...data,
-        // Convert Timestamps to ISO strings for easier use on the client
         metadata: {
           ...data.metadata,
-          timestamp: (data.metadata.timestamp as any)?.toDate().toISOString(),
+          timestamp: (data.metadata.timestamp as admin.firestore.Timestamp)?.toDate().toISOString() || new Date().toISOString(),
         }
-      };
+      } as BrieflyLog;
     });
+
+    // Sort by timestamp again client-side to ensure proper ordering
+    return logs.sort((a, b) => new Date(b.metadata.timestamp).getTime() - new Date(a.metadata.timestamp).getTime());
 }

@@ -33,11 +33,11 @@ export type BrieflyLog = z.infer<typeof BrieflyLogSchema>;
 
 
 export const LogInputSchema = z.object({
-  traceId: z.string(),
+  traceId: z.string().optional(), // Now optional
   flowName: z.string(),
   userId: z.string().optional(),
-  level: LogLevelSchema,
-  status: LogStatusSchema,
+  level: LogLevelSchema.optional(),
+  status: LogStatusSchema.optional(),
   message: z.string(),
   data: z.any().optional(),
   source: z.string(),

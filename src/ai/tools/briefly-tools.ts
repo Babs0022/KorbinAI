@@ -12,28 +12,52 @@ import { generateWrittenContent } from '@/ai/flows/generate-written-content-flow
 import { generatePrompt } from '@/ai/flows/generate-prompt-flow';
 import { generateImage } from '@/ai/flows/generate-image-flow';
 import { generateStructuredData } from '@/ai/flows/generate-structured-data-flow';
-import { saveAgentLog } from '../../services/agentLogService';
+import { createLog } from '@/services/loggingService';
 import type { GenerateWrittenContentInput, GeneratePromptInput, GenerateImageInput, GenerateStructuredDataInput } from '@/types/ai';
+
+const toolInputSchema = z.object({
+  userId: z.string().optional(),
+  traceId: z.string().optional(), // traceId is now optional but expected
+});
+
+const writtenContentInputSchema = toolInputSchema.extend({
+  contentType: z.string(),
+  tone: z.string(),
+  topic: z.string(),
+  audience: z.string().optional(),
+  keywords: z.string().optional(),
+}).describe('The parameters for generating written content.');
+
+const promptGeneratorInputSchema = toolInputSchema.extend({
+  taskDescription: z.string(),
+  targetModel: z.string().optional(),
+  outputFormat: z.string().optional(),
+}).describe('The parameters for generating an AI prompt.');
+
+const imageGeneratorInputSchema = toolInputSchema.extend({
+  prompt: z.string(),
+  count: z.number().optional().default(1),
+}).describe('The parameters for generating an image.');
+
+const structuredDataInputSchema = toolInputSchema.extend({
+  description: z.string(),
+  format: z.enum(['json', 'csv', 'kml', 'xml']),
+  schemaDefinition: z.string().optional(),
+}).describe('The parameters for generating structured data.');
 
 // Written Content Tool
 export const brieflyWrittenContentGenerator = ai.defineTool(
   {
     name: 'brieflyWrittenContentGenerator',
     description: 'Generates written content like blog posts, articles, emails, or social media updates.',
-    inputSchema: z.object({
-        userId: z.string().optional(),
-        contentType: z.string(),
-        tone: z.string(),
-        topic: z.string(),
-        audience: z.string().optional(),
-        keywords: z.string().optional(),
-    }).describe('The parameters for generating written content.'),
+    inputSchema: writtenContentInputSchema,
     outputSchema: z.string(),
   },
   async (input) => {
-    await saveAgentLog({ userId: input.userId, type: 'tool_start', message: 'Executing Written Content Generator Tool.', data: input });
+    const { traceId, userId } = input;
+    await createLog({ traceId, userId, flowName: 'brieflyWrittenContentGenerator', level: 'info', status: 'started', message: 'Executing tool.', source: 'briefly-tools.ts', data: input });
     const result = await generateWrittenContent(input as GenerateWrittenContentInput);
-    await saveAgentLog({ userId: input.userId, type: 'tool_end', message: 'Written Content Generator Tool finished.' });
+    await createLog({ traceId, userId, flowName: 'brieflyWrittenContentGenerator', level: 'info', status: 'completed', message: 'Tool finished.', source: 'briefly-tools.ts' });
     return result.generatedContent;
   }
 );
@@ -43,18 +67,14 @@ export const brieflyPromptGenerator = ai.defineTool(
   {
     name: 'brieflyPromptGenerator',
     description: 'Generates an optimized AI prompt based on a user\'s task description.',
-    inputSchema: z.object({
-        userId: z.string().optional(),
-        taskDescription: z.string(),
-        targetModel: z.string().optional(),
-        outputFormat: z.string().optional(),
-    }).describe('The parameters for generating an AI prompt.'),
+    inputSchema: promptGeneratorInputSchema,
     outputSchema: z.string(),
   },
   async (input) => {
-    await saveAgentLog({ userId: input.userId, type: 'tool_start', message: 'Executing Prompt Generator Tool.', data: input });
+    const { traceId, userId } = input;
+    await createLog({ traceId, userId, flowName: 'brieflyPromptGenerator', level: 'info', status: 'started', message: 'Executing tool.', source: 'briefly-tools.ts', data: input });
     const result = await generatePrompt(input as GeneratePromptInput);
-    await saveAgentLog({ userId: input.userId, type: 'tool_end', message: 'Prompt Generator Tool finished.' });
+    await createLog({ traceId, userId, flowName: 'brieflyPromptGenerator', level: 'info', status: 'completed', message: 'Tool finished.', source: 'briefly-tools.ts' });
     return result.generatedPrompt;
   }
 );
@@ -64,17 +84,14 @@ export const brieflyImageGenerator = ai.defineTool(
   {
     name: 'brieflyImageGenerator',
     description: 'Generates visual images from a text prompt.',
-    inputSchema: z.object({
-        userId: z.string().optional(),
-        prompt: z.string(),
-        count: z.number().optional().default(1),
-    }).describe('The parameters for generating an image.'),
+    inputSchema: imageGeneratorInputSchema,
     outputSchema: z.string().describe('A single data URI for the generated image.'),
   },
   async (input) => {
-    await saveAgentLog({ userId: input.userId, type: 'tool_start', message: 'Executing Image Generator Tool.', data: input });
+    const { traceId, userId } = input;
+    await createLog({ traceId, userId, flowName: 'brieflyImageGenerator', level: 'info', status: 'started', message: 'Executing tool.', source: 'briefly-tools.ts', data: input });
     const result = await generateImage(input as GenerateImageInput);
-    await saveAgentLog({ userId: input.userId, type: 'tool_end', message: 'Image Generator Tool finished.' });
+    await createLog({ traceId, userId, flowName: 'brieflyImageGenerator', level: 'info', status: 'completed', message: 'Tool finished.', source: 'briefly-tools.ts' });
     // For simplicity, the agent tool returns the first image URL.
     return result.imageUrls[0] || 'No image was generated.';
   }
@@ -85,18 +102,14 @@ export const brieflyStructuredDataGenerator = ai.defineTool(
   {
     name: 'brieflyStructuredDataGenerator',
     description: 'Generates structured data in formats like JSON, CSV, KML, or XML.',
-    inputSchema: z.object({
-        userId: z.string().optional(),
-        description: z.string(),
-        format: z.enum(['json', 'csv', 'kml', 'xml']),
-        schemaDefinition: z.string().optional(),
-    }).describe('The parameters for generating structured data.'),
+    inputSchema: structuredDataInputSchema,
     outputSchema: z.string(),
   },
   async (input) => {
-    await saveAgentLog({ userId: input.userId, type: 'tool_start', message: 'Executing Structured Data Generator Tool.', data: input });
+    const { traceId, userId } = input;
+    await createLog({ traceId, userId, flowName: 'brieflyStructuredDataGenerator', level: 'info', status: 'started', message: 'Executing tool.', source: 'briefly-tools.ts', data: input });
     const result = await generateStructuredData(input as GenerateStructuredDataInput);
-    await saveAgentLog({ userId: input.userId, type: 'tool_end', message: 'Structured Data Generator Tool finished.' });
+    await createLog({ traceId, userId, flowName: 'brieflyStructuredDataGenerator', level: 'info', status: 'completed', message: 'Tool finished.', source: 'briefly-tools.ts' });
     return result.generatedData;
   }
 );
