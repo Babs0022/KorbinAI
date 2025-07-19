@@ -22,6 +22,7 @@ import { generateJsonSchemaSuggestions } from "@/ai/flows/generate-json-schema-s
 import { generateDataRefinementSuggestions } from "@/ai/flows/generate-data-refinement-suggestions-flow";
 import type { GenerateStructuredDataInput, RefinementSuggestion } from "@/types/ai";
 import GenerationResultCard from "@/components/shared/GenerationResultCard";
+import Logo from "@/components/shared/Logo";
 
 export default function StructuredDataClient() {
   const searchParams = useSearchParams();
@@ -344,7 +345,7 @@ export default function StructuredDataClient() {
                       <p className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Sparkles className="h-4 w-4 text-primary" />
                           <span className="font-semibold text-primary">Suggestion:</span>{" "}
-                          We can generate a schema for you.
+                          I can generate a schema for you.
                       </p>
                       <Button
                           type="button"
@@ -376,9 +377,10 @@ export default function StructuredDataClient() {
     
       {isLoading && (
         <div className="mt-12 flex flex-col items-center justify-center gap-4 text-center animate-fade-in">
-          <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
-          <h2 className="text-2xl font-bold">Generating Data...</h2>
-          <p className="text-muted-foreground">The AI is structuring your data. Please wait.</p>
+          <div className="flex items-center gap-4">
+             <Logo />
+             <p className="text-xl text-muted-foreground">Briefly is thinking...</p>
+          </div>
         </div>
       )}
 

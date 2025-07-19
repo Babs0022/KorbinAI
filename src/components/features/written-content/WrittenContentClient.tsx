@@ -5,6 +5,7 @@ import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
+import Logo from "@/components/shared/Logo";
 
 // Workflow components
 import ContentIdeaForm from '@/components/content-workflow/ContentIdeaForm';
@@ -254,8 +255,10 @@ export default function WrittenContentClient() {
       if (state.isLoading && currentStep !== 1) {
           return (
               <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
-                  <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
-                  <p className="mt-4 text-muted-foreground">AI is thinking...</p>
+                  <div className="flex items-center gap-4">
+                     <Logo />
+                     <p className="text-xl text-muted-foreground">Briefly is thinking...</p>
+                  </div>
               </div>
           );
       }

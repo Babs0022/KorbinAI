@@ -18,6 +18,7 @@ import { generateImage } from "@/ai/flows/generate-image-flow";
 import type { GenerateImageInput } from "@/types/ai";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
+import Logo from "@/components/shared/Logo";
 
 const styleOptions = [
   { value: "photorealistic", label: "Photorealistic" },
@@ -263,9 +264,10 @@ export default function ImageGeneratorClient() {
                 {isLoading && (
                     <div className="flex h-full items-center justify-center rounded-xl border border-dashed p-16">
                         <div className="text-center">
-                            <LoaderCircle className="mx-auto h-12 w-12 animate-spin text-primary" />
-                            <h3 className="mt-4 text-xl font-semibold">Generating your masterpiece...</h3>
-                            <p className="text-muted-foreground">The AI is warming up its paintbrushes.</p>
+                            <div className="flex items-center justify-center gap-4">
+                               <Logo />
+                               <p className="text-xl text-muted-foreground">Briefly is thinking...</p>
+                            </div>
                         </div>
                     </div>
                 )}

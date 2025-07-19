@@ -20,6 +20,7 @@ import { generatePromptFormatSuggestions } from "@/ai/flows/generate-prompt-form
 import { analyzePrompt } from "@/ai/flows/analyze-prompt-flow";
 import type { GeneratePromptInput, AnalyzePromptOutput } from "@/types/ai";
 import GenerationResultCard from "@/components/shared/GenerationResultCard";
+import Logo from "@/components/shared/Logo";
 
 export default function PromptGeneratorClient() {
   // Form State
@@ -292,7 +293,10 @@ export default function PromptGeneratorClient() {
     
       {isLoading && !generatedPrompt && (
         <div className="mt-12 flex items-center justify-center">
-            <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex items-center gap-4">
+                <Logo />
+                <p className="text-xl text-muted-foreground">Briefly is thinking...</p>
+            </div>
         </div>
       )}
 

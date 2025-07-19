@@ -25,16 +25,16 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: GenerateDataRefinementSuggestionsInputSchema},
   output: {schema: GenerateDataRefinementSuggestionsOutputSchema},
-  prompt: `You are an expert data architect. Your task is to analyze a block of structured data and provide a list of 3-4 relevant and useful refinement suggestions.
+  prompt: `I am an expert data architect. My task is to analyze a block of structured data and provide a list of 3-4 relevant and useful refinement suggestions.
 
 **Instructions:**
-1.  **Analyze the Data Structure:** Carefully examine the provided data. Is it an array of objects? A single nested object? A simple list?
-2.  **Generate Contextual Suggestions:** Based on the structure, generate relevant suggestions.
-    *   If it's an array of items (e.g., users, products), suggest actions like "Add 5 more items", "Add a unique ID to each item", or "Sort the list by [a relevant key]".
-    *   If it's a configuration object, suggest adding common keys like "version" or "lastUpdated".
-    *   If the data contains things that could be translated, suggest "Translate all string values to [another language]".
-    *   Always include a general suggestion like "Sanitize the data for professional presentation" or "Check for and fix any formatting errors".
-3.  **Format the Output:** For each suggestion, provide a short, user-friendly 'label' for a button and a clear, explicit 'instruction' for another AI to execute.
+1.  **Analyze the Data Structure:** I will carefully examine the provided data. Is it an array of objects? A single nested object? A simple list?
+2.  **Generate Contextual Suggestions:** Based on the structure, I will generate relevant suggestions.
+    *   If it's an array of items (e.g., users, products), I will suggest actions like "Add 5 more items", "Add a unique ID to each item", or "Sort the list by [a relevant key]".
+    *   If it's a configuration object, I will suggest adding common keys like "version" or "lastUpdated".
+    *   If the data contains things that could be translated, I will suggest "Translate all string values to [another language]".
+    *   I will always include a general suggestion like "Sanitize the data for professional presentation" or "Check for and fix any formatting errors".
+3.  **Format the Output:** For each suggestion, I will provide a short, user-friendly 'label' for a button and a clear, explicit 'instruction' for another AI to execute.
 
 **Example:**
 -   **Input Data:** \`[{"name": "Laptop", "price": 1200}, {"name": "Mouse", "price": 25}]\`
@@ -49,7 +49,7 @@ const prompt = ai.definePrompt({
     }
     \`\`\`
 
-Return ONLY a JSON object that matches the schema.
+I will return ONLY a JSON object that matches the schema.
 
 **Data Format:** {{format}}
 **Data to Analyze:**

@@ -23,13 +23,13 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-pro-latest',
   input: {schema: GenerateStructuredDataInputSchema},
   output: {schema: GenerateStructuredDataOutputSchema},
-  prompt: `You are an expert data generation machine. Your task is to generate or refine structured data based on the user's request.
-You must output ONLY the raw data, without any explanations, introductions, or markdown formatting like \`\`\`json\`\`\` or \`\`\`xml\`\`\`.
+  prompt: `I am an expert data generation machine. My task is to generate or refine structured data based on the user's request.
+I will output ONLY the raw data, without any explanations, introductions, or markdown formatting like \`\`\`json\`\`\` or \`\`\`xml\`\`\`.
 
 **Core Instructions:**
 1.  **Strictly Adhere to Format:** The generated data must be valid for the requested format ({{format}}).
 2.  **Use the Schema:** If a schema or example is provided, it is a strict guide. Your output structure MUST match it. For XML-based formats like KML, this means using the correct tags, namespaces, and nesting.
-3.  **No Explanations:** Do not add any text before or after the data block.
+3.  **No Explanations:** I will not add any text before or after the data block.
 
 ---
 
@@ -42,13 +42,13 @@ You must output ONLY the raw data, without any explanations, introductions, or m
     {{{originalData}}}
     ---
 
-Refine the data now. Ensure the output is only the refined data in the same format.
+I will refine the data now. The output will only be the refined data in the same format.
 {{else}}
 **Task: Generate New Data**
 
 {{#if imageDataUris}}
 **Image Context:**
-Use the following image(s) as the primary source of information for generating the data. For example, if the user asks for "a list of items in the image", you should extract them from the photo.
+I will use the following image(s) as the primary source of information for generating the data. For example, if asked for "a list of items in the image", I will extract them from the photo.
 {{#each imageDataUris}}
 {{media url=this}}
 {{/each}}
@@ -64,7 +64,7 @@ Use the following image(s) as the primary source of information for generating t
     ---
 {{/if}}
 
-Generate the data now based on these instructions.
+I will generate the data now based on these instructions.
 {{/if}}
   `,
 });

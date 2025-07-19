@@ -60,23 +60,6 @@ export const ExpandOutlineSectionOutputSchema = z.object({
 export type ExpandOutlineSectionOutput = z.infer<typeof ExpandOutlineSectionOutputSchema>;
 
 
-// === generate-component-flow (DEPRECATED) ===
-export const GenerateAppInputSchema = z.object({
-  description: z.string().describe('A plain English description of the application or page to build.'),
-  dataPoints: z.string().optional().describe('A comma-separated list of specific page sections the app should include (e.g., Hero, Features, Testimonials). This is the primary guide for page structure.'),
-});
-export type GenerateAppInput = z.infer<typeof GenerateAppInputSchema>;
-const FileOutputSchema = z.object({
-  filePath: z.string().describe("The full path for the file, which should be 'index.html'."),
-  componentCode: z.string().describe("The full HTML code for the file."),
-  instructions: z.string().describe("A one-sentence, beginner-friendly explanation of this file's purpose."),
-});
-export const GenerateAppOutputSchema = z.object({
-  files: z.array(FileOutputSchema).describe("An array containing a single file object for the generated HTML."),
-});
-export type GenerateAppOutput = z.infer<typeof GenerateAppOutputSchema>;
-
-
 // === generate-content-outline-flow ===
 export const GenerateContentOutlineInputSchema = z.object({
   contentType: z.string().describe("The type of content (e.g., 'Blog Post', 'Email')."),
@@ -167,7 +150,7 @@ export type GenerateJsonSchemaSuggestionsOutput = z.infer<typeof GenerateJsonSch
 
 
 // === generate-project-metadata-flow ===
-const PROJECT_TYPES = ['written-content', 'prompt', 'structured-data', 'image-generator'] as const;
+const PROJECT_TYPES = ['written-content', 'prompt', 'structured-data', 'image-generator', 'chat'] as const;
 export const GenerateProjectMetadataInputSchema = z.object({
   type: z.enum(PROJECT_TYPES).describe('The type of content in the project.'),
   content: z.string().describe('The generated content to be summarized.'),
@@ -221,17 +204,6 @@ export const GenerateSectionDraftOutputSchema = z.object({
   generatedSectionContent: z.string().describe("The written content for the specified section, formatted as a markdown string."),
 });
 export type GenerateSectionDraftOutput = z.infer<typeof GenerateSectionDraftOutputSchema>;
-
-
-// === generate-section-suggestions-flow (DEPRECATED) ===
-export const GenerateSectionSuggestionsInputSchema = z.object({
-  description: z.string().describe('A plain English description of the application or page to build.'),
-});
-export type GenerateSectionSuggestionsInput = z.infer<typeof GenerateSectionSuggestionsInputSchema>;
-export const GenerateSectionSuggestionsOutputSchema = z.object({
-  suggestions: z.array(z.string()).describe("An array of suggested sections (e.g., 'Hero', 'Features', 'FAQ', 'Contact Form')."),
-});
-export type GenerateSectionSuggestionsOutput = z.infer<typeof GenerateSectionSuggestionsOutputSchema>;
 
 
 // === generate-structured-data-flow ===

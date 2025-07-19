@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Wand2, LoaderCircle, Check } from 'lucide-react';
 import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
+import Logo from '@/components/shared/Logo';
 
 export interface OptimizationOptions {
   seo: boolean;
@@ -152,7 +153,10 @@ export default function ContentOptimizer({
                  <div className="min-h-[200px] max-h-[40vh] overflow-y-auto rounded-md bg-secondary p-4 text-sm">
                     {isLoading ? (
                         <div className="flex items-center justify-center h-full">
-                            <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+                           <div className="flex items-center gap-4">
+                                <Logo />
+                                <p className="text-muted-foreground">Briefly is thinking...</p>
+                            </div>
                         </div>
                     ) : suggestions ? (
                         <MarkdownRenderer>{suggestions}</MarkdownRenderer>
