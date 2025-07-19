@@ -107,37 +107,8 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                     onSubmit={form.handleSubmit(handleFormSubmit)}
                     className="rounded-xl border bg-secondary"
                 >
-                    <div className="flex items-center justify-between p-2 pt-1 pb-0">
-                       <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="gap-2">
-                              {mode === 'chat' ? (
-                                <>
-                                  <MessageSquare /> Chat
-                                </>
-                              ) : (
-                                <>
-                                  <Bot /> Agent
-                                </>
-                              )}
-                              <ChevronDown className="h-4 w-4 opacity-50" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem onSelect={() => setMode('chat')}>
-                              <MessageSquare className="mr-2" />
-                              Chat
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => setMode('agent')}>
-                              <Bot className="mr-2" />
-                              Agent
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-
                     {imagePreview && (
-                        <div className="relative p-2 pt-0">
+                        <div className="relative p-2 pt-2">
                             <Image src={imagePreview} alt="Image preview" width={90} height={90} className="rounded-lg" />
                             <Button
                                 type="button"
@@ -174,11 +145,30 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                     )}
                     />
                     <div className="flex items-center justify-between p-2">
-                        <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
-                            <ImagePlus className="h-5 w-5 text-muted-foreground" />
-                            <span className="sr-only">Upload image</span>
-                        </Button>
-                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                        <div className="flex items-center gap-1">
+                            <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                                <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                                <span className="sr-only">Upload image</span>
+                            </Button>
+                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="gap-2">
+                                    <span className="capitalize">{mode}</span>
+                                    <ChevronDown className="h-4 w-4 opacity-50" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start">
+                                    <DropdownMenuItem onSelect={() => setMode('chat')}>
+                                        Chat
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => setMode('agent')}>
+                                        Agent
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                         
                         <Button type="submit" size="sm" className="rounded-lg" disabled={isLoading}>
                             {isLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
