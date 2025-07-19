@@ -41,9 +41,12 @@ export default function ComponentResultDisplay({ searchParams }: { searchParams:
       setFinalCode(null);
 
       try {
+        const desc = Array.isArray(searchParams.description) ? searchParams.description[0] : searchParams.description;
+        const data = Array.isArray(searchParams.dataPoints) ? searchParams.dataPoints[0] : searchParams.dataPoints;
+
         const body: GenerateAppInput = {
-            description: searchParams.description,
-            dataPoints: searchParams.dataPoints,
+            description: desc,
+            dataPoints: data,
         };
 
         if (!body.description) {
