@@ -8,19 +8,17 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { nanoid } from 'nanoid';
 import {
   brieflyImageGenerator,
   brieflyPromptGenerator,
   brieflyStructuredDataGenerator,
   brieflyWrittenContentGenerator,
 } from '@/ai/tools/briefly-tools';
-import { saveAgentLog } from '@/services/agentLogService';
-import type { AgentExecutionInput } from '@/types/ai';
+import { createLog } from '@/services/loggingService'; 
+import { AgentExecutionInputSchema, type AgentExecutionInput } from '@/types/ai';
 
-const AgentExecutionInputSchema = z.object({
-  userId: z.string().optional().describe("The ID of the user making the request."),
-  prompt: z.string().describe("The user's high-level request for the agent to perform."),
-});
+const FLOW_NAME = 'agentExecutorFlow';
 
 // Export the main async function that calls the flow
 export async function agentExecutor(input: AgentExecutionInput): Promise<string> {
@@ -30,13 +28,27 @@ export async function agentExecutor(input: AgentExecutionInput): Promise<string>
 // Define the Genkit flow for the agent
 const agentExecutorFlow = ai.defineFlow(
   {
-    name: 'agentExecutorFlow',
+    name: FLOW_NAME,
     inputSchema: AgentExecutionInputSchema,
     outputSchema: z.string(),
   },
-  async ({ userId, prompt }) => {
+  async ({ userId, messages }) => {
+    const traceId = nanoid();
+    const startTime = Date.now();
+    const source = 'src/ai/flows/agent-executor-flow.ts';
     
-    await saveAgentLog({ userId, type: 'start', message: `Agent started for prompt: "${prompt}"` });
+    const latestUserMessage = messages[messages.length - 1]?.content || '';
+    
+    await createLog({
+        traceId,
+        flowName: FLOW_NAME,
+        userId,
+        level: 'info',
+        status: 'started',
+        message: `Agent execution started for prompt: "${latestUserMessage}"`,
+        source,
+        data: { messages },
+    });
 
     const systemPrompt = `You are an autonomous AI agent for the application "BrieflyAI". Your purpose is to help users accomplish creative tasks by using the tools at your disposal.
 
@@ -52,12 +64,38 @@ Analyze the user's prompt and execute the most appropriate tool. If no tool is a
 
 After a tool returns a result, your job is complete. You should then present the final output to the user in a clear and concise way. Do not just return the raw tool output. For example, if you generate an image, say "I have generated an image for you:" and then present the image URL.
 `;
+
+    const formattedMessagesForApi = messages
+      .map(message => {
+        const parts: ({ text: string; } | { inlineData: { mimeType: string; data: string; }; })[] = [];
+        if (message.content && typeof message.content === 'string' && message.content.trim() !== '') {
+          parts.push({ text: message.content });
+        }
+        if (message.imageUrl) {
+          const match = message.imageUrl.match(/^data:(image\/.+);base64,(.+)$/);
+          if (match) {
+            parts.push({
+              inlineData: { mimeType: match[1], data: match[2] },
+            });
+          }
+        }
+        if (parts.length === 0) return null;
+        return {
+          role: message.role,
+          content: parts,
+        };
+      })
+      .filter(m => m !== null && m.role !== 'system');
+
+
     let response;
     try {
       response = await ai.generate({
-        model: 'googleai/gemini-1.5-pro-latest',
-        system: systemPrompt,
-        prompt: `User's Request: "${prompt}"`,
+        model: 'googleai/gemini-2.5-pro',
+        messages: [
+          { role: 'system', content: [{ text: systemPrompt }] },
+          ...formattedMessagesForApi,
+        ],
         tools: [
           brieflyWrittenContentGenerator,
           brieflyPromptGenerator,
@@ -65,41 +103,102 @@ After a tool returns a result, your job is complete. You should then present the
           brieflyStructuredDataGenerator,
         ],
       });
-
     } catch (error) {
-      console.error('Error calling ai.generate():', error);
-      const errorForFirestore = error instanceof Error ? { name: error.name, message: error.message, stack: error.stack } : { data: JSON.stringify(error) };
-      await saveAgentLog({ userId, type: 'error', message: 'Agent failed to generate a response.', data: errorForFirestore });
+      const executionTimeMs = Date.now() - startTime;
+      const errorForLog = error instanceof Error ? { name: error.name, message: error.message, stack: error.stack } : { data: JSON.stringify(error) };
+      await createLog({
+        traceId,
+        flowName: FLOW_NAME,
+        userId,
+        level: 'error',
+        status: 'failed',
+        message: 'Agent failed to generate a response during ai.generate() call.',
+        source,
+        data: errorForLog,
+        executionTimeMs,
+      });
       throw new Error('The agent failed to generate a response. Please check the logs for more details.');
     }
     
-    if (!response || !response.choices || response.choices.length === 0) {
-      console.error('Invalid response from ai.generate():', response);
-      await saveAgentLog({ userId, type: 'error', message: 'Agent received an invalid response from the AI.', data: { response: JSON.parse(JSON.stringify(response)) } });
-      throw new Error('The agent received an invalid response from the AI. Please check the logs for more details.');
-    }
+    // Case 1: A tool call is present.
+    if (response.choices?.[0]?.toolCalls?.length > 0) {
+        const firstChoice = response.choices[0];
+        const toolName = firstChoice.toolCalls[0].toolName;
 
-    const firstChoice = response.choices[0];
-    
-    // Check if the model decided to use a tool
-    if (firstChoice.toolCalls && firstChoice.toolCalls.length > 0) {
-        await saveAgentLog({ userId, type: 'info', message: `Agent decided to use tool: ${firstChoice.toolCalls[0].toolName}.` });
+        await createLog({
+            traceId,
+            flowName: FLOW_NAME,
+            userId,
+            level: 'info',
+            status: 'started',
+            message: `Agent decided to use tool: ${toolName}.`,
+            source,
+            data: { toolCall: firstChoice.toolCalls[0] },
+        });
+        
         const toolResult = await firstChoice.callTools();
-        await saveAgentLog({ userId, type: 'result', message: `Tool returned a result.`, data: toolResult[0].output });
 
-        // Generate a final, user-friendly response based on the tool's output
-        const finalResponse = await ai.generate({
-            model: 'googleai/gemini-1.5-flash', // Use a faster model for simple summarization
-            prompt: `The user asked me to: "${prompt}". I've used the ${firstChoice.toolCalls[0].toolName} tool and got this result. Please formulate a friendly and clear final response to the user, presenting this result. If the result is an image URL, embed it using markdown. Result: ${JSON.stringify(toolResult[0].output)}`
+        await createLog({
+            traceId,
+            flowName: FLOW_NAME,
+            userId,
+            level: 'info',
+            status: 'completed',
+            message: `Tool ${toolName} returned a result.`,
+            source,
+            data: { toolResult },
         });
 
-        await saveAgentLog({ userId, type: 'finish', message: 'Agent finished execution.' });
-        return finalResponse.text;
+        const finalResponsePrompt = `The user asked me to: "${latestUserMessage}". I've used the ${toolName} tool and got this result. Please formulate a friendly and clear final response to the user, presenting this result. If the result is an image URL, embed it using markdown. Result: ${JSON.stringify(toolResult[0].output)}`;
+        const finalResponse = await ai.generate({
+            model: 'googleai/gemini-1.5-flash',
+            messages: [{ role: 'user', content: [{ text: finalResponsePrompt }] }],
+        });
 
-    } else {
-        // If the model doesn't use a tool, return its direct text response.
-        await saveAgentLog({ userId, type: 'finish', message: 'Agent finished execution without using a tool.' });
-        return firstChoice.text;
+        await createLog({
+            traceId,
+            flowName: FLOW_NAME,
+            userId,
+            level: 'info',
+            status: 'completed',
+            message: 'Agent finished execution successfully with tool.',
+            source,
+            executionTimeMs: Date.now() - startTime,
+        });
+
+        return finalResponse.text;
     }
+    
+    // Case 2: No tool call, just a text response.
+    const textResponse = response.text;
+    if (textResponse && typeof textResponse === 'string' && textResponse.trim() !== '') {
+        await createLog({
+            traceId,
+            flowName: FLOW_NAME,
+            userId,
+            level: 'info',
+            status: 'completed',
+            message: 'Agent finished execution successfully without using a tool.',
+            source,
+            data: { response: textResponse },
+            executionTimeMs: Date.now() - startTime,
+        });
+        return textResponse;
+    }
+
+    // Case 3: Invalid response from the AI.
+    const executionTimeMs = Date.now() - startTime;
+    await createLog({
+        traceId,
+        flowName: FLOW_NAME,
+        userId,
+        level: 'error',
+        status: 'failed',
+        message: 'Agent received an invalid response from the AI (no tool call and no parsable text).',
+        source,
+        data: { response: JSON.parse(JSON.stringify(response)) },
+        executionTimeMs,
+    });
+    throw new Error('The agent received an invalid response from the AI. Please check the logs for more details.');
   }
 );

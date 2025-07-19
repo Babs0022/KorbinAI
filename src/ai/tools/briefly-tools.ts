@@ -12,7 +12,7 @@ import { generateWrittenContent } from '@/ai/flows/generate-written-content-flow
 import { generatePrompt } from '@/ai/flows/generate-prompt-flow';
 import { generateImage } from '@/ai/flows/generate-image-flow';
 import { generateStructuredData } from '@/ai/flows/generate-structured-data-flow';
-import { saveAgentLog } from '@/services/agentLogService';
+import { saveAgentLog } from '../../services/agentLogService';
 import type { GenerateWrittenContentInput, GeneratePromptInput, GenerateImageInput, GenerateStructuredDataInput } from '@/types/ai';
 
 // Written Content Tool

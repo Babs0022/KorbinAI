@@ -210,7 +210,7 @@ export default function ChatClient() {
     try {
       let response;
       if (mode === 'agent') {
-        response = await agentExecutor({ userId: user?.uid, prompt: values.message });
+        response = await agentExecutor({ userId: user?.uid, messages: newHistory });
       } else {
         response = await conversationalChat({
           history: newHistory,

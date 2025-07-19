@@ -6,17 +6,9 @@
 
 import { z } from 'zod';
 
-// === Agent Executor Flow ===
-export const AgentExecutionInputSchema = z.object({
-  userId: z.string().optional().describe('The ID of the user making the request.'),
-  prompt: z.string().describe("The user's high-level request for the agent to perform."),
-});
-export type AgentExecutionInput = z.infer<typeof AgentExecutionInputSchema>;
-
-
 // === Conversational Chat Flow ===
 export const MessageSchema = z.object({
-  role: z.enum(['user', 'model']),
+  role: z.enum(['user', 'model', 'system']),
   content: z.string(),
   imageUrl: z.string().optional().describe('An optional image URL (can be a data URI) associated with the message.'),
 });
@@ -26,6 +18,13 @@ export const ConversationalChatInputSchema = z.object({
   history: z.array(MessageSchema).describe('The full conversation history, including the latest user message.'),
 });
 export type ConversationalChatInput = z.infer<typeof ConversationalChatInputSchema>;
+
+// === Agent Executor Flow ===
+export const AgentExecutionInputSchema = z.object({
+  userId: z.string().optional().describe('The ID of the user making the request.'),
+  messages: z.array(MessageSchema).describe('The conversation history with the agent, where the last message is the user query.'),
+});
+export type AgentExecutionInput = z.infer<typeof AgentExecutionInputSchema>;
 
 
 // === General Content Idea ===
