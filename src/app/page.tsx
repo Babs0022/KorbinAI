@@ -13,14 +13,14 @@ export default function HomePage() {
     {
       id: "feature-written-content",
       icon: <Feather className="h-8 w-8" />,
-      title: "Written Content",
+      title: "Briefly for Creators",
       subtitle: "Blog posts, emails, social media updates",
       href: "/written-content",
     },
     {
       id: "feature-prompt-generator",
       icon: <Bolt className="h-8 w-8" />,
-      title: "Prompt Generator",
+      title: "Briefly for Prompters",
       subtitle: "Craft optimized prompts for any task",
       href: "/prompt-generator",
     },
@@ -34,14 +34,14 @@ export default function HomePage() {
     {
       id: "feature-image-generator",
       icon: <Image className="h-8 w-8" />,
-      title: "Image Generator",
+      title: "Briefly for Artists",
       subtitle: "Create unique images from text",
       href: "/image-generator",
     },
     {
       id: "feature-structured-data",
       icon: <Code2 className="h-8 w-8" />,
-      title: "Structured Data",
+      title: "Briefly for Analysts",
       subtitle: "JSON for components, CSV lists",
       href: "/structured-data",
     },

@@ -18,7 +18,7 @@ export default function WrittenContentPage() {
 
         <div className="text-center">
           <h1 className="mb-2 text-4xl font-bold md:text-5xl">
-            Written Content Assistant
+            Briefly for Creators
           </h1>
           <p className="mb-12 text-lg text-muted-foreground">
             Describe the content you want to create, and our AI will write and refine it with you.

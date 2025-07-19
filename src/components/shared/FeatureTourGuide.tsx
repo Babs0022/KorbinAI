@@ -8,22 +8,22 @@ import { ArrowRight, Sparkles, X } from 'lucide-react';
 const tourStops = [
     {
         target: '#feature-written-content',
-        title: 'Written Content',
+        title: 'Briefly for Creators',
         content: 'Generate high-quality blog posts, emails, social media updates, and more from a simple description.',
     },
     {
         target: '#feature-prompt-generator',
-        title: 'Prompt Generator',
+        title: 'Briefly for Prompters',
         content: 'Need to use another AI? Craft detailed, optimized prompts for any model or task to get the best results.',
     },
     {
         target: '#feature-image-generator',
-        title: 'Image Generator',
+        title: 'Briefly for Artists',
         content: 'Create unique, stunning images and art from a text description. You can even provide your own images for context.',
     },
     {
         target: '#feature-structured-data',
-        title: 'Structured Data',
+        title: 'Briefly for Analysts',
         content: 'Generate structured data like JSON or CSV from a plain-English description, perfect for populating components.',
     },
 ];

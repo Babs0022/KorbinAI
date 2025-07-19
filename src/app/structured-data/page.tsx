@@ -18,7 +18,7 @@ export default function StructuredDataPage() {
 
         <div className="text-center">
           <h1 className="mb-2 text-4xl font-bold md:text-5xl">
-            Structured Data Assistant
+            Briefly for Analysts
           </h1>
           <p className="mb-12 text-lg text-muted-foreground">
             Describe the data you need, and our AI will generate and refine it with you.

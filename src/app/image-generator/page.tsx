@@ -18,7 +18,7 @@ export default function ImageGeneratorPage() {
 
         <div className="text-center">
           <h1 className="mb-2 text-4xl font-bold md:text-5xl">
-            Image Studio
+            Briefly for Artists
           </h1>
           <p className="mb-12 text-lg text-muted-foreground">
             Describe your vision, choose a style, and let the AI bring it to life.
