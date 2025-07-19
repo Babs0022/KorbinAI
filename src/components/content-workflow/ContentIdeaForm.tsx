@@ -75,18 +75,17 @@ export default function ContentIdeaForm({ onDataChange, initialData }: ContentId
                     if (result.suggestedAudience) {
                         const newAudience = result.suggestedAudience;
                         const isCustom = !audiences.includes(newAudience);
+                        
+                        const updatedData = {
+                            ...formData, // Use the current state
+                            targetAudience: isCustom ? 'Other' : newAudience,
+                            otherAudience: isCustom ? newAudience : formData.otherAudience
+                        };
 
-                        // Use a functional update to avoid issues with stale state
-                        setFormData(currentData => {
-                           const updatedData = {
-                                ...currentData,
-                                targetAudience: isCustom ? 'Other' : newAudience,
-                                otherAudience: isCustom ? newAudience : currentData.otherAudience
-                            };
-                            // Manually call onDataChange here since we are in a functional update
-                            onDataChange(updatedData);
-                            return updatedData;
-                        });
+                        // Update local state first
+                        setFormData(updatedData);
+                        // Then propagate the change to the parent
+                        onDataChange(updatedData);
                     }
                 }
             } catch (error) {
