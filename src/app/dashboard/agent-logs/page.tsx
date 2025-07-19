@@ -142,7 +142,6 @@ export default function AgentLogsPage() {
         return Object.fromEntries(sortedGroups);
     }, [logs]);
 
-
     return (
         <DashboardLayout>
             <main className="flex-1 p-4 md:p-8">
