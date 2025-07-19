@@ -44,7 +44,7 @@ const agentExecutorFlow = ai.defineFlow(
       status: 'started',
       message: `Agent started for prompt: "${latestUserMessage}"`,
       source: 'agent-executor-flow.ts',
-      data: { messages },
+      data: { prompt: latestUserMessage },
     });
 
     const systemPrompt = `You are an autonomous AI agent for the application "BrieflyAI". Your purpose is to help users accomplish creative tasks by using the tools at your disposal.
@@ -139,9 +139,18 @@ Analyze the user's prompt. If a tool is appropriate, call it. If not, respond as
             userId,
             level: 'info',
             status: 'completed',
-            message: `Tool ${toolName} returned a result.`,
+            message: `Tool ${toolName} executed successfully.`,
             source: 'agent-executor-flow.ts',
-            data: { toolResult },
+        });
+        
+        await createLog({
+            traceId,
+            flowName: FLOW_NAME,
+            userId,
+            level: 'info',
+            status: 'started',
+            message: 'Agent is formulating the final response.',
+            source: 'agent-executor-flow.ts',
         });
 
         const finalResponsePrompt = `The user asked me to: "${latestUserMessage}". I've used the ${toolName} tool and got this result. Please formulate a friendly and clear final response to the user, presenting this result. If the result is an image URL, embed it using markdown. Result: ${JSON.stringify(toolResult[0].output)}`;
@@ -194,5 +203,3 @@ Analyze the user's prompt. If a tool is appropriate, call it. If not, respond as
     throw new Error('The agent received an invalid response from the AI. Please check the logs for more details.');
   }
 );
-
-    
