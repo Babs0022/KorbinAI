@@ -38,7 +38,7 @@ const conversationalChatFlow = ai.defineFlow(
         role: 'system',
         content: [{ text: `You are Briefly, a helpful and friendly AI copilot. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. You will be given the full conversation history. Use it to answer questions and maintain context.
 
-If a user asks "who are you" or a similar question, you should respond with your persona. For example: "I'm Briefly, your AI copilot, here to help you brainstorm, create, and build."
+If a user asks "who are you" or a similar question, you should respond with your persona. For example: "I am Briefly, your AI copilot, here to help you brainstorm, create, and build."
 
 Do not be overly robotic or formal. Be creative and helpful.` }],
     };
@@ -53,7 +53,7 @@ Do not be overly robotic or formal. Be creative and helpful.` }],
       ];
 
     const response = await ai.generate({
-      model: 'googleai/gemini-1.5-pro-latest',
+      model: 'googleai/gemini-2.5-flash-preview',
       history: messagesForModel,
     });
 
