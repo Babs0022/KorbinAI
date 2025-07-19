@@ -6,6 +6,14 @@
 
 import { z } from 'zod';
 
+// === Agent Executor Flow ===
+export const AgentExecutionInputSchema = z.object({
+  userId: z.string().optional().describe('The ID of the user making the request.'),
+  prompt: z.string().describe("The user's high-level request for the agent to perform."),
+});
+export type AgentExecutionInput = z.infer<typeof AgentExecutionInputSchema>;
+
+
 // === Conversational Chat Flow ===
 export const MessageSchema = z.object({
   role: z.enum(['user', 'model']),
@@ -191,7 +199,7 @@ export type GeneratePromptFormatSuggestionsOutput = z.infer<typeof GeneratePromp
 // === generate-section-draft-flow ===
 export const GenerateSectionDraftInputSchema = z.object({
   sectionToDraft: z.string().describe('The specific outline section title to be drafted.'),
-  fullOutline: z.array(z.string()).describe('The complete list of all section titles in the outline.'),
+  fullOutline: z.array(z.array(z.string())).describe('The complete list of all section titles in the outline.'),
   mainTopic: z.string().describe('The main topic of the entire piece of content.'),
   priorContent: z.string().optional().describe('The content that was generated for the previous sections, to ensure a smooth transition.'),
   contentType: z.string().describe("The type of content (e.g., 'Blog Post')."),

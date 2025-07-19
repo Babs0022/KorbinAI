@@ -1,5 +1,14 @@
 
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "agentLogs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

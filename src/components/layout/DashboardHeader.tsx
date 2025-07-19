@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, FileText, Shield, PanelLeft, Sun, Moon, Mail, UserPlus } from "lucide-react";
+import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, FileText, Shield, PanelLeft, Sun, Moon, Mail, UserPlus, Bot } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -123,6 +123,12 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <FolderKanban />
             <div className={cn("flex w-full items-center justify-between transition-opacity", state === 'collapsed' && 'opacity-0')}>
               <span>Projects</span>
+            </div>
+        </Link>
+        <Link href="/dashboard/agent-logs" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+            <Bot />
+            <div className={cn("flex w-full items-center justify-between transition-opacity", state === 'collapsed' && 'opacity-0')}>
+              <span>Agent Logs</span>
             </div>
         </Link>
         <div className="flex items-center gap-3 p-2 rounded-md text-muted-foreground/50 cursor-not-allowed relative">

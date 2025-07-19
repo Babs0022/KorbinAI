@@ -5,10 +5,11 @@ import { useState, useRef, useEffect, forwardRef, memo } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { LoaderCircle, Send, ImagePlus, X, ChevronDown, MessageSquare, Bot } from "lucide-react";
+import { LoaderCircle, Send, ImagePlus, X, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
+import { agentExecutor } from "@/ai/flows/agent-executor-flow"; // Import the agent flow
 import { type Message } from "@/types/ai";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -23,7 +24,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 
 
 const formSchema = z.object({
@@ -38,16 +39,17 @@ type ChatMode = 'chat' | 'agent';
 interface ChatInputFormProps {
   onSubmit: (values: FormValues, image?: string) => void;
   isLoading: boolean;
+  mode: ChatMode;
+  onModeChange: (mode: ChatMode) => void;
   className?: string;
 }
 
 
 // Memoize the form component to prevent re-renders on parent state changes.
-const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, className }, ref) => {
+const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, mode, onModeChange, className }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [mode, setMode] = useState<ChatMode>('chat');
     
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -160,10 +162,10 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start">
-                                    <DropdownMenuItem onSelect={() => setMode('chat')}>
+                                    <DropdownMenuItem onSelect={() => onModeChange('chat')}>
                                         Chat
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => setMode('agent')}>
+                                    <DropdownMenuItem onSelect={() => onModeChange('agent')}>
                                         Agent
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -187,6 +189,7 @@ export default function ChatClient() {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [mode, setMode] = useState<ChatMode>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -205,9 +208,14 @@ export default function ChatClient() {
     setIsLoading(true);
 
     try {
-      const response = await conversationalChat({
-        history: newHistory,
-      });
+      let response;
+      if (mode === 'agent') {
+        response = await agentExecutor({ userId: user?.uid, prompt: values.message });
+      } else {
+        response = await conversationalChat({
+          history: newHistory,
+        });
+      }
 
       if (typeof response === 'string' && response.trim().length > 0) {
         const aiMessage: Message = { role: "model", content: response };
@@ -226,7 +234,7 @@ export default function ChatClient() {
       console.error("Chat failed:", error);
       const errorMessage: Message = {
         role: "model",
-        content: "Sorry, I encountered an error. Please try again.",
+        content: `Sorry, I encountered an error. ${error instanceof Error ? error.message : ''}`,
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -303,7 +311,12 @@ export default function ChatClient() {
       </div>
       <div className="sticky bottom-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-8 px-4">
         <div className="mx-auto w-full max-w-4xl">
-          <ChatInputForm onSubmit={handleNewMessage} isLoading={isLoading} />
+          <ChatInputForm
+            onSubmit={handleNewMessage}
+            isLoading={isLoading}
+            mode={mode}
+            onModeChange={setMode}
+          />
         </div>
       </div>
     </div>

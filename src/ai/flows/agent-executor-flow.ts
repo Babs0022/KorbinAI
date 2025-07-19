@@ -1,0 +1,90 @@
+
+'use server';
+/**
+ * @fileOverview A flow for the autonomous agent to execute tasks.
+ *
+ * - agentExecutor - A function that interprets a user request and uses available tools to fulfill it.
+ */
+
+import { ai } from '@/ai/genkit';
+import { z } from 'zod';
+import {
+  brieflyImageGenerator,
+  brieflyPromptGenerator,
+  brieflyStructuredDataGenerator,
+  brieflyWrittenContentGenerator,
+} from '@/ai/tools/briefly-tools';
+import { saveAgentLog } from '@/services/agentLogService';
+import type { AgentExecutionInput } from '@/types/ai';
+
+export const AgentExecutionInputSchema = z.object({
+  userId: z.string().optional().describe('The ID of the user making the request.'),
+  prompt: z.string().describe('The user\'s high-level request for the agent to perform.'),
+});
+
+// Export the main async function that calls the flow
+export async function agentExecutor(input: AgentExecutionInput): Promise<string> {
+  return agentExecutorFlow(input);
+}
+
+// Define the Genkit flow for the agent
+const agentExecutorFlow = ai.defineFlow(
+  {
+    name: 'agentExecutorFlow',
+    inputSchema: AgentExecutionInputSchema,
+    outputSchema: z.string(),
+  },
+  async ({ userId, prompt }) => {
+    
+    await saveAgentLog({ userId, type: 'start', message: `Agent started for prompt: "${prompt}"` });
+
+    const systemPrompt = `You are an autonomous AI agent for the application "BrieflyAI". Your purpose is to help users accomplish creative tasks by using the tools at your disposal.
+
+You must determine which tool is best suited for the user's request, construct the correct input for that tool, and then execute it.
+
+Here are the tools available to you:
+- **brieflyWrittenContentGenerator**: Use this for requests involving writing text like blog posts, emails, or articles.
+- **brieflyPromptGenerator**: Use this for requests to create or optimize a prompt for another AI.
+- **brieflyImageGenerator**: Use this for requests to create a visual image, photo, or drawing.
+- **brieflyStructuredDataGenerator**: Use this for requests to create data in a specific format like JSON or CSV.
+
+Analyze the user's prompt and execute the most appropriate tool. After the tool returns a result, your job is complete. You should then present the final output to the user in a clear and concise way. Do not just return the raw tool output. For example, if you generate an image, say "I have generated an image for you:" and then present the image URL.
+
+User's Request: "${prompt}"
+`;
+
+    const response = await ai.generate({
+      model: 'googleai/gemini-1.5-pro-latest',
+      system: systemPrompt,
+      tools: [
+        brieflyWrittenContentGenerator,
+        brieflyPromptGenerator,
+        brieflyImageGenerator,
+        brieflyStructuredDataGenerator,
+      ],
+    });
+    
+    const toolOutput = response.toolCalls();
+    
+    // Check if the model decided to use a tool
+    if (toolOutput && toolOutput.length > 0) {
+        await saveAgentLog({ userId, type: 'info', message: `Agent decided to use tool: ${toolOutput[0].toolName}.` });
+        const toolResult = await response.callTools();
+        await saveAgentLog({ userId, type: 'result', message: `Tool returned a result.`, data: toolResult[0].output });
+
+        // Generate a final, user-friendly response based on the tool's output
+        const finalResponse = await ai.generate({
+            model: 'googleai/gemini-1.5-pro-latest',
+            prompt: `The user asked me to: "${prompt}". I used the ${toolOutput[0].toolName} tool and got this result. Please formulate a friendly and clear final response to the user, presenting this result. If the result is an image URL, embed it using markdown. Result: ${JSON.stringify(toolResult[0].output)}`
+        });
+
+        await saveAgentLog({ userId, type: 'finish', message: 'Agent finished execution.' });
+        return finalResponse.text;
+
+    } else {
+        // If the model doesn't use a tool, return its direct text response.
+        await saveAgentLog({ userId, type: 'finish', message: 'Agent finished execution without using a tool.' });
+        return response.text;
+    }
+  }
+);
