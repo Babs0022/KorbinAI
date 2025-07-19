@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, FileText, Shield, PanelLeft, Sun, Moon, Mail } from "lucide-react";
+import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, FileText, Shield, PanelLeft, Sun, Moon, Mail, UserPlus } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -103,7 +103,14 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
         </DropdownMenu>
       )
     }
-    return null;
+    return (
+        <Button asChild>
+            <Link href="/login">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Sign In
+            </Link>
+        </Button>
+    );
   }
 
   const SidebarNav = () => (

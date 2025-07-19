@@ -2,31 +2,10 @@
 import {NextResponse} from 'next/server';
 import type {NextRequest} from 'next/server';
 
-const PROTECTED_ROUTES = [
-    '/',
-    '/image-generator',
-    '/prompt-generator',
-    '/structured-data',
-    '/written-content',
-    '/chat',
-    '/dashboard/projects',
-    '/dashboard/account',
-    '/dashboard/settings',
-    '/dashboard/billing',
-];
-
+// This middleware file is now simplified to allow all traffic through,
+// effectively making all pages public by default. Authentication checks
+// will be handled at the component/page level for specific features.
 export function middleware(request: NextRequest) {
-  const {pathname} = request.nextUrl;
-  const authToken = request.cookies.get('firebaseIdToken');
-
-  const isProtectedRoute = PROTECTED_ROUTES.some(route => pathname.startsWith(route));
-
-  // If user is unauthenticated and trying to access a protected route, redirect to login
-  if (!authToken && isProtectedRoute) {
-    const loginUrl = new URL('/login', request.url)
-    return NextResponse.redirect(loginUrl);
-  }
-  
   return NextResponse.next();
 }
 

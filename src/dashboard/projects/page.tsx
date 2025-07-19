@@ -9,7 +9,7 @@ import type { Project } from "@/types/project";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, FolderKanban, Feather, Code2, Image, Bolt, MessageSquare, ArrowRight } from "lucide-react";
+import { PlusCircle, FolderKanban, Feather, Code2, Image, Bolt, MessageSquare, ArrowRight, UserPlus } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from "@/lib/utils";
@@ -29,6 +29,21 @@ const ProjectCardSkeleton = () => (
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-4 w-1/2" />
         </div>
+    </div>
+);
+
+const LoggedOutState = () => (
+     <div className="text-center py-16 px-4 border-2 border-dashed rounded-xl">
+        <UserPlus className="mx-auto h-12 w-12 text-muted-foreground" />
+        <h3 className="mt-4 text-lg font-semibold">Sign In to View Projects</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+            Create an account or sign in to save and manage your projects.
+        </p>
+        <Button asChild className="mt-6">
+            <Link href="/login">
+                Sign In
+            </Link>
+        </Button>
     </div>
 );
 
@@ -73,6 +88,63 @@ export default function ProjectsPage() {
 
         fetchProjects();
     }, [user, authLoading]);
+    
+    const renderContent = () => {
+        if (isLoading) {
+            return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <ProjectCardSkeleton />
+                    <ProjectCardSkeleton />
+                    <ProjectCardSkeleton />
+                </div>
+            )
+        }
+
+        if (!user) {
+            return <LoggedOutState />;
+        }
+
+        if (projects.length === 0) {
+            return <EmptyState />;
+        }
+
+        return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {projects.map((project) => (
+                    <Link href={`/dashboard/projects/${project.id}`} key={project.id} className="group">
+                        <Card className={cn(
+                            "flex h-full transform flex-col justify-between text-left transition-all duration-300 rounded-xl",
+                            "bg-secondary/30",
+                            "hover:-translate-y-1 hover:border-primary/50"
+                        )}>
+                            <CardHeader>
+                                <div className="flex items-start justify-between">
+                                    <div className="text-primary bg-primary/10 p-3 rounded-lg">
+                                        {projectTypeIcons[project.type] || <FolderKanban />}
+                                    </div>
+                                    <div className="flex items-center text-primary opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                                        <span className="text-sm">View</span>
+                                        <ArrowRight className="ml-1 h-4 w-4" />
+                                    </div>
+                                </div>
+                                <CardTitle className="pt-4 text-lg font-semibold transition-colors duration-300 group-hover:text-primary">
+                                    {project.name}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground line-clamp-2">{project.summary}</p>
+                            </CardContent>
+                            <CardFooter>
+                                <p className="text-xs text-muted-foreground">
+                                    Updated {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })}
+                                </p>
+                            </CardFooter>
+                        </Card>
+                    </Link>
+                ))}
+            </div>
+        );
+    }
 
     return (
         <DashboardLayout>
@@ -93,50 +165,7 @@ export default function ProjectsPage() {
                         </Button>
                     </div>
 
-                    {isLoading ? (
-                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <ProjectCardSkeleton />
-                            <ProjectCardSkeleton />
-                            <ProjectCardSkeleton />
-                         </div>
-                    ) : projects.length === 0 ? (
-                        <EmptyState />
-                    ) : (
-                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {projects.map((project) => (
-                                <Link href={`/dashboard/projects/${project.id}`} key={project.id} className="group">
-                                    <Card className={cn(
-                                        "flex h-full transform flex-col justify-between text-left transition-all duration-300 rounded-xl",
-                                        "bg-secondary/30",
-                                        "hover:-translate-y-1 hover:border-primary/50"
-                                    )}>
-                                        <CardHeader>
-                                            <div className="flex items-start justify-between">
-                                                <div className="text-primary bg-primary/10 p-3 rounded-lg">
-                                                    {projectTypeIcons[project.type] || <FolderKanban />}
-                                                </div>
-                                                <div className="flex items-center text-primary opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                                                    <span className="text-sm">View</span>
-                                                    <ArrowRight className="ml-1 h-4 w-4" />
-                                                </div>
-                                            </div>
-                                            <CardTitle className="pt-4 text-lg font-semibold transition-colors duration-300 group-hover:text-primary">
-                                                {project.name}
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <p className="text-sm text-muted-foreground line-clamp-2">{project.summary}</p>
-                                        </CardContent>
-                                        <CardFooter>
-                                            <p className="text-xs text-muted-foreground">
-                                                Updated {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })}
-                                            </p>
-                                        </CardFooter>
-                                    </Card>
-                                </Link>
-                            ))}
-                         </div>
-                    )}
+                    {renderContent()}
                 </div>
             </main>
         </DashboardLayout>

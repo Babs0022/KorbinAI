@@ -79,7 +79,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // User is signed out
       await setSessionCookie(null);
       setUser(null);
-      // Let middleware handle redirects for logged-out users.
     }
     setLoading(false);
   }, [pathname, router]);
