@@ -35,14 +35,14 @@ export type ContentIdeaFormData = z.infer<typeof ContentIdeaFormDataSchema>;
 
 
 // === analyze-prompt-flow ===
-const ToolEnum = z.enum(['image-generator', 'written-content', 'component-wizard', 'structured-data', 'none']);
+const ToolEnum = z.enum(['image-generator', 'written-content', 'structured-data', 'none']);
 export const AnalyzePromptInputSchema = z.object({
   prompt: z.string().describe('The generated prompt to be analyzed.'),
 });
 export type AnalyzePromptInput = z.infer<typeof AnalyzePromptInputSchema>;
 export const AnalyzePromptOutputSchema = z.object({
   tool: ToolEnum.describe("The most appropriate tool for the given prompt."),
-  suggestion: z.string().describe("A user-friendly call to action, e.g., 'Execute this with our Image Generator' or 'Create this page with the App Builder'. If no tool is suitable, this should be an empty string."),
+  suggestion: z.string().describe("A user-friendly call to action, e.g., 'Execute this with our Image Generator'. If no tool is suitable, this should be an empty string."),
 });
 export type AnalyzePromptOutput = z.infer<typeof AnalyzePromptOutputSchema>;
 
@@ -60,7 +60,7 @@ export const ExpandOutlineSectionOutputSchema = z.object({
 export type ExpandOutlineSectionOutput = z.infer<typeof ExpandOutlineSectionOutputSchema>;
 
 
-// === generate-component-flow ===
+// === generate-component-flow (DEPRECATED) ===
 export const GenerateAppInputSchema = z.object({
   description: z.string().describe('A plain English description of the application or page to build.'),
   dataPoints: z.string().optional().describe('A comma-separated list of specific page sections the app should include (e.g., Hero, Features, Testimonials). This is the primary guide for page structure.'),
@@ -167,7 +167,7 @@ export type GenerateJsonSchemaSuggestionsOutput = z.infer<typeof GenerateJsonSch
 
 
 // === generate-project-metadata-flow ===
-const PROJECT_TYPES = ['written-content', 'prompt', 'component-wizard', 'structured-data', 'image-generator'] as const;
+const PROJECT_TYPES = ['written-content', 'prompt', 'structured-data', 'image-generator'] as const;
 export const GenerateProjectMetadataInputSchema = z.object({
   type: z.enum(PROJECT_TYPES).describe('The type of content in the project.'),
   content: z.string().describe('The generated content to be summarized.'),
@@ -223,7 +223,7 @@ export const GenerateSectionDraftOutputSchema = z.object({
 export type GenerateSectionDraftOutput = z.infer<typeof GenerateSectionDraftOutputSchema>;
 
 
-// === generate-section-suggestions-flow ===
+// === generate-section-suggestions-flow (DEPRECATED) ===
 export const GenerateSectionSuggestionsInputSchema = z.object({
   description: z.string().describe('A plain English description of the application or page to build.'),
 });

@@ -17,11 +17,6 @@ const tourStops = [
         content: 'Need to use another AI? Craft detailed, optimized prompts for any model or task to get the best results.',
     },
     {
-        target: '#feature-web-page-app',
-        title: 'Web Page / App',
-        content: 'Build multi-file, production-ready web pages and applications with Next.js from a single prompt.',
-    },
-    {
         target: '#feature-image-generator',
         title: 'Image Generator',
         content: 'Create unique, stunning images and art from a text description. You can even provide your own images for context.',

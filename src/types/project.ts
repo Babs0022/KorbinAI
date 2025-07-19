@@ -28,7 +28,7 @@ export const ProjectSchema = z.object({
   generationId: z.string(), // Links to the document in the 'generations' collection.
   name: z.string(),
   summary: z.string(),
-  type: z.enum(['written-content', 'prompt', 'structured-data', 'image-generator', 'component-wizard', 'chat']),
+  type: z.enum(['written-content', 'prompt', 'structured-data', 'image-generator', 'chat']),
   createdAt: z.string(), 
   updatedAt: z.string(),
   // The 'content' is now fetched separately from the 'generations' collection.
@@ -41,7 +41,7 @@ export type Project = z.infer<typeof ProjectSchema>;
 export const GenerationSchema = z.object({
   id: z.string(),
   userId: z.string(),
-  type: z.enum(['written-content', 'prompt', 'structured-data', 'image-generator', 'component-wizard', 'chat']),
+  type: z.enum(['written-content', 'prompt', 'structured-data', 'image-generator', 'chat']),
   content: ProjectContentSchema,
   createdAt: z.any(), // Firestore Timestamp
 });

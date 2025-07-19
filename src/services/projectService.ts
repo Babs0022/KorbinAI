@@ -96,13 +96,15 @@ export async function saveProject({ userId, type, content }: SaveProjectInput): 
           name: `Generated Image Album`,
           summary: `An album containing ${urls.length} AI-generated image(s).`,
       };
+  } else if (type === 'chat') {
+      metadata = {
+          name: 'Chat Session',
+          summary: 'A saved conversational chat session.'
+      };
   } else {
       let contentForMetadata: string;
       if (typeof content === 'string') {
           contentForMetadata = content;
-      } else if (typeof content === 'object' && content && 'files' in content) {
-          const fileList = (content.files as { filePath: string }[]).map(f => f.filePath).join(', ');
-          contentForMetadata = `An application with files: ${fileList}`;
       } else {
           contentForMetadata = 'A saved project with unspecified content.';
       }
@@ -192,8 +194,6 @@ export async function getProjectById(projectId: string): Promise<Project | null>
                 content = "Content could not be loaded."; break;
             case 'image-generator':
                 content = []; break;
-            case 'component-wizard':
-                content = { files: [], finalInstructions: "Content could not be loaded."}; break;
             default:
                 content = "Unknown or missing content.";
         }

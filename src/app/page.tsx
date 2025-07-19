@@ -32,13 +32,6 @@ export default function HomePage() {
     //   href: "/chat",
     // },
     {
-      id: "feature-web-page-app",
-      icon: <LayoutTemplate className="h-8 w-8" />,
-      title: "Web Page / App",
-      subtitle: "Full landing pages, dashboards, etc.",
-      href: "/component-wizard",
-    },
-    {
       id: "feature-image-generator",
       icon: <Image className="h-8 w-8" />,
       title: "Image Generator",

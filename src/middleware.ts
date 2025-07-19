@@ -4,8 +4,6 @@ import type {NextRequest} from 'next/server';
 
 const PROTECTED_ROUTES = [
     '/',
-    '/component-wizard',
-    '/component-wizard/result',
     '/image-generator',
     '/prompt-generator',
     '/structured-data',
