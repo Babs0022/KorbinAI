@@ -28,6 +28,11 @@ const conversationalChatFlow = ai.defineFlow(
     outputSchema: z.string(),
   },
   async ({ history }) => {
+    
+    // Prevent calling the model with no history, which causes an error.
+    if (!history || history.length === 0) {
+      throw new Error('Cannot generate a chat response with an empty history.');
+    }
 
     const systemInstruction = {
         role: 'system',
