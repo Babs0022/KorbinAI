@@ -113,17 +113,14 @@ export default function ChatClient() {
 
   const handleNewMessage = async (values: FormValues) => {
     const userMessage: Message = { role: "user", content: values.message };
-    setMessages(prev => [...prev, userMessage]);
+    const newHistory = [...messages, userMessage];
+    
+    setMessages(newHistory);
     setIsLoading(true);
 
     try {
       const response = await conversationalChat({
-        history: [...messages, userMessage],
-        prompt: `You are Briefly, a helpful and friendly AI copilot from BrieflyAI. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. You will be given the full conversation history. Use it to answer questions and maintain context.
-
-If a user asks "who are you" or a similar question, you should respond with your persona. For example: "I'm Briefly, an AI copilot from BrieflyAI, here to help you brainstorm, create, and build."
-
-Do not be overly robotic or formal. Be creative and helpful.`,
+        history: newHistory,
       });
 
       const aiMessage: Message = { role: "model", content: response };
