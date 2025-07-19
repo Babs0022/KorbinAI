@@ -5,7 +5,8 @@ import { useState, useRef, useEffect, forwardRef, memo } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { LoaderCircle, Send, ImagePlus } from "lucide-react";
+import { LoaderCircle, Send, ImagePlus, X } from "lucide-react";
+import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
 import { type Message } from "@/types/ai";
@@ -15,22 +16,29 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import MarkdownRenderer from "@/components/shared/MarkdownRenderer";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+
 
 const formSchema = z.object({
-  message: z.string().min(1, "Message cannot be empty."),
+  message: z.string(), // Allow empty message if an image is attached
+}).refine(data => data.message.trim().length > 0 || "image is present", {
+  message: "Message cannot be empty.",
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface ChatInputFormProps {
-  onSubmit: (values: FormValues) => void;
+  onSubmit: (values: FormValues, image?: string) => void;
   isLoading: boolean;
   className?: string;
 }
 
+
 // Memoize the form component to prevent re-renders on parent state changes.
 const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, className }, ref) => {
+    const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
     
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -40,14 +48,45 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     });
 
     const handleFormSubmit = (values: FormValues) => {
-        onSubmit(values);
+        if (!values.message.trim() && !imagePreview) {
+            toast({
+                title: "Empty message",
+                description: "Please enter a message or upload an image to send.",
+                variant: "destructive",
+            });
+            return;
+        }
+        onSubmit(values, imagePreview || undefined);
         form.reset();
+        setImagePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
     };
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             form.handleSubmit(handleFormSubmit)();
+        }
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) { // 2MB limit
+                toast({
+                    title: "Image too large",
+                    description: "Please upload an image smaller than 2MB.",
+                    variant: "destructive",
+                });
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -59,6 +98,25 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                     onSubmit={form.handleSubmit(handleFormSubmit)}
                     className="rounded-xl border bg-secondary"
                 >
+                    {imagePreview && (
+                        <div className="relative p-2">
+                            <Image src={imagePreview} alt="Image preview" width={90} height={90} className="rounded-lg" />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-0 right-0 rounded-full h-6 w-6"
+                                onClick={() => {
+                                    setImagePreview(null);
+                                    if (fileInputRef.current) {
+                                        fileInputRef.current.value = "";
+                                    }
+                                }}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
                     <FormField
                     control={form.control}
                     name="message"
@@ -78,11 +136,11 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                     )}
                     />
                     <div className="flex items-center justify-between p-2">
-                        <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled>
+                        <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
                             <ImagePlus className="h-5 w-5 text-muted-foreground" />
                             <span className="sr-only">Upload image</span>
                         </Button>
-                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" disabled />
+                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                         
                         <Button type="submit" size="sm" className="rounded-lg" disabled={isLoading}>
                             {isLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
@@ -111,8 +169,8 @@ export default function ChatClient() {
     scrollToBottom();
   }, [messages]);
 
-  const handleNewMessage = async (values: FormValues) => {
-    const userMessage: Message = { role: "user", content: values.message };
+  const handleNewMessage = async (values: FormValues, image?: string) => {
+    const userMessage: Message = { role: "user", content: values.message, imageUrl: image };
     const newHistory = [...messages, userMessage];
     
     setMessages(newHistory);
@@ -123,8 +181,18 @@ export default function ChatClient() {
         history: newHistory,
       });
 
-      const aiMessage: Message = { role: "model", content: response };
-      setMessages((prev) => [...prev, aiMessage]);
+      if (typeof response === 'string' && response.trim().length > 0) {
+        const aiMessage: Message = { role: "model", content: response };
+        setMessages((prev) => [...prev, aiMessage]);
+      } else {
+        // Handle cases where the AI returns an empty or invalid response
+        console.error("Invalid response from AI:", response);
+        const errorMessage: Message = {
+            role: "model",
+            content: "Sorry, I received an invalid response. Please try again.",
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
 
     } catch (error) {
       console.error("Chat failed:", error);
@@ -176,6 +244,7 @@ export default function ChatClient() {
                       : "" // No bubble styling for the model's response
                   )}
               >
+                  {message.imageUrl && <Image src={message.imageUrl} alt="User upload" width={300} height={300} className="rounded-lg mb-2" />}
                   <MarkdownRenderer>{message.content}</MarkdownRenderer>
               </div>
                   {message.role === "user" && user && (
