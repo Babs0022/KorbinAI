@@ -8,7 +8,7 @@ import type { BrieflyLog } from "@/types/logs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
-  Bot, ListRestart, CheckCircle, AlertCircle, PlayCircle, BrainCircuit, ListChecks, RefreshCcw, Hourglass, ServerCrash, Wand2
+  Bot, ListRestart, CheckCircle, PlayCircle, BrainCircuit, ListChecks, RefreshCcw, Hourglass, ServerCrash, Wand2
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { format, formatDistanceToNow } from 'date-fns';
@@ -133,19 +133,15 @@ export default function AgentLogsPage() {
             return acc;
         }, {} as GroupedLogs);
 
-        return Object.fromEntries(
-            Object.entries(groups)
-                .sort(([, groupA], [, groupB]) => {
-                    const timeA = new Date(groupA[0]?.metadata.timestamp || 0).getTime();
-                    const timeB = new Date(groupB[0]?.metadata.timestamp || 0).getTime();
-                    return timeB - timeA;
-                })
-                .map(([traceId, group]) => {
-                    const sortedGroup = group.sort((a, b) => new Date(a.metadata.timestamp).getTime() - new Date(b.metadata.timestamp).getTime());
-                    return [traceId, sortedGroup];
-                })
-        );
+        const sortedGroups = Object.entries(groups).sort(([, groupA], [, groupB]) => {
+            const timeA = new Date(groupA[0]?.metadata.timestamp || 0).getTime();
+            const timeB = new Date(groupB[0]?.metadata.timestamp || 0).getTime();
+            return timeB - timeA;
+        });
+
+        return Object.fromEntries(sortedGroups);
     }, [logs]);
+
 
     return (
         <DashboardLayout>
