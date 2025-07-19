@@ -194,3 +194,5 @@ Analyze the user's prompt. If a tool is appropriate, call it. If not, respond as
     throw new Error('The agent received an invalid response from the AI. Please check the logs for more details.');
   }
 );
+
+    

@@ -113,3 +113,5 @@ export const brieflyStructuredDataGenerator = ai.defineTool(
     return result.generatedData;
   }
 );
+
+    
