@@ -154,10 +154,7 @@ export default function ContentOptimizer({
                  <div className="min-h-[200px] max-h-[40vh] overflow-y-auto rounded-md bg-secondary p-4 text-sm">
                     {isLoading ? (
                         <div className="flex items-center justify-center h-full">
-                           <div className="flex items-center gap-4">
-                                <Logo />
-                                <AnimatedLoadingText />
-                            </div>
+                           <AnimatedLoadingText />
                         </div>
                     ) : suggestions ? (
                         <MarkdownRenderer>{suggestions}</MarkdownRenderer>

@@ -167,7 +167,7 @@ export default function ImageGeneratorClient() {
             <form onSubmit={handleSubmit} className="space-y-8 lg:col-span-4">
                 <div className="space-y-6 sticky top-8">
                     <div className="space-y-2">
-                        <Label htmlFor="prompt" className="text-lg font-medium text-white">1. Describe your vision</Label>
+                        <Label htmlFor="prompt" className="text-lg font-medium">1. Describe your vision</Label>
                         <Textarea
                         id="prompt"
                         name="prompt"
@@ -180,7 +180,7 @@ export default function ImageGeneratorClient() {
                     </div>
                     
                     <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-white">
+                        <h3 className="text-lg font-medium">
                             2. Add Context Images <span className="font-normal text-muted-foreground">(optional)</span>
                         </h3>
                         <div className="flex flex-wrap gap-4">
@@ -211,7 +211,7 @@ export default function ImageGeneratorClient() {
                     </div>
                     
                     <div className="space-y-3">
-                        <h3 className="text-lg font-medium text-white">3. Select a style <span className="text-sm font-normal text-muted-foreground">(for new images)</span></h3>
+                        <h3 className="text-lg font-medium">3. Select a style <span className="text-sm font-normal text-muted-foreground">(for new images)</span></h3>
                          <RadioGroup value={style} onValueChange={setStyle} className="grid grid-cols-2 gap-2">
                             {styleOptions.map(({ value, label }) => (
                                 <div key={value}>
@@ -225,7 +225,7 @@ export default function ImageGeneratorClient() {
                     </div>
 
                     <div className="space-y-3">
-                        <h3 className="text-lg font-medium text-white">4. Choose an aspect ratio <span className="text-sm font-normal text-muted-foreground">(for new images)</span></h3>
+                        <h3 className="text-lg font-medium">4. Choose an aspect ratio <span className="text-sm font-normal text-muted-foreground">(for new images)</span></h3>
                         <RadioGroup value={aspectRatio} onValueChange={setAspectRatio}>
                             {ratioOptions.map(({ value, label }) => (
                                 <div key={value} className="flex items-center space-x-2">
@@ -237,7 +237,7 @@ export default function ImageGeneratorClient() {
                     </div>
 
                     <div className="space-y-3">
-                        <h3 className="text-lg font-medium text-white">5. Number of images</h3>
+                        <h3 className="text-lg font-medium">5. Number of images</h3>
                         <RadioGroup value={String(count)} onValueChange={(val) => setCount(Number(val))}>
                             {[1, 2, 3, 4].map(num => (
                                 <div key={num} className="flex items-center space-x-2">
@@ -264,10 +264,7 @@ export default function ImageGeneratorClient() {
             <div className="lg:col-span-8">
                 {isLoading && (
                     <div className="flex h-full items-center justify-center rounded-xl border border-dashed p-16">
-                        <div className="flex items-center justify-center gap-4">
-                            <Logo />
-                            <AnimatedLoadingText />
-                        </div>
+                        <AnimatedLoadingText />
                     </div>
                 )}
                 

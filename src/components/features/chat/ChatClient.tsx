@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import MarkdownRenderer from "@/components/shared/MarkdownRenderer";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import LogoSpinner from "@/components/shared/LogoSpinner";
 
 
 const formSchema = z.object({
@@ -257,13 +258,7 @@ export default function ChatClient() {
           ))}
               {isLoading && (
               <div className="flex items-start gap-4 justify-start">
-              <Avatar className="h-9 w-9">
-                  <AvatarImage src="/icon.png" alt="BrieflyAI" data-ai-hint="logo icon" />
-                  <AvatarFallback>B</AvatarFallback>
-              </Avatar>
-              <div className="max-w-xl flex items-center">
-                  <LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" />
-              </div>
+              <LogoSpinner />
               </div>
           )}
           <div ref={messagesEndRef} />

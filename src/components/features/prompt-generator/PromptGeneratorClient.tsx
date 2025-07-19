@@ -185,119 +185,118 @@ export default function PromptGeneratorClient() {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-2">
-        <h3 className="text-lg font-medium text-white">
-          What task do you want the AI to perform?
-        </h3>
-        <Textarea
-          id="task-description"
-          name="taskDescription"
-          placeholder="e.g., 'Write a tweet about our new product launch' or 'Summarize a long article about climate change'."
-          className="min-h-[120px] text-base"
-          value={taskDescription}
-          onChange={(e) => setTaskDescription(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium text-white">
-          Add Context Images <span className="font-normal text-muted-foreground">(optional)</span>
-        </h3>
-        <div className="flex flex-wrap gap-4">
-          {images.map((image, index) => (
-            <div key={index} className="relative w-32 h-32">
-              <NextImage src={image} alt={`Image preview ${index + 1}`} fill sizes="128px" className="object-cover rounded-lg" data-ai-hint="context image" />
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                className="absolute -top-2 -right-2 h-7 w-7 rounded-full z-10"
-                onClick={() => removeImage(index)}
-              >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Remove image</span>
-              </Button>
-            </div>
-          ))}
-          
-          <Label htmlFor="image-upload" className="flex flex-col items-center justify-center w-32 h-32 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-accent">
-            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <ImagePlus className="w-8 h-8 text-muted-foreground" />
-              <span className="sr-only">Add image</span>
-            </div>
-            <Input id="image-upload" type="file" className="hidden" accept="image/png, image/jpeg" onChange={handleImageChange} multiple />
-          </Label>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+      <form onSubmit={handleSubmit} className="space-y-8">
         <div className="space-y-2">
-          <h3 className="text-lg font-medium text-white">
-            Target AI Model <span className="font-normal text-muted-foreground">(optional)</span>
-          </h3>
-          <Input 
-            id="target-model" 
-            name="targetModel" 
-            placeholder="e.g., 'Gemini 1.5 Pro'" 
-            className="text-base" 
-            value={targetModel}
-            onChange={(e) => setTargetModel(e.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-medium text-white">
-              Desired Output Format <span className="font-normal text-muted-foreground">(optional)</span>
+            <h3 className="text-lg font-medium">
+            What task do you want the AI to perform?
             </h3>
-            {isSuggesting && <LoaderCircle className="h-4 w-4 animate-spin" />}
-          </div>
-          <Input 
-            id="output-format" 
-            name="outputFormat" 
-            placeholder="e.g., 'JSON with 'name' and 'summary' keys'" 
-            className="text-base" 
-            value={outputFormat}
-            onChange={(e) => setOutputFormat(e.target.value)}
-          />
-           {formatSuggestions.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-2">
-                  {formatSuggestions.map(suggestion => (
-                      <Button
-                          key={suggestion}
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setOutputFormat(suggestion)}
-                          className="text-xs"
-                      >
-                          <Sparkles className="mr-1 h-3 w-3 text-primary" /> {suggestion}
-                      </Button>
-                  ))}
-              </div>
-          )}
+            <Textarea
+            id="task-description"
+            name="taskDescription"
+            placeholder="e.g., 'Write a tweet about our new product launch' or 'Summarize a long article about climate change'."
+            className="min-h-[120px] text-base"
+            value={taskDescription}
+            onChange={(e) => setTaskDescription(e.target.value)}
+            required
+            />
         </div>
-      </div>
 
-      <div className="flex justify-end pt-4">
-        <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !user} onClick={handleSubmit}>
-          {isLoading ? (
-            <>
-              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            "Generate Prompt"
-          )}
-        </Button>
-      </div>
+        <div className="space-y-4">
+            <h3 className="text-lg font-medium">
+            Add Context Images <span className="font-normal text-muted-foreground">(optional)</span>
+            </h3>
+            <div className="flex flex-wrap gap-4">
+            {images.map((image, index) => (
+                <div key={index} className="relative w-32 h-32">
+                <NextImage src={image} alt={`Image preview ${index + 1}`} fill sizes="128px" className="object-cover rounded-lg" data-ai-hint="context image" />
+                <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -top-2 -right-2 h-7 w-7 rounded-full z-10"
+                    onClick={() => removeImage(index)}
+                >
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Remove image</span>
+                </Button>
+                </div>
+            ))}
+            
+            <Label htmlFor="image-upload" className="flex flex-col items-center justify-center w-32 h-32 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-accent">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <ImagePlus className="w-8 h-8 text-muted-foreground" />
+                <span className="sr-only">Add image</span>
+                </div>
+                <Input id="image-upload" type="file" className="hidden" accept="image/png, image/jpeg" onChange={handleImageChange} multiple />
+            </Label>
+            </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div className="space-y-2">
+            <h3 className="text-lg font-medium">
+                Target AI Model <span className="font-normal text-muted-foreground">(optional)</span>
+            </h3>
+            <Input 
+                id="target-model" 
+                name="targetModel" 
+                placeholder="e.g., 'Gemini 1.5 Pro'" 
+                className="text-base" 
+                value={targetModel}
+                onChange={(e) => setTargetModel(e.target.value)}
+            />
+            </div>
+            <div className="space-y-2">
+            <div className="flex items-center gap-2">
+                <h3 className="text-lg font-medium">
+                Desired Output Format <span className="font-normal text-muted-foreground">(optional)</span>
+                </h3>
+                {isSuggesting && <LoaderCircle className="h-4 w-4 animate-spin" />}
+            </div>
+            <Input 
+                id="output-format" 
+                name="outputFormat" 
+                placeholder="e.g., 'JSON with 'name' and 'summary' keys'" 
+                className="text-base" 
+                value={outputFormat}
+                onChange={(e) => setOutputFormat(e.target.value)}
+            />
+            {formatSuggestions.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                    {formatSuggestions.map(suggestion => (
+                        <Button
+                            key={suggestion}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setOutputFormat(suggestion)}
+                            className="text-xs"
+                        >
+                            <Sparkles className="mr-1 h-3 w-3 text-primary" /> {suggestion}
+                        </Button>
+                    ))}
+                </div>
+            )}
+            </div>
+        </div>
+
+        <div className="flex justify-end pt-4">
+            <Button type="submit" size="lg" className="text-lg" disabled={isLoading || !user}>
+            {isLoading ? (
+                <>
+                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+                </>
+            ) : (
+                "Generate Prompt"
+            )}
+            </Button>
+        </div>
+      </form>
     
       {isLoading && !generatedPrompt && (
         <div className="mt-12 flex items-center justify-center">
-            <div className="flex items-center gap-4">
-                <Logo />
-                <AnimatedLoadingText />
-            </div>
+            <AnimatedLoadingText />
         </div>
       )}
 

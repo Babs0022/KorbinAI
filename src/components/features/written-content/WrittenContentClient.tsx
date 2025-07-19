@@ -256,10 +256,7 @@ export default function WrittenContentClient() {
       if (state.isLoading && currentStep !== 1) {
           return (
               <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
-                  <div className="flex items-center gap-4">
-                     <Logo />
-                     <AnimatedLoadingText />
-                  </div>
+                  <AnimatedLoadingText />
               </div>
           );
       }

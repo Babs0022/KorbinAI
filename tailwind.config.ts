@@ -105,13 +105,18 @@ export default {
         'marquee-slow': {
           from: { transform: 'translateX(0)' },
           to: { transform: 'translateX(calc(-100% - 2rem * 6))' }, // -100% of the first set of items, minus the gap for all items
-        }
+        },
+        'spin-slow': {
+            '0%': { transform: 'rotate(0deg)' },
+            '100%': { transform: 'rotate(360deg)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'fade-in': 'fade-in 0.5s ease-out forwards',
         'marquee-slow': 'marquee-slow 60s linear infinite',
+        'spin-slow': 'spin-slow 1.5s linear infinite',
       },
     },
   },

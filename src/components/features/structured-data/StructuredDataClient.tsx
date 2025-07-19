@@ -250,7 +250,7 @@ export default function StructuredDataClient() {
     <div className="space-y-8">
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="space-y-2">
-          <h3 className="text-lg font-medium text-white">
+          <h3 className="text-lg font-medium">
             What data do you want to generate?
           </h3>
           <Textarea
@@ -265,7 +265,7 @@ export default function StructuredDataClient() {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-white">
+          <h3 className="text-lg font-medium">
             Add Context Images <span className="font-normal text-muted-foreground">(optional)</span>
           </h3>
           <div className="flex flex-wrap gap-4">
@@ -297,7 +297,7 @@ export default function StructuredDataClient() {
         
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-white">
+            <h3 className="text-lg font-medium">
               Output Format
             </h3>
             <RadioGroup
@@ -326,7 +326,7 @@ export default function StructuredDataClient() {
           
           <div className="space-y-2">
              <div className="flex items-center gap-2">
-              <h3 className="text-lg font-medium text-white">
+              <h3 className="text-lg font-medium">
                 Schema/Example <span className="font-normal text-muted-foreground">(optional)</span>
               </h3>
               {isSuggestingSchema && format === 'json' && <LoaderCircle className="h-4 w-4 animate-spin" />}
@@ -377,11 +377,8 @@ export default function StructuredDataClient() {
       </form>
     
       {isLoading && (
-        <div className="mt-12 flex flex-col items-center justify-center gap-4 text-center animate-fade-in">
-          <div className="flex items-center gap-4">
-             <Logo />
-             <AnimatedLoadingText />
-          </div>
+        <div className="mt-12 flex items-center justify-center">
+          <AnimatedLoadingText />
         </div>
       )}
 
@@ -396,7 +393,7 @@ export default function StructuredDataClient() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-white flex items-center gap-2">
+              <h3 className="text-lg font-medium flex items-center gap-2">
                 <Wand2 className="h-5 w-5 text-primary" />
                 Refinement Suggestions
               </h3>
