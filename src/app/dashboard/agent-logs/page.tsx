@@ -170,7 +170,7 @@ export default function AgentLogsPage() {
                                 const firstLog = logGroup[0];
                                 const finalLog = logGroup[logGroup.length - 1];
                                 const finalStatus = finalLog.status;
-                                const userPrompt = logGroup[0]?.message.match(/Agent started for prompt: "([^"]+)"/)?.[1] || "Agent Task";
+                                const userPrompt = firstLog?.message.match(/Agent started for prompt: "([^"]+)"/)?.[1] || "Agent Task";
 
 
                                 return (
