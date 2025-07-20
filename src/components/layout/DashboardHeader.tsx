@@ -12,9 +12,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, FileText, Shield, PanelLeft, Sun, Moon, Mail, UserPlus, Bot } from "lucide-react";
+import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, FileText, Shield, PanelLeft, Sun, Moon, Mail, UserPlus, Bot, Monitor } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +56,34 @@ function ThemeToggle() {
             <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             <span className="sr-only">Toggle theme</span>
         </Button>
+    )
+}
+
+function MenuThemeToggle() {
+    const { setTheme } = useTheme();
+    return (
+         <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+                <Sun className="mr-2 h-4 w-4" />
+                <span>Theme</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+                <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={() => setTheme("light")}>
+                        <Sun className="mr-2 h-4 w-4" />
+                        <span>Light</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("dark")}>
+                        <Moon className="mr-2 h-4 w-4" />
+                        <span>Dark</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("system")}>
+                        <Monitor className="mr-2 h-4 w-4" />
+                        <span>System</span>
+                    </DropdownMenuItem>
+                </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+        </DropdownMenuSub>
     )
 }
 
@@ -93,11 +125,30 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 </div>
               </DropdownMenuLabel>
                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                    <Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Account</Link>
-                </DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing</Link></DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild><a href="https://brieflyai.xyz/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
+                <DropdownMenuItem asChild><a href="https://brieflyai.xyz/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>
+                <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        <span>Subscription Plan</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                             <DropdownMenuItem disabled>
+                                <span>No plan active</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <DropdownMenuSeparator />
+                <MenuThemeToggle />
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={logout} className="text-destructive focus:text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />Log out
+                    <LogOut className="mr-2 h-4 w-4" />Sign Out
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
