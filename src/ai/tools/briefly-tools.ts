@@ -55,9 +55,9 @@ export const brieflyWrittenContentGenerator = ai.defineTool(
   },
   async (input) => {
     const { traceId, userId } = input;
-    await createLog({ traceId, userId, flowName: 'brieflyWrittenContentGenerator', level: 'info', status: 'started', message: 'Executing tool.', source: 'briefly-tools.ts', data: input });
+    await createLog({ traceId, userId, flowName: 'brieflyWrittenContentGenerator', phase: 'Executing', stepName: 'ToolStarted', level: 'info', status: 'started', message: 'Executing tool.', source: 'briefly-tools.ts', data: input });
     const result = await generateWrittenContent(input as GenerateWrittenContentInput);
-    await createLog({ traceId, userId, flowName: 'brieflyWrittenContentGenerator', level: 'info', status: 'completed', message: 'Tool finished.', source: 'briefly-tools.ts' });
+    await createLog({ traceId, userId, flowName: 'brieflyWrittenContentGenerator', phase: 'Executing', stepName: 'ToolCompleted', level: 'info', status: 'completed', message: 'Tool finished.', source: 'briefly-tools.ts' });
     return result.generatedContent;
   }
 );
@@ -72,9 +72,9 @@ export const brieflyPromptGenerator = ai.defineTool(
   },
   async (input) => {
     const { traceId, userId } = input;
-    await createLog({ traceId, userId, flowName: 'brieflyPromptGenerator', level: 'info', status: 'started', message: 'Executing tool.', source: 'briefly-tools.ts', data: input });
+    await createLog({ traceId, userId, flowName: 'brieflyPromptGenerator', phase: 'Executing', stepName: 'ToolStarted', level: 'info', status: 'started', message: 'Executing tool.', source: 'briefly-tools.ts', data: input });
     const result = await generatePrompt(input as GeneratePromptInput);
-    await createLog({ traceId, userId, flowName: 'brieflyPromptGenerator', level: 'info', status: 'completed', message: 'Tool finished.', source: 'briefly-tools.ts' });
+    await createLog({ traceId, userId, flowName: 'brieflyPromptGenerator', phase: 'Executing', stepName: 'ToolCompleted', level: 'info', status: 'completed', message: 'Tool finished.', source: 'briefly-tools.ts' });
     return result.generatedPrompt;
   }
 );
@@ -89,9 +89,9 @@ export const brieflyImageGenerator = ai.defineTool(
   },
   async (input) => {
     const { traceId, userId } = input;
-    await createLog({ traceId, userId, flowName: 'brieflyImageGenerator', level: 'info', status: 'started', message: 'Executing tool.', source: 'briefly-tools.ts', data: input });
+    await createLog({ traceId, userId, flowName: 'brieflyImageGenerator', phase: 'Executing', stepName: 'ToolStarted', level: 'info', status: 'started', message: 'Executing tool.', source: 'briefly-tools.ts', data: input });
     const result = await generateImage(input as GenerateImageInput);
-    await createLog({ traceId, userId, flowName: 'brieflyImageGenerator', level: 'info', status: 'completed', message: 'Tool finished.', source: 'briefly-tools.ts' });
+    await createLog({ traceId, userId, flowName: 'brieflyImageGenerator', phase: 'Executing', stepName: 'ToolCompleted', level: 'info', status: 'completed', message: 'Tool finished.', source: 'briefly-tools.ts' });
     // For simplicity, the agent tool returns the first image URL.
     return result.imageUrls[0] || 'No image was generated.';
   }
@@ -107,9 +107,11 @@ export const brieflyStructuredDataGenerator = ai.defineTool(
   },
   async (input) => {
     const { traceId, userId } = input;
-    await createLog({ traceId, userId, flowName: 'brieflyStructuredDataGenerator', level: 'info', status: 'started', message: 'Executing tool.', source: 'briefly-tools.ts', data: input });
+    await createLog({ traceId, userId, flowName: 'brieflyStructuredDataGenerator', phase: 'Executing', stepName: 'ToolStarted', level: 'info', status: 'started', message: 'Executing tool.', source: 'briefly-tools.ts', data: input });
     const result = await generateStructuredData(input as GenerateStructuredDataInput);
-    await createLog({ traceId, userId, flowName: 'brieflyStructuredDataGenerator', level: 'info', status: 'completed', message: 'Tool finished.', source: 'briefly-tools.ts' });
+    await createLog({ traceId, userId, flowName: 'brieflyStructuredDataGenerator', phase: 'Executing', stepName: 'ToolCompleted', level: 'info', status: 'completed', message: 'Tool finished.', source: 'briefly-tools.ts' });
     return result.generatedData;
   }
 );
+
+    
