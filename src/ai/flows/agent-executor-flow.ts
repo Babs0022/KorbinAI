@@ -87,38 +87,16 @@ Your Cognitive Process follows this reasoning loop:
 ${memoryContext}
 `;
 
-    const formattedMessagesForApi = messages.reduce<Message[]>((acc, message) => {
-        if (message.role === 'system') {
-            return acc;
-        }
-
-        const parts: ({ text: string; } | { inlineData: { mimeType: string; data: string; }; })[] = [];
-        if (message.content && typeof message.content === 'string' && message.content.trim() !== '') {
-            parts.push({ text: message.content });
-        }
-        if (message.imageUrl) {
-            const match = message.imageUrl.match(/^data:(image\/.+);base64,(.+)$/);
-            if (match) {
-                parts.push({
-                    inlineData: { mimeType: match[1], data: match[2] },
-                });
-            }
-        }
-        
-        if (parts.length > 0) {
-            acc.push({
-                role: message.role,
-                content: parts,
-            });
-        }
-        return acc;
-    }, []);
+    const formattedMessagesForApi = messages.map((msg) => ({
+      role: msg.role,
+      content: [{ text: msg.content }],
+    }));
 
 
     let response;
     try {
       response = await ai.generate({
-        model: 'googleai/gemini-1.5-pro-latest',
+        model: 'googleai/gemini-1.5-flash',
         system: systemPrompt,
         messages: formattedMessagesForApi,
         tools: [
@@ -147,7 +125,7 @@ ${memoryContext}
       throw new Error('The agent failed to generate a response. Please check the logs for more details.');
     }
     
-    const toolCalls = response.toolCalls();
+    const toolCalls = response.toolCalls() ?? [];
     
     // Handle the 'saveMemory' call specifically for the learning loop
     const memoryCall = toolCalls.find(call => call.toolName === 'saveMemoryTool');
@@ -276,4 +254,3 @@ ${memoryContext}
     throw new Error('The agent received an invalid response from the AI. Please check the logs for more details.');
   }
 );
-
