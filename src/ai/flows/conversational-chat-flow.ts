@@ -6,7 +6,7 @@
  * - conversationalChat - A function that handles a single turn of a conversation.
  */
 
-import { ai, media } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import {
     ConversationalChatInputSchema,
@@ -63,7 +63,10 @@ Do not be overly robotic or formal. Be creative and helpful.`;
 
     // 3. Map to the format the model expects
     const messages = alternatingHistory.map((msg) => {
-        const content = [{ text: msg.content }];
+        const content: ({text: string} | {media: {url: string}})[] = [];
+        if (msg.content) {
+            content.push({ text: msg.content });
+        }
         if (msg.imageUrl) {
             content.push({ media: { url: msg.imageUrl } });
         }
@@ -79,7 +82,7 @@ Do not be overly robotic or formal. Be creative and helpful.`;
     }
 
     const response = await ai.generate({
-      model: 'googleai/gemini-2.5-flash',
+      model: 'googleai/gemini-1.5-pro-latest',
       system: systemPrompt,
       messages: messages,
       tools: [getCurrentTime, generateImage],
@@ -88,3 +91,4 @@ Do not be overly robotic or formal. Be creative and helpful.`;
     return response.text;
   }
 );
+

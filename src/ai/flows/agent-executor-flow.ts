@@ -19,7 +19,7 @@ import {
 import { createLog } from '@/services/loggingService';
 import { AgentExecutionInputSchema, type AgentExecutionInput, type Message } from '@/types/ai';
 import { v4 as uuidv4 } from 'uuid';
-import { getMemory, saveMemory } from '@/services/memoryService';
+import { getMemory, saveMemoryTool } from '@/services/memoryService';
 
 const FLOW_NAME = 'agentExecutorFlow';
 
@@ -76,12 +76,13 @@ Your Cognitive Process follows this reasoning loop:
 - **brieflyPromptGenerator**: Use for creating or optimizing AI prompts.
 - **brieflyImageGenerator**: Use for creating visual images.
 - **brieflyStructuredDataGenerator**: Use for creating data (JSON, CSV).
+- **saveMemoryTool**: Use to save a key takeaway to your long-term memory after a task is complete.
 
 **Execution Guidance**:
 - If the user's request is purely conversational (e.g., "hello"), respond naturally without using a tool.
 - For tasks, first create a plan, then execute it.
 - After a tool returns a result, present the final output clearly to the user. Do not just return raw tool output. For images, state that you have generated it and present the image URL.
-- After the task is complete, you MUST call the 'saveMemory' tool to record what you learned.
+- After the task is complete, you MUST call the 'saveMemoryTool' to record what you learned.
 
 ${memoryContext}
 `;
@@ -117,7 +118,7 @@ ${memoryContext}
     let response;
     try {
       response = await ai.generate({
-        model: 'googleai/gemini-1.5-pro',
+        model: 'googleai/gemini-1.5-pro-latest',
         system: systemPrompt,
         messages: formattedMessagesForApi,
         tools: [
@@ -125,7 +126,7 @@ ${memoryContext}
           brieflyPromptGenerator,
           brieflyImageGenerator,
           brieflyStructuredDataGenerator,
-          saveMemory, // Add the new learning tool
+          saveMemoryTool, // Add the new learning tool
         ],
         toolChoice: 'auto',
       });
@@ -149,14 +150,14 @@ ${memoryContext}
     const toolCalls = response.toolCalls();
     
     // Handle the 'saveMemory' call specifically for the learning loop
-    const memoryCall = toolCalls.find(call => call.toolName === 'saveMemory');
+    const memoryCall = toolCalls.find(call => call.toolName === 'saveMemoryTool');
     if (memoryCall && userId) {
       await createLog({ traceId, flowName: FLOW_NAME, userId, phase: 'Learning', stepName: 'SaveMemoryCalled', level: 'info', status: 'started', message: 'Agent is saving key takeaway to long-term memory.', source: 'agent-executor-flow.ts', data: memoryCall.args });
       await memoryCall.call();
     }
     
     // Filter out the memory call from the main response to the user
-    const userFacingToolCalls = toolCalls.filter(call => call.toolName !== 'saveMemory');
+    const userFacingToolCalls = toolCalls.filter(call => call.toolName !== 'saveMemoryTool');
     
     // Case 1: A tool call is present.
     if (userFacingToolCalls.length > 0) {
@@ -209,18 +210,18 @@ ${memoryContext}
         // The final response prompt now also instructs the agent to save to memory
         const finalResponsePrompt = `The user asked: "${latestUserMessage}". I used the ${toolName} tool and got this result. 
         1. Formulate a friendly and clear final response to the user, presenting this result. If the result is an image URL, embed it using markdown.
-        2. Based on the entire interaction, call the 'saveMemory' tool with a concise takeaway (e.g., 'User prefers marketing content to be witty', 'User is building a React Native app').
+        2. Based on the entire interaction, call the 'saveMemoryTool' with a concise takeaway (e.g., 'User prefers marketing content to be witty', 'User is building a React Native app').
         
         Result: ${JSON.stringify(toolResult)}`;
         
         const finalResponse = await ai.generate({
             model: 'googleai/gemini-1.5-flash',
             prompt: finalResponsePrompt,
-            tools: [saveMemory],
+            tools: [saveMemoryTool],
         });
 
         // Asynchronously call the memory tool without waiting for it, so user gets response faster
-        const finalMemoryCall = finalResponse.toolCalls().find(call => call.toolName === 'saveMemory');
+        const finalMemoryCall = finalResponse.toolCalls().find(call => call.toolName === 'saveMemoryTool');
         if (finalMemoryCall && userId) {
           finalMemoryCall.args.userId = userId;
           createLog({ traceId, flowName: FLOW_NAME, userId, phase: 'Learning', stepName: 'SaveMemoryCalled', level: 'info', status: 'started', message: 'Agent is saving final key takeaway to long-term memory.', source: 'agent-executor-flow.ts', data: finalMemoryCall.args }).then(() => finalMemoryCall.call());
@@ -276,4 +277,3 @@ ${memoryContext}
   }
 );
 
-    
