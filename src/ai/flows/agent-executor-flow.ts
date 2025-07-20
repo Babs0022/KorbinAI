@@ -4,6 +4,7 @@
  * @fileOverview The Cognitive Core of the Autonomous AI Agent.
  * This flow implements the principles of a proactive, goal-oriented partner by
  * planning, reasoning, and using memory to accomplish complex tasks.
+ * It features a multi-step reasoning loop to chain tool calls and adapt its plan.
  *
  * - agentExecutor - A function that interprets a user request and uses available tools to fulfill it.
  */
@@ -13,15 +14,34 @@ import { z } from 'zod';
 import {
   brieflyImageGenerator,
   brieflyPromptGenerator,
-  brieflyStructuredDataGenerator,
   brieflyWrittenContentGenerator,
+  brieflyStructuredDataGenerator,
 } from '@/ai/tools/briefly-tools';
 import { createLog } from '@/services/loggingService';
-import { AgentExecutionInputSchema, type AgentExecutionInput, type Message } from '@/types/ai';
+import { AgentExecutionInputSchema, type AgentExecutionInput } from '@/types/ai';
 import { v4 as uuidv4 } from 'uuid';
 import { getMemory, saveMemoryTool } from '@/services/memoryService';
+import { Message, ToolRequest, GenerateOptions, Part } from '@genkit-ai/ai/prompt';
+import { experimental } from 'genkit';
+
+const {
+    fromObject,
+    message,
+    part,
+} = experimental.v1;
+
 
 const FLOW_NAME = 'agentExecutorFlow';
+
+// A map of the available tools that the agent can execute.
+const availableTools = {
+  [brieflyWrittenContentGenerator.name]: brieflyWrittenContentGenerator,
+  [brieflyPromptGenerator.name]: brieflyPromptGenerator,
+  [brieflyImageGenerator.name]: brieflyImageGenerator,
+  [brieflyStructuredDataGenerator.name]: brieflyStructuredDataGenerator,
+  [saveMemoryTool.name]: saveMemoryTool,
+};
+
 
 // Export the main async function that calls the flow
 export async function agentExecutor(input: AgentExecutionInput): Promise<string> {
@@ -61,196 +81,157 @@ ${relevantMemory}
 ---
 ` : "No relevant long-term memory found for this query.";
 
-
     const systemPrompt = `You are a proactive, goal-oriented AI agent for the application "BrieflyAI". Your purpose is to help users accomplish creative tasks by understanding high-level goals and creating multi-step plans.
 
 Your Cognitive Process follows this reasoning loop:
-1.  **Perception**: Analyze the user's request and the conversation history (Short-Term Memory). Also, consider any relevant information from your Long-Term Memory.
-2.  **Planning**: Decompose the user's goal into a sequence of smaller, actionable steps. Determine which tool is best suited for each step.
+1.  **Perception**: Analyze the user's request, the conversation history (Short-Term Memory), and relevant Long-Term Memory.
+2.  **Planning**: Decompose the user's goal into a sequence of smaller, actionable steps. If the goal requires multiple actions, create a plan and execute the first step.
 3.  **Action**: Execute the chosen tool with the correct parameters.
-4.  **Reflection**: Analyze the result of the action. If the plan is complete, formulate a final response. If not, decide the next step. If an error occurs, adapt your plan.
-5.  **Learning**: After formulating the final response, identify a key takeaway from this interaction to store in your Long-Term Memory for future use.
+4.  **Reflection**: Analyze the result of the action.
+    - If the plan is complete, formulate a final response to the user.
+    - If the plan is not yet complete, update your plan and decide the next step.
+    - If an error occurs, adapt your plan.
+5.  **Learning**: Once the entire goal is achieved, you MUST call the 'saveMemoryTool' with a key takeaway from the interaction to store in your Long-Term Memory for future use.
 
 **Available Tools**:
 - **brieflyWrittenContentGenerator**: Use for writing text (blog posts, emails, articles).
 - **brieflyPromptGenerator**: Use for creating or optimizing AI prompts.
 - **brieflyImageGenerator**: Use for creating visual images.
 - **brieflyStructuredDataGenerator**: Use for creating data (JSON, CSV).
-- **saveMemoryTool**: Use to save a key takeaway to your long-term memory after a task is complete.
+- **saveMemoryTool**: IMPORTANT: Use this tool ONLY ONCE at the very end of your entire plan to save a key takeaway. Do not use it after every step.
 
 **Execution Guidance**:
+- For complex requests, break them down. For example, to "write a blog post and create an image for it", first use \`brieflyWrittenContentGenerator\` and then, in a second step, use \`brieflyImageGenerator\`.
 - If the user's request is purely conversational (e.g., "hello"), respond naturally without using a tool.
-- For tasks, first create a plan, then execute it.
-- After a tool returns a result, present the final output clearly to the user. Do not just return raw tool output. For images, state that you have generated it and present the image URL.
-- After the task is complete, you MUST call the 'saveMemoryTool' to record what you learned.
+- After a tool returns a result, analyze it. Do not just return raw tool output. Present the final output clearly to the user once all steps are complete.
+- The 'saveMemoryTool' is for learning and should be the final action you take.
 
 ${memoryContext}
 `;
 
-    const formattedMessagesForApi = messages.map((msg) => ({
-      role: msg.role,
-      content: [{ text: msg.content }],
-    }));
-
-
-    let response;
-    try {
-      response = await ai.generate({
-        model: 'googleai/gemini-1.5-flash',
+    const modelConfig: GenerateOptions = {
+        model: 'googleai/gemini-2.5-pro',
         system: systemPrompt,
-        messages: formattedMessagesForApi,
-        tools: [
-          brieflyWrittenContentGenerator,
-          brieflyPromptGenerator,
-          brieflyImageGenerator,
-          brieflyStructuredDataGenerator,
-          saveMemoryTool, // Add the new learning tool
-        ],
+        tools: Object.values(availableTools),
         toolChoice: 'auto',
-      });
-    } catch (error) {
-      const errorForLog = error instanceof Error ? { name: error.name, message: error.message, stack: error.stack } : { data: JSON.stringify(error) };
-      await createLog({
-        traceId,
-        flowName: FLOW_NAME,
-        userId,
-        phase: 'Executing',
-        stepName: 'AIGenerationFailed',
-        level: 'error',
-        status: 'failed',
-        message: 'Agent failed to generate a response during ai.generate() call.',
-        source: 'agent-executor-flow.ts',
-        data: errorForLog,
-      });
-      throw new Error('The agent failed to generate a response. Please check the logs for more details.');
-    }
+    };
     
-    const toolCalls = response.toolCalls() ?? [];
-    
-    // Handle the 'saveMemory' call specifically for the learning loop
-    const memoryCall = toolCalls.find(call => call.toolName === 'saveMemoryTool');
-    if (memoryCall && userId) {
-      await createLog({ traceId, flowName: FLOW_NAME, userId, phase: 'Learning', stepName: 'SaveMemoryCalled', level: 'info', status: 'started', message: 'Agent is saving key takeaway to long-term memory.', source: 'agent-executor-flow.ts', data: memoryCall.args });
-      await memoryCall.call();
-    }
-    
-    // Filter out the memory call from the main response to the user
-    const userFacingToolCalls = toolCalls.filter(call => call.toolName !== 'saveMemoryTool');
-    
-    // Case 1: A tool call is present.
-    if (userFacingToolCalls.length > 0) {
-        const firstToolCall = userFacingToolCalls[0];
-        const toolName = firstToolCall.toolName;
+    // Convert incoming messages to Genkit's format
+    const history: Message[] = messages.map(msg => fromObject(msg) as Message);
 
-        await createLog({
-            traceId,
-            flowName: FLOW_NAME,
-            userId,
-            phase: 'Planning',
-            stepName: 'ToolDecision',
-            level: 'info',
-            status: 'completed',
-            message: `Agent created a plan and decided to use tool: ${toolName}.`,
-            source: 'agent-executor-flow.ts',
-            data: { toolCall: firstToolCall },
-        });
-        
-        // Pass traceId to tools
-        if (userId) firstToolCall.args.userId = userId;
-        firstToolCall.args.traceId = traceId;
+    // --- REASONING LOOP ---
+    let loopCount = 0;
+    const maxLoops = 10; // To prevent infinite loops
 
-        const toolResult = await firstToolCall.call();
+    while (loopCount < maxLoops) {
+        loopCount++;
 
-        await createLog({
-            traceId,
-            flowName: FLOW_NAME,
-            userId,
-            phase: 'Executing',
-            stepName: 'ToolExecution',
-            level: 'info',
-            status: 'completed',
-            message: `Tool ${toolName} executed successfully. Now reflecting on the result.`,
-            source: 'agent-executor-flow.ts',
-        });
-        
-        await createLog({
-            traceId,
-            flowName: FLOW_NAME,
-            userId,
-            phase: 'Thinking',
-            stepName: 'FormulatingFinalResponse',
-            level: 'info',
-            status: 'started',
-            message: 'Agent is formulating the final response and identifying key takeaways for learning.',
-            source: 'agent-executor-flow.ts',
+        const response = await ai.generate({
+            ...modelConfig,
+            messages: history,
         });
 
-        // The final response prompt now also instructs the agent to save to memory
-        const finalResponsePrompt = `The user asked: "${latestUserMessage}". I used the ${toolName} tool and got this result. 
-        1. Formulate a friendly and clear final response to the user, presenting this result. If the result is an image URL, embed it using markdown.
-        2. Based on the entire interaction, call the 'saveMemoryTool' with a concise takeaway (e.g., 'User prefers marketing content to be witty', 'User is building a React Native app').
+        const choice = response.choices[0];
         
-        Result: ${JSON.stringify(toolResult)}`;
+        // If there's no tool call, it's the final answer. Break the loop.
+        if (!choice.message.toolRequest) {
+            history.push(choice.message);
+            break;
+        }
         
-        const finalResponse = await ai.generate({
-            model: 'googleai/gemini-1.5-flash',
-            prompt: finalResponsePrompt,
-            tools: [saveMemoryTool],
-        });
+        // Add the tool request to history
+        history.push(choice.message);
+        
+        const toolRequest: ToolRequest = choice.message.toolRequest;
+        const toolName = toolRequest.name;
+        const toolToRun = availableTools[toolName];
 
-        // Asynchronously call the memory tool without waiting for it, so user gets response faster
-        const finalMemoryCall = finalResponse.toolCalls().find(call => call.toolName === 'saveMemoryTool');
-        if (finalMemoryCall && userId) {
-          finalMemoryCall.args.userId = userId;
-          createLog({ traceId, flowName: FLOW_NAME, userId, phase: 'Learning', stepName: 'SaveMemoryCalled', level: 'info', status: 'started', message: 'Agent is saving final key takeaway to long-term memory.', source: 'agent-executor-flow.ts', data: finalMemoryCall.args }).then(() => finalMemoryCall.call());
+        if (!toolToRun) {
+            throw new Error(`The AI model requested the tool "${toolName}", but it is not available.`);
         }
 
         await createLog({
             traceId,
             flowName: FLOW_NAME,
             userId,
-            phase: 'Completed',
-            stepName: 'AgentSuccessWithTool',
+            phase: 'Planning',
+            stepName: `Step_${loopCount}_ToolDecision`,
             level: 'info',
             status: 'completed',
-            message: 'Agent finished execution successfully with tool.',
+            message: `Agent decided to use tool: ${toolName}.`,
             source: 'agent-executor-flow.ts',
+            data: { toolRequest },
         });
 
-        return finalResponse.text;
-    }
-    
-    // Case 2: No tool call, just a text response.
-    const textResponse = response.text;
-    if (textResponse) {
+        // Add traceId and userId to tool args if they exist
+        const toolInput = { ...toolRequest.input };
+        if (userId) (toolInput as any).userId = userId;
+        (toolInput as any).traceId = traceId;
+        
+        // Execute the tool call
+        let toolResult;
+        try {
+            toolResult = await toolToRun(toolInput);
+        } catch (error) {
+            const errorForLog = error instanceof Error ? { name: error.name, message: error.message } : { data: JSON.stringify(error) };
+            toolResult = `Error executing tool ${toolName}: ${error instanceof Error ? error.message : 'An unknown error occurred'}`;
+            await createLog({
+                traceId, flowName: FLOW_NAME, userId, phase: 'Executing',
+                stepName: `Step_${loopCount}_ToolExecutionFailed`, level: 'error', status: 'failed',
+                message: `Tool ${toolName} failed to execute.`, source: 'agent-executor-flow.ts', data: errorForLog,
+            });
+        }
+
         await createLog({
-            traceId,
-            flowName: FLOW_NAME,
-            userId,
-            phase: 'Completed',
-            stepName: 'AgentSuccessNoTool',
-            level: 'info',
-            status: 'completed',
-            message: 'Agent finished with a conversational response.',
-            source: 'agent-executor-flow.ts',
-            data: { response: textResponse },
+            traceId, flowName: FLOW_NAME, userId, phase: 'Executing',
+            stepName: `Step_${loopCount}_ToolExecution`, level: 'info', status: 'completed',
+            message: `Tool ${toolName} executed. Reflecting on result.`, source: 'agent-executor-flow.ts',
         });
-        return textResponse;
+        
+        // Add the tool's output to the history for the next iteration
+        history.push(message({
+            role: 'tool',
+            content: [part({
+                toolResponse: {
+                    name: toolName,
+                    ref: toolRequest.ref,
+                    output: toolResult,
+                }
+            })]
+        }));
+
+        // If the learning tool was just called, we can likely end the loop.
+        if (toolName === 'saveMemoryTool') {
+            break;
+        }
     }
 
-    // Case 3: Invalid response from the AI.
+    // --- END OF REASONING LOOP ---
+
+    const finalMessage = history[history.length - 1];
+    const finalResponseText = finalMessage.content.map(part => part.text || '').join('');
+
+    if (finalResponseText) {
+         await createLog({
+            traceId, flowName: FLOW_NAME, userId,
+            phase: 'Completed', stepName: 'AgentSuccess',
+            level: 'info', status: 'completed',
+            message: 'Agent finished execution successfully.',
+            source: 'agent-executor-flow.ts',
+        });
+        return finalResponseText;
+    }
+
+
+    // If we get here, something went wrong (e.g., loop ended without a text response).
     await createLog({
-        traceId,
-        flowName: FLOW_NAME,
-        userId,
-        phase: 'Executing',
-        stepName: 'InvalidAIResponse',
-        level: 'error',
-        status: 'failed',
-        message: 'Agent received an invalid response from the AI (no tool call and no parsable text).',
+        traceId, flowName: FLOW_NAME, userId,
+        phase: 'Executing', stepName: 'InvalidAIFinalResponse',
+        level: 'error', status: 'failed',
+        message: 'Agent loop completed without generating a final text response.',
         source: 'agent-executor-flow.ts',
-        data: { response: JSON.parse(JSON.stringify(response)) },
+        data: { history: JSON.parse(JSON.stringify(history)) },
     });
-    throw new Error('The agent received an invalid response from the AI. Please check the logs for more details.');
+    throw new Error('The agent did not produce a final response. Please check the logs.');
   }
 );
