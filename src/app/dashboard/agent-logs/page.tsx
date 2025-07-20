@@ -68,9 +68,6 @@ const DataViewer = ({ data }: { data?: BrieflyLog['data'] }) => {
     }
 
     const content = JSON.stringify(data, null, 2);
-    if (content === '{}') {
-        return null;
-    }
 
     return (
         <details className="mt-2 group">
@@ -123,7 +120,7 @@ export default function AgentLogsPage() {
         }
     }, [user, authLoading, fetchLogs]);
 
-    const groupedLogs = useMemo(() => {
+    const sortedLogGroups = useMemo(() => {
         const groups: GroupedLogs = logs.reduce((acc, log) => {
             const traceId = log.traceId;
             if (!acc[traceId]) {
@@ -133,13 +130,11 @@ export default function AgentLogsPage() {
             return acc;
         }, {} as GroupedLogs);
 
-        const sortedGroups = Object.entries(groups).sort(([, groupA], [, groupB]) => {
+        return Object.entries(groups).sort(([, groupA], [, groupB]) => {
             const timeA = new Date(groupA[0]?.metadata.timestamp || 0).getTime();
             const timeB = new Date(groupB[0]?.metadata.timestamp || 0).getTime();
             return timeB - timeA;
         });
-
-        return Object.fromEntries(sortedGroups);
     }, [logs]);
 
     return (
@@ -161,15 +156,16 @@ export default function AgentLogsPage() {
 
                     {isLoading ? (
                         <LogSkeleton />
-                    ) : Object.keys(groupedLogs).length === 0 ? (
+                    ) : sortedLogGroups.length === 0 ? (
                         <EmptyState />
                     ) : (
                         <Accordion type="multiple" className="w-full space-y-4">
-                            {Object.entries(groupedLogs).map(([traceId, logGroup]) => {
+                            {sortedLogGroups.map(([traceId, logGroup]) => {
                                 const firstLog = logGroup[0];
                                 const finalLog = logGroup[logGroup.length - 1];
                                 const finalStatus = finalLog.status;
                                 const userPrompt = firstLog?.message.match(/Agent started for prompt: "([^"]+)"/)?.[1] || "Agent Task";
+                                const FinalStatusIcon = statusIcons[finalStatus]?.icon || Bot;
 
 
                                 return (
@@ -177,7 +173,7 @@ export default function AgentLogsPage() {
                                         <AccordionTrigger className="p-4 bg-secondary/50 hover:bg-secondary/80 hover:no-underline data-[state=open]:border-b data-[state=open]:rounded-b-none">
                                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-left w-full">
                                                 <div className={cn("mt-1 sm:mt-0", statusIcons[finalStatus]?.color || "text-gray-400")}>
-                                                    {statusIcons[finalStatus] ? <statusIcons[finalStatus].icon className="h-5 w-5" /> : <Bot className="h-5 w-5"/>}
+                                                    <FinalStatusIcon className="h-5 w-5" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-mono text-sm font-semibold text-foreground break-words">{userPrompt}</p>
