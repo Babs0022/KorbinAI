@@ -32,7 +32,7 @@ const CodeBlock = ({ className, children }: { className?: string; children: Reac
     };
 
     return match ? (
-        <div className="relative my-4 rounded-lg bg-secondary">
+        <div className="relative my-4 rounded-lg bg-secondary border">
             <div className="flex items-center justify-between px-4 py-2 border-b">
                 <span className="text-xs font-sans text-muted-foreground">{match[1]}</span>
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCopy}>
@@ -50,7 +50,7 @@ const CodeBlock = ({ className, children }: { className?: string; children: Reac
             </SyntaxHighlighter>
         </div>
     ) : (
-        <code className={className}>{children}</code>
+        <code className={cn("bg-secondary text-foreground p-1 rounded-md border", className)}>{children}</code>
     );
 };
 
@@ -69,10 +69,10 @@ const ImageBlock = ({ src, alt }: { src?: string; alt?: string }) => {
     };
     
     return (
-        <div className="relative my-4 group">
+        <div className="relative my-4 group bg-secondary border rounded-lg p-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src} alt={alt} className="rounded-lg border max-w-full h-auto" />
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <img src={src} alt={alt} className="rounded-lg max-w-full h-auto" />
+            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button variant="secondary" size="icon" onClick={handleDownload}>
                     <Download className="h-4 w-4" />
                 </Button>

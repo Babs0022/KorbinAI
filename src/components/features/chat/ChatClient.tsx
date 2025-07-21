@@ -49,6 +49,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [mode, setMode] = useState<ChatMode>('chat');
     
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -152,16 +153,16 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                     <ImagePlus className="h-5 w-5 text-muted-foreground" />
                                     <span className="sr-only">Upload image</span>
                                 </Button>
-                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                                 
                                 <div className="flex items-center rounded-md bg-background p-1 border">
                                     <div className="relative">
                                         <Button 
                                             type="button"
-                                            variant={'ghost'} 
+                                            variant={mode === 'agent' ? 'default' : 'ghost'}
                                             size="sm"
                                             className="h-8 gap-2"
-                                            disabled
+                                            onClick={() => setMode('agent')}
+                                            disabled={true}
                                         >
                                             Agent
                                         </Button>
@@ -169,9 +170,10 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                     </div>
                                     <Button 
                                         type="button"
-                                        variant={'default'} 
+                                        variant={mode === 'chat' ? 'default' : 'ghost'} 
                                         size="sm"
                                         className="h-8 gap-2"
+                                        onClick={() => setMode('chat')}
                                     >
                                         Chat
                                     </Button>
@@ -196,7 +198,6 @@ export default function ChatClient() {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [mode, setMode] = useState<ChatMode>('chat');
   const [greeting, setGreeting] = useState("Hey");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -292,10 +293,10 @@ export default function ChatClient() {
               )}
               <div
                   className={cn(
-                    "max-w-xl rounded-xl shadow-md",
+                    "max-w-xl",
                     message.role === "user"
-                      ? "bg-primary text-primary-foreground p-3"
-                      : "prose dark:prose-invert max-w-none bg-secondary p-4"
+                      ? "rounded-xl shadow-md bg-primary text-primary-foreground p-3"
+                      : "" // Removed styling from AI message container
                   )}
               >
                   {message.imageUrl && <Image src={message.imageUrl} alt="User upload" width={300} height={300} className="rounded-lg mb-2" />}
