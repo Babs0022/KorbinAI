@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, forwardRef, memo } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { LoaderCircle, Send, ImagePlus, X, ChevronDown } from "lucide-react";
+import { LoaderCircle, Send, ImagePlus, X, MessageSquare, Bot } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
@@ -19,13 +19,6 @@ import MarkdownRenderer from "@/components/shared/MarkdownRenderer";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
 
 const formSchema = z.object({
   message: z.string(), // Allow empty message if an image is attached
@@ -102,8 +95,8 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     };
 
     return (
-        <div className={cn("w-full px-4", className)}>
-            <div className="mx-auto w-full max-w-4xl">
+        <div className={cn("sticky bottom-0 bg-gradient-to-t from-background to-transparent pt-4 pb-8", className)}>
+            <div className="mx-auto w-full max-w-4xl px-4">
                 <FormProvider {...form}>
                     <form
                         ref={ref}
@@ -137,7 +130,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                             <FormControl>
                                 <Textarea
                                     placeholder={mode === 'chat' ? "Ask Briefly anything..." : "Tell the agent what to do..."}
-                                    className="text-xl min-h-[90px] bg-secondary border-0 focus-visible:ring-0 resize-none placeholder:text-xl"
+                                    className="text-lg min-h-[90px] bg-secondary border-0 focus-visible:ring-0 resize-none placeholder:text-lg"
                                     autoComplete="off"
                                     disabled={isLoading}
                                     onKeyDown={handleKeyDown}
@@ -148,29 +141,35 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                         )}
                         />
                         <div className="flex items-center justify-between p-2">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-2">
                                 <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
                                     <ImagePlus className="h-5 w-5 text-muted-foreground" />
                                     <span className="sr-only">Upload image</span>
                                 </Button>
                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="gap-2">
-                                        <span className="capitalize">{mode}</span>
-                                        <ChevronDown className="h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start">
-                                        <DropdownMenuItem onSelect={() => onModeChange('chat')}>
-                                            Chat
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => onModeChange('agent')}>
-                                            Agent
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                
+                                <div className="flex items-center rounded-md bg-background p-1 border">
+                                    <Button 
+                                        type="button"
+                                        variant={mode === 'chat' ? 'default' : 'ghost'} 
+                                        size="sm"
+                                        className="h-8 gap-2"
+                                        onClick={() => onModeChange("chat")}
+                                    >
+                                        <MessageSquare className="h-4 w-4" />
+                                        Chat
+                                    </Button>
+                                    <Button 
+                                        type="button"
+                                        variant={mode === 'agent' ? 'default' : 'ghost'} 
+                                        size="sm"
+                                        className="h-8 gap-2"
+                                        onClick={() => onModeChange("agent")}
+                                    >
+                                        <Bot className="h-4 w-4" />
+                                        Agent
+                                    </Button>
+                                </div>
                             </div>
                             
                             <Button type="submit" size="sm" className="rounded-lg" disabled={isLoading}>
@@ -192,11 +191,23 @@ export default function ChatClient() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<ChatMode>('chat');
+  const [greeting, setGreeting] = useState("Hey");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+  
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) {
+      setGreeting("Good morning");
+    } else if (hour < 18) {
+      setGreeting("Good afternoon");
+    } else {
+      setGreeting("Good evening");
+    }
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
@@ -253,22 +264,22 @@ export default function ChatClient() {
     if (messages.length === 0) {
       const userName = user?.displayName ? `, ${user.displayName.split(' ')[0]}` : '';
       return (
-        <div className="flex-1 flex flex-col items-center justify-center p-4">
-            <div className="text-center space-y-4">
-                <h1 className="text-4xl font-bold">Hey{userName}</h1>
-                <p className="text-xl text-muted-foreground">How can I help you today?</p>
+        <div className="flex-grow flex flex-col items-center justify-center p-4">
+            <div className="text-center space-y-4 max-w-full">
+                <h1 className="text-3xl sm:text-4xl font-bold break-words">{greeting}{userName}</h1>
+                <p className="text-lg sm:text-xl text-muted-foreground">How can I help you today?</p>
             </div>
         </div>
       );
     }
 
     return (
-      <div className="w-full max-w-4xl mx-auto space-y-6">
+      <div className="flex-grow w-full max-w-4xl mx-auto space-y-6 px-4">
           {messages.map((message, index) => (
               <div
               key={index}
               className={cn(
-                  "flex items-start gap-4",
+                  "flex items-start gap-4 w-full",
                   message.role === "user" ? "justify-end" : "justify-start"
               )}
               >
@@ -280,10 +291,10 @@ export default function ChatClient() {
               )}
               <div
                   className={cn(
-                    "max-w-xl",
+                    "max-w-xl rounded-xl shadow-md",
                     message.role === "user"
-                      ? "rounded-xl bg-primary text-primary-foreground p-3 shadow-md"
-                      : "prose dark:prose-invert max-w-none"
+                      ? "bg-primary text-primary-foreground p-3"
+                      : "prose dark:prose-invert max-w-none bg-secondary p-4"
                   )}
               >
                   {message.imageUrl && <Image src={message.imageUrl} alt="User upload" width={300} height={300} className="rounded-lg mb-2" />}
@@ -309,18 +320,17 @@ export default function ChatClient() {
 
 
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+    <div className="flex-grow flex flex-col">
+      <div className="flex-grow flex flex-col overflow-y-auto pt-6">
         {renderContent()}
       </div>
-      <div className="sticky bottom-0 bg-gradient-to-t from-background to-transparent pt-4 pb-8">
-          <ChatInputForm
-            onSubmit={handleNewMessage}
-            isLoading={isLoading}
-            mode={mode}
-            onModeChange={setMode}
-          />
-      </div>
+      <ChatInputForm
+        onSubmit={handleNewMessage}
+        isLoading={isLoading}
+        mode={mode}
+        onModeChange={setMode}
+        className="flex-shrink-0"
+      />
     </div>
   );
 }
