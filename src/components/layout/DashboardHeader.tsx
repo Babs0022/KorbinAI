@@ -203,7 +203,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
         <div className="flex flex-col h-full">
             <div className="flex items-center justify-between gap-2 p-4 border-b">
                  <Link href="/" className={cn("flex items-center gap-2 font-semibold text-lg", state === 'collapsed' && !isMobile && "justify-center")}>
-                    <Logo />
+                    <span><Logo /></span>
                     <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>BrieflyAI</span>
                  </Link>
             </div>
