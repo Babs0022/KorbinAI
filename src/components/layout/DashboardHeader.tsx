@@ -75,7 +75,7 @@ function MenuThemeToggle() {
 
 export default function DashboardHeader({ variant = 'main' }: DashboardHeaderProps) {
   const { user, logout, loading } = useAuth();
-  const { state } = useSidebar();
+  const { state, isMobile } = useSidebar();
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
@@ -139,7 +139,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 <SidebarMenuButton asChild>
                     <Link href="/">
                         <LayoutGrid />
-                        <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Dashboard</span>
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Dashboard</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
@@ -147,7 +147,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 <SidebarMenuButton asChild>
                     <Link href="/dashboard/projects">
                         <FolderKanban />
-                        <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Projects</span>
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Projects</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
@@ -155,7 +155,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 <SidebarMenuButton asChild>
                     <Link href="/dashboard/agent-logs">
                         <Bot />
-                        <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Agent Logs</span>
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Agent Logs</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
@@ -168,7 +168,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <SidebarMenuButton asChild tooltip={{children: 'Written Content'}}>
                         <Link href="/written-content">
                             <Feather />
-                            <span>Written Content</span>
+                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Written Content</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -176,7 +176,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <SidebarMenuButton asChild tooltip={{children: 'Prompt Generator'}}>
                         <Link href="/prompt-generator">
                             <Bolt />
-                            <span>Prompt Generator</span>
+                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Prompt Generator</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -184,7 +184,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <SidebarMenuButton asChild tooltip={{children: 'Image Generator'}}>
                         <Link href="/image-generator">
                             <ImageIcon />
-                            <span>Image Generator</span>
+                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Image Generator</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -192,7 +192,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <SidebarMenuButton asChild tooltip={{children: 'Structured Data'}}>
                         <Link href="/structured-data">
                             <Code2 />
-                            <span>Structured Data</span>
+                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Structured Data</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -206,7 +206,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
         <div className="flex flex-col h-full">
             <div className="flex items-center justify-between gap-2 p-4 border-b">
                  <Logo />
-                <div className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>
+                <div className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>
                     <ThemeToggle />
                 </div>
             </div>
@@ -227,7 +227,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                                     <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
                                     <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                                 </Avatar>
-                                <div className={cn("text-left transition-opacity", state === 'collapsed' && 'opacity-0')}>
+                                <div className={cn("text-left transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>
                                     <p className="text-sm font-medium leading-none">{user.displayName}</p>
                                     <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                                 </div>
