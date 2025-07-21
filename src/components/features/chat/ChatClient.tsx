@@ -18,7 +18,6 @@ import MarkdownRenderer from "@/components/shared/MarkdownRenderer";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
-import { Badge } from "@/components/ui/badge";
 
 const formSchema = z.object({
   message: z.string(), // Allow empty message if an image is attached
@@ -27,7 +26,6 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-type ChatMode = 'chat' | 'agent';
 
 // Custom SVG Icon based on the sketch
 const SendIcon = () => (
@@ -49,7 +47,6 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-    const [mode, setMode] = useState<ChatMode>('chat');
     
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -171,31 +168,6 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                     multiple
                                     accept="image/png, image/jpeg, image/gif, image/webp"
                                 />
-                                
-                                <div className="flex items-center rounded-md bg-background p-1 border">
-                                    <div className="relative">
-                                        <Button 
-                                            type="button"
-                                            variant={'ghost'}
-                                            size="sm"
-                                            className="h-8 gap-2"
-                                            onClick={() => setMode('agent')}
-                                            disabled={true}
-                                        >
-                                            Agent
-                                        </Button>
-                                        <Badge variant="secondary" className="absolute -top-2 -right-3 text-xs">Soon</Badge>
-                                    </div>
-                                    <Button 
-                                        type="button"
-                                        variant={'default'} 
-                                        size="sm"
-                                        className="h-8 gap-2"
-                                        onClick={() => setMode('chat')}
-                                    >
-                                        Chat
-                                    </Button>
-                                </div>
                             </div>
                             
                             <Button type="submit" size="sm" className="rounded-lg" disabled={isLoading}>
