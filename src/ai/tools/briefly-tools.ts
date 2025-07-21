@@ -58,7 +58,8 @@ export const brieflyWrittenContentGenerator = ai.defineTool(
     await createLog({ traceId, userId, flowName: 'brieflyWrittenContentGenerator', phase: 'Executing', stepName: 'ToolStarted', level: 'info', status: 'started', message: 'Executing tool.', source: 'briefly-tools.ts', data: input });
     const result = await generateWrittenContent(input as GenerateWrittenContentInput);
     await createLog({ traceId, userId, flowName: 'brieflyWrittenContentGenerator', phase: 'Executing', stepName: 'ToolCompleted', level: 'info', status: 'completed', message: 'Tool finished.', source: 'briefly-tools.ts' });
-    return result.generatedContent;
+    // Wrap the content in a markdown code block to make it appear in a container.
+    return `\`\`\`markdown\n${result.generatedContent}\n\`\`\``;
   }
 );
 
@@ -113,4 +114,3 @@ export const brieflyStructuredDataGenerator = ai.defineTool(
     return result.generatedData;
   }
 );
-

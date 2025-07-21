@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, forwardRef, memo } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { LoaderCircle, ImagePlus, X, Bot, MessageSquare } from "lucide-react";
+import { LoaderCircle, ImagePlus, X } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
@@ -296,18 +296,12 @@ export default function ChatClient() {
                     "max-w-xl",
                     message.role === "user"
                       ? "rounded-xl shadow-md bg-primary text-primary-foreground p-3"
-                      : "" // Removed styling from AI message container
+                      : ""
                   )}
               >
                   {message.imageUrl && <Image src={message.imageUrl} alt="User upload" width={300} height={300} className="rounded-lg mb-2" />}
                   <MarkdownRenderer>{message.content}</MarkdownRenderer>
               </div>
-                  {message.role === "user" && user && (
-                  <Avatar className="h-9 w-9">
-                      <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
-                      <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                  </Avatar>
-              )}
               </div>
           ))}
               {isLoading && (
