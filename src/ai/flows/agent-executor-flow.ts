@@ -21,14 +21,7 @@ import { createLog } from '@/services/loggingService';
 import { AgentExecutionInputSchema, type AgentExecutionInput } from '@/types/ai';
 import { v4 as uuidv4 } from 'uuid';
 import { getMemory, saveMemoryTool } from '@/services/memoryService';
-import { Message, ToolRequest, GenerateOptions, Part } from '@genkit-ai/ai/prompt';
-import { experimental } from 'genkit';
-
-const {
-    fromObject,
-    message,
-    part,
-} = experimental.v1;
+import { Message, ToolRequest, GenerateOptions, Part } from '@genkit-ai/ai';
 
 
 const FLOW_NAME = 'agentExecutorFlow';
@@ -102,7 +95,7 @@ Your Cognitive Process follows this reasoning loop:
 
 **Execution Guidance**:
 - For complex requests, break them down. For example, to "write a blog post and create an image for it", first use \`brieflyWrittenContentGenerator\` and then, in a second step, use \`brieflyImageGenerator\`.
-- If the user's request is purely conversational (e.g., "hello"), respond naturally without using a tool.
+- If the user's request is purely conversational (e.g., "hello"), respond naturally withoutusing a tool.
 - After a tool returns a result, analyze it. Do not just return raw tool output. Present the final output clearly to the user once all steps are complete.
 - The 'saveMemoryTool' is for learning and should be the final action you take.
 
@@ -110,14 +103,20 @@ ${memoryContext}
 `;
 
     const modelConfig: GenerateOptions = {
-        model: 'googleai/gemini-2.5-pro',
+        model: 'googleai/gemini-1.5-pro', // Corrected model name
         system: systemPrompt,
         tools: Object.values(availableTools),
         toolChoice: 'auto',
     };
     
     // Convert incoming messages to Genkit's format
-    const history: Message[] = messages.map(msg => fromObject(msg) as Message);
+    const history: Message[] = messages.map(msg => {
+        const contentParts: Part[] = [{ text: msg.content }];
+        if (msg.imageUrl) {
+            contentParts.push({ media: { url: msg.imageUrl } });
+        }
+        return { role: msg.role, content: contentParts };
+    });
 
     // --- REASONING LOOP ---
     let loopCount = 0;
@@ -130,6 +129,24 @@ ${memoryContext}
             ...modelConfig,
             messages: history,
         });
+        
+        // Add defensive check for response.choices
+        if (!response.choices || response.choices.length === 0) {
+            const errorData = { response: 'No response body available.' };
+            try {
+                errorData.response = JSON.parse(JSON.stringify(response));
+            } catch (e) { /* Ignore parsing errors if response is not serializable */ }
+
+            await createLog({
+                traceId, flowName: FLOW_NAME, userId,
+                phase: 'Executing', stepName: 'InvalidAIGenerationResponse',
+                level: 'error', status: 'failed',
+                message: 'AI generation returned no choices. This may be due to an invalid model name or API error.',
+                source: 'agent-executor-flow.ts',
+                data: errorData,
+            });
+            throw new Error('AI generation failed to produce a response.');
+        }
 
         const choice = response.choices[0];
         
@@ -189,16 +206,16 @@ ${memoryContext}
         });
         
         // Add the tool's output to the history for the next iteration
-        history.push(message({
+        history.push({
             role: 'tool',
-            content: [part({
+            content: [{
                 toolResponse: {
                     name: toolName,
                     ref: toolRequest.ref,
                     output: toolResult,
                 }
-            })]
-        }));
+            }]
+        });
 
         // If the learning tool was just called, we can likely end the loop.
         if (toolName === 'saveMemoryTool') {

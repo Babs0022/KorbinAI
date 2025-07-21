@@ -11,14 +11,13 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, FileText, Shield, PanelLeft, Sun, Moon, Mail, UserPlus, Bot, Monitor } from "lucide-react";
+import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, FileText, Shield, PanelLeft, Sun, Moon, Mail, UserPlus, Bot, Monitor, MessageSquare, Feather, Bolt, Image, Code2, Wand2 } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -167,8 +166,8 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   const SidebarNav = () => (
     <nav className="flex flex-col gap-2 p-2">
         <Link href="/" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
-            <LayoutGrid />
-            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Dashboard</span>
+            <MessageSquare />
+            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Chat</span>
         </Link>
         <Link href="/dashboard/projects" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
             <FolderKanban />
@@ -182,20 +181,26 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
               <span>Agent Logs</span>
             </div>
         </Link>
-        <div className="flex items-center gap-3 p-2 rounded-md text-muted-foreground/50 cursor-not-allowed relative">
-            <CreditCard />
-            <div className={cn("flex w-full items-center justify-between transition-opacity", state === 'collapsed' && 'opacity-0')}>
-              <span>Billing</span>
-               <Badge variant="secondary" className="absolute right-2 top-1/2 -translate-y-1/2">Soon</Badge>
-            </div>
-        </div>
-        <Link href="/dashboard/account" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
-            <User />
-            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Account</span>
+
+        <Separator className="my-2" />
+        
+        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Tools</div>
+        
+        <Link href="/written-content" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+            <Feather />
+            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Written Content</span>
         </Link>
-        <Link href="/dashboard/settings" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
-            <Settings />
-            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Settings</span>
+        <Link href="/prompt-generator" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+            <Bolt />
+            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Prompt Generator</span>
+        </Link>
+        <Link href="/image-generator" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+            <Image />
+            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Image Generator</span>
+        </Link>
+        <Link href="/structured-data" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+            <Code2 />
+            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Structured Data</span>
         </Link>
         
         <Separator className="my-2" />
