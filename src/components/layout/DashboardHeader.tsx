@@ -14,14 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Settings, LogOut, FolderKanban, Bot, Sun, Moon, Monitor, UserPlus, Feather, Bolt, Image as ImageIcon, Code2, CreditCard, FileText, Shield, MessageSquare } from "lucide-react";
-import { SidebarProvider, Sidebar, SidebarInset, useSidebar, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
+import { User, Settings, LogOut, FolderKanban, Bot, Sun, Moon, Monitor, CreditCard, FileText, Shield, Feather, Bolt, Image as ImageIcon, Code2, MessageSquare } from "lucide-react";
+import { useSidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import Logo from "@/components/shared/Logo";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Badge } from "../ui/badge";
-
 
 interface DashboardHeaderProps {
     variant?: 'main' | 'sidebar';
@@ -66,7 +65,7 @@ function MenuThemeToggle() {
 export default function DashboardHeader({ variant = 'main' }: DashboardHeaderProps) {
   const { user, logout, loading } = useAuth();
   const { subscription } = useSubscription();
-  const { state, isMobile, open, toggleSidebar } = useSidebar();
+  const { state, isMobile } = useSidebar();
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
@@ -79,13 +78,13 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   
   const UserProfileMenu = () => {
     if (loading) {
-      return <Skeleton className="h-10 w-10 rounded-md" />
+      return <Skeleton className="h-10 w-10 rounded-full" />
     }
     if (user) {
       return (
          <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" className="relative h-10 w-10 p-0">
+                 <Button variant="ghost" className="relative h-10 w-10 p-0 rounded-full">
                     <Avatar className="h-10 w-10">
                         <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
                         <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
@@ -94,7 +93,8 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-64" align="end" forceMount>
                <DropdownMenuLabel className="font-normal">
-                 <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
+                 <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                 <p className="text-xs leading-none text-muted-foreground truncate pt-1">{user.email}</p>
               </DropdownMenuLabel>
                <DropdownMenuSeparator />
                 <DropdownMenuItem asChild><Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
@@ -122,7 +122,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     return (
         <Button asChild>
             <Link href="/login">
-                <UserPlus className="mr-2 h-4 w-4" />
                 Sign In
             </Link>
         </Button>
@@ -149,52 +148,53 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                    <Link href="/dashboard/agent-logs">
+                <div className="relative">
+                    <SidebarMenuButton disabled>
                         <Bot />
                         <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Agent Logs</span>
+                    </SidebarMenuButton>
+                    <Badge variant="secondary" className="absolute top-1 right-2 group-data-[collapsible=icon]:hidden">Soon</Badge>
+                </div>
+            </SidebarMenuItem>
+        </SidebarMenu>
+        
+        <div className="px-2 py-2 text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
+            Briefs
+        </div>
+        <SidebarMenu>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{children: 'Written Content'}}>
+                    <Link href="/written-content">
+                        <Feather />
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Written Content</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{children: 'Prompt Generator'}}>
+                    <Link href="/prompt-generator">
+                        <Bolt />
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Prompt Generator</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{children: 'Image Generator'}}>
+                    <Link href="/image-generator">
+                        <ImageIcon />
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Image Generator</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{children: 'Structured Data'}}>
+                    <Link href="/structured-data">
+                        <Code2 />
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Structured Data</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>
-        
-        <SidebarGroup>
-            <SidebarGroupLabel>Briefs</SidebarGroupLabel>
-            <SidebarMenu>
-                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip={{children: 'Written Content'}}>
-                        <Link href="/written-content">
-                            <Feather />
-                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Written Content</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip={{children: 'Prompt Generator'}}>
-                        <Link href="/prompt-generator">
-                            <Bolt />
-                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Prompt Generator</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip={{children: 'Image Generator'}}>
-                        <Link href="/image-generator">
-                            <ImageIcon />
-                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Image Generator</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip={{children: 'Structured Data'}}>
-                        <Link href="/structured-data">
-                            <Code2 />
-                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Structured Data</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
-        </SidebarGroup>
     </nav>
   );
 
@@ -202,7 +202,10 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     return (
         <div className="flex flex-col h-full">
             <div className="flex items-center justify-between gap-2 p-4 border-b">
-                 <Logo />
+                 <Link href="/" className={cn("flex items-center gap-2 font-semibold text-lg", state === 'collapsed' && !isMobile && "justify-center")}>
+                    <Logo />
+                    <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>BrieflyAI</span>
+                 </Link>
             </div>
             <div className="flex-1 overflow-y-auto">
                 <SidebarNav />
@@ -255,10 +258,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
         <div className="flex items-center gap-2">
             <SidebarTrigger />
             <div className="md:hidden">
-                <Logo />
-            </div>
-            <div className="h-6 border-l mx-2 hidden md:block"></div>
-            <div className="hidden md:block">
                 <Logo />
             </div>
         </div>

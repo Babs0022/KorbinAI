@@ -5,11 +5,10 @@ import { useState, useRef, useEffect, forwardRef, memo } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { LoaderCircle, ImagePlus, X } from "lucide-react";
+import { LoaderCircle, ImagePlus, X, Bot, MessageSquare } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
-import { agentExecutor } from "@/ai/flows/agent-executor-flow"; // Import the agent flow
 import { type Message } from "@/types/ai";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -19,6 +18,7 @@ import MarkdownRenderer from "@/components/shared/MarkdownRenderer";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
+import { Badge } from "@/components/ui/badge";
 
 const formSchema = z.object({
   message: z.string(), // Allow empty message if an image is attached
@@ -41,13 +41,11 @@ const SendIcon = () => (
 interface ChatInputFormProps {
   onSubmit: (values: FormValues, image?: string) => void;
   isLoading: boolean;
-  mode: ChatMode;
-  onModeChange: (mode: ChatMode) => void;
 }
 
 
 // Memoize the form component to prevent re-renders on parent state changes.
-const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, mode, onModeChange }, ref) => {
+const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -137,7 +135,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                             <FormItem>
                             <FormControl>
                                 <Textarea
-                                    placeholder={mode === 'chat' ? "Ask Briefly anything..." : "Tell the agent what to do..."}
+                                    placeholder={"Ask Briefly anything..."}
                                     className="text-lg min-h-[90px] bg-secondary border-0 focus-visible:ring-0 resize-none placeholder:text-lg"
                                     autoComplete="off"
                                     disabled={isLoading}
@@ -157,21 +155,23 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                                 
                                 <div className="flex items-center rounded-md bg-background p-1 border">
+                                    <div className="relative">
+                                        <Button 
+                                            type="button"
+                                            variant={'ghost'} 
+                                            size="sm"
+                                            className="h-8 gap-2"
+                                            disabled
+                                        >
+                                            Agent
+                                        </Button>
+                                        <Badge variant="secondary" className="absolute -top-2 -right-3 text-xs">Soon</Badge>
+                                    </div>
                                     <Button 
                                         type="button"
-                                        variant={mode === 'agent' ? 'default' : 'ghost'} 
+                                        variant={'default'} 
                                         size="sm"
                                         className="h-8 gap-2"
-                                        onClick={() => onModeChange("agent")}
-                                    >
-                                        Agent
-                                    </Button>
-                                    <Button 
-                                        type="button"
-                                        variant={mode === 'chat' ? 'default' : 'ghost'} 
-                                        size="sm"
-                                        className="h-8 gap-2"
-                                        onClick={() => onModeChange("chat")}
                                     >
                                         Chat
                                     </Button>
@@ -196,7 +196,7 @@ export default function ChatClient() {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [mode, setMode] = useState<ChatMode>('agent');
+  const [mode, setMode] = useState<ChatMode>('chat');
   const [greeting, setGreeting] = useState("Hey");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -227,14 +227,9 @@ export default function ChatClient() {
     setIsLoading(true);
 
     try {
-      let response;
-      if (mode === 'agent') {
-        response = await agentExecutor({ userId: user?.uid, messages: newHistory });
-      } else {
-        response = await conversationalChat({
-          history: newHistory,
-        });
-      }
+      const response = await conversationalChat({
+        history: newHistory,
+      });
 
       if (typeof response === 'string' && response.trim().length > 0) {
         const aiMessage: Message = { role: "model", content: response };
@@ -333,8 +328,6 @@ export default function ChatClient() {
       <ChatInputForm
         onSubmit={handleNewMessage}
         isLoading={isLoading}
-        mode={mode}
-        onModeChange={setMode}
       />
     </div>
   );
