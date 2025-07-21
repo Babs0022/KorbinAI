@@ -198,7 +198,7 @@ export type GeneratePromptFormatSuggestionsOutput = z.infer<typeof GeneratePromp
 // === generate-section-draft-flow ===
 export const GenerateSectionDraftInputSchema = z.object({
   sectionToDraft: z.string().describe('The specific outline section title to be drafted.'),
-  fullOutline: z.array(z.array(z.string())).describe('The complete list of all section titles in the outline.'),
+  fullOutline: z.array(z.string()).describe('The complete list of all section titles in the outline.'),
   mainTopic: z.string().describe('The main topic of the entire piece of content.'),
   priorContent: z.string().optional().describe('The content that was generated for the previous sections, to ensure a smooth transition.'),
   contentType: z.string().describe("The type of content (e.g., 'Blog Post')."),
@@ -269,20 +269,3 @@ export const OptimizeContentOutputSchema = z.object({
   optimizedContent: z.string().describe("The optimized content or a list of suggestions, formatted as a markdown string."),
 });
 export type OptimizeContentOutput = z.infer<typeof OptimizeContentOutputSchema>;
-
-
-// === generate-content-outline-flow (OLD) ===
-export const GenerateStrategicBriefInputSchema = z.object({
-  topic: z.string().describe("The user's topic for the content."),
-  targetAudience: z.string().describe("The user's stated target audience."),
-  purpose: z.string().describe("The user's stated purpose or desired tone."),
-});
-export type GenerateStrategicBriefInput = z.infer<typeof GenerateStrategicBriefInputSchema>;
-
-export const GenerateStrategicBriefOutputSchema = z.object({
-    audiencePersona: z.string(),
-    bigIdea: z.string(),
-    readerTransformation: z.string(),
-    writingPersona: z.string(),
-});
-export type GenerateStrategicBriefOutput = z.infer<typeof GenerateStrategicBriefOutputSchema>;

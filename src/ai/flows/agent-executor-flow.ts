@@ -17,6 +17,7 @@ import {
   brieflyWrittenContentGenerator,
   brieflyStructuredDataGenerator,
 } from '@/ai/tools/briefly-tools';
+import { scrapeWebPage } from '@/ai/tools/web-scraper-tool';
 import { createLog } from '@/services/loggingService';
 import { AgentExecutionInputSchema, type AgentExecutionInput } from '@/types/ai';
 import { v4 as uuidv4 } from 'uuid';
@@ -32,6 +33,7 @@ const availableTools = {
   [brieflyPromptGenerator.name]: brieflyPromptGenerator,
   [brieflyImageGenerator.name]: brieflyImageGenerator,
   [brieflyStructuredDataGenerator.name]: brieflyStructuredDataGenerator,
+  [scrapeWebPage.name]: scrapeWebPage,
   [saveMemoryTool.name]: saveMemoryTool,
 };
 
@@ -91,11 +93,13 @@ Your Cognitive Process follows this reasoning loop:
 - **brieflyPromptGenerator**: Use for creating or optimizing AI prompts.
 - **brieflyImageGenerator**: Use for creating visual images.
 - **brieflyStructuredDataGenerator**: Use for creating data (JSON, CSV).
+- **scrapeWebPage**: Use this to access the internet to view links and websites. Provide a URL to get its content.
 - **saveMemoryTool**: IMPORTANT: Use this tool ONLY ONCE at the very end of your entire plan to save a key takeaway. Do not use it after every step.
 
 **Execution Guidance**:
 - For complex requests, break them down. For example, to "write a blog post and create an image for it", first use \`brieflyWrittenContentGenerator\` and then, in a second step, use \`brieflyImageGenerator\`.
 - If the user's request is purely conversational (e.g., "hello"), respond naturally without using a tool.
+- If a user provides a URL and asks a question about it, use the \`scrapeWebPage\` tool first to get the content.
 - After a tool returns a result, analyze it. Do not just return raw tool output. Present the final output clearly to the user once all steps are complete.
 - The 'saveMemoryTool' is for learning and should be the final action you take.
 

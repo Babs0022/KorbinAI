@@ -21,6 +21,7 @@ import './flows/agent-executor-flow'; // Import the agent flow
 import './tools/time-tool';
 import './tools/image-generation-tool';
 import './tools/briefly-tools'; // Import the new app tools
+import './tools/web-scraper-tool'; // Import the new web scraper tool
 import { saveMemoryTool } from '@/services/memoryService';
 
     
