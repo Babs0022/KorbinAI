@@ -18,8 +18,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, Bot, PanelLeft, Sun, Moon, Monitor, UserPlus } from "lucide-react";
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { LayoutGrid, User, Settings, LogOut, FolderKanban, Bot, PanelLeft, Sun, Moon, Monitor, UserPlus, Feather, Bolt, Image as ImageIcon, Code2 } from "lucide-react";
+import { SidebarTrigger, useSidebar, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import Logo from "@/components/shared/Logo";
@@ -134,22 +134,70 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
 
   const SidebarNav = () => (
     <nav className="flex flex-col gap-2 p-2">
-        <Link href="/" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
-            <LayoutGrid />
-            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Dashboard</span>
-        </Link>
-        <Link href="/dashboard/projects" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
-            <FolderKanban />
-            <div className={cn("flex w-full items-center justify-between transition-opacity", state === 'collapsed' && 'opacity-0')}>
-              <span>Projects</span>
-            </div>
-        </Link>
-        <Link href="/dashboard/agent-logs" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
-            <Bot />
-            <div className={cn("flex w-full items-center justify-between transition-opacity", state === 'collapsed' && 'opacity-0')}>
-              <span>Agent Logs</span>
-            </div>
-        </Link>
+        <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                    <Link href="/">
+                        <LayoutGrid />
+                        <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Dashboard</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                    <Link href="/dashboard/projects">
+                        <FolderKanban />
+                        <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Projects</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                    <Link href="/dashboard/agent-logs">
+                        <Bot />
+                        <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Agent Logs</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        </SidebarMenu>
+
+        <SidebarGroup>
+            <SidebarGroupLabel>Tools</SidebarGroupLabel>
+            <SidebarMenu>
+                 <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip={{children: 'Written Content'}}>
+                        <Link href="/written-content">
+                            <Feather />
+                            <span>Written Content</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip={{children: 'Prompt Generator'}}>
+                        <Link href="/prompt-generator">
+                            <Bolt />
+                            <span>Prompt Generator</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip={{children: 'Image Generator'}}>
+                        <Link href="/image-generator">
+                            <ImageIcon />
+                            <span>Image Generator</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip={{children: 'Structured Data'}}>
+                        <Link href="/structured-data">
+                            <Code2 />
+                            <span>Structured Data</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
+        </SidebarGroup>
     </nav>
   );
 
