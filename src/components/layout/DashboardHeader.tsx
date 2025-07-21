@@ -15,6 +15,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuPortal,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, Bot, PanelLeft, Sun, Moon, Monitor, UserPlus } from "lucide-react";
