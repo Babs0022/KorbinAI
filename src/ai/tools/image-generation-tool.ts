@@ -16,7 +16,7 @@ export const generateImage = ai.defineTool(
     inputSchema: z.object({
       prompt: z.string().describe('A detailed text description of the image to generate.'),
     }),
-    outputSchema: z.string().describe("A markdown string for the generated image, e.g. '![Generated Image](data:image/png;base64,...)'"),
+    outputSchema: z.string().describe("A markdown string for the generated image, e.g., '![Generated Image](data:image/png;base64,...)'"),
   },
   async (input) => {
     const { media } = await ai.generate({
