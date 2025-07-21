@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, User, Settings, LogOut, FolderKanban, Bot, PanelLeft, Sun, Moon, Monitor, UserPlus, Feather, Bolt, Image as ImageIcon, Code2, CreditCard, FileText, Shield } from "lucide-react";
+import { User, Settings, LogOut, FolderKanban, Bot, PanelLeft, Sun, Moon, Monitor, UserPlus, Feather, Bolt, Image as ImageIcon, Code2, CreditCard, FileText, Shield, MessageSquare } from "lucide-react";
 import { SidebarTrigger, useSidebar, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -130,35 +130,22 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
 
   const SidebarNav = () => (
     <nav className="flex flex-col gap-2 p-2">
-        <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                    <Link href="/">
-                        <LayoutGrid />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Dashboard</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                    <Link href="/dashboard/projects">
-                        <FolderKanban />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Projects</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                    <Link href="/dashboard/agent-logs">
-                        <Bot />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Agent Logs</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-        </SidebarMenu>
-
         <SidebarGroup>
-            <SidebarGroupLabel>Tools</SidebarGroupLabel>
+            <SidebarGroupLabel>Chats</SidebarGroupLabel>
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                        <Link href="/">
+                            <MessageSquare />
+                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>New Chat</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
+        </SidebarGroup>
+        
+        <SidebarGroup>
+            <SidebarGroupLabel>Briefs</SidebarGroupLabel>
             <SidebarMenu>
                  <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip={{children: 'Written Content'}}>
@@ -193,6 +180,28 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     </SidebarMenuButton>
                 </SidebarMenuItem>
             </SidebarMenu>
+        </SidebarGroup>
+        
+        <SidebarGroup>
+             <SidebarGroupLabel>Manage</SidebarGroupLabel>
+             <SidebarMenu>
+                 <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                        <Link href="/dashboard/projects">
+                            <FolderKanban />
+                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Projects</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                 <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                        <Link href="/dashboard/agent-logs">
+                            <Bot />
+                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Agent Logs</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+             </SidebarMenu>
         </SidebarGroup>
     </nav>
   );

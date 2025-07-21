@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, forwardRef, memo } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { LoaderCircle, Send, ImagePlus, X, MessageSquare, Bot } from "lucide-react";
+import { LoaderCircle, ImagePlus, X, MessageSquare, Bot } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
@@ -29,17 +29,25 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 type ChatMode = 'chat' | 'agent';
 
+// Custom SVG Icon based on the sketch
+const SendIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
+        <path d="M7 11L12 6L17 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M12 18V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
+
+
 interface ChatInputFormProps {
   onSubmit: (values: FormValues, image?: string) => void;
   isLoading: boolean;
   mode: ChatMode;
   onModeChange: (mode: ChatMode) => void;
-  className?: string;
 }
 
 
 // Memoize the form component to prevent re-renders on parent state changes.
-const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, mode, onModeChange, className }, ref) => {
+const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, mode, onModeChange }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -95,7 +103,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     };
 
     return (
-        <div className={cn("sticky bottom-0 bg-gradient-to-t from-background to-transparent pt-4 pb-8", className)}>
+        <div className="flex-shrink-0 bg-gradient-to-t from-background via-background/80 to-transparent pt-4 pb-8">
             <div className="mx-auto w-full max-w-4xl px-4">
                 <FormProvider {...form}>
                     <form
@@ -173,7 +181,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                             </div>
                             
                             <Button type="submit" size="sm" className="rounded-lg" disabled={isLoading}>
-                                {isLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                                {isLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <SendIcon />}
                                 <span className="sr-only">Send</span>
                             </Button>
                         </div>
@@ -320,8 +328,8 @@ export default function ChatClient() {
 
 
   return (
-    <div className="flex-grow flex flex-col">
-      <div className="flex-grow flex flex-col overflow-y-auto pt-6">
+    <div className="flex-grow flex flex-col overflow-y-auto">
+      <div className="flex-grow overflow-y-auto pt-6">
         {renderContent()}
       </div>
       <ChatInputForm
@@ -329,7 +337,6 @@ export default function ChatClient() {
         isLoading={isLoading}
         mode={mode}
         onModeChange={setMode}
-        className="flex-shrink-0"
       />
     </div>
   );
