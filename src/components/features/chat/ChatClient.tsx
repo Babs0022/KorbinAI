@@ -102,83 +102,85 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     };
 
     return (
-        <div className={cn("w-full", className)}>
-            <FormProvider {...form}>
-                <form
-                    ref={ref}
-                    onSubmit={form.handleSubmit(handleFormSubmit)}
-                    className="rounded-xl border bg-secondary"
-                >
-                    {imagePreview && (
-                        <div className="relative p-2 pt-2">
-                            <Image src={imagePreview} alt="Image preview" width={90} height={90} className="rounded-lg" />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="absolute top-0 right-0 rounded-full h-6 w-6"
-                                onClick={() => {
-                                    setImagePreview(null);
-                                    if (fileInputRef.current) {
-                                        fileInputRef.current.value = "";
-                                    }
-                                }}
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    )}
-                    <FormField
-                    control={form.control}
-                    name="message"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormControl>
-                            <Textarea
-                                placeholder={mode === 'chat' ? "Ask Briefly anything..." : "Tell the agent what to do..."}
-                                className="text-xl min-h-[90px] bg-secondary border-0 focus-visible:ring-0 resize-none placeholder:text-xl"
-                                autoComplete="off"
-                                disabled={isLoading}
-                                onKeyDown={handleKeyDown}
-                                {...field}
-                            />
-                        </FormControl>
-                        </FormItem>
-                    )}
-                    />
-                    <div className="flex items-center justify-between p-2">
-                        <div className="flex items-center gap-1">
-                            <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
-                                <ImagePlus className="h-5 w-5 text-muted-foreground" />
-                                <span className="sr-only">Upload image</span>
-                            </Button>
-                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+        <div className={cn("w-full px-4", className)}>
+            <div className="mx-auto w-full max-w-4xl">
+                <FormProvider {...form}>
+                    <form
+                        ref={ref}
+                        onSubmit={form.handleSubmit(handleFormSubmit)}
+                        className="rounded-xl border bg-secondary"
+                    >
+                        {imagePreview && (
+                            <div className="relative p-2 pt-2">
+                                <Image src={imagePreview} alt="Image preview" width={90} height={90} className="rounded-lg" />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute top-0 right-0 rounded-full h-6 w-6"
+                                    onClick={() => {
+                                        setImagePreview(null);
+                                        if (fileInputRef.current) {
+                                            fileInputRef.current.value = "";
+                                        }
+                                    }}
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
+                        <FormField
+                        control={form.control}
+                        name="message"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormControl>
+                                <Textarea
+                                    placeholder={mode === 'chat' ? "Ask Briefly anything..." : "Tell the agent what to do..."}
+                                    className="text-xl min-h-[90px] bg-secondary border-0 focus-visible:ring-0 resize-none placeholder:text-xl"
+                                    autoComplete="off"
+                                    disabled={isLoading}
+                                    onKeyDown={handleKeyDown}
+                                    {...field}
+                                />
+                            </FormControl>
+                            </FormItem>
+                        )}
+                        />
+                        <div className="flex items-center justify-between p-2">
+                            <div className="flex items-center gap-1">
+                                <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                                    <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                                    <span className="sr-only">Upload image</span>
+                                </Button>
+                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
 
-                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="gap-2">
-                                    <span className="capitalize">{mode}</span>
-                                    <ChevronDown className="h-4 w-4 opacity-50" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start">
-                                    <DropdownMenuItem onSelect={() => onModeChange('chat')}>
-                                        Chat
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => onModeChange('agent')}>
-                                        Agent
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="gap-2">
+                                        <span className="capitalize">{mode}</span>
+                                        <ChevronDown className="h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start">
+                                        <DropdownMenuItem onSelect={() => onModeChange('chat')}>
+                                            Chat
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => onModeChange('agent')}>
+                                            Agent
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                            
+                            <Button type="submit" size="sm" className="rounded-lg" disabled={isLoading}>
+                                {isLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                                <span className="sr-only">Send</span>
+                            </Button>
                         </div>
-                        
-                        <Button type="submit" size="sm" className="rounded-lg" disabled={isLoading}>
-                            {isLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-                            <span className="sr-only">Send</span>
-                        </Button>
-                    </div>
-                </form>
-            </FormProvider>
+                    </form>
+                </FormProvider>
+            </div>
         </div>
     )
 }));
@@ -251,7 +253,7 @@ export default function ChatClient() {
     if (messages.length === 0) {
       const userName = user?.displayName ? `, ${user.displayName.split(' ')[0]}` : '';
       return (
-        <div className="flex-grow flex flex-col items-center justify-center p-4">
+        <div className="flex-1 flex flex-col items-center justify-center p-4">
             <div className="text-center space-y-4">
                 <h1 className="text-4xl font-bold">Hey{userName}</h1>
                 <p className="text-xl text-muted-foreground">How can I help you today?</p>
@@ -261,7 +263,7 @@ export default function ChatClient() {
     }
 
     return (
-      <div className="w-full space-y-6">
+      <div className="w-full max-w-4xl mx-auto space-y-6">
           {messages.map((message, index) => (
               <div
               key={index}
@@ -281,7 +283,7 @@ export default function ChatClient() {
                     "max-w-xl",
                     message.role === "user"
                       ? "rounded-xl bg-primary text-primary-foreground p-3 shadow-md"
-                      : "" // No bubble styling for the model's response
+                      : "prose dark:prose-invert max-w-none"
                   )}
               >
                   {message.imageUrl && <Image src={message.imageUrl} alt="User upload" width={300} height={300} className="rounded-lg mb-2" />}
@@ -307,21 +309,17 @@ export default function ChatClient() {
 
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex flex-1 flex-col">
       <div className="flex-1 overflow-y-auto p-4 md:p-6">
-        <div className="mx-auto w-full max-w-4xl">
-            {renderContent()}
-        </div>
+        {renderContent()}
       </div>
-      <div className="sticky bottom-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-8 px-4">
-        <div className="mx-auto w-full max-w-4xl">
+      <div className="sticky bottom-0 bg-gradient-to-t from-background to-transparent pt-4 pb-8">
           <ChatInputForm
             onSubmit={handleNewMessage}
             isLoading={isLoading}
             mode={mode}
             onModeChange={setMode}
           />
-        </div>
       </div>
     </div>
   );
