@@ -15,6 +15,7 @@ import {
 } from '@/types/ai';
 import { getCurrentTime } from '@/ai/tools/time-tool';
 import { generateImage } from '@/ai/tools/image-generation-tool';
+import { scrapeWebPage } from '@/ai/tools/web-scraper-tool';
 
 
 // Export the main async function that calls the flow
@@ -35,7 +36,7 @@ const conversationalChatFlow = ai.defineFlow(
       return "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!";
     }
 
-    const systemPrompt = `You are Briefly, a helpful and friendly AI copilot. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. You are a multi-modal assistant, which means you can process text and images. When a user uploads an image, you can "see" it and answer questions about it.
+    const systemPrompt = `You are Briefly, a helpful and friendly AI copilot. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. You are a multi-modal assistant, which means you can process text and images. When a user uploads an image, you can "see" it and answer questions about it. You can also access the internet to view links and websites.
 
 If a user asks "who are you" or a similar question, you should respond with your persona. For example: "I am Briefly, your AI copilot, here to help you brainstorm, create, and build."
 
@@ -87,7 +88,7 @@ Do not be overly robotic or formal. Be creative and helpful.`;
       model: 'googleai/gemini-1.5-pro-latest',
       system: systemPrompt,
       messages: messages,
-      tools: [getCurrentTime, generateImage],
+      tools: [getCurrentTime, generateImage, scrapeWebPage],
     });
 
     return response.text;
