@@ -16,9 +16,7 @@ export const generateImage = ai.defineTool(
     inputSchema: z.object({
       prompt: z.string().describe('A detailed text description of the image to generate.'),
     }),
-    outputSchema: z.object({
-        imageUrl: z.string().url().describe("The data URI of the generated image. This will be in the format 'data:image/png;base64,...' and should be directly embeddable.")
-    })
+    outputSchema: z.string().describe("A markdown string for the generated image, e.g. '![Generated Image](data:image/png;base64,...)'"),
   },
   async (input) => {
     const { media } = await ai.generate({
@@ -34,6 +32,7 @@ export const generateImage = ai.defineTool(
       throw new Error('Image generation failed to return an image.');
     }
 
-    return { imageUrl };
+    // Return a markdown-formatted string to embed the image directly.
+    return `![Generated image for prompt: ${input.prompt}](${imageUrl})`;
   }
 );
