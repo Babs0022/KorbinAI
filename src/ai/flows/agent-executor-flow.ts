@@ -21,14 +21,7 @@ import { createLog } from '@/services/loggingService';
 import { AgentExecutionInputSchema, type AgentExecutionInput } from '@/types/ai';
 import { v4 as uuidv4 } from 'uuid';
 import { getMemory, saveMemoryTool } from '@/services/memoryService';
-import { Message, ToolRequest, GenerateOptions, Part } from '@genkit-ai/ai/prompt';
-import { experimental } from 'genkit';
-
-const {
-    fromObject,
-    message,
-    part,
-} = experimental.v1;
+import { type Message, type ToolRequest, type GenerateOptions, type Part, fromObject, message, part } from '@genkit-ai/ai';
 
 
 const FLOW_NAME = 'agentExecutorFlow';
