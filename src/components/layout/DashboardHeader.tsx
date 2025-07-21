@@ -11,37 +11,21 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, FileText, Shield, PanelLeft, Sun, Moon, Mail, UserPlus, Bot, Monitor } from "lucide-react";
+import { LayoutGrid, User, Settings, LogOut, FolderKanban, CreditCard, Bot, PanelLeft, Sun, Moon, Monitor, UserPlus } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
 import Logo from "@/components/shared/Logo";
 
 interface DashboardHeaderProps {
     variant?: 'main' | 'sidebar';
 }
-
-const XIcon = (props: React.ComponentProps<'svg'>) => (
-    <svg
-      role="img"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-4 w-4 fill-current"
-      {...props}
-    >
-      <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.931ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
-    </svg>
-);
-
 
 function ThemeToggle() {
     const { setTheme, theme } = useTheme();
@@ -91,7 +75,6 @@ function MenuThemeToggle() {
 export default function DashboardHeader({ variant = 'main' }: DashboardHeaderProps) {
   const { user, logout, loading } = useAuth();
   const { state } = useSidebar();
-  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'elijah@brieflyai.xyz';
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
@@ -128,22 +111,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 <DropdownMenuItem asChild><Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing</Link></DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><a href="https://brieflyai.xyz/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
-                <DropdownMenuItem asChild><a href="https://brieflyai.xyz/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>
-                <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        <span>Subscription Plan</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                             <DropdownMenuItem disabled>
-                                <span>No plan active</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                </DropdownMenuSub>
                 <DropdownMenuSeparator />
                 <MenuThemeToggle />
                 <DropdownMenuSeparator />
@@ -182,28 +149,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
               <span>Agent Logs</span>
             </div>
         </Link>
-        
-        <Separator className="my-2" />
-
-        <a href="https://brieflyai.xyz/terms" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
-            <FileText />
-            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Terms of Service</span>
-        </a>
-        <a href="https://brieflyai.xyz/privacy" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
-            <Shield />
-            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Privacy Policy</span>
-        </a>
-
-        <Separator className="my-2" />
-
-         <a href="https://x.com/trybrieflyai" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
-            <XIcon />
-            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Follow on X</span>
-        </a>
-         <a href={`mailto:${supportEmail}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
-            <Mail />
-            <span className={cn("transition-opacity", state === 'collapsed' && 'opacity-0')}>Contact Support</span>
-        </a>
     </nav>
   );
 
