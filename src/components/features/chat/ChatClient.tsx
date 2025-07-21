@@ -39,7 +39,7 @@ const SendIcon = () => (
 
 
 interface ChatInputFormProps {
-  onSubmit: (values: FormValues, image?: string) => void;
+  onSubmit: (values: FormValues, images?: string[]) => void;
   isLoading: boolean;
 }
 
@@ -48,7 +48,7 @@ interface ChatInputFormProps {
 const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [mode, setMode] = useState<ChatMode>('chat');
     
     const form = useForm<FormValues>({
@@ -59,7 +59,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     });
 
     const handleFormSubmit = (values: FormValues) => {
-        if (!values.message.trim() && !imagePreview) {
+        if (!values.message.trim() && imagePreviews.length === 0) {
             toast({
                 title: "Empty message",
                 description: "Please enter a message or upload an image to send.",
@@ -67,9 +67,9 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
             });
             return;
         }
-        onSubmit(values, imagePreview || undefined);
+        onSubmit(values, imagePreviews.length > 0 ? imagePreviews : undefined);
         form.reset();
-        setImagePreview(null);
+        setImagePreviews([]);
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
@@ -83,22 +83,33 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     };
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            if (file.size > 2 * 1024 * 1024) { // 2MB limit
-                toast({
-                    title: "Image too large",
-                    description: "Please upload an image smaller than 2MB.",
-                    variant: "destructive",
-                });
-                return;
+        const files = event.target.files;
+        if (files) {
+            const newPreviews: Promise<string>[] = [];
+            for (const file of Array.from(files)) {
+                if (file.size > 2 * 1024 * 1024) { // 2MB limit per image
+                    toast({
+                        title: "Image too large",
+                        description: `${file.name} is larger than 2MB. Please upload smaller images.`,
+                        variant: "destructive",
+                    });
+                    continue;
+                }
+                newPreviews.push(new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                }));
             }
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+            Promise.all(newPreviews).then(results => {
+                setImagePreviews(prev => [...prev, ...results]);
+            });
         }
+    };
+    
+    const removeImage = (indexToRemove: number) => {
+        setImagePreviews(previews => previews.filter((_, index) => index !== indexToRemove));
     };
 
     return (
@@ -110,23 +121,22 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                         onSubmit={form.handleSubmit(handleFormSubmit)}
                         className="rounded-xl border bg-secondary"
                     >
-                        {imagePreview && (
-                            <div className="relative p-2 pt-2">
-                                <Image src={imagePreview} alt="Image preview" width={90} height={90} className="rounded-lg" />
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute top-0 right-0 rounded-full h-6 w-6"
-                                    onClick={() => {
-                                        setImagePreview(null);
-                                        if (fileInputRef.current) {
-                                            fileInputRef.current.value = "";
-                                        }
-                                    }}
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
+                        {imagePreviews.length > 0 && (
+                            <div className="p-2 pt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                                {imagePreviews.map((src, index) => (
+                                    <div key={index} className="relative aspect-square">
+                                        <Image src={src} alt={`Preview ${index}`} fill sizes="90px" className="rounded-lg object-cover" />
+                                        <Button
+                                            type="button"
+                                            variant="destructive"
+                                            size="icon"
+                                            className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 rounded-full h-5 w-5"
+                                            onClick={() => removeImage(index)}
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                ))}
                             </div>
                         )}
                         <FormField
@@ -153,12 +163,20 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                     <ImagePlus className="h-5 w-5 text-muted-foreground" />
                                     <span className="sr-only">Upload image</span>
                                 </Button>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                    multiple
+                                    accept="image/png, image/jpeg, image/gif, image/webp"
+                                />
                                 
                                 <div className="flex items-center rounded-md bg-background p-1 border">
                                     <div className="relative">
                                         <Button 
                                             type="button"
-                                            variant={mode === 'agent' ? 'default' : 'ghost'}
+                                            variant={'ghost'}
                                             size="sm"
                                             className="h-8 gap-2"
                                             onClick={() => setMode('agent')}
@@ -170,7 +188,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                     </div>
                                     <Button 
                                         type="button"
-                                        variant={mode === 'chat' ? 'default' : 'ghost'} 
+                                        variant={'default'} 
                                         size="sm"
                                         className="h-8 gap-2"
                                         onClick={() => setMode('chat')}
@@ -220,8 +238,8 @@ export default function ChatClient() {
     scrollToBottom();
   }, [messages]);
 
-  const handleNewMessage = async (values: FormValues, image?: string) => {
-    const userMessage: Message = { role: "user", content: values.message, imageUrl: image };
+  const handleNewMessage = async (values: FormValues, images?: string[]) => {
+    const userMessage: Message = { role: "user", content: values.message, imageUrls: images };
     const newHistory = [...messages, userMessage];
     
     setMessages(newHistory);
@@ -256,11 +274,6 @@ export default function ChatClient() {
       setIsLoading(false);
     }
   }
-  
-  const getInitials = (name?: string | null) => {
-    if (!name) return "U";
-    return name.split(" ").map((n) => n[0]).join("").toUpperCase();
-  };
 
   const renderContent = () => {
     if (messages.length === 0) {
@@ -299,8 +312,14 @@ export default function ChatClient() {
                       : ""
                   )}
               >
-                  {message.imageUrl && <Image src={message.imageUrl} alt="User upload" width={300} height={300} className="rounded-lg mb-2" />}
-                  <MarkdownRenderer>{message.content}</MarkdownRenderer>
+                  {message.imageUrls && message.imageUrls.length > 0 && (
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                          {message.imageUrls.map((url, i) => (
+                              <Image key={i} src={url} alt={`User upload ${i + 1}`} width={150} height={150} className="rounded-lg object-cover" />
+                          ))}
+                      </div>
+                  )}
+                  {message.content && <MarkdownRenderer>{message.content}</MarkdownRenderer>}
               </div>
               </div>
           ))}

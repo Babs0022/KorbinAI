@@ -44,7 +44,7 @@ If you generate an image, you MUST tell the user you have created it and that it
 Do not be overly robotic or formal. Be creative and helpful.`;
     
     // 1. Filter out any malformed messages
-    const validMessages = history.filter((msg): msg is Message => msg && (typeof msg.content === 'string' || typeof msg.imageUrl === 'string'));
+    const validMessages = history.filter((msg): msg is Message => msg && (typeof msg.content === 'string' || (Array.isArray(msg.imageUrls) && msg.imageUrls.length > 0)));
 
     // 2. Enforce that roles must alternate, starting with 'user'.
     const alternatingHistory: Message[] = [];
@@ -67,8 +67,10 @@ Do not be overly robotic or formal. Be creative and helpful.`;
         if (msg.content) {
             content.push({ text: msg.content });
         }
-        if (msg.imageUrl) {
-            content.push({ media: { url: msg.imageUrl } });
+        if (msg.imageUrls) {
+            msg.imageUrls.forEach(url => {
+                content.push({ media: { url } });
+            });
         }
         return {
             role: msg.role === 'user' ? 'user' : 'model',
@@ -91,4 +93,3 @@ Do not be overly robotic or formal. Be creative and helpful.`;
     return response.text;
   }
 );
-

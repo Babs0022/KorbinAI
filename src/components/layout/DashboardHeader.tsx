@@ -148,12 +148,15 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                    <Link href="/dashboard/agent-logs">
-                        <Bot />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Agent Logs</span>
-                    </Link>
-                </SidebarMenuButton>
+                <div className="relative">
+                    <SidebarMenuButton asChild disabled>
+                        <Link href="/dashboard/agent-logs">
+                            <Bot />
+                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Agent Logs</span>
+                        </Link>
+                    </SidebarMenuButton>
+                    <Badge variant="secondary" className="absolute top-1 right-1 text-xs group-data-[collapsible=icon]:hidden">Soon</Badge>
+                </div>
             </SidebarMenuItem>
         </SidebarMenu>
         
