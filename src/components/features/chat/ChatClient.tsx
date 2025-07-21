@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, forwardRef, memo } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { LoaderCircle, ImagePlus, X, MessageSquare, Bot } from "lucide-react";
+import { LoaderCircle, ImagePlus, X } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
@@ -159,23 +159,21 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                 <div className="flex items-center rounded-md bg-background p-1 border">
                                     <Button 
                                         type="button"
-                                        variant={mode === 'chat' ? 'default' : 'ghost'} 
-                                        size="sm"
-                                        className="h-8 gap-2"
-                                        onClick={() => onModeChange("chat")}
-                                    >
-                                        <MessageSquare className="h-4 w-4" />
-                                        Chat
-                                    </Button>
-                                    <Button 
-                                        type="button"
                                         variant={mode === 'agent' ? 'default' : 'ghost'} 
                                         size="sm"
                                         className="h-8 gap-2"
                                         onClick={() => onModeChange("agent")}
                                     >
-                                        <Bot className="h-4 w-4" />
                                         Agent
+                                    </Button>
+                                    <Button 
+                                        type="button"
+                                        variant={mode === 'chat' ? 'default' : 'ghost'} 
+                                        size="sm"
+                                        className="h-8 gap-2"
+                                        onClick={() => onModeChange("chat")}
+                                    >
+                                        Chat
                                     </Button>
                                 </div>
                             </div>
@@ -198,7 +196,7 @@ export default function ChatClient() {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [mode, setMode] = useState<ChatMode>('chat');
+  const [mode, setMode] = useState<ChatMode>('agent');
   const [greeting, setGreeting] = useState("Hey");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
