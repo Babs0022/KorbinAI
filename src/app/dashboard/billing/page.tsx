@@ -1,35 +1,35 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Check, CreditCard, Sparkles, LoaderCircle } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { getFunctions, httpsCallable } from "firebase/functions";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { UserSubscription } from "@/types/subscription";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { usePaystackPayment } from "react-paystack";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const planDetails = {
     monthly: {
         name: "Pro Plan (Monthly)",
         planId: "pro",
         billingCycle: "monthly" as const,
+        price: 2000, // in kobo/cents
         priceString: "$20",
         priceSuffix: "/ month",
+        paystackPlanCode: "PLN_apm944j0mz7armb",
         features: [
             "Billed month-to-month",
             "Unlimited Written Content Generation",
             "Unlimited Prompt Generation",
-            "Unlimited Web Page/App Generation",
             "Unlimited Image Generation",
             "Unlimited Structured Data Generation",
             "Access to All Future Tools",
@@ -40,14 +40,14 @@ const planDetails = {
         name: "Pro Plan (Annually)",
         planId: "pro",
         billingCycle: "annually" as const,
+        price: 21600, // in kobo/cents
         priceString: "$216",
         priceSuffix: "/ year",
+        paystackPlanCode: "PLN_up61lgvt7wozomg",
         features: [
-            "Based on a $20/month value",
-            "Billed annually with a 10% discount",
+            "Billed annually (Save 10%)",
             "Unlimited Written Content Generation",
             "Unlimited Prompt Generation",
-            "Unlimited Web Page/App Generation",
             "Unlimited Image Generation",
             "Unlimited Structured Data Generation",
             "Access to All Future Tools",
@@ -80,79 +80,58 @@ const CurrentPlanCard = ({ subscription }: { subscription: UserSubscription }) =
     </Card>
 );
 
-
-export default function BillingPage() {
+const PaystackButton = ({ plan, billingCycle }: { plan: 'pro', billingCycle: 'monthly' | 'annually' }) => {
     const { user } = useAuth();
     const { toast } = useToast();
-    const [subscription, setSubscription] = useState<UserSubscription | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [billingCycle, setBillingCycle] = useState<'monthly' | 'annually'>('annually');
+    const { price, paystackPlanCode } = planDetails[billingCycle];
 
-    const selectedPlan = planDetails[billingCycle];
-
-    useEffect(() => {
-        if (!user) {
-            setIsLoading(false);
-            return;
+    const config = {
+        reference: new Date().getTime().toString(),
+        email: user?.email || '',
+        amount: price,
+        plan: paystackPlanCode,
+        publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
+        metadata: {
+            user_id: user?.uid,
+            plan_id: plan,
+            billing_cycle: billingCycle,
         }
-        
-        const subDocRef = doc(db, "userSubscriptions", user.uid);
-        const unsubscribe = onSnapshot(subDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                setSubscription({
-                    ...data,
-                    currentPeriodEnd: data.currentPeriodEnd?.toDate(),
-                    startedAt: data.startedAt?.toDate(),
-                    currentPeriodStart: data.currentPeriodStart?.toDate(),
-                } as UserSubscription);
-            } else {
-                setSubscription(null);
-            }
-            setIsLoading(false);
+    };
+
+    const initializePayment = usePaystackPayment(config);
+
+    const onSuccess = () => {
+        toast({
+            title: "Payment Successful!",
+            description: "Your subscription is now active. Refreshing...",
         });
+        setTimeout(() => window.location.reload(), 2000);
+    };
 
-        return () => unsubscribe();
-    }, [user]);
+    const onClose = () => {
+        toast({
+            title: "Payment Closed",
+            description: "The payment window was closed.",
+            variant: "destructive"
+        });
+    };
+    
+    return (
+         <Button size="lg" className="w-full text-lg" onClick={() => initializePayment({onSuccess, onClose})}>
+            <CreditCard className="mr-2 h-5 w-5" />
+            Upgrade to Pro
+        </Button>
+    )
+}
 
-    const handleUpgrade = async () => {
-        if (!user) {
-            toast({
-                variant: "destructive",
-                title: "Authentication Error",
-                description: "You must be signed in to upgrade your plan.",
-            });
-            return;
-        }
-        
-        setIsProcessing(true);
 
-        try {
-            const functions = getFunctions();
-            const initializePayment = httpsCallable(functions, 'initializePaystackPayment');
-            const result = await initializePayment({ 
-                planId: selectedPlan.planId, 
-                billingCycle: selectedPlan.billingCycle 
-            });
-            
-            const { authorization_url } = result.data as { authorization_url: string };
-
-            if (authorization_url) {
-                window.location.href = authorization_url;
-            } else {
-                throw new Error("Could not retrieve payment URL.");
-            }
-
-        } catch (error: any) {
-            toast({
-                variant: "destructive",
-                title: "Payment Error",
-                description: error.message || "An unexpected error occurred. Please try again.",
-            });
-            setIsProcessing(false);
-        }
-    }
+export default function BillingPage() {
+    const { user, loading: authLoading } = useAuth();
+    const { subscription, isLoading: subscriptionLoading } = useSubscription();
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'annually'>('annually');
+    
+    const isLoading = authLoading || subscriptionLoading;
+    const selectedPlan = planDetails[billingCycle];
     
     if (isLoading) {
         return (
@@ -217,17 +196,11 @@ export default function BillingPage() {
                                     </li>
                                 ))}
                             </ul>
-                            <div className="relative">
-                                <Button size="lg" className="w-full text-lg" disabled={true}>
-                                    <CreditCard className="mr-2 h-5 w-5" />
-                                    Upgrade to Pro
-                                </Button>
-                                <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>
-                            </div>
+                            <PaystackButton plan="pro" billingCycle={billingCycle} />
                         </CardContent>
                          <CardFooter>
                             <p className="text-xs text-muted-foreground mx-auto">
-                                Payments are securely processed. You can cancel anytime.
+                                Payments are securely processed by Paystack. You can cancel anytime.
                             </p>
                          </CardFooter>
                     </Card>

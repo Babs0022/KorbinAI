@@ -1,15 +1,23 @@
+
 export type UserSubscription = {
-  status: 'active' | 'cancelled' | 'past_due';
-  planId: 'pro' | 'premium' | 'unlimited';
-  billingCycle: 'monthly' | 'annually';
+  status: 'active' | 'cancelled' | 'past_due' | string; // Allow other statuses
+  planId: 'pro' | 'premium' | 'unlimited' | string; // Allow other plan IDs
+  billingCycle: 'monthly' | 'annually' | string;
   userId: string;
-  provider: 'stripe' | 'paystack'; // Added provider
-  paystack?: {
-    customerCode: string;
-    subscriptionCode: string;
-    planCode: string;
-  };
-  currentPeriodStart: Date;
-  currentPeriodEnd: Date;
-  startedAt: Date;
+  email?: string;
+  paymentMethod: 'card' | 'crypto' | string; // e.g., 'paystack', 'nowpayments'
+  
+  // Paystack specific fields
+  paystackReference?: string;
+  
+  // NOWPayments specific fields
+  nowpaymentsPaymentId?: string;
+  
+  // General fields
+  amountPaid?: number;
+  currency?: string;
+  
+  currentPeriodStart?: Date;
+  currentPeriodEnd?: Date;
+  lastEventTimestamp?: any; // Firestore timestamp
 };

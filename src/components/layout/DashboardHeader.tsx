@@ -11,18 +11,16 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, User, Settings, LogOut, FolderKanban, Bot, PanelLeft, Sun, Moon, Monitor, UserPlus, Feather, Bolt, Image as ImageIcon, Code2, CreditCard } from "lucide-react";
+import { LayoutGrid, User, Settings, LogOut, FolderKanban, Bot, PanelLeft, Sun, Moon, Monitor, UserPlus, Feather, Bolt, Image as ImageIcon, Code2, CreditCard, FileText, Shield } from "lucide-react";
 import { SidebarTrigger, useSidebar, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import Logo from "@/components/shared/Logo";
+import { useSubscription } from "@/hooks/useSubscription";
+import { Badge } from "../ui/badge";
 
 interface DashboardHeaderProps {
     variant?: 'main' | 'sidebar';
@@ -45,36 +43,44 @@ function ThemeToggle() {
 }
 
 function MenuThemeToggle() {
-    const { setTheme } = useTheme();
+    const { setTheme, theme } = useTheme();
     return (
-         <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-                <Sun className="mr-2 h-4 w-4" />
-                <span>Theme</span>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-                <DropdownMenuSubContent>
-                    <DropdownMenuItem onClick={() => setTheme("light")}>
-                        <Sun className="mr-2 h-4 w-4" />
-                        <span>Light</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("dark")}>
-                        <Moon className="mr-2 h-4 w-4" />
-                        <span>Dark</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("system")}>
-                        <Monitor className="mr-2 h-4 w-4" />
-                        <span>System</span>
-                    </DropdownMenuItem>
-                </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-        </DropdownMenuSub>
+        <div className="flex items-center justify-between px-2 py-1.5">
+            <span className="text-sm">Theme</span>
+            <div className="flex items-center rounded-md bg-secondary p-1">
+                 <Button 
+                    variant={theme === 'light' ? 'default' : 'ghost'} 
+                    size="sm" 
+                    className="h-7 px-2"
+                    onClick={() => setTheme("light")}
+                >
+                    L
+                </Button>
+                 <Button 
+                    variant={theme === 'dark' ? 'default' : 'ghost'} 
+                    size="sm" 
+                    className="h-7 px-2"
+                    onClick={() => setTheme("dark")}
+                >
+                    D
+                </Button>
+                 <Button 
+                    variant={theme === 'system' ? 'default' : 'ghost'} 
+                    size="sm" 
+                    className="h-7 px-2"
+                    onClick={() => setTheme("system")}
+                >
+                    S
+                </Button>
+            </div>
+        </div>
     )
 }
 
 
 export default function DashboardHeader({ variant = 'main' }: DashboardHeaderProps) {
   const { user, logout, loading } = useAuth();
+  const { subscription } = useSubscription();
   const { state, isMobile } = useSidebar();
 
   const getInitials = (name?: string | null) => {
@@ -96,23 +102,29 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <DropdownMenuTrigger asChild>
                  <Button variant="ghost" className="relative h-10 w-10 p-0">
                     <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
+                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
                         <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                     </Avatar>
                  </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuContent className="w-64" align="end" forceMount>
                <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user.displayName}</p>
-                  <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                </div>
+                 <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
               </DropdownMenuLabel>
                <DropdownMenuSeparator />
                 <DropdownMenuItem asChild><Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild><a href="https://brieflyai.xyz/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
+                <DropdownMenuItem asChild><a href="https://brieflyai.xyz/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <div className="px-2 py-1.5 text-sm flex justify-between items-center">
+                    <span>Subscription</span>
+                    <Badge variant={subscription?.status === 'active' ? "default" : "secondary"} className="capitalize">
+                        {subscription?.planId || 'Free'}
+                    </Badge>
+                </div>
                 <MenuThemeToggle />
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={logout} className="text-destructive focus:text-destructive">
@@ -224,7 +236,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                         <DropdownMenuTrigger asChild>
                              <Button variant="ghost" className="w-full justify-start items-center gap-3 p-2 h-auto">
                                 <Avatar className="h-10 w-10">
-                                    <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
+                                    <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
                                     <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                                 </Avatar>
                                 <div className={cn("text-left transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>
@@ -256,7 +268,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
 
   // Main Header Variant
   return (
-    <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-sm">
       <div className="flex h-16 items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-2">
             <SidebarTrigger>
