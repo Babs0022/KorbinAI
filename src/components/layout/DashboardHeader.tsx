@@ -14,13 +14,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Settings, LogOut, FolderKanban, Bot, PanelLeft, Sun, Moon, Monitor, UserPlus, Feather, Bolt, Image as ImageIcon, Code2, CreditCard, FileText, Shield, MessageSquare } from "lucide-react";
-import { SidebarTrigger, useSidebar, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
+import { User, Settings, LogOut, FolderKanban, Bot, Sun, Moon, Monitor, UserPlus, Feather, Bolt, Image as ImageIcon, Code2, CreditCard, FileText, Shield, MessageSquare } from "lucide-react";
+import { SidebarProvider, Sidebar, SidebarInset, useSidebar, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import Logo from "@/components/shared/Logo";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Badge } from "../ui/badge";
+
 
 interface DashboardHeaderProps {
     variant?: 'main' | 'sidebar';
@@ -65,7 +66,7 @@ function MenuThemeToggle() {
 export default function DashboardHeader({ variant = 'main' }: DashboardHeaderProps) {
   const { user, logout, loading } = useAuth();
   const { subscription } = useSubscription();
-  const { state, isMobile } = useSidebar();
+  const { state, isMobile, open, toggleSidebar } = useSidebar();
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
@@ -130,41 +131,32 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
 
   const SidebarNav = () => (
     <nav className="flex flex-col gap-2 p-2">
-        <SidebarGroup>
-            <SidebarGroupLabel>Chats</SidebarGroupLabel>
-            <SidebarMenu>
-                <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                        <Link href="/">
-                            <MessageSquare />
-                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>New Chat</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
-        </SidebarGroup>
-        
-        <SidebarGroup>
-             <SidebarGroupLabel>Manage</SidebarGroupLabel>
-             <SidebarMenu>
-                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                        <Link href="/dashboard/projects">
-                            <FolderKanban />
-                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Projects</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                        <Link href="/dashboard/agent-logs">
-                            <Bot />
-                            <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Agent Logs</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-             </SidebarMenu>
-        </SidebarGroup>
+        <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                    <Link href="/">
+                        <MessageSquare />
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>New Chat</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                    <Link href="/dashboard/projects">
+                        <FolderKanban />
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Projects</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                    <Link href="/dashboard/agent-logs">
+                        <Bot />
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Agent Logs</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        </SidebarMenu>
         
         <SidebarGroup>
             <SidebarGroupLabel>Briefs</SidebarGroupLabel>
@@ -261,12 +253,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-sm">
       <div className="flex h-16 items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-2">
-            <SidebarTrigger>
-                <Button variant="ghost" size="icon">
-                    <PanelLeft />
-                    <span className="sr-only">Toggle Sidebar</span>
-                </Button>
-            </SidebarTrigger>
+            <SidebarTrigger />
             <div className="md:hidden">
                 <Logo />
             </div>
