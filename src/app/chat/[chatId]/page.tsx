@@ -6,9 +6,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import ChatClient from "@/components/features/chat/ChatClient";
 import { LoaderCircle } from 'lucide-react';
 
-export default function ChatPage({ params }: { params: { chatId: string } }) {
-  const { chatId } = params;
-
+export default function ChatPage() {
   return (
     <DashboardLayout>
       <main className="flex-1 flex flex-col">
@@ -20,7 +18,7 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
             </div>
           </div>
         }>
-          <ChatClient chatId={chatId} />
+          <ChatClient />
         </Suspense>
       </main>
     </DashboardLayout>

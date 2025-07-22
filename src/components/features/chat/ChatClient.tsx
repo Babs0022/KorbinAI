@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, forwardRef, memo } from "react";
 import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { LoaderCircle, ImagePlus, X, ArrowUp, Square } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
@@ -209,7 +209,9 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
 ChatInputForm.displayName = "ChatInputForm";
 
 
-export default function ChatClient({ chatId }: { chatId: string }) {
+export default function ChatClient() {
+  const params = useParams();
+  const chatId = params.chatId as string;
   const { user } = useAuth();
   const router = useRouter();
   const [session, setSession] = useState<ChatSession | null>(null);
