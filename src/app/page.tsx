@@ -1,17 +1,24 @@
 
 "use client";
 
-import { Suspense } from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import ChatClient from "@/components/features/chat/ChatClient";
+import { LoaderCircle } from 'lucide-react';
 
 export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect to a new chat session immediately
+    router.replace('/chat/new');
+  }, [router]);
+
   return (
     <DashboardLayout>
-      <main className="flex-1 flex flex-col">
-        <Suspense fallback={<div className="flex flex-1 items-center justify-center">Loading...</div>}>
-          <ChatClient />
-        </Suspense>
+      <main className="flex-1 flex flex-col items-center justify-center">
+        <LoaderCircle className="h-8 w-8 animate-spin" />
+        <p className="mt-4 text-muted-foreground">Starting a new chat...</p>
       </main>
     </DashboardLayout>
   );

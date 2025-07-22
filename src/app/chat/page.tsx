@@ -1,4 +1,5 @@
-// This page has been removed as the chat functionality has been moved to the main home page.
+
+// This page has been removed as the chat functionality has been moved to a dynamic route /chat/[chatId]
 export default function ObsoletePage() {
   return null;
 }

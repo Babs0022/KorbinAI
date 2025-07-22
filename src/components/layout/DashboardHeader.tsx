@@ -14,13 +14,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Settings, LogOut, FolderKanban, Bot, Sun, Moon, Monitor, CreditCard, FileText, Shield, Feather, Bolt, Image as ImageIcon, Code2, MessageSquare } from "lucide-react";
+import { User, Settings, LogOut, FolderKanban, Bot, Sun, Moon, Monitor, CreditCard, FileText, Shield, Feather, Bolt, Image as ImageIcon, Code2, MessageSquare, Plus, MessageSquareText } from "lucide-react";
 import { useSidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import Logo from "@/components/shared/Logo";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Badge } from "../ui/badge";
+import { useEffect, useState } from "react";
+import { listRecentChatsForUser } from "@/services/chatService";
+import type { ChatSession } from "@/types/chat";
+import { formatDistanceToNow } from 'date-fns';
+import { usePathname } from "next/navigation";
+
 
 interface DashboardHeaderProps {
     variant?: 'main' | 'sidebar';
@@ -66,6 +72,19 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   const { user, logout, loading } = useAuth();
   const { subscription } = useSubscription();
   const { state, isMobile } = useSidebar();
+  const [recentChats, setRecentChats] = useState<ChatSession[]>([]);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (user) {
+      // This function from chatService is safe to call on the client
+      // as it uses the client-side SDK for its listener.
+      const unsubscribe = listRecentChatsForUser(user.uid, (chats) => {
+        setRecentChats(chats);
+      });
+      return () => unsubscribe();
+    }
+  }, [user]);
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
@@ -133,8 +152,8 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
         <SidebarMenu>
             <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                    <Link href="/">
-                        <MessageSquare />
+                    <Link href="/chat/new">
+                        <Plus />
                         <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>New Chat</span>
                     </Link>
                 </SidebarMenuButton>
@@ -150,41 +169,19 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
         </SidebarMenu>
         
         <div className="px-2 py-2 text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
-            Briefs
+            Recents
         </div>
         <SidebarMenu>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{children: 'Written Content'}}>
-                    <Link href="/written-content">
-                        <Feather />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Written Content</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{children: 'Prompt Generator'}}>
-                    <Link href="/prompt-generator">
-                        <Bolt />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Prompt Generator</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{children: 'Image Generator'}}>
-                    <Link href="/image-generator">
-                        <ImageIcon />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Image Generator</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{children: 'Structured Data'}}>
-                    <Link href="/structured-data">
-                        <Code2 />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Structured Data</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
+             {recentChats.map(chat => (
+                <SidebarMenuItem key={chat.id}>
+                    <SidebarMenuButton asChild tooltip={{children: chat.title, className: "max-w-xs truncate"}} isActive={pathname.includes(`/chat/${chat.id}`)}>
+                        <Link href={`/chat/${chat.id}`} className="truncate">
+                            <MessageSquareText />
+                            <span className={cn("transition-opacity truncate", state === 'collapsed' && !isMobile && 'opacity-0')}>{chat.title}</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+             ))}
         </SidebarMenu>
     </nav>
   );
