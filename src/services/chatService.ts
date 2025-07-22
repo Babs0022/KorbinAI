@@ -1,5 +1,4 @@
 
-
 import {
   collection,
   addDoc,
@@ -17,6 +16,7 @@ import {
 import { db } from '@/lib/firebase'; // Use the client-side Firebase instance
 import type { ChatSession } from '@/types/chat';
 import type { Message } from '@/types/ai';
+import { generateTitleForChat } from '@/ai/actions/generate-chat-title-action';
 
 interface CreateChatSessionInput {
   userId: string;
@@ -30,13 +30,16 @@ interface CreateChatSessionInput {
  * @param message The message object to sanitize.
  * @returns A new message object safe to store in Firestore.
  */
-function sanitizeMessageForFirestore(message: Message): Partial<Message> {
-    const sanitized: Partial<Message> = { role: message.role };
-    if (message.content) {
-        sanitized.content = message.content;
-    }
+function sanitizeMessageForFirestore(message: Message): Message {
+    const sanitized: Message = {
+        role: message.role,
+        content: message.content ?? '',
+    };
     if (message.imageUrls && message.imageUrls.length > 0) {
         sanitized.imageUrls = message.imageUrls;
+    } else {
+        // Explicitly set to an empty array if undefined or empty to avoid Firestore errors
+        sanitized.imageUrls = [];
     }
     return sanitized;
 }
@@ -50,12 +53,12 @@ export async function createChatSession({ userId, firstMessage }: CreateChatSess
   // Sanitize the first message to prevent Firestore errors with undefined fields.
   const sanitizedFirstMessage = sanitizeMessageForFirestore(firstMessage);
 
-  // Create a simple title from the first message content.
-  const title = (sanitizedFirstMessage.content || 'Chat').split(' ').slice(0, 5).join(' ') + ((sanitizedFirstMessage.content || '').split(' ').length > 5 ? '...' : '');
+  // Generate a title for the chat.
+  const title = await generateTitleForChat(firstMessage);
 
   const newSessionData = {
     userId,
-    title: title || 'New Chat',
+    title,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     messages: [sanitizedFirstMessage],
@@ -67,7 +70,7 @@ export async function createChatSession({ userId, firstMessage }: CreateChatSess
   return {
     id: chatRef.id,
     userId,
-    title: title || 'New Chat',
+    title,
     messages: [sanitizedFirstMessage as Message],
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),

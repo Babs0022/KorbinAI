@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Settings, LogOut, FolderKanban, Bot, Sun, Moon, Monitor, CreditCard, FileText, Shield, Feather, Bolt, Image as ImageIcon, Code2, MessageSquare, Plus, MessageSquareText } from "lucide-react";
+import { User, Settings, LogOut, FolderKanban, Bot, Sun, Moon, Monitor, CreditCard, FileText, Shield, Feather, Bolt, Image as ImageIcon, Code2, MessageSquare, Plus, MessageSquareText, MoreHorizontal, Pin, Trash2, Share, Pencil } from "lucide-react";
 import { useSidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -77,8 +77,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
 
   useEffect(() => {
     if (user) {
-      // This function from chatService is safe to call on the client
-      // as it uses the client-side SDK for its listener.
       const unsubscribe = listRecentChatsForUser(user.uid, (chats) => {
         setRecentChats(chats);
       });
@@ -152,7 +150,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
         <SidebarMenu>
             <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                    <Link href="/chat/new">
+                    <Link href="/">
                         <Plus />
                         <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>New Chat</span>
                     </Link>
@@ -175,11 +173,24 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
              {recentChats.map(chat => (
                 <SidebarMenuItem key={chat.id}>
                     <SidebarMenuButton asChild tooltip={{children: chat.title, className: "max-w-xs truncate"}} isActive={pathname.includes(`/chat/${chat.id}`)}>
-                        <Link href={`/chat/${chat.id}`} className="truncate">
-                            <MessageSquareText />
+                        <Link href={`/chat/${chat.id}`} className="truncate w-full justify-start items-center">
                             <span className={cn("transition-opacity truncate", state === 'collapsed' && !isMobile && 'opacity-0')}>{chat.title}</span>
                         </Link>
                     </SidebarMenuButton>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                             <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                                <MoreHorizontal className="h-4 w-4" />
+                             </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-48">
+                            <DropdownMenuItem><Pin className="mr-2 h-4 w-4"/>Pin</DropdownMenuItem>
+                            <DropdownMenuItem><Pencil className="mr-2 h-4 w-4"/>Rename</DropdownMenuItem>
+                            <DropdownMenuItem><Share className="mr-2 h-4 w-4"/>Share</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
+                        </DropdownMenuContent>
+                     </DropdownMenu>
                 </SidebarMenuItem>
              ))}
         </SidebarMenu>
