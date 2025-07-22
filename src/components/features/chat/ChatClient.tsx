@@ -2,10 +2,10 @@
 "use client";
 
 import { useState, useRef, useEffect, forwardRef, memo } from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { LoaderCircle, ImagePlus, X } from "lucide-react";
+import { LoaderCircle, ImagePlus, X, ArrowUp, Square } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
@@ -21,29 +21,20 @@ import LogoSpinner from "@/components/shared/LogoSpinner";
 
 const formSchema = z.object({
   message: z.string(), // Allow empty message if an image is attached
-}).refine(data => data.message.trim().length > 0 || "image is present", {
-  message: "Message cannot be empty.",
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-// Custom SVG Icon based on the sketch
-const SendIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
-        <path d="M7 11L12 6L17 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M12 18V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-);
 
 
 interface ChatInputFormProps {
   onSubmit: (values: FormValues, images?: string[]) => void;
   isLoading: boolean;
+  onInterrupt: () => void;
 }
 
 
 // Memoize the form component to prevent re-renders on parent state changes.
-const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading }, ref) => {
+const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -54,6 +45,9 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
             message: "",
         },
     });
+
+    const messageValue = useWatch({ control: form.control, name: 'message' });
+    const isButtonDisabled = isLoading || (!messageValue?.trim() && imagePreviews.length === 0);
 
     const handleFormSubmit = (values: FormValues) => {
         if (!values.message.trim() && imagePreviews.length === 0) {
@@ -75,7 +69,9 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
-            form.handleSubmit(handleFormSubmit)();
+            if (!isButtonDisabled) {
+                form.handleSubmit(handleFormSubmit)();
+            }
         }
     };
 
@@ -170,9 +166,15 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                 />
                             </div>
                             
-                            <Button type="submit" size="sm" className="rounded-lg" disabled={isLoading}>
-                                {isLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <SendIcon />}
-                                <span className="sr-only">Send</span>
+                            <Button 
+                                type={isLoading ? "button" : "submit"}
+                                size="sm" 
+                                className="rounded-lg" 
+                                disabled={isButtonDisabled}
+                                onClick={isLoading ? onInterrupt : undefined}
+                            >
+                                {isLoading ? <Square className="h-5 w-5" /> : <ArrowUp className="h-5 w-5" />}
+                                <span className="sr-only">{isLoading ? 'Stop' : 'Send'}</span>
                             </Button>
                         </div>
                     </form>
@@ -190,6 +192,7 @@ export default function ChatClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [greeting, setGreeting] = useState("Hey");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -210,10 +213,17 @@ export default function ChatClient() {
     scrollToBottom();
   }, [messages]);
 
+  const handleInterrupt = () => {
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+    }
+  };
+
   const handleNewMessage = async (values: FormValues, images?: string[]) => {
     const userMessage: Message = { role: "user", content: values.message, imageUrls: images };
     const newHistory = [...messages, userMessage];
     
+    abortControllerRef.current = new AbortController();
     setMessages(newHistory);
     setIsLoading(true);
 
@@ -235,15 +245,24 @@ export default function ChatClient() {
         setMessages((prev) => [...prev, errorMessage]);
       }
 
-    } catch (error) {
-      console.error("Chat failed:", error);
-      const errorMessage: Message = {
-        role: "model",
-        content: `Sorry, I encountered an error. ${error instanceof Error ? error.message : ''}`,
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+    } catch (error: any) {
+        if (error.name === 'AbortError') {
+            const interruptMessage: Message = {
+                role: "model",
+                content: "*What else can I help you with?*",
+            };
+            setMessages((prev) => [...prev, interruptMessage]);
+        } else {
+            console.error("Chat failed:", error);
+            const errorMessage: Message = {
+                role: "model",
+                content: `Sorry, I encountered an error. ${error instanceof Error ? error.message : ''}`,
+            };
+            setMessages((prev) => [...prev, errorMessage]);
+        }
     } finally {
       setIsLoading(false);
+      abortControllerRef.current = null;
     }
   }
 
@@ -314,6 +333,7 @@ export default function ChatClient() {
       <ChatInputForm
         onSubmit={handleNewMessage}
         isLoading={isLoading}
+        onInterrupt={handleInterrupt}
       />
     </div>
   );
