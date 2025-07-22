@@ -1,67 +1,43 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // --- User Data ---
-    // Users can read and write their own user document and its subcollections.
+    // Users can read and update their own user document.
     match /users/{userId} {
-      // Allow users to create, read, update, and delete their own user document.
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
-
-      // Allow users to manage their own subscriptions in the 'subscriptions' subcollection.
-      match /subscriptions/{subscriptionId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
+      allow read, update: if request.auth != null && request.auth.uid == userId;
     }
 
-    // --- Projects (Metadata) ---
-    // Handles rules for the 'projects' collection which stores metadata.
-    match /projects/{projectId} {
-      // Allow a user to get a single project if they are the owner.
-      allow get: if request.auth != null && resource.data.userId == request.auth.uid;
-      
-      // Allow a user to list projects only if they are querying by their own userId.
-      allow list: if request.auth != null && request.query.where[0][0] == 'userId' && request.query.where[0][2] == request.auth.uid;
-      
-      // Allow a user to create, update, or delete a project if they are the owner.
-      allow create, update, delete: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    // Users can create and manage their own chat sessions.
+    match /chatSessions/{chatId} {
+      allow read, update: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Users can read their own transactions.
+    match /transactions/{transactionId} {
+        allow read: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
-    // --- Generations (Content) ---
-    // Handles rules for the 'generations' collection which stores raw content.
-    match /generations/{generationId} {
-        // Users can read their own generation data.
-        allow get: if request.auth != null && resource.data.userId == request.auth.uid;
-        // Creation should be handled by server-side logic (e.g., Cloud Functions or Server Actions).
-        // Disallow direct client creation to prevent misuse.
-        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-        // Generally, generations should be immutable from the client.
-        allow update, delete: if false;
-    }
-
-    // --- Feedback ---
-    match /feedback/{feedbackId} {
-      // Only allow authenticated users to create feedback.
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      // Nobody can read, update, or delete feedback from the client.
-      allow read, update, delete: if false;
-    }
-
-    // --- User Subscriptions (Legacy or separate) ---
-    // Handled by server-side functions. Client can only read their own.
+    // Users can read their own subscriptions.
     match /userSubscriptions/{userId} {
-      allow get: if request.auth != null && request.auth.uid == userId;
-      allow list, create, update, delete: if false;
+      allow read: if request.auth != null && request.auth.uid == userId;
     }
 
-    // --- Transactions ---
-    // Handled by server-side functions. Client can only read their own.
-    match /transactions/{transactionId} {
-      allow get: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow list: if request.auth != null && request.query.where[0][0] == 'userId' && request.query.where[0][2] == request.auth.uid;
-      allow create, update, delete: if false;
+    // Generations can only be read indirectly via a project lookup by a logged-in user.
+    // Direct access is denied to prevent data leakage.
+    match /generations/{generationId} {
+        allow read, write: if false;
+    }
+    
+    // Projects can be read by their owner. Creation/update is handled by server-side logic.
+    match /projects/{projectId} {
+        allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    // Default deny all other access
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
