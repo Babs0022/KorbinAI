@@ -11,7 +11,7 @@ import * as cheerio from 'cheerio';
 export const scrapeWebPage = ai.defineTool(
   {
     name: 'scrapeWebPage',
-    description: 'Fetches the content of a web page and returns a clean, readable text summary. Use this when a user provides a URL or asks to look something up on the internet.',
+    description: 'Fetches the content of a web page and returns a clean, readable text summary. Use this when a user provides a URL or asks you to search for something on the internet (e.g., "find the OpenAI website").',
     inputSchema: z.object({
       url: z.string().url().describe('The full URL of the webpage to scrape.'),
     }),
