@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect, forwardRef, memo } from "react";
+import { useState, useRef, useEffect, forwardRef, memo, useCallback } from "react";
 import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,7 +16,6 @@ import { createChatSession, getChatSession, updateChatSession } from "@/services
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import MarkdownRenderer from "@/components/shared/MarkdownRenderer";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -221,6 +220,13 @@ export default function ChatClient() {
   const [greeting, setGreeting] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  
+  // Create a ref for the session state to use in async handlers
+  const sessionRef = useRef(session);
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -242,7 +248,6 @@ export default function ChatClient() {
   useEffect(() => {
     async function loadChat() {
         if (!user || !chatId) {
-            // This is a new chat on the root page, clear state.
             setSession(null);
             setMessages([]);
             setIsPageLoading(false);
@@ -256,7 +261,7 @@ export default function ChatClient() {
                 setSession(loadedSession);
                 setMessages(loadedSession.messages);
             } else {
-                router.replace('/'); // If chat not found, start new one
+                router.replace('/'); 
             }
         } catch (error) {
             console.error("Error loading chat session:", error);
@@ -278,7 +283,7 @@ export default function ChatClient() {
     }
   };
 
-  const handleNewMessage = async (values: FormValues, images?: string[]) => {
+  const handleNewMessage = useCallback(async (values: FormValues, images?: string[]) => {
     if (!user) return;
 
     const userMessage: Message = { role: "user", content: values.message, imageUrls: images };
@@ -288,16 +293,20 @@ export default function ChatClient() {
     abortControllerRef.current = new AbortController();
     setIsLoading(true);
 
-    let currentSession = session;
-
     try {
+        let currentSession = sessionRef.current;
+
         // If it's a new chat, create it first
-        if (!chatId && !currentSession) {
+        if (!currentSession) {
             const newSession = await createChatSession({ userId: user.uid, firstMessage: userMessage });
-            setSession(newSession);
-            currentSession = newSession;
+            setSession(newSession); // This updates the state
+            currentSession = newSession; // Use the newly created session for this operation
             // Update URL without reloading the page
             window.history.replaceState(null, '', `/chat/${newSession.id}`);
+        }
+        
+        if (!currentSession) {
+            throw new Error("Failed to create or find a chat session.");
         }
 
         const response = await conversationalChat({
@@ -319,17 +328,14 @@ export default function ChatClient() {
         const finalHistory = [...newHistory, aiMessage];
         setMessages(finalHistory);
 
-        // Update the session in Firestore
-        if (currentSession) {
-            await updateChatSession(currentSession.id, finalHistory);
-        }
+        await updateChatSession(currentSession.id, finalHistory);
 
     } catch (error: any) {
         if (error.message === 'AbortError' || abortControllerRef.current?.signal.aborted) {
             const interruptMessage: Message = { role: "model", content: "*What else can I help you with?*" };
             const finalHistory = [...newHistory, interruptMessage];
             setMessages(finalHistory);
-            if (currentSession) await updateChatSession(currentSession.id, finalHistory);
+            if (sessionRef.current) await updateChatSession(sessionRef.current.id, finalHistory);
         } else {
             console.error("Chat failed:", error);
             const errorMessage: Message = { role: "model", content: `Sorry, I encountered an error. ${error instanceof Error ? error.message : ''}` };
@@ -339,7 +345,7 @@ export default function ChatClient() {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
-  }
+  }, [user, messages, router]);
 
   const handlePromptSuggestionClick = (prompt: string) => {
     handleNewMessage({ message: prompt });
