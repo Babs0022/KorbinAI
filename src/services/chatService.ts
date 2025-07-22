@@ -24,18 +24,34 @@ interface CreateChatSessionInput {
 }
 
 /**
+ * Creates a new, sanitized message object for Firestore.
+ * Firestore does not allow `undefined` values.
+ * This function removes any keys where the value is undefined.
+ * @param message The message object to sanitize.
+ * @returns A new message object safe to store in Firestore.
+ */
+function sanitizeMessageForFirestore(message: Message): Partial<Message> {
+    const sanitized: Partial<Message> = { role: message.role };
+    if (message.content) {
+        sanitized.content = message.content;
+    }
+    if (message.imageUrls && message.imageUrls.length > 0) {
+        sanitized.imageUrls = message.imageUrls;
+    }
+    return sanitized;
+}
+
+
+/**
  * Creates a new chat session in Firestore using the client SDK.
  * Generates a title from the first message.
  */
 export async function createChatSession({ userId, firstMessage }: CreateChatSessionInput): Promise<ChatSession> {
   // Sanitize the first message to prevent Firestore errors with undefined fields.
-  const sanitizedFirstMessage = {
-    ...firstMessage,
-    content: firstMessage.content || '', // Ensure content is at least an empty string.
-  };
+  const sanitizedFirstMessage = sanitizeMessageForFirestore(firstMessage);
 
   // Create a simple title from the first message content.
-  const title = sanitizedFirstMessage.content.split(' ').slice(0, 5).join(' ') + (sanitizedFirstMessage.content.split(' ').length > 5 ? '...' : '');
+  const title = (sanitizedFirstMessage.content || 'Chat').split(' ').slice(0, 5).join(' ') + ((sanitizedFirstMessage.content || '').split(' ').length > 5 ? '...' : '');
 
   const newSessionData = {
     userId,
@@ -52,7 +68,7 @@ export async function createChatSession({ userId, firstMessage }: CreateChatSess
     id: chatRef.id,
     userId,
     title: title || 'New Chat',
-    messages: [sanitizedFirstMessage],
+    messages: [sanitizedFirstMessage as Message],
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
   } as ChatSession;
@@ -85,8 +101,11 @@ export async function getChatSession(chatId: string): Promise<ChatSession | null
  */
 export async function updateChatSession(chatId: string, messages: Message[]): Promise<void> {
   const chatRef = doc(db, 'chatSessions', chatId);
+  // Sanitize every message in the array before updating
+  const sanitizedMessages = messages.map(sanitizeMessageForFirestore);
+
   await updateDoc(chatRef, {
-    messages,
+    messages: sanitizedMessages,
     updatedAt: serverTimestamp(),
   });
 }
