@@ -13,6 +13,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User, Settings, LogOut, FolderKanban, Bot, Sun, Moon, Monitor, CreditCard, FileText, Shield, Feather, Bolt, Image as ImageIcon, Code2, MessageSquare, Plus, MessageSquareText, MoreHorizontal, Pin, Trash2, Share, Pencil } from "lucide-react";
 import { useSidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
@@ -22,10 +25,10 @@ import Logo from "@/components/shared/Logo";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Badge } from "../ui/badge";
 import { useEffect, useState } from "react";
-import { listRecentChatsForUser } from "@/services/chatService";
+import { listRecentChatsForUser, deleteChatSession, updateChatSessionMetadata } from "@/services/chatService";
 import type { ChatSession } from "@/types/chat";
-import { formatDistanceToNow } from 'date-fns';
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 
 interface DashboardHeaderProps {
@@ -74,11 +77,24 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   const { state, isMobile } = useSidebar();
   const [recentChats, setRecentChats] = useState<ChatSession[]>([]);
   const pathname = usePathname();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [chatToRename, setChatToRename] = useState<ChatSession | null>(null);
+  const [newChatName, setNewChatName] = useState("");
 
   useEffect(() => {
     if (user) {
       const unsubscribe = listRecentChatsForUser(user.uid, (chats) => {
-        setRecentChats(chats);
+        // Sort chats to show pinned ones first, then by date
+        const sortedChats = chats.sort((a, b) => {
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+          // Assuming updatedAt is a string that can be parsed into a Date
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        });
+        setRecentChats(sortedChats);
       });
       return () => unsubscribe();
     }
@@ -91,6 +107,52 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
       .map((n) => n[0])
       .join("")
       .toUpperCase();
+  };
+  
+  const handleDelete = async (chatId: string) => {
+    try {
+        await deleteChatSession(chatId);
+        toast({ title: "Conversation Deleted" });
+        // If the user deleted the chat they are currently on, redirect them
+        if (pathname.includes(chatId)) {
+            router.push('/');
+        }
+    } catch (error) {
+        toast({ variant: 'destructive', title: "Error", description: "Could not delete conversation." });
+    }
+  };
+  
+  const handleTogglePin = async (chat: ChatSession) => {
+    try {
+        await updateChatSessionMetadata(chat.id, { isPinned: !chat.isPinned });
+        toast({ title: chat.isPinned ? "Unpinned" : "Pinned to top" });
+    } catch (error) {
+        toast({ variant: 'destructive', title: "Error", description: "Could not update pin status." });
+    }
+  };
+
+  const openRenameDialog = (chat: ChatSession) => {
+    setChatToRename(chat);
+    setNewChatName(chat.title);
+    setIsRenameDialogOpen(true);
+  };
+  
+  const handleRename = async () => {
+    if (!chatToRename || !newChatName.trim()) return;
+    try {
+        await updateChatSessionMetadata(chatToRename.id, { title: newChatName.trim() });
+        toast({ title: "Conversation Renamed" });
+        setIsRenameDialogOpen(false);
+        setChatToRename(null);
+    } catch (error) {
+        toast({ variant: 'destructive', title: "Error", description: "Could not rename conversation." });
+    }
+  };
+  
+  const handleShare = (chatId: string) => {
+    const url = `${window.location.origin}/chat/${chatId}`;
+    navigator.clipboard.writeText(url);
+    toast({ title: "Link Copied", description: "A shareable link has been copied to your clipboard." });
   };
   
   const UserProfileMenu = () => {
@@ -166,31 +228,34 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             </SidebarMenuItem>
         </SidebarMenu>
         
-        <div className="px-2 py-2 text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
+        <div className="px-2 py-2 text-xs font-medium text-sidebar-foreground/70 group-data-[state=collapsed]:opacity-0 transition-opacity">
             Recents
         </div>
         <SidebarMenu>
              {recentChats.map(chat => (
                 <SidebarMenuItem key={chat.id}>
-                    <SidebarMenuButton asChild tooltip={{children: chat.title, className: "max-w-xs truncate"}} isActive={pathname.includes(`/chat/${chat.id}`)}>
-                        <Link href={`/chat/${chat.id}`} className="truncate w-full justify-start items-center">
-                            <span className={cn("transition-opacity truncate", state === 'collapsed' && !isMobile && 'opacity-0')}>{chat.title}</span>
-                        </Link>
-                    </SidebarMenuButton>
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                             <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-                                <MoreHorizontal className="h-4 w-4" />
-                             </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-48">
-                            <DropdownMenuItem><Pin className="mr-2 h-4 w-4"/>Pin</DropdownMenuItem>
-                            <DropdownMenuItem><Pencil className="mr-2 h-4 w-4"/>Rename</DropdownMenuItem>
-                            <DropdownMenuItem><Share className="mr-2 h-4 w-4"/>Share</DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                     </DropdownMenu>
+                    <div className="relative flex items-center w-full group">
+                        <SidebarMenuButton asChild tooltip={{children: chat.title, className: "max-w-xs truncate"}} isActive={pathname.includes(`/chat/${chat.id}`)} className="flex-1 pr-8">
+                            <Link href={`/chat/${chat.id}`} className="flex items-center gap-2 truncate w-full justify-start">
+                                {chat.isPinned && <Pin className="h-3 w-3 shrink-0 text-primary" />}
+                                <span className={cn("transition-opacity truncate", state === 'collapsed' && !isMobile && 'opacity-0')}>{chat.title}</span>
+                            </Link>
+                        </SidebarMenuButton>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-48">
+                                <DropdownMenuItem onSelect={() => handleTogglePin(chat)}><Pin className="mr-2 h-4 w-4"/>{chat.isPinned ? "Unpin" : "Pin"}</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => openRenameDialog(chat)}><Pencil className="mr-2 h-4 w-4"/>Rename</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => handleShare(chat.id)}><Share className="mr-2 h-4 w-4"/>Share</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onSelect={() => handleDelete(chat.id)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                 </SidebarMenuItem>
              ))}
         </SidebarMenu>
@@ -246,6 +311,33 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     </Button>
                 )}
             </div>
+            
+             <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Rename Conversation</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="name" className="text-right">Name</Label>
+                            <Input
+                                id="name"
+                                value={newChatName}
+                                onChange={(e) => setNewChatName(e.target.value)}
+                                className="col-span-3"
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleRename(); }}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                           <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <Button onClick={handleRename}>Save</Button>
+                    </DialogFooter>
+                </DialogContent>
+             </Dialog>
+
         </div>
     );
   }

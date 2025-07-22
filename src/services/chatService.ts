@@ -12,6 +12,7 @@ import {
   onSnapshot,
   serverTimestamp,
   Timestamp,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase'; // Use the client-side Firebase instance
 import type { ChatSession } from '@/types/chat';
@@ -34,13 +35,8 @@ function sanitizeMessageForFirestore(message: Message): Message {
     const sanitized: Message = {
         role: message.role,
         content: message.content ?? '',
+        imageUrls: message.imageUrls ?? [],
     };
-    if (message.imageUrls && message.imageUrls.length > 0) {
-        sanitized.imageUrls = message.imageUrls;
-    } else {
-        // Explicitly set to an empty array if undefined or empty to avoid Firestore errors
-        sanitized.imageUrls = [];
-    }
     return sanitized;
 }
 
@@ -62,6 +58,7 @@ export async function createChatSession({ userId, firstMessage }: CreateChatSess
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     messages: [sanitizedFirstMessage],
+    isPinned: false, // Default value for pinning
   };
 
   const chatRef = await addDoc(collection(db, 'chatSessions'), newSessionData);
@@ -74,6 +71,7 @@ export async function createChatSession({ userId, firstMessage }: CreateChatSess
     messages: [sanitizedFirstMessage as Message],
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
+    isPinned: false,
   } as ChatSession;
 }
 
@@ -138,4 +136,29 @@ export function listRecentChatsForUser(userId: string, callback: (chats: ChatSes
   });
 
   return unsubscribe;
+}
+
+/**
+ * Deletes a chat session from Firestore.
+ */
+export async function deleteChatSession(chatId: string): Promise<void> {
+  const docRef = doc(db, 'chatSessions', chatId);
+  await deleteDoc(docRef);
+}
+
+/**
+ * Updates the metadata of a chat session (e.g., title, isPinned).
+ */
+export async function updateChatSessionMetadata(chatId: string, data: { title?: string; isPinned?: boolean }): Promise<void> {
+    const docRef = doc(db, 'chatSessions', chatId);
+    const updateData: { [key: string]: any } = {
+        updatedAt: serverTimestamp(),
+    };
+    if (data.title !== undefined) {
+        updateData.title = data.title;
+    }
+    if (data.isPinned !== undefined) {
+        updateData.isPinned = data.isPinned;
+    }
+    await updateDoc(docRef, updateData);
 }
