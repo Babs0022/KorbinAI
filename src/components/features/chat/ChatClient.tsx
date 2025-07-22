@@ -170,7 +170,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                 type={isLoading ? "button" : "submit"}
                                 size="sm" 
                                 className="rounded-lg" 
-                                disabled={isButtonDisabled}
+                                disabled={isButtonDisabled && !isLoading}
                                 onClick={isLoading ? onInterrupt : undefined}
                             >
                                 {isLoading ? <Square className="h-5 w-5" /> : <ArrowUp className="h-5 w-5" />}
@@ -228,9 +228,17 @@ export default function ChatClient() {
     setIsLoading(true);
 
     try {
+      // Note: Genkit flows don't accept an AbortSignal directly like fetch.
+      // This implementation handles the client-side interruption gracefully.
       const response = await conversationalChat({
         history: newHistory,
       });
+
+      if (abortControllerRef.current?.signal.aborted) {
+          // If aborted during the await, don't process the response.
+          // The catch block will handle the message.
+          return;
+      }
 
       if (typeof response === 'string' && response.trim().length > 0) {
         const aiMessage: Message = { role: "model", content: response };
@@ -246,7 +254,7 @@ export default function ChatClient() {
       }
 
     } catch (error: any) {
-        if (error.name === 'AbortError') {
+        if (error.name === 'AbortError' || abortControllerRef.current?.signal.aborted) {
             const interruptMessage: Message = {
                 role: "model",
                 content: "*What else can I help you with?*",
