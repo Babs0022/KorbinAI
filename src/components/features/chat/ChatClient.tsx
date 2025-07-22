@@ -209,7 +209,8 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
 ChatInputForm.displayName = "ChatInputForm";
 
 
-export default function ChatClient({ chatId }: { chatId: string }) {
+export default function ChatClient({ params }: { params: { chatId: string } }) {
+  const { chatId } = params;
   const { user } = useAuth();
   const router = useRouter();
   const [session, setSession] = useState<ChatSession | null>(null);
