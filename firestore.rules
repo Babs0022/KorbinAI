@@ -1,43 +1,53 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read and update their own user document.
+
+    // Helper function to check if the user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if the user owns the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Users can read and update their own user document
     match /users/{userId} {
-      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow read, update: if isSignedIn() && isOwner(userId);
     }
-
-    // Users can create and manage their own chat sessions.
+    
+    // Users can create and read their own chat sessions, and only update/delete their own.
     match /chatSessions/{chatId} {
-      allow read, update: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read, delete, update: if isSignedIn() && isOwner(resource.data.userId);
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
     }
 
-    // Users can read their own transactions.
+    // Transactions can only be read by the user who created them. Creation should be handled by secure backend functions.
     match /transactions/{transactionId} {
-        allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+        allow read: if isSignedIn() && isOwner(resource.data.userId);
+        allow create, update, delete: if false; // Disallow client-side modification
     }
     
-    // Users can read their own subscriptions.
-    match /userSubscriptions/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
+    // feedback can be created by any signed-in user.
+    match /feedback/{feedbackId} {
+        allow create: if isSignedIn();
+        allow read, update, delete: if false;
     }
 
-    // Generations can only be read indirectly via a project lookup by a logged-in user.
-    // Direct access is denied to prevent data leakage.
+    // generations can only be created by signed-in users (via server-side logic). Read access is granted via project document lookup.
     match /generations/{generationId} {
-        allow read, write: if false;
-    }
-    
-    // Projects can be read by their owner. Creation/update is handled by server-side logic.
-    match /projects/{projectId} {
-        allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+        allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+        allow read, update, delete: if false;
     }
 
-    // Default deny all other access
-    match /{document=**} {
-      allow read, write: if false;
+    // projects can be created and read by their owners.
+    match /projects/{projectId} {
+        allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+        allow read, delete: if isSignedIn() && isOwner(resource.data.userId);
+        allow update: if false; // Updates should happen via specific actions if needed
     }
+    
   }
 }
