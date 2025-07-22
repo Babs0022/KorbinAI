@@ -369,15 +369,17 @@ export default function ChatClient() {
 
 
   return (
-    <div className="flex-grow flex flex-col overflow-y-auto">
-      <div className="flex-grow overflow-y-auto pt-6">
+    <div className="flex-1 flex flex-col">
+      <div className="flex-1 overflow-y-auto pt-6 pb-24">
         {renderContent()}
       </div>
-      <ChatInputForm
-        onSubmit={handleNewMessage}
-        isLoading={isLoading}
-        onInterrupt={handleInterrupt}
-      />
+      <div className="fixed bottom-0 left-0 right-0 md:pl-[var(--sidebar-width)] group-data-[state=collapsed]:md:pl-[var(--sidebar-width-icon)]">
+          <ChatInputForm
+            onSubmit={handleNewMessage}
+            isLoading={isLoading}
+            onInterrupt={handleInterrupt}
+          />
+      </div>
     </div>
   );
 }
