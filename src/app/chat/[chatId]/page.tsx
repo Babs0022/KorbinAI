@@ -18,7 +18,7 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
             </div>
           </div>
         }>
-          <ChatClient params={params} />
+          <ChatClient chatId={params.chatId} />
         </Suspense>
       </main>
     </DashboardLayout>
