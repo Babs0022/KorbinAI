@@ -19,7 +19,6 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const formSchema = z.object({
   message: z.string(), // Allow empty message if an image is attached
@@ -309,19 +308,14 @@ export default function ChatClient() {
                     <p className="text-lg sm:text-xl text-muted-foreground">{greeting}</p>
                 </div>
                 
-                 <div className="relative">
-                    <ScrollArea>
-                        <div className="flex space-x-4 pb-4">
-                            {promptSuggestions.map((prompt, index) => (
-                                <Card key={index} className="min-w-[250px] flex-shrink-0 cursor-pointer hover:border-primary transition-colors" onClick={() => handlePromptSuggestionClick(prompt.prompt)}>
-                                    <CardHeader>
-                                        <CardTitle className="text-base">{prompt.title}</CardTitle>
-                                    </CardHeader>
-                                </Card>
-                            ))}
-                        </div>
-                        <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
+                 <div className="space-y-4">
+                    {promptSuggestions.map((prompt, index) => (
+                        <Card key={index} className="w-full cursor-pointer hover:border-primary transition-colors" onClick={() => handlePromptSuggestionClick(prompt.prompt)}>
+                            <CardHeader>
+                                <CardTitle className="text-base">{prompt.title}</CardTitle>
+                            </CardHeader>
+                        </Card>
+                    ))}
                 </div>
             </div>
         </div>
