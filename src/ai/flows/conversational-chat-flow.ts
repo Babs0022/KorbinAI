@@ -87,7 +87,7 @@ Do not be overly robotic or formal. Be creative and helpful.`;
     }
 
     const response = await ai.generate({
-      model: 'googleai/gemini-1.5-pro-latest',
+      model: 'googleai/gemini-1.5-flash-latest',
       system: systemPrompt,
       messages: messages,
       tools: [getCurrentTime, generateImage, scrapeWebPage],
