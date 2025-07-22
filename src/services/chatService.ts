@@ -28,15 +28,21 @@ interface CreateChatSessionInput {
  * Generates a title from the first message.
  */
 export async function createChatSession({ userId, firstMessage }: CreateChatSessionInput): Promise<ChatSession> {
+  // Sanitize the first message to prevent Firestore errors with undefined fields.
+  const sanitizedFirstMessage = {
+    ...firstMessage,
+    content: firstMessage.content || '', // Ensure content is at least an empty string.
+  };
+
   // Create a simple title from the first message content.
-  const title = firstMessage.content.split(' ').slice(0, 5).join(' ') + (firstMessage.content.split(' ').length > 5 ? '...' : '');
+  const title = sanitizedFirstMessage.content.split(' ').slice(0, 5).join(' ') + (sanitizedFirstMessage.content.split(' ').length > 5 ? '...' : '');
 
   const newSessionData = {
     userId,
     title: title || 'New Chat',
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-    messages: [firstMessage],
+    messages: [sanitizedFirstMessage],
   };
 
   const chatRef = await addDoc(collection(db, 'chatSessions'), newSessionData);
@@ -44,7 +50,9 @@ export async function createChatSession({ userId, firstMessage }: CreateChatSess
   const now = new Date();
   return {
     id: chatRef.id,
-    ...newSessionData,
+    userId,
+    title: title || 'New Chat',
+    messages: [sanitizedFirstMessage],
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
   } as ChatSession;
