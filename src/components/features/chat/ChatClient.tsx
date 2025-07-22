@@ -18,6 +18,8 @@ import MarkdownRenderer from "@/components/shared/MarkdownRenderer";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const formSchema = z.object({
   message: z.string(), // Allow empty message if an image is attached
@@ -31,6 +33,25 @@ interface ChatInputFormProps {
   isLoading: boolean;
   onInterrupt: () => void;
 }
+
+const promptSuggestions = [
+    {
+        title: "Write a blog post",
+        prompt: "Write a blog post about the future of renewable energy, focusing on recent breakthroughs in solar and wind power."
+    },
+    {
+        title: "Summarize this article",
+        prompt: "Can you please visit https://www.theverge.com/2023/9/19/23880112/google-ai-ethicist-blake-lemoine-conscious-lamda-chatbots and give me a summary of the key points?"
+    },
+    {
+        title: "Brainstorm marketing ideas",
+        prompt: "Brainstorm three creative marketing slogans for a new brand of eco-friendly sneakers."
+    },
+    {
+        title: "Multi-task: Create and explain",
+        prompt: "Generate an image of a futuristic cityscape at night, then write a short, cyberpunk-style story scene that takes place in it."
+    }
+];
 
 
 // Memoize the form component to prevent re-renders on parent state changes.
@@ -190,7 +211,7 @@ export default function ChatClient() {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [greeting, setGreeting] = useState("Hey");
+  const [greeting, setGreeting] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -199,14 +220,17 @@ export default function ChatClient() {
   };
   
   useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) {
-      setGreeting("Good morning");
-    } else if (hour < 18) {
-      setGreeting("Good afternoon");
-    } else {
-      setGreeting("Good evening");
-    }
+    const greetings = [
+        "How can I help you today?",
+        "What can I create for you?",
+        "Ready to build something amazing?",
+        "Let's get to work. What's the plan?",
+        "Your creative copilot, reporting for duty.",
+        "What masterpiece are we creating today?",
+        "Ask me anything. Let's get started."
+    ];
+    const randomIndex = Math.floor(Math.random() * greetings.length);
+    setGreeting(greetings[randomIndex]);
   }, []);
 
   useEffect(() => {
@@ -269,14 +293,36 @@ export default function ChatClient() {
     }
   }
 
+  const handlePromptSuggestionClick = (prompt: string) => {
+    handleNewMessage({ message: prompt });
+  };
+
+
   const renderContent = () => {
     if (messages.length === 0) {
       const userName = user?.displayName ? `, ${user.displayName.split(' ')[0]}` : '';
       return (
         <div className="flex-grow flex flex-col items-center justify-center p-4">
-            <div className="text-center space-y-4 max-w-full">
-                <h1 className="text-3xl sm:text-4xl font-bold break-words">{greeting}{userName}</h1>
-                <p className="text-lg sm:text-xl text-muted-foreground">How can I help you today?</p>
+            <div className="w-full max-w-4xl mx-auto space-y-12">
+                <div className="text-center space-y-4 max-w-full">
+                    <h1 className="text-3xl sm:text-4xl font-bold break-words">Hello{userName}</h1>
+                    <p className="text-lg sm:text-xl text-muted-foreground">{greeting}</p>
+                </div>
+                
+                 <div className="relative">
+                    <ScrollArea>
+                        <div className="flex space-x-4 pb-4">
+                            {promptSuggestions.map((prompt, index) => (
+                                <Card key={index} className="min-w-[250px] flex-shrink-0 cursor-pointer hover:border-primary transition-colors" onClick={() => handlePromptSuggestionClick(prompt.prompt)}>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">{prompt.title}</CardTitle>
+                                    </CardHeader>
+                                </Card>
+                            ))}
+                        </div>
+                        <ScrollBar orientation="horizontal" />
+                    </ScrollArea>
+                </div>
             </div>
         </div>
       );
