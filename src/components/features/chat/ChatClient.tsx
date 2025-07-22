@@ -211,13 +211,13 @@ ChatInputForm.displayName = "ChatInputForm";
 
 export default function ChatClient() {
   const params = useParams();
-  const chatId = params.chatId as string;
+  const chatId = params.chatId as string | undefined; // Can be undefined on the root page
   const { user } = useAuth();
   const router = useRouter();
   const [session, setSession] = useState<ChatSession | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [isPageLoading, setIsPageLoading] = useState(!!chatId); // Only show page loading for existing chats
   const [greeting, setGreeting] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -241,25 +241,26 @@ export default function ChatClient() {
 
   useEffect(() => {
     async function loadChat() {
-        if (!user || !chatId) return;
-
-        setIsPageLoading(true);
-        if (chatId !== 'new') {
-            try {
-                const loadedSession = await getChatSession(chatId);
-                if (loadedSession) {
-                    setSession(loadedSession);
-                    setMessages(loadedSession.messages);
-                } else {
-                    router.replace('/chat/new'); // If chat not found, start new one
-                }
-            } catch (error) {
-                console.error("Error loading chat session:", error);
-                router.replace('/chat/new');
-            }
-        } else {
+        if (!user || !chatId) {
+            // This is a new chat on the root page, clear state.
             setSession(null);
             setMessages([]);
+            setIsPageLoading(false);
+            return;
+        };
+
+        setIsPageLoading(true);
+        try {
+            const loadedSession = await getChatSession(chatId);
+            if (loadedSession) {
+                setSession(loadedSession);
+                setMessages(loadedSession.messages);
+            } else {
+                router.replace('/'); // If chat not found, start new one
+            }
+        } catch (error) {
+            console.error("Error loading chat session:", error);
+            router.replace('/');
         }
         setIsPageLoading(false);
     }
@@ -288,15 +289,13 @@ export default function ChatClient() {
     setIsLoading(true);
 
     let currentSession = session;
-    let currentChatId = chatId;
 
     try {
         // If it's a new chat, create it first
-        if (chatId === 'new' && !currentSession) {
+        if (!chatId && !currentSession) {
             const newSession = await createChatSession({ userId: user.uid, firstMessage: userMessage });
             setSession(newSession);
             currentSession = newSession;
-            currentChatId = newSession.id;
             // Update URL without reloading the page
             window.history.replaceState(null, '', `/chat/${newSession.id}`);
         }
@@ -390,18 +389,10 @@ export default function ChatClient() {
                   message.role === "user" ? "justify-end" : "justify-start"
               )}
               >
-              {message.role === "model" && (
-                  <Avatar className="h-9 w-9">
-                      <AvatarImage src="/icon.png" alt="BrieflyAI" data-ai-hint="logo icon" />
-                      <AvatarFallback>B</AvatarFallback>
-                  </Avatar>
-              )}
               <div
                   className={cn(
-                    "max-w-xl",
-                    message.role === "user"
-                      ? "rounded-xl shadow-md bg-primary text-primary-foreground p-3"
-                      : ""
+                    "max-w-xl rounded-xl p-3",
+                     message.role === "user" ? "shadow-md bg-primary text-primary-foreground" : "bg-secondary"
                   )}
               >
                   {message.imageUrls && message.imageUrls.length > 0 && (
