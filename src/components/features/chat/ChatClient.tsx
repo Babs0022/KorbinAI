@@ -228,23 +228,18 @@ export default function ChatClient() {
     setIsLoading(true);
 
     try {
-      // Note: Genkit flows don't accept an AbortSignal directly like fetch.
-      // This implementation handles the client-side interruption gracefully.
       const response = await conversationalChat({
         history: newHistory,
       });
 
       if (abortControllerRef.current?.signal.aborted) {
-          // If aborted during the await, don't process the response.
-          // The catch block will handle the message.
-          return;
+        throw new Error('AbortError');
       }
 
       if (typeof response === 'string' && response.trim().length > 0) {
         const aiMessage: Message = { role: "model", content: response };
         setMessages((prev) => [...prev, aiMessage]);
       } else {
-        // Handle cases where the AI returns an empty or invalid response
         console.error("Invalid response from AI:", response);
         const errorMessage: Message = {
             role: "model",
@@ -254,7 +249,7 @@ export default function ChatClient() {
       }
 
     } catch (error: any) {
-        if (error.name === 'AbortError' || abortControllerRef.current?.signal.aborted) {
+        if (error.message === 'AbortError' || abortControllerRef.current?.signal.aborted) {
             const interruptMessage: Message = {
                 role: "model",
                 content: "*What else can I help you with?*",
