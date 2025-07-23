@@ -10,7 +10,7 @@ import { z } from 'zod';
 export const MessageSchema = z.object({
   role: z.enum(['user', 'model', 'system']),
   content: z.string(),
-  imageUrls: z.array(z.string()).optional().describe('An optional array of image URLs (can be data URIs) associated with the message.'),
+  mediaUrls: z.array(z.string()).optional().describe('An optional array of media URLs (can be data URIs) associated with the message, for images or videos.'),
 });
 export type Message = z.infer<typeof MessageSchema>;
 

@@ -36,7 +36,7 @@ const conversationalChatFlow = ai.defineFlow(
       return "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!";
     }
 
-    const systemPrompt = `You are Briefly, a helpful and friendly AI copilot. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. You are a multi-modal assistant, which means you can process text and images. When a user uploads an image, you can "see" it and answer questions about it.
+    const systemPrompt = `You are Briefly, a helpful and friendly AI copilot. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. You are a multi-modal assistant, which means you can process text, images, and videos. When a user uploads media, you can "see" it and answer questions about it.
 
 You can also access the internet. If a user asks for a link, provides a URL, or asks you to search for something, you should use your knowledge to construct the most likely URL (e.g., 'OpenAI website' becomes 'https://openai.com') and then use the 'scrapeWebPage' tool to get information.
 
@@ -47,7 +47,7 @@ If you generate an image, you MUST tell the user you have created it and that it
 Do not be overly robotic or formal. Be creative and helpful.`;
     
     // 1. Filter out any malformed messages
-    const validMessages = history.filter((msg): msg is Message => msg && (typeof msg.content === 'string' || (Array.isArray(msg.imageUrls) && msg.imageUrls.length > 0)));
+    const validMessages = history.filter((msg): msg is Message => msg && (typeof msg.content === 'string' || (Array.isArray(msg.mediaUrls) && msg.mediaUrls.length > 0)));
 
     // 2. Enforce that roles must alternate, starting with 'user'.
     const alternatingHistory: Message[] = [];
@@ -70,8 +70,8 @@ Do not be overly robotic or formal. Be creative and helpful.`;
         if (msg.content) {
             content.push({ text: msg.content });
         }
-        if (msg.imageUrls) {
-            msg.imageUrls.forEach(url => {
+        if (msg.mediaUrls) {
+            msg.mediaUrls.forEach(url => {
                 content.push({ media: { url } });
             });
         }

@@ -23,18 +23,17 @@ import LogoSpinner from "@/components/shared/LogoSpinner";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 const formSchema = z.object({
-  message: z.string(), // Allow empty message if an image is attached
+  message: z.string(), // Allow empty message if a media file is attached
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-
 interface ChatInputFormProps {
-  onSubmit: (values: FormValues, images?: string[]) => void;
+  onSubmit: (values: FormValues, media?: string[]) => void;
   isLoading: boolean;
   onInterrupt: () => void;
   onSuggestionClick: (suggestion: string) => void;
-  hasImages: boolean;
+  hasMedia: boolean;
 }
 
 const promptSuggestions = [
@@ -56,19 +55,19 @@ const promptSuggestions = [
     }
 ];
 
-const imageSuggestionPrompts = [
-    "Describe this image in detail.",
-    "Write a social media post about this image.",
-    "What is the main subject of this photo?",
+const mediaSuggestionPrompts = [
+    "Describe this in detail.",
+    "Write a social media post about this.",
+    "What is the main subject of this file?",
     "Generate a witty caption for this picture."
 ];
 
 
 // Memoize the form component to prevent re-renders on parent state changes.
-const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt, onSuggestionClick, hasImages }, ref) => {
+const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt, onSuggestionClick, hasMedia }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+    const [mediaPreviews, setMediaPreviews] = useState<{type: 'image' | 'video', url: string}[]>([]);
     
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -78,10 +77,10 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     });
 
     const messageValue = useWatch({ control: form.control, name: 'message' });
-    const isButtonDisabled = isLoading || (!messageValue?.trim() && imagePreviews.length === 0);
+    const isButtonDisabled = isLoading || (!messageValue?.trim() && mediaPreviews.length === 0);
 
     const handleFormSubmit = (values: FormValues) => {
-        if (!values.message.trim() && imagePreviews.length === 0) {
+        if (!values.message.trim() && mediaPreviews.length === 0) {
             toast({
                 title: "Empty message",
                 description: "Please enter a message or upload an image to send.",
@@ -89,9 +88,9 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
             });
             return;
         }
-        onSubmit(values, imagePreviews.length > 0 ? imagePreviews : undefined);
+        onSubmit(values, mediaPreviews.length > 0 ? mediaPreviews.map(p => p.url) : undefined);
         form.reset();
-        setImagePreviews([]);
+        setMediaPreviews([]);
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
@@ -109,44 +108,49 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         if (files) {
-            const newPreviews: Promise<string>[] = [];
+            const newPreviews: Promise<{type: 'image' | 'video', url: string}>[] = [];
             for (const file of Array.from(files)) {
-                if (file.size > 2 * 1024 * 1024) { // 2MB limit per image
+                // ~10 minutes of video at reasonable quality, or large images.
+                const maxSize = 25 * 1024 * 1024; // 25MB limit per file
+                if (file.size > maxSize) {
                     toast({
-                        title: "Image too large",
-                        description: `${file.name} is larger than 2MB. Please upload smaller images.`,
+                        title: "File too large",
+                        description: `${file.name} is larger than 25MB. Please upload a smaller file.`,
                         variant: "destructive",
                     });
                     continue;
                 }
                 newPreviews.push(new Promise((resolve, reject) => {
                     const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.onloadend = () => resolve({
+                        type: file.type.startsWith('video') ? 'video' : 'image',
+                        url: reader.result as string
+                    });
                     reader.onerror = reject;
                     reader.readAsDataURL(file);
                 }));
             }
             Promise.all(newPreviews).then(results => {
-                setImagePreviews(prev => [...prev, ...results]);
+                setMediaPreviews(prev => [...prev, ...results]);
             });
         }
     };
     
-    const removeImage = (indexToRemove: number) => {
-        setImagePreviews(previews => previews.filter((_, index) => index !== indexToRemove));
+    const removeMedia = (indexToRemove: number) => {
+        setMediaPreviews(previews => previews.filter((_, index) => index !== indexToRemove));
     };
 
     return (
         <div className="flex-shrink-0 bg-gradient-to-t from-background via-background/80 to-transparent pt-4 pb-8">
             <div className="mx-auto w-full max-w-4xl px-4">
-                 {hasImages && (
+                 {hasMedia && (
                     <div className="mb-4">
                         <div className="flex items-center gap-2 mb-2">
                              <Sparkles className="h-4 w-4 text-primary" />
-                             <h4 className="text-sm font-semibold text-muted-foreground">What do you want to do with this image?</h4>
+                             <h4 className="text-sm font-semibold text-muted-foreground">What do you want to do with this file?</h4>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {imageSuggestionPrompts.map((prompt) => (
+                            {mediaSuggestionPrompts.map((prompt) => (
                                 <Button
                                     key={prompt}
                                     variant="secondary"
@@ -165,17 +169,21 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                         onSubmit={form.handleSubmit(handleFormSubmit)}
                         className="rounded-xl border bg-secondary"
                     >
-                        {imagePreviews.length > 0 && (
+                        {mediaPreviews.length > 0 && (
                             <div className="p-2 pt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                                {imagePreviews.map((src, index) => (
+                                {mediaPreviews.map((preview, index) => (
                                     <div key={index} className="relative aspect-square">
-                                        <Image src={src} alt={`Preview ${index}`} fill sizes="90px" className="rounded-lg object-cover" />
+                                        {preview.type === 'image' ? (
+                                            <Image src={preview.url} alt={`Preview ${index}`} fill sizes="90px" className="rounded-lg object-cover" />
+                                        ) : (
+                                            <video src={preview.url} className="rounded-lg object-cover w-full h-full" muted playsInline />
+                                        )}
                                         <Button
                                             type="button"
                                             variant="destructive"
                                             size="icon"
                                             className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 rounded-full h-5 w-5"
-                                            onClick={() => removeImage(index)}
+                                            onClick={() => removeMedia(index)}
                                         >
                                             <X className="h-3 w-3" />
                                         </Button>
@@ -205,7 +213,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                             <div className="flex items-center gap-2">
                                 <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
                                     <ImagePlus className="h-5 w-5 text-muted-foreground" />
-                                    <span className="sr-only">Upload image</span>
+                                    <span className="sr-only">Upload media</span>
                                 </Button>
                                 <input
                                     type="file"
@@ -213,7 +221,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                     onChange={handleFileChange}
                                     className="hidden"
                                     multiple
-                                    accept="image/png, image/jpeg, image/gif, image/webp"
+                                    accept="image/png, image/jpeg, image/gif, image/webp, video/mp4, video/quicktime"
                                 />
                             </div>
                             
@@ -298,10 +306,10 @@ export default function ChatClient() {
     }
   };
 
-  const handleNewMessage = useCallback(async (values: FormValues, images?: string[]) => {
+  const handleNewMessage = useCallback(async (values: FormValues, media?: string[]) => {
     if (!user) return;
 
-    const userMessage: Message = { role: "user", content: values.message, imageUrls: images };
+    const userMessage: Message = { role: "user", content: values.message, mediaUrls: media };
     const newHistory = [...messages, userMessage];
     setMessages(newHistory);
     
@@ -416,10 +424,16 @@ export default function ChatClient() {
                      message.role === "user" ? "shadow-md bg-primary text-primary-foreground" : "bg-secondary"
                   )}
               >
-                  {message.imageUrls && message.imageUrls.length > 0 && (
+                  {message.mediaUrls && message.mediaUrls.length > 0 && (
                       <div className="grid grid-cols-2 gap-2 mb-2">
-                          {message.imageUrls.map((url, i) => (
-                              <Image key={i} src={url} alt={`User upload ${i + 1}`} width={150} height={150} className="rounded-lg object-cover" />
+                          {message.mediaUrls.map((url, i) => (
+                            <div key={i} className="relative aspect-square">
+                                {url.startsWith('data:video') ? (
+                                    <video src={url} className="rounded-lg object-cover w-full h-full" controls />
+                                ) : (
+                                    <Image src={url} alt={`User upload ${i + 1}`} fill sizes="150px" className="rounded-lg object-cover" />
+                                )}
+                            </div>
                           ))}
                       </div>
                   )}
@@ -449,7 +463,7 @@ export default function ChatClient() {
             isLoading={isLoading}
             onInterrupt={handleInterrupt}
             onSuggestionClick={handlePromptSuggestionClick}
-            hasImages={messages.some(m => m.imageUrls && m.imageUrls.length > 0)}
+            hasMedia={messages.some(m => m.mediaUrls && m.mediaUrls.length > 0)}
           />
       </div>
     </div>

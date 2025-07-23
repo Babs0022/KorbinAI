@@ -35,7 +35,7 @@ function sanitizeMessageForFirestore(message: Message): Message {
     const sanitized: Message = {
         role: message.role,
         content: message.content ?? '',
-        imageUrls: message.imageUrls ?? [],
+        mediaUrls: message.mediaUrls ?? [],
     };
     return sanitized;
 }
