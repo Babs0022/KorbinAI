@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-// This file has been cleared as the agent executor functionality has been removed.
-=======
 
 'use server';
 /**
@@ -9,7 +6,7 @@
  * planning, reasoning, and using memory to accomplish complex tasks.
  * It features a multi-step reasoning loop to chain tool calls and adapt its plan.
  *
- * - agentExecutor - A function that interprets a user request and uses available tools to fulfill it.
+ * - agentExecutor - a function that interprets a user request and uses available tools to fulfill it.
  */
 
 import { ai } from '@/ai/genkit';
@@ -106,7 +103,7 @@ ${memoryContext}
 `;
 
     const modelConfig: GenerateOptions = {
-        model: 'googleai/gemini-1.5-pro', // Corrected model name
+        model: 'googleai/gemini-1.5-pro',
         system: systemPrompt,
         tools: Object.values(availableTools),
         toolChoice: 'auto',
@@ -255,4 +252,3 @@ ${memoryContext}
     throw new Error('The agent did not produce a final response. Please check the logs.');
   }
 );
->>>>>>> 40454ef15872741c4d8cc53664f80761b018c73a
