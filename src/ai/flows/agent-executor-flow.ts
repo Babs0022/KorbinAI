@@ -106,7 +106,7 @@ ${memoryContext}
 `;
 
     const modelConfig: GenerateOptions = {
-        model: 'googleai/gemini-1.5-pro', // Corrected model name
+        model: 'googleai/gemini-2.5-pro', // Corrected model name
         system: systemPrompt,
         tools: Object.values(availableTools),
         toolChoice: 'auto',
