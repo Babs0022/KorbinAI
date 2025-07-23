@@ -10,6 +10,7 @@ import { Copy, Check, Download } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { saveAs } from "file-saver";
+import Image from "next/image";
 
 import { cn } from "@/lib/utils";
 
@@ -69,9 +70,8 @@ const ImageBlock = ({ src, alt }: { src?: string; alt?: string }) => {
     };
     
     return (
-        <div className="relative my-4 group bg-secondary border rounded-lg p-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src} alt={alt} className="rounded-lg max-w-full h-auto" />
+        <div className="relative my-4 group bg-secondary border rounded-lg p-2 max-w-md">
+            <Image src={src} alt={alt || "generated image"} width={512} height={512} className="rounded-md w-full h-auto object-contain" data-ai-hint="generated image" />
             <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button variant="secondary" size="icon" onClick={handleDownload}>
                     <Download className="h-4 w-4" />

@@ -6,7 +6,7 @@ import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useParams } from "next/navigation";
-import { LoaderCircle, ImagePlus, X, ArrowUp, Square } from "lucide-react";
+import { LoaderCircle, ImagePlus, X, ArrowUp, Square, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
@@ -33,6 +33,8 @@ interface ChatInputFormProps {
   onSubmit: (values: FormValues, images?: string[]) => void;
   isLoading: boolean;
   onInterrupt: () => void;
+  onSuggestionClick: (suggestion: string) => void;
+  hasImages: boolean;
 }
 
 const promptSuggestions = [
@@ -54,9 +56,16 @@ const promptSuggestions = [
     }
 ];
 
+const imageSuggestionPrompts = [
+    "Describe this image in detail.",
+    "Write a social media post about this image.",
+    "What is the main subject of this photo?",
+    "Generate a witty caption for this picture."
+];
+
 
 // Memoize the form component to prevent re-renders on parent state changes.
-const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt }, ref) => {
+const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt, onSuggestionClick, hasImages }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -130,6 +139,26 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     return (
         <div className="flex-shrink-0 bg-gradient-to-t from-background via-background/80 to-transparent pt-4 pb-8">
             <div className="mx-auto w-full max-w-4xl px-4">
+                 {hasImages && (
+                    <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-2">
+                             <Sparkles className="h-4 w-4 text-primary" />
+                             <h4 className="text-sm font-semibold text-muted-foreground">What do you want to do with this image?</h4>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {imageSuggestionPrompts.map((prompt) => (
+                                <Button
+                                    key={prompt}
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => onSuggestionClick(prompt)}
+                                >
+                                    {prompt}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 <FormProvider {...form}>
                     <form
                         ref={ref}
@@ -217,7 +246,6 @@ export default function ChatClient() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(!!chatId); // Only show page loading for existing chats
-  const [greeting, setGreeting] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   
@@ -231,19 +259,6 @@ export default function ChatClient() {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-  
-  useEffect(() => {
-    const greetings = [
-        "How can I help you today?",
-        "What can I create for you?",
-        "Ready to build something amazing?",
-        "Let's get to work. What's the plan?",
-        "Your creative copilot, reporting for duty.",
-        "What masterpiece are we creating today?",
-        "Ask me anything. Let's get started."
-    ];
-    setGreeting(greetings[Math.floor(Math.random() * greetings.length)]);
-  }, []);
 
   useEffect(() => {
     async function loadChat() {
@@ -367,8 +382,8 @@ export default function ChatClient() {
         <div className="flex-grow flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-4xl mx-auto space-y-12">
                 <div className="text-center space-y-4 max-w-full">
-                    <h1 className="text-3xl sm:text-4xl font-bold break-words">Hello{userName}</h1>
-                    <p className="text-lg sm:text-xl text-muted-foreground">{greeting}</p>
+                    <h1 className="text-3xl sm:text-4xl font-bold break-words">Hello{userName}. Let's get to work.</h1>
+                    <p className="text-lg sm:text-xl text-muted-foreground">What's the plan?</p>
                 </div>
                 
                  <div className="space-y-4">
@@ -433,6 +448,8 @@ export default function ChatClient() {
             onSubmit={handleNewMessage}
             isLoading={isLoading}
             onInterrupt={handleInterrupt}
+            onSuggestionClick={handlePromptSuggestionClick}
+            hasImages={messages.some(m => m.imageUrls && m.imageUrls.length > 0)}
           />
       </div>
     </div>
