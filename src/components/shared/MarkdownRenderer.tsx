@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button } from "@/components/ui/button";
-import { Copy, Check, Download } from "lucide-react";
+import { Copy, Check, Download, Link as LinkIcon, File } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { saveAs } from "file-saver";
@@ -18,6 +18,8 @@ interface MarkdownRendererProps {
   children: string;
   className?: string;
 }
+
+const URL_REGEX = /https?:\/\/[^\s/$.?#].[^\s]*/gi;
 
 const CodeBlock = ({ className, children }: { className?: string; children: React.ReactNode }) => {
     const { toast } = useToast();
@@ -81,23 +83,47 @@ const ImageBlock = ({ src, alt }: { src?: string; alt?: string }) => {
     );
 };
 
+
 export default function MarkdownRenderer({ children, className }: MarkdownRendererProps) {
-  return (
-    <ReactMarkdown
-      className={cn("prose dark:prose-invert max-w-none", className)}
-      remarkPlugins={[remarkGfm]}
-      components={{
-        code(props) {
-            const {children, className} = props;
-            return <CodeBlock className={className}>{children}</CodeBlock>;
-        },
-        img(props) {
-            const {src, alt} = props;
-            return <ImageBlock src={src} alt={alt} />;
-        },
-      }}
-    >
-      {children}
-    </ReactMarkdown>
-  );
+    const urls = children.match(URL_REGEX);
+    const textWithoutUrls = children.replace(URL_REGEX, '').trim();
+
+    return (
+        <>
+            {urls && urls.length > 0 && (
+                <div className="mb-2 space-y-2">
+                    {urls.map((url, index) => (
+                        <a 
+                            key={index}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-2 rounded-lg border bg-background/50 hover:bg-accent transition-colors"
+                        >
+                            <LinkIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span className="text-sm truncate text-primary">{url}</span>
+                        </a>
+                    ))}
+                </div>
+            )}
+            {textWithoutUrls && (
+                <ReactMarkdown
+                    className={cn("prose dark:prose-invert max-w-none", className)}
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                        code(props) {
+                            const {children, className} = props;
+                            return <CodeBlock className={className}>{children}</CodeBlock>;
+                        },
+                        img(props) {
+                            const {src, alt} = props;
+                            return <ImageBlock src={src} alt={alt} />;
+                        },
+                    }}
+                >
+                    {textWithoutUrls}
+                </ReactMarkdown>
+            )}
+        </>
+    );
 }

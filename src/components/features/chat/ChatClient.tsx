@@ -67,7 +67,7 @@ const mediaSuggestionPrompts = [
 const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt, onSuggestionClick, hasMedia }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [mediaPreviews, setMediaPreviews] = useState<{type: 'image' | 'video', url: string}[]>([]);
+    const [mediaPreviews, setMediaPreviews] = useState<{type: 'image' | 'video' | 'other', url: string, name: string}[]>([]);
     
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -108,7 +108,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         if (files) {
-            const newPreviews: Promise<{type: 'image' | 'video', url: string}>[] = [];
+            const newPreviews: Promise<{type: 'image' | 'video' | 'other', url: string, name: string}>[] = [];
             for (const file of Array.from(files)) {
                 // ~10 minutes of video at reasonable quality, or large images.
                 const maxSize = 25 * 1024 * 1024; // 25MB limit per file
@@ -120,11 +120,15 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                     });
                     continue;
                 }
+                
+                const fileType = file.type.startsWith('video') ? 'video' : (file.type.startsWith('image') ? 'image' : 'other');
+
                 newPreviews.push(new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onloadend = () => resolve({
-                        type: file.type.startsWith('video') ? 'video' : 'image',
-                        url: reader.result as string
+                        type: fileType,
+                        url: reader.result as string,
+                        name: file.name,
                     });
                     reader.onerror = reject;
                     reader.readAsDataURL(file);
@@ -175,8 +179,12 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                     <div key={index} className="relative aspect-square">
                                         {preview.type === 'image' ? (
                                             <Image src={preview.url} alt={`Preview ${index}`} fill sizes="90px" className="rounded-lg object-cover" />
-                                        ) : (
+                                        ) : preview.type === 'video' ? (
                                             <video src={preview.url} className="rounded-lg object-cover w-full h-full" muted playsInline />
+                                        ) : (
+                                            <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center text-center p-1 text-xs text-muted-foreground">
+                                                {preview.name}
+                                            </div>
                                         )}
                                         <Button
                                             type="button"
@@ -221,7 +229,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                     onChange={handleFileChange}
                                     className="hidden"
                                     multiple
-                                    accept="image/png, image/jpeg, image/gif, image/webp, video/mp4, video/quicktime"
+                                    accept="image/*,video/mp4,video/quicktime,application/pdf,text/plain,.csv,.json,.xml"
                                 />
                             </div>
                             
