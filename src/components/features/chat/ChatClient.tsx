@@ -333,7 +333,7 @@ export default function ChatClient() {
             setSession(newSession); // This updates the state
             currentSession = newSession; // Use the newly created session for this operation
             // Update URL without reloading the page
-            window.history.replaceState(null, '', `/chat/${newSession.id}`);
+            router.replace(`/chat/${newSession.id}`);
         }
         
         if (!currentSession) {
