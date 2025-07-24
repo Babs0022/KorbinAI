@@ -7,8 +7,9 @@ export type FeedbackRating = z.infer<typeof FeedbackRatingSchema>;
 export const FeedbackSchema = z.object({
   id: z.string(),
   userId: z.string(),
-  projectId: z.string(),
+  contentId: z.string().describe("A unique identifier for the content being rated, e.g., a message ID or a hash of the content."),
   rating: FeedbackRatingSchema,
+  tags: z.array(z.string()).optional().describe("A list of tags selected by the user, like 'Factually Incorrect' or 'Creative'."),
   comment: z.string().optional(),
   createdAt: z.any(), // Firestore Timestamp
 });

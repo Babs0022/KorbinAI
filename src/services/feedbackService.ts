@@ -13,34 +13,35 @@ const db = admin.firestore();
 
 interface SubmitFeedbackInput {
   userId: string;
-  projectId: string;
+  contentId: string; // Generic ID for the content being reviewed (e.g., message hash or ID)
   rating: FeedbackRating;
+  tags?: string[];
   comment?: string;
 }
 
 /**
- * Saves user feedback for a specific project to Firestore.
- * This is called from the client when a user provides feedback.
+ * Saves user feedback for a specific piece of content to Firestore.
  * @param {SubmitFeedbackInput} input - The feedback data.
  * @returns {Promise<string>} The ID of the newly created feedback document.
  */
-export async function submitFeedback({ userId, projectId, rating, comment }: SubmitFeedbackInput): Promise<string> {
-  if (!userId || !projectId || !rating) {
-    throw new Error('User ID, Project ID, and rating are required to submit feedback.');
+export async function submitFeedback({ userId, contentId, rating, tags, comment }: SubmitFeedbackInput): Promise<string> {
+  if (!userId || !contentId || !rating) {
+    throw new Error('User ID, content ID, and rating are required to submit feedback.');
   }
 
   const feedbackRef = db.collection('feedback').doc();
 
   const newFeedbackData = {
     userId,
-    projectId,
+    contentId,
     rating,
-    ...(comment && { comment }), // Only include comment if it exists
+    ...(tags && { tags }),
+    ...(comment && { comment }),
     createdAt: FieldValue.serverTimestamp(),
   };
 
   await feedbackRef.set(newFeedbackData);
 
-  console.log(`Feedback ${feedbackRef.id} saved for project ${projectId} by user ${userId}.`);
+  console.log(`Feedback ${feedbackRef.id} saved for content ${contentId} by user ${userId}.`);
   return feedbackRef.id;
 }

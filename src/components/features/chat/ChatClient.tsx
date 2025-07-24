@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import ChatMessageActions from "./ChatMessageActions";
 
 const formSchema = z.object({
   message: z.string(), // Allow empty message if a media file is attached
@@ -314,12 +315,35 @@ export default function ChatClient() {
     }
   };
 
-  const handleNewMessage = useCallback(async (values: FormValues, media?: string[]) => {
+  const handleNewMessage = useCallback(async (values: FormValues, media?: string[], isRegeneration = false, originalUserMessage?: Message) => {
     if (!user) return;
+    
+    // Determine the user message to use
+    let userMessage: Message;
+    if (isRegeneration && originalUserMessage) {
+        userMessage = originalUserMessage;
+    } else {
+        userMessage = { role: "user", content: values.message, mediaUrls: media };
+    }
 
-    const userMessage: Message = { role: "user", content: values.message, mediaUrls: media };
-    const newHistory = [...messages, userMessage];
-    setMessages(newHistory);
+    // Determine the history to send to the AI
+    let historyForAI: Message[];
+    if (isRegeneration) {
+        // Find the index of the original user message and slice the history up to that point
+        const userMessageIndex = messages.findIndex(m => m.role === 'user' && m.content === userMessage.content);
+        if (userMessageIndex !== -1) {
+            historyForAI = messages.slice(0, userMessageIndex + 1);
+            setMessages(historyForAI); // Visually remove the old AI response
+        } else {
+            // Fallback if original message not found (should not happen)
+            historyForAI = [...messages, userMessage];
+            setMessages(historyForAI);
+        }
+    } else {
+        historyForAI = [...messages, userMessage];
+        setMessages(historyForAI);
+    }
+
     
     abortControllerRef.current = new AbortController();
     setIsLoading(true);
@@ -333,7 +357,7 @@ export default function ChatClient() {
             setSession(newSession); // This updates the state
             currentSession = newSession; // Use the newly created session for this operation
             // Update URL without reloading the page
-            router.replace(`/chat/${newSession.id}`);
+            window.history.replaceState(null, '', `/chat/${newSession.id}`);
         }
         
         if (!currentSession) {
@@ -341,7 +365,7 @@ export default function ChatClient() {
         }
 
         const response = await conversationalChat({
-            history: newHistory,
+            history: historyForAI,
         });
 
         if (abortControllerRef.current?.signal.aborted) {
@@ -356,7 +380,7 @@ export default function ChatClient() {
             aiMessage = { role: "model", content: "Sorry, I received an invalid response. Please try again." };
         }
         
-        const finalHistory = [...newHistory, aiMessage];
+        const finalHistory = [...historyForAI, aiMessage];
         setMessages(finalHistory);
 
         await updateChatSession(currentSession.id, finalHistory);
@@ -364,7 +388,7 @@ export default function ChatClient() {
     } catch (error: any) {
         if (error.message === 'AbortError' || abortControllerRef.current?.signal.aborted) {
             const interruptMessage: Message = { role: "model", content: "*What else can I help you with?*" };
-            const finalHistory = [...newHistory, interruptMessage];
+            const finalHistory = [...historyForAI, interruptMessage];
             setMessages(finalHistory);
             if (sessionRef.current) await updateChatSession(sessionRef.current.id, finalHistory);
         } else {
@@ -380,6 +404,14 @@ export default function ChatClient() {
 
   const handlePromptSuggestionClick = (prompt: string) => {
     handleNewMessage({ message: prompt });
+  };
+  
+  const handleRegenerate = (messageIndex: number) => {
+      // The message to regenerate is at `messageIndex`. The user prompt that caused it is at `messageIndex - 1`.
+      const userMessageToResend = messages[messageIndex - 1];
+      if (userMessageToResend && userMessageToResend.role === 'user') {
+          handleNewMessage({ message: userMessageToResend.content || '' }, userMessageToResend.mediaUrls, true, userMessageToResend);
+      }
   };
 
 
@@ -446,6 +478,12 @@ export default function ChatClient() {
                       </div>
                   )}
                   {message.content && <MarkdownRenderer>{message.content}</MarkdownRenderer>}
+                  {message.role === 'model' && (
+                      <ChatMessageActions
+                        message={message}
+                        onRegenerate={() => handleRegenerate(index)}
+                      />
+                  )}
               </div>
               </div>
           ))}
