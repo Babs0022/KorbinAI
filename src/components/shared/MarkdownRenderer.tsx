@@ -86,13 +86,19 @@ const ImageBlock = ({ src, alt }: { src?: string; alt?: string }) => {
 
 export default function MarkdownRenderer({ children, className }: MarkdownRendererProps) {
     const urls = children.match(URL_REGEX);
-    const textWithoutUrls = children.replace(URL_REGEX, '').trim();
+    
+    // Check if the URL is part of a markdown image tag
+    const isImageUrl = (url: string) => `![](${url})`.includes(children) || `![some alt](${url})`.includes(children);
+    const textLinks = urls?.filter(url => !url.startsWith('data:image') && !isImageUrl(url));
+    
+    // The main content to render, could be text, image markdown, or both.
+    const mainContent = children;
 
     return (
         <>
-            {urls && urls.length > 0 && (
+            {textLinks && textLinks.length > 0 && (
                 <div className="mb-2 space-y-2">
-                    {urls.map((url, index) => (
+                    {textLinks.map((url, index) => (
                         <a 
                             key={index}
                             href={url}
@@ -106,24 +112,22 @@ export default function MarkdownRenderer({ children, className }: MarkdownRender
                     ))}
                 </div>
             )}
-            {textWithoutUrls && (
-                <ReactMarkdown
-                    className={cn("prose dark:prose-invert max-w-none", className)}
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                        code(props) {
-                            const {children, className} = props;
-                            return <CodeBlock className={className}>{children}</CodeBlock>;
-                        },
-                        img(props) {
-                            const {src, alt} = props;
-                            return <ImageBlock src={src} alt={alt} />;
-                        },
-                    }}
-                >
-                    {textWithoutUrls}
-                </ReactMarkdown>
-            )}
+            <ReactMarkdown
+                className={cn("prose dark:prose-invert max-w-none", className)}
+                remarkPlugins={[remarkGfm]}
+                components={{
+                    code(props) {
+                        const {children, className} = props;
+                        return <CodeBlock className={className}>{children}</CodeBlock>;
+                    },
+                    img(props) {
+                        const {src, alt} = props;
+                        return <ImageBlock src={src} alt={alt} />;
+                    },
+                }}
+            >
+                {mainContent}
+            </ReactMarkdown>
         </>
     );
 }

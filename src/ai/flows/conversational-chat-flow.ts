@@ -16,6 +16,7 @@ import {
 import { getCurrentTime } from '@/ai/tools/time-tool';
 import { generateImage } from '@/ai/tools/image-generation-tool';
 import { scrapeWebPage } from '@/ai/tools/web-scraper-tool';
+import { GenerateOptions, MessageData } from '@genkit-ai/ai';
 
 
 // Export the main async function that calls the flow
@@ -46,26 +47,38 @@ If you generate an image, you MUST tell the user you have created it and that it
 
 Do not be overly robotic or formal. Be creative and helpful.`;
     
-    // 1. Filter out any malformed messages
-    const validMessages = history.filter((msg): msg is Message => msg && (typeof msg.content === 'string' || (Array.isArray(msg.mediaUrls) && msg.mediaUrls.length > 0)));
-
-    // 2. Enforce that roles must alternate, starting with 'user'.
-    const alternatingHistory: Message[] = [];
-    if (validMessages.length > 0) {
-        const firstUserIndex = validMessages.findIndex(msg => msg.role === 'user');
-        
+    // 1. Filter out any malformed messages and create a valid history
+    const validMessages: Message[] = [];
+    if (history.length > 0) {
+        // Ensure the conversation starts with a user message
+        const firstUserIndex = history.findIndex(msg => msg.role === 'user');
         if (firstUserIndex !== -1) {
-            alternatingHistory.push(validMessages[firstUserIndex]);
-            for (let i = firstUserIndex + 1; i < validMessages.length; i++) {
-                if (validMessages[i].role !== alternatingHistory[alternatingHistory.length - 1].role) {
-                    alternatingHistory.push(validMessages[i]);
+            // Add the first user message
+            validMessages.push(history[firstUserIndex]);
+            // Add alternating messages after the first user message
+            for (let i = firstUserIndex + 1; i < history.length; i++) {
+                if (history[i].role !== validMessages[validMessages.length - 1].role) {
+                    validMessages.push(history[i]);
                 }
             }
         }
     }
 
+    // 2. Implement sliding window for conversation history to manage token count.
+    // Keep the first message for context, and the last 10 messages for recency.
+    let messagesToProcess: Message[] = [];
+    if (validMessages.length > 11) {
+      messagesToProcess = [
+        validMessages[0], // The first message
+        ...validMessages.slice(-10), // The last 10 messages
+      ];
+    } else {
+      messagesToProcess = validMessages;
+    }
+
+
     // 3. Map to the format the model expects
-    const messages = alternatingHistory.map((msg) => {
+    const messages = messagesToProcess.map((msg) => {
         const content: ({text: string} | {media: {url: string}})[] = [];
         if (msg.content) {
             content.push({ text: msg.content });
@@ -86,12 +99,36 @@ Do not be overly robotic or formal. Be creative and helpful.`;
         return "It seems there are no valid messages in our conversation. Could you please start over?";
     }
 
-    const response = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
+    const modelToUse = 'googleai/gemini-2.5-flash';
+    const finalPrompt = {
+      model: modelToUse,
       system: systemPrompt,
-      messages: messages,
+      messages: messages as MessageData[],
       tools: [getCurrentTime, generateImage, scrapeWebPage],
-    });
+    } as GenerateOptions;
+
+    // Special handling for image generation to avoid token limit errors from history
+    const lastMessage = messages[messages.length - 1];
+    const textContent = Array.isArray(lastMessage.content)
+      ? lastMessage.content.find(p => p.text)?.text || ''
+      : '';
+    const imageKeywords = ['generate image', 'create an image', 'draw a picture'];
+    if (imageKeywords.some(keyword => textContent.toLowerCase().includes(keyword))) {
+        const imageContext = Array.isArray(lastMessage.content) ? lastMessage.content.filter(p => p.media).map(p => p.media!.url) : [];
+        const toolRequest = {
+            name: 'generateImage',
+            input: {
+                prompt: textContent,
+                ...(imageContext.length > 0 && { imageContext }),
+            }
+        };
+        const toolResult = await generateImage(toolRequest.input);
+        const finalResponse = `I've generated an image for you based on your description:\n\n${toolResult}`;
+        return finalResponse;
+    }
+
+
+    const response = await ai.generate(finalPrompt);
 
     return response.text;
   }
