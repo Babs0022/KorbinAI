@@ -12,7 +12,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
 import { type Message } from "@/types/ai";
 import { type ChatSession } from "@/types/chat";
-import { createChatSession, getChatSession, updateChatSession } from "@/services/chatService";
+import { createChatSession, getChatSession, updateChatSession, updateChatSessionMetadata } from "@/services/chatService";
+import { generateTitleForChat } from '@/ai/actions/generate-chat-title-action';
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
@@ -325,104 +326,104 @@ export default function ChatClient() {
     }
   };
 
-  const handleNewMessage = useCallback(async (values: FormValues, media?: string[], isRegeneration = false, originalUserMessage?: Message) => {
+  const getAiResponse = useCallback(async (sessionId: string, historyForAI: Message[]) => {
     if (!user) return;
-    
-    // Determine the user message to use
-    let userMessage: Message;
-    if (isRegeneration && originalUserMessage) {
-        userMessage = originalUserMessage;
-    } else {
-        userMessage = { role: "user", content: values.message, mediaUrls: media };
-    }
 
-    // Determine the history to send to the AI
-    let historyForAI: Message[];
-    if (isRegeneration) {
-        // Find the index of the original user message and slice the history up to that point
-        const userMessageIndex = messages.findIndex(m => m.role === 'user' && m.content === userMessage.content);
-        if (userMessageIndex !== -1) {
-            historyForAI = messages.slice(0, userMessageIndex + 1);
-            setMessages(historyForAI); // Visually remove the old AI response
-        } else {
-            // Fallback if original message not found (should not happen)
-            historyForAI = [...messages, userMessage];
-            setMessages(historyForAI);
-        }
-    } else {
-        historyForAI = [...messages, userMessage];
-        setMessages(historyForAI);
-    }
-
-    
     abortControllerRef.current = new AbortController();
     setIsLoading(true);
 
     try {
-        const response = await conversationalChat({
-            history: historyForAI,
-            userId: user.uid,
-        });
+      const response = await conversationalChat({
+        history: historyForAI,
+        userId: user.uid,
+      });
 
-        if (abortControllerRef.current?.signal.aborted) {
-            throw new Error('AbortError');
-        }
+      if (abortControllerRef.current?.signal.aborted) {
+        throw new Error('AbortError');
+      }
+      
+      let aiMessage: Message;
+      if (typeof response === 'string' && response.trim().length > 0) {
+          aiMessage = { role: "model", content: response };
+      } else {
+          console.error("Invalid response from AI:", response);
+          aiMessage = { role: "model", content: "Sorry, I received an invalid response. Please try again." };
+      }
 
-        let aiMessage: Message;
-        if (typeof response === 'string' && response.trim().length > 0) {
-            aiMessage = { role: "model", content: response };
-        } else {
-            console.error("Invalid response from AI:", response);
-            aiMessage = { role: "model", content: "Sorry, I received an invalid response. Please try again." };
-        }
-        
-        let currentSession = sessionRef.current;
-        // If it's a new chat, create it now after getting the AI response
-        if (!currentSession) {
-            const newSession = await createChatSession({
-                userId: user.uid,
-                firstUserMessage: userMessage,
-                firstAiResponse: aiMessage,
-            });
-            setSession(newSession);
-            currentSession = newSession;
-            // Use replaceState to update URL without a full navigation/reload
-            window.history.replaceState(null, '', `/chat/${newSession.id}`);
-        } else {
-             // Otherwise, just update the existing session
-            await updateChatSession(currentSession.id, [...historyForAI, aiMessage]);
-        }
-        
-        const finalHistory = [...historyForAI, aiMessage];
-        setMessages(finalHistory);
+      const finalHistory = [...historyForAI, aiMessage];
+      setMessages(finalHistory);
 
+      // Update the session in Firestore with the full history
+      await updateChatSession(sessionId, finalHistory);
+      
+      // Now, generate and update the title based on the conversation
+      const newTitle = await generateTitleForChat(historyForAI[0].content, aiMessage.content);
+      await updateChatSessionMetadata(sessionId, { title: newTitle });
+
+      // Update local state with the new title
+      setSession(prev => prev ? { ...prev, title: newTitle } : null);
 
     } catch (error: any) {
         if (error.message === 'AbortError' || abortControllerRef.current?.signal.aborted) {
             const interruptMessage: Message = { role: "model", content: "*What else can I help you with?*" };
             const finalHistory = [...historyForAI, interruptMessage];
             setMessages(finalHistory);
-            if (sessionRef.current) await updateChatSession(sessionRef.current.id, finalHistory);
+            await updateChatSession(sessionId, finalHistory);
         } else {
             console.error("Chat failed:", error);
             const errorMessage: Message = { role: "model", content: `Sorry, I encountered an error. ${error instanceof Error ? error.message : ''}` };
             setMessages((prev) => [...prev, errorMessage]);
         }
     } finally {
-      setIsLoading(false);
-      abortControllerRef.current = null;
+        setIsLoading(false);
+        abortControllerRef.current = null;
     }
-  }, [user, messages]);
+  }, [user]);
+
+  const handleSendMessage = useCallback(async (values: FormValues, media?: string[]) => {
+    if (!user) return;
+
+    const userMessage: Message = { role: "user", content: values.message, mediaUrls: media };
+
+    // If there is no current chat session, create one first.
+    if (!chatId) {
+      try {
+        setIsLoading(true); // Show loading state on the main page
+        const newSession = await createChatSession({
+          userId: user.uid,
+          firstUserMessage: userMessage,
+        });
+        
+        // Immediately navigate to the new chat page.
+        // The rest of the AI interaction will happen on the new page.
+        router.push(`/chat/${newSession.id}`);
+        // No need to call getAiResponse here; the useEffect on the new page will handle loading.
+        // We can, however, call it without awaiting to kickstart the process.
+        getAiResponse(newSession.id, [userMessage]);
+
+      } catch (error) {
+        console.error("Failed to create new chat session:", error);
+        setIsLoading(false); // Make sure to turn off loading on error
+      }
+    } else {
+      // If we are already in a chat, just append the message and get the response.
+      const historyForAI = [...messages, userMessage];
+      setMessages(historyForAI); // Optimistically update the UI
+      getAiResponse(chatId, historyForAI);
+    }
+  }, [user, chatId, messages, router, getAiResponse]);
 
   const handlePromptSuggestionClick = (prompt: string) => {
-    handleNewMessage({ message: prompt });
+    handleSendMessage({ message: prompt });
   };
   
   const handleRegenerate = (messageIndex: number) => {
       // The message to regenerate is at `messageIndex`. The user prompt that caused it is at `messageIndex - 1`.
       const userMessageToResend = messages[messageIndex - 1];
-      if (userMessageToResend && userMessageToResend.role === 'user') {
-          handleNewMessage({ message: userMessageToResend.content || '' }, userMessageToResend.mediaUrls, true, userMessageToResend);
+      if (userMessageToResend && userMessageToResend.role === 'user' && chatId) {
+          const historyForAI = messages.slice(0, messageIndex);
+          setMessages(historyForAI); // Visually remove the old AI response and subsequent messages
+          getAiResponse(chatId, historyForAI);
       }
   };
 
@@ -511,12 +512,12 @@ export default function ChatClient() {
 
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="flex-1 overflow-y-auto pt-6 pb-4">
+    <div className="flex flex-col h-screen max-h-screen">
+      <div className="flex-grow overflow-y-auto pt-6 pb-4">
         {renderContent()}
       </div>
        <ChatInputForm
-        onSubmit={handleNewMessage}
+        onSubmit={handleSendMessage}
         isLoading={isLoading}
         onInterrupt={handleInterrupt}
         onSuggestionClick={handlePromptSuggestionClick}

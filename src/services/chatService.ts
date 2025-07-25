@@ -22,7 +22,7 @@ import { generateTitleForChat } from '@/ai/actions/generate-chat-title-action';
 interface CreateChatSessionInput {
   userId: string;
   firstUserMessage: Message;
-  firstAiResponse: Message;
+  firstAiResponse?: Message;
 }
 
 /**
@@ -44,14 +44,24 @@ function sanitizeMessageForFirestore(message: Message): Message {
 
 /**
  * Creates a new chat session in Firestore using the client SDK.
- * Generates a title from the first message exchange.
+ * If the AI's first response is provided, it generates a title.
+ * Otherwise, it sets a temporary title.
  */
 export async function createChatSession({ userId, firstUserMessage, firstAiResponse }: CreateChatSessionInput): Promise<ChatSession> {
   const sanitizedUserMessage = sanitizeMessageForFirestore(firstUserMessage);
-  const sanitizedAiMessage = sanitizeMessageForFirestore(firstAiResponse);
-  const messages = [sanitizedUserMessage, sanitizedAiMessage];
+  const messages = [sanitizedUserMessage];
+  let title: string;
 
-  const title = await generateTitleForChat(sanitizedUserMessage.content, sanitizedAiMessage.content);
+  if (firstAiResponse) {
+    const sanitizedAiMessage = sanitizeMessageForFirestore(firstAiResponse);
+    messages.push(sanitizedAiMessage);
+    // Generate the real title if both messages are present
+    title = await generateTitleForChat(sanitizedUserMessage.content, sanitizedAiMessage.content);
+  } else {
+    // Create a temporary title if only the user message is present
+    title = 'New Conversation';
+  }
+
 
   const newSessionData = {
     userId,
