@@ -6,7 +6,7 @@ import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useParams } from "next/navigation";
-import { LoaderCircle, ImagePlus, X, ArrowUp, Square, Sparkles } from "lucide-react";
+import { LoaderCircle, ImagePlus, X, ArrowUp, Square, Sparkles, Info } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
@@ -146,7 +146,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     };
 
     return (
-        <div className="flex-shrink-0 bg-gradient-to-t from-background via-background/80 to-transparent pt-4 pb-8">
+        <div className="flex-shrink-0 bg-gradient-to-t from-background via-background/80 to-transparent pt-4 pb-2">
             <div className="mx-auto w-full max-w-4xl px-4">
                  {hasMedia && (
                     <div className="mb-4">
@@ -247,6 +247,10 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                         </div>
                     </form>
                 </FormProvider>
+                <div className="flex items-center justify-center gap-2 mt-3 text-xs text-muted-foreground">
+                    <Info className="h-3.5 w-3.5" />
+                    <span>Briefly can make mistakes, do well to double check it</span>
+                </div>
             </div>
         </div>
     )
@@ -507,7 +511,7 @@ export default function ChatClient() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <div className="flex-1 overflow-y-auto pt-6 pb-24">
+      <div className="flex-1 overflow-y-auto pt-6 pb-32">
         {renderContent()}
       </div>
       <div className="fixed bottom-0 left-0 right-0 md:pl-[var(--sidebar-width)] group-data-[state=collapsed]:md:pl-[var(--sidebar-width-icon)]">
