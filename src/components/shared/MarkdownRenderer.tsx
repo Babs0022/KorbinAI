@@ -46,6 +46,7 @@ const CodeBlock = ({ className, children }: { className?: string; children: Reac
                 style={vscDarkPlus}
                 language={match[1]}
                 PreTag="div"
+                className="!whitespace-pre-wrap !break-all"
                 customStyle={{ margin: 0, backgroundColor: 'transparent', padding: '1rem', maxHeight: '400px', overflowY: 'auto' }}
                 codeTagProps={{ style: { fontFamily: "var(--font-code, monospace)", fontSize: "0.875rem" } }}
             >
@@ -53,7 +54,7 @@ const CodeBlock = ({ className, children }: { className?: string; children: Reac
             </SyntaxHighlighter>
         </div>
     ) : (
-        <code className={cn("bg-secondary text-foreground p-1 rounded-md border", className)}>{children}</code>
+        <code className={cn("bg-secondary text-foreground p-1 rounded-md border break-words", className)}>{children}</code>
     );
 };
 
