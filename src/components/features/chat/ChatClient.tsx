@@ -412,7 +412,7 @@ export default function ChatClient() {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
-  }, [user, messages, router]);
+  }, [user, messages]);
 
   const handlePromptSuggestionClick = (prompt: string) => {
     handleNewMessage({ message: prompt });
@@ -512,18 +512,16 @@ export default function ChatClient() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <div className="flex-1 overflow-y-auto pt-6 pb-32">
+      <div className="flex-1 overflow-y-auto pt-6 pb-4">
         {renderContent()}
       </div>
-      <div className="fixed bottom-0 left-0 right-0 md:pl-[var(--sidebar-width)] group-data-[state=collapsed]:md:pl-[var(--sidebar-width-icon)]">
-          <ChatInputForm
-            onSubmit={handleNewMessage}
-            isLoading={isLoading}
-            onInterrupt={handleInterrupt}
-            onSuggestionClick={handlePromptSuggestionClick}
-            hasMedia={messages.some(m => m.mediaUrls && m.mediaUrls.length > 0)}
-          />
-      </div>
+       <ChatInputForm
+        onSubmit={handleNewMessage}
+        isLoading={isLoading}
+        onInterrupt={handleInterrupt}
+        onSuggestionClick={handlePromptSuggestionClick}
+        hasMedia={messages.some(m => m.mediaUrls && m.mediaUrls.length > 0)}
+      />
     </div>
   );
 }

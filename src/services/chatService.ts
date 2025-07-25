@@ -73,7 +73,7 @@ export async function createChatSession({ userId, firstUserMessage, firstAiRespo
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
     isPinned: false,
-  } as ChatSession;
+  };
 }
 
 
