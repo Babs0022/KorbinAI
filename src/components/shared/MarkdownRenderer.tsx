@@ -114,7 +114,7 @@ export default function MarkdownRenderer({ children, className }: MarkdownRender
                 </div>
             )}
             <ReactMarkdown
-                className={cn("prose dark:prose-invert max-w-none", className)}
+                className={cn("prose dark:prose-invert max-w-none break-words", className)}
                 remarkPlugins={[remarkGfm]}
                 components={{
                     code(props) {
