@@ -361,6 +361,7 @@ export default function ChatClient() {
     try {
         const response = await conversationalChat({
             history: historyForAI,
+            userId: user.uid,
         });
 
         if (abortControllerRef.current?.signal.aborted) {

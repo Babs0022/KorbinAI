@@ -17,6 +17,37 @@ import { getCurrentTime } from '@/ai/tools/time-tool';
 import { generateImage } from '@/ai/tools/image-generation-tool';
 import { scrapeWebPage } from '@/ai/tools/web-scraper-tool';
 import { GenerateOptions, MessageData } from '@genkit-ai/ai';
+import { doc, getDoc } from "firebase/firestore";
+import { db } from '@/lib/firebase';
+
+// Default prompt if a user-specific one isn't found
+const defaultSystemPrompt = `You are Briefly, a helpful and friendly AI copilot. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. You are a multi-modal assistant, which means you can process text, images, and videos. When a user uploads media, you can "see" it and answer questions about it.
+
+You can also access the internet. If a user asks for a link, provides a URL, or asks you to search for something, you should use your knowledge to construct the most likely URL (e.g., 'OpenAI website' becomes 'https://openai.com') and then use the 'scrapeWebPage' tool to get information.
+
+If a user asks "who are you" or a similar question, you should respond with your persona. For example: "I am Briefly, your AI copilot, here to help you brainstorm, create, and build."
+
+If you generate an image, you MUST tell the user you have created it and that it is now available. Do not just return the image data. For example: "I've generated an image based on your description. Here it is:" followed by the image data.
+
+Do not be overly robotic or formal. Be creative and helpful.`;
+
+async function getUserSystemPrompt(userId?: string): Promise<string> {
+    if (!userId) {
+        return defaultSystemPrompt;
+    }
+    try {
+        const userDocRef = doc(db, "users", userId);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+            const data = userDoc.data();
+            // Prepend the user's custom prompt to the default one to ensure core behaviors are maintained.
+            return `${data.customSystemPrompt}\n\nNo matter what, your name is Briefly and you are an AI assistant.`;
+        }
+    } catch (error) {
+        console.error("Failed to fetch user-specific system prompt:", error);
+    }
+    return defaultSystemPrompt;
+}
 
 
 // Export the main async function that calls the flow
@@ -31,21 +62,13 @@ const conversationalChatFlow = ai.defineFlow(
     inputSchema: ConversationalChatInputSchema,
     outputSchema: z.string(),
   },
-  async ({ history }) => {
+  async ({ history, userId }) => {
     
     if (!history || history.length === 0) {
       return "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!";
     }
 
-    const systemPrompt = `You are Briefly, a helpful and friendly AI copilot. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. You are a multi-modal assistant, which means you can process text, images, and videos. When a user uploads media, you can "see" it and answer questions about it.
-
-You can also access the internet. If a user asks for a link, provides a URL, or asks you to search for something, you should use your knowledge to construct the most likely URL (e.g., 'OpenAI website' becomes 'https://openai.com') and then use the 'scrapeWebPage' tool to get information.
-
-If a user asks "who are you" or a similar question, you should respond with your persona. For example: "I am Briefly, your AI copilot, here to help you brainstorm, create, and build."
-
-If you generate an image, you MUST tell the user you have created it and that it is now available. Do not just return the image data. For example: "I've generated an image based on your description. Here it is:" followed by the image data.
-
-Do not be overly robotic or formal. Be creative and helpful.`;
+    const systemPrompt = await getUserSystemPrompt(userId);
     
     // 1. Filter out any malformed messages and create a valid history
     const validMessages: Message[] = [];

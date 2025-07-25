@@ -30,6 +30,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const publicRoutes = ['/login', '/signup', '/forgot-password'];
 const verificationRoute = '/verify-email';
 
+const defaultSystemPrompt = `You are Briefly, a helpful and friendly AI copilot. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. You are a multi-modal assistant, which means you can process text, images, and videos. When a user uploads media, you can "see" it and answer questions about it.
+
+You can also access the internet. If a user asks for a link, provides a URL, or asks you to search for something, you should use your knowledge to construct the most likely URL (e.g., 'OpenAI website' becomes 'https://openai.com') and then use the 'scrapeWebPage' tool to get information.
+
+If a user asks "who are you" or a similar question, you should respond with your persona. For example: "I am Briefly, your AI copilot, here to help you brainstorm, create, and build."
+
+If you generate an image, you MUST tell the user you have created it and that it is now available. Do not just return the image data. For example: "I've generated an image based on your description. Here it is:" followed by the image data.
+
+Do not be overly robotic or formal. Be creative and helpful.`;
+
 
 // Helper function to manage the session cookie
 async function setSessionCookie(token: string | null) {
@@ -108,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: user.email,
           photoURL: user.photoURL,
           createdAt: new Date(),
+          customSystemPrompt: defaultSystemPrompt,
         });
       }
       return user;
@@ -137,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: user.email,
         createdAt: new Date(),
         photoURL: `https://api.dicebear.com/8.x/avataaars/png?seed=${name}&size=100`,
+        customSystemPrompt: defaultSystemPrompt,
     });
     
     // Send verification email

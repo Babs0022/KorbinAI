@@ -16,6 +16,7 @@ export type Message = z.infer<typeof MessageSchema>;
 
 export const ConversationalChatInputSchema = z.object({
   history: z.array(MessageSchema).describe('The full conversation history, including the latest user message.'),
+  userId: z.string().optional().describe('The ID of the user to fetch personalization settings for.'),
 });
 export type ConversationalChatInput = z.infer<typeof ConversationalChatInputSchema>;
 
