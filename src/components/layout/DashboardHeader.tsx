@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Settings, LogOut, FolderKanban, Bot, Sun, Moon, Monitor, CreditCard, FileText, Shield, Feather, Bolt, Image as ImageIcon, Code2, MessageSquare, Plus, MessageSquareText, MoreHorizontal, Pin, Trash2, Share, Pencil } from "lucide-react";
+import { User, Settings, LogOut, FolderKanban, Bot, Sun, Moon, Monitor, CreditCard, FileText, Shield, Feather, Bolt, Image as ImageIcon, Code2, MessageSquare, Plus, MessageSquareText, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid } from "lucide-react";
 import { useSidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -217,8 +217,8 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                     <Link href="/">
-                        <Plus />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>New Chat</span>
+                        <LayoutGrid />
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Creation Hub</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
@@ -227,6 +227,14 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <Link href="/dashboard/projects">
                         <FolderKanban />
                         <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Projects</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                    <Link href="/chat">
+                        <MessageSquareText />
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Chat</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
