@@ -21,7 +21,8 @@ import { generateTitleForChat } from '@/ai/actions/generate-chat-title-action';
 
 interface CreateChatSessionInput {
   userId: string;
-  firstMessage: Message;
+  firstUserMessage: Message;
+  firstAiResponse: Message;
 }
 
 /**
@@ -43,22 +44,22 @@ function sanitizeMessageForFirestore(message: Message): Message {
 
 /**
  * Creates a new chat session in Firestore using the client SDK.
- * Generates a title from the first message.
+ * Generates a title from the first message exchange.
  */
-export async function createChatSession({ userId, firstMessage }: CreateChatSessionInput): Promise<ChatSession> {
-  // Sanitize the first message to prevent Firestore errors with undefined fields.
-  const sanitizedFirstMessage = sanitizeMessageForFirestore(firstMessage);
+export async function createChatSession({ userId, firstUserMessage, firstAiResponse }: CreateChatSessionInput): Promise<ChatSession> {
+  const sanitizedUserMessage = sanitizeMessageForFirestore(firstUserMessage);
+  const sanitizedAiMessage = sanitizeMessageForFirestore(firstAiResponse);
+  const messages = [sanitizedUserMessage, sanitizedAiMessage];
 
-  // Generate a title for the chat.
-  const title = await generateTitleForChat(firstMessage);
+  const title = await generateTitleForChat(sanitizedUserMessage.content, sanitizedAiMessage.content);
 
   const newSessionData = {
     userId,
     title,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-    messages: [sanitizedFirstMessage],
-    isPinned: false, // Default value for pinning
+    messages,
+    isPinned: false,
   };
 
   const chatRef = await addDoc(collection(db, 'chatSessions'), newSessionData);
@@ -68,7 +69,7 @@ export async function createChatSession({ userId, firstMessage }: CreateChatSess
     id: chatRef.id,
     userId,
     title,
-    messages: [sanitizedFirstMessage as Message],
+    messages: messages as Message[],
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
     isPinned: false,

@@ -286,6 +286,12 @@ export default function ChatClient() {
             return;
         };
 
+        // If the session is already loaded and the ID matches, don't refetch
+        if (sessionRef.current && sessionRef.current.id === chatId) {
+            setIsPageLoading(false);
+            return;
+        }
+
         setIsPageLoading(true);
         try {
             const loadedSession = await getChatSession(chatId);
@@ -349,21 +355,6 @@ export default function ChatClient() {
     setIsLoading(true);
 
     try {
-        let currentSession = sessionRef.current;
-
-        // If it's a new chat, create it first
-        if (!currentSession) {
-            const newSession = await createChatSession({ userId: user.uid, firstMessage: userMessage });
-            setSession(newSession); // This updates the state
-            currentSession = newSession; // Use the newly created session for this operation
-            // Update URL without reloading the page
-            window.history.replaceState(null, '', `/chat/${newSession.id}`);
-        }
-        
-        if (!currentSession) {
-            throw new Error("Failed to create or find a chat session.");
-        }
-
         const response = await conversationalChat({
             history: historyForAI,
         });
@@ -380,10 +371,26 @@ export default function ChatClient() {
             aiMessage = { role: "model", content: "Sorry, I received an invalid response. Please try again." };
         }
         
+        let currentSession = sessionRef.current;
+        // If it's a new chat, create it now after getting the AI response
+        if (!currentSession) {
+            const newSession = await createChatSession({
+                userId: user.uid,
+                firstUserMessage: userMessage,
+                firstAiResponse: aiMessage,
+            });
+            setSession(newSession);
+            currentSession = newSession;
+            // Use replaceState to update URL without a full navigation/reload
+            window.history.replaceState(null, '', `/chat/${newSession.id}`);
+        } else {
+             // Otherwise, just update the existing session
+            await updateChatSession(currentSession.id, [...historyForAI, aiMessage]);
+        }
+        
         const finalHistory = [...historyForAI, aiMessage];
         setMessages(finalHistory);
 
-        await updateChatSession(currentSession.id, finalHistory);
 
     } catch (error: any) {
         if (error.message === 'AbortError' || abortControllerRef.current?.signal.aborted) {
