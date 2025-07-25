@@ -449,7 +449,7 @@ export default function ChatClient() {
     }
 
     return (
-      <div className="flex-grow w-full max-w-4xl mx-auto space-y-6 px-4">
+      <div className="flex-grow w-full max-w-4xl mx-auto space-y-8 px-4">
           {messages.map((message, index) => (
               <div
               key={index}
@@ -460,8 +460,8 @@ export default function ChatClient() {
               >
               <div
                   className={cn(
-                    "max-w-xl rounded-xl p-3",
-                     message.role === "user" ? "shadow-md bg-primary text-primary-foreground" : "bg-secondary"
+                    "max-w-xl",
+                     message.role === "user" ? "shadow-md bg-primary text-primary-foreground rounded-xl p-3" : ""
                   )}
               >
                   {message.mediaUrls && message.mediaUrls.length > 0 && (
