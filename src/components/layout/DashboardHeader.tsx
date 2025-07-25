@@ -231,6 +231,44 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>
+
+        <div className="px-2 py-2 text-xs font-medium text-sidebar-foreground/70 group-data-[state=collapsed]:opacity-0 transition-opacity">
+            Briefs
+        </div>
+        <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Written Content">
+                    <Link href="/written-content">
+                        <Feather />
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Written Content</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Prompt Generator">
+                    <Link href="/prompt-generator">
+                        <Bolt />
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Prompt Generator</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Image Generator">
+                    <Link href="/image-generator">
+                        <ImageIcon />
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Image Generator</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Structured Data">
+                    <Link href="/structured-data">
+                        <Code2 />
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Structured Data</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        </SidebarMenu>
         
         <div className="px-2 py-2 text-xs font-medium text-sidebar-foreground/70 group-data-[state=collapsed]:opacity-0 transition-opacity">
             Recents
