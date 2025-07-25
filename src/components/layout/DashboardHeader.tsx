@@ -217,6 +217,14 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                     <Link href="/">
+                        <MessageSquareText />
+                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Chat</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                    <Link href="/hub">
                         <LayoutGrid />
                         <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Creation Hub</span>
                     </Link>
@@ -227,14 +235,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <Link href="/dashboard/projects">
                         <FolderKanban />
                         <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Projects</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                    <Link href="/chat">
-                        <MessageSquareText />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Chat</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
