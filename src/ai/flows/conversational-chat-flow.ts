@@ -41,7 +41,9 @@ async function getUserSystemPrompt(userId?: string): Promise<string> {
         if (userDoc.exists()) {
             const data = userDoc.data();
             // Prepend the user's custom prompt to the default one to ensure core behaviors are maintained.
-            return `${data.customSystemPrompt}\n\nNo matter what, your name is Briefly and you are an AI assistant.`;
+            return `${data.customSystemPrompt}
+
+No matter what, your name is Briefly and you are an AI assistant.`;
         }
     } catch (error) {
         console.error("Failed to fetch user-specific system prompt:", error);
@@ -122,7 +124,7 @@ const conversationalChatFlow = ai.defineFlow(
         return "It seems there are no valid messages in our conversation. Could you please start over?";
     }
 
-    const modelToUse = 'googleai/gemini-2.5-flash';
+    const modelToUse = 'googleai/gemini-1.5-flash';
     const finalPrompt = {
       model: modelToUse,
       system: systemPrompt,
@@ -146,7 +148,9 @@ const conversationalChatFlow = ai.defineFlow(
             }
         };
         const toolResult = await generateImage(toolRequest.input);
-        const finalResponse = `I've generated an image for you based on your description:\n\n${toolResult}`;
+        const finalResponse = `I've generated an image for you based on your description:
+
+${toolResult}`;
         return finalResponse;
     }
 
