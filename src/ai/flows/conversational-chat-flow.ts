@@ -131,38 +131,6 @@ const conversationalChatFlow = ai.defineFlow(
       tools: [getCurrentTime, generateImage, scrapeWebPage],
     } as GenerateOptions;
 
-    // Special handling for image generation to avoid token limit errors from history
-    const lastMessage = messages[messages.length - 1];
-    const textContent = Array.isArray(lastMessage.content)
-      ? lastMessage.content.find(p => p.text)?.text || ''
-      : '';
-    const imageKeywords = ['generate image', 'create an image', 'draw a picture'];
-    if (imageKeywords.some(keyword => textContent.toLowerCase().includes(keyword))) {
-        const imageContext = Array.isArray(lastMessage.content) ? lastMessage.content.filter(p => p.media).map(p => p.media!.url) : [];
-        const toolRequest = {
-            name: 'generateImage',
-            input: {
-                prompt: textContent,
-                ...(imageContext.length > 0 && { imageContext }),
-            }
-        };
-        try {
-            const imageUrl = await generateImage(toolRequest.input);
-            const finalResponse: Message = {
-                role: 'model',
-                content: "I've generated an image for you based on your description. Here it is:",
-                mediaUrls: [imageUrl],
-            };
-            return finalResponse;
-        } catch (error) {
-            return {
-                role: 'model',
-                content: "I'm sorry, but I couldn't generate the image. There might be an issue with the service or the prompt might have violated a safety policy. Please try again with a different description.",
-            }
-        }
-    }
-
-
     const response = await ai.generate(finalPrompt);
 
     return {
