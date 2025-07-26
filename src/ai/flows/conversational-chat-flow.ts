@@ -10,6 +10,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import {
     ConversationalChatInputSchema,
+    MessageSchema,
     type ConversationalChatInput,
     type Message,
 } from '@/types/ai';
