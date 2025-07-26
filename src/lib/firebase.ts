@@ -4,6 +4,8 @@ import { getAuth, type Auth } from 'firebase/auth';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
+// Define the configuration object directly in this file
+// This ensures that the variables are read at the time of initialization
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
