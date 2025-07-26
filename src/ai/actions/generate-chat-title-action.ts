@@ -15,6 +15,7 @@ const GenerateTitleInputSchema = z.object({
 
 const titlePrompt = ai.definePrompt({
     name: 'generateChatTitle',
+    model: 'googleai/gemini-1.5-pro-latest', // Corrected model name
     input: { schema: GenerateTitleInputSchema },
     output: { schema: z.string() },
     prompt: `Summarize the following conversation into a concise title of 3-5 words. The title should reflect the core topic of the exchange.
