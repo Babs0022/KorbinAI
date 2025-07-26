@@ -111,7 +111,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
       .split(" ")
       .map((n) => n[0])
       .join("")
-      .toUpperCase();
+      .toUpperCase() || 'U';
   };
   
   const handleDelete = async (chatId: string) => {

@@ -1,21 +1,17 @@
 
 'use server';
 /**
- * @fileOverview A flow for generating images from a text prompt, optionally with image context.
- * This file contains the server-side logic and exports only the main async function.
- * Type definitions are in `src/types/ai.ts`.
+ * @fileOverview A flow for generating images using the Imagen 2 model.
+ *
+ * - generateImage - A function that handles image generation with various options.
  */
 
-import {ai} from '@/ai/genkit';
-import type {Part} from 'genkit';
-import {
-    GenerateImageInputSchema,
-    GenerateImageOutputSchema,
-    type GenerateImageInput,
-    type GenerateImageOutput,
-} from '@/types/ai';
+import { ai } from '@/ai/genkit';
+import { z } from 'zod';
+import { GenerateImageInputSchema, GenerateImageOutputSchema } from '@/types/ai';
+import type { GenerateImageInput } from '@/types/ai';
 
-export async function generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
+export async function generateImage(input: GenerateImageInput): Promise<z.infer<typeof GenerateImageOutputSchema>> {
   return generateImageFlow(input);
 }
 
@@ -25,43 +21,46 @@ const generateImageFlow = ai.defineFlow(
     inputSchema: GenerateImageInputSchema,
     outputSchema: GenerateImageOutputSchema,
   },
-  async (input) => {
-    const promptParts: Part[] = [];
-
-    // If context images are provided, add them to the prompt parts.
-    if (input.imageDataUris && input.imageDataUris.length > 0) {
-        input.imageDataUris.forEach(uri => {
-            promptParts.push({ media: { url: uri } });
-        });
-    }
-
-    // Always add the text prompt.
-    promptParts.push({ text: input.prompt });
+  async (input: z.infer<typeof GenerateImageInputSchema>) => {
     
-    const generationPromises = Array(input.count).fill(null).map(() => 
-      ai.generate({
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: promptParts,
-        config: {
-          responseModalities: ['TEXT', 'IMAGE'],
-        },
-      })
-    );
+    const { prompt, imageDataUris, count = 1, style, aspectRatio, negativePrompt } = input;
 
-    const results = await Promise.all(generationPromises);
-
-    const dataUris = results
-      .map(response => response.media?.url)
-      .filter((url): url is string => !!url);
-      
-    if (dataUris.length === 0) {
-      throw new Error('Image generation failed to return any images. This may be due to a safety policy violation in the prompt or a network issue.');
+    // Base prompt for the model
+    let finalPrompt = prompt;
+    if (style) {
+      finalPrompt += `, in the style of ${style}`;
+    }
+    if (aspectRatio) {
+      finalPrompt += `, aspect ratio ${aspectRatio}`;
     }
 
-    const flowOutput: GenerateImageOutput = {
-      imageUrls: dataUris,
-    };
+    try {
+      const llmResponse = await ai.generate({
+        model: 'googleai/imagen-2',
+        prompt: finalPrompt,
+        config: {
+          numImages: count,
+          negativePrompt,
+        },
+        context: imageDataUris ? imageDataUris.map(url => ({ media: { url } })) : undefined,
+      });
 
-    return flowOutput;
+      if (!llmResponse.media) {
+        throw new Error('Image generation failed to return any images.');
+      }
+      
+      const imageUrl = llmResponse.media.url;
+
+      if (!imageUrl) {
+        throw new Error('Image generation failed to return an image URL.');
+      }
+
+      return { imageUrls: [imageUrl] };
+
+    } catch (error) {
+      console.error('Image generation flow failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      throw new Error(`Failed to generate image: ${errorMessage}`);
+    }
   }
 );

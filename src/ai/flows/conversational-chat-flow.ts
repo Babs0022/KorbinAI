@@ -17,7 +17,7 @@ import {
 import { getCurrentTime } from '@/ai/tools/time-tool';
 import { generateImage } from '@/ai/tools/image-generation-tool';
 import { scrapeWebPage } from '@/ai/tools/web-scraper-tool';
-import { GenerateOptions, MessageData } from '@genkit-ai/ai';
+import { GenerateOptions, MessageData, Part } from '@genkit-ai/ai';
 import { doc, getDoc } from "firebase/firestore";
 import { db } from '@/lib/firebase';
 
@@ -41,7 +41,6 @@ async function getUserSystemPrompt(userId?: string): Promise<string> {
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
             const data = userDoc.data();
-            // Prepend the user's custom prompt to the default one to ensure core behaviors are maintained.
             return `${data.customSystemPrompt}
 
 No matter what, your name is Briefly and you are an AI assistant.`;
@@ -51,7 +50,6 @@ No matter what, your name is Briefly and you are an AI assistant.`;
     }
     return defaultSystemPrompt;
 }
-
 
 // Export the main async function that calls the flow
 export async function conversationalChat(input: ConversationalChatInput): Promise<Message> {
@@ -65,7 +63,7 @@ const conversationalChatFlow = ai.defineFlow(
     inputSchema: ConversationalChatInputSchema,
     outputSchema: MessageSchema,
   },
-  async ({ history, userId }) => {
+  async ({ history, userId }): Promise<Message> => {
     
     if (!history || history.length === 0) {
       return { role: "model", content: "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!" };
@@ -73,39 +71,12 @@ const conversationalChatFlow = ai.defineFlow(
 
     const systemPrompt = await getUserSystemPrompt(userId);
     
-    // 1. Filter out any malformed messages and create a valid history
-    const validMessages: Message[] = [];
-    if (history.length > 0) {
-        // Ensure the conversation starts with a user message
-        const firstUserIndex = history.findIndex(msg => msg.role === 'user');
-        if (firstUserIndex !== -1) {
-            // Add the first user message
-            validMessages.push(history[firstUserIndex]);
-            // Add alternating messages after the first user message
-            for (let i = firstUserIndex + 1; i < history.length; i++) {
-                if (history[i].role !== validMessages[validMessages.length - 1].role) {
-                    validMessages.push(history[i]);
-                }
-            }
-        }
-    }
+    // 1. Filter out any malformed messages
+    const validMessages = history.filter(msg => (msg.content || (msg.mediaUrls && msg.mediaUrls.length > 0)));
 
-    // 2. Implement sliding window for conversation history to manage token count.
-    // Keep the first message for context, and the last 10 messages for recency.
-    let messagesToProcess: Message[] = [];
-    if (validMessages.length > 11) {
-      messagesToProcess = [
-        validMessages[0], // The first message
-        ...validMessages.slice(-10), // The last 10 messages
-      ];
-    } else {
-      messagesToProcess = validMessages;
-    }
-
-
-    // 3. Map to the format the model expects
-    const messages = messagesToProcess.map((msg) => {
-        const content: ({text: string} | {media: {url: string}})[] = [];
+    // 2. Map to the format the model expects
+    const messages = validMessages.map((msg): MessageData => {
+        const content: Part[] = [];
         if (msg.content) {
             content.push({ text: msg.content });
         }
@@ -120,43 +91,52 @@ const conversationalChatFlow = ai.defineFlow(
         };
     });
 
-    // 4. If, after all filtering, there are no messages left, return a helpful message.
+    // 3. If there are no valid messages, return a helpful response
     if (messages.length === 0) {
         return { role: "model", content: "It seems there are no valid messages in our conversation. Could you please start over?" };
     }
 
     const modelToUse = 'googleai/gemini-1.5-flash';
-    const finalPrompt = {
+    const finalPrompt: GenerateOptions = {
       model: modelToUse,
       system: systemPrompt,
-      messages: messages as MessageData[],
+      messages: messages,
       tools: [getCurrentTime, generateImage, scrapeWebPage],
-    } as GenerateOptions;
-
-    const response = await ai.generate(finalPrompt);
-    const choice = response.choices[0];
-    const textContent = choice.text() || '';
-    let imageUrls: string[] = [];
-    
-    // Look for image generation tool output in the response
-    for (const part of choice.message.content) {
-        if (part.toolResponse && part.toolResponse.name === 'generateImage') {
-            const toolOutput = part.toolResponse.output as { imageUrls: string[] };
-            if (toolOutput && Array.isArray(toolOutput.imageUrls)) {
-                imageUrls.push(...toolOutput.imageUrls);
-            }
-        }
-    }
-    
-    const result: Message = {
-        role: 'model',
-        content: textContent,
     };
 
-    if (imageUrls.length > 0) {
-        result.mediaUrls = imageUrls;
-    }
+    try {
+        const response = await ai.generate(finalPrompt);
 
-    return result;
+        const textContent = response.text || '';
+        let imageUrls: string[] = [];
+
+        // Cast to any to safely access properties that might not be in the type definition
+        const responseAsAny = response as any;
+
+        if (responseAsAny.candidates && Array.isArray(responseAsAny.candidates)) {
+            for (const candidate of responseAsAny.candidates) {
+                if (candidate.message && Array.isArray(candidate.message.content)) {
+                    for (const part of candidate.message.content) {
+                        if (part.toolResponse && part.toolResponse.name === 'generateImage') {
+                            const toolOutput = part.toolResponse.output as { imageUrls: string[] };
+                            if (toolOutput && Array.isArray(toolOutput.imageUrls)) {
+                                imageUrls.push(...toolOutput.imageUrls);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return {
+            role: 'model',
+            content: textContent,
+            mediaUrls: imageUrls.length > 0 ? imageUrls : undefined,
+        };
+
+    } catch (error) {
+        console.error("AI generation failed:", error);
+        return { role: 'model', content: "I'm sorry, I couldn't generate a response. Please try rephrasing your message." };
+    }
   }
 );

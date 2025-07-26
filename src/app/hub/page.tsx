@@ -7,6 +7,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import LogoSpinner from '@/components/shared/LogoSpinner';
 
 const creationTools = [
   {
@@ -44,8 +45,20 @@ const creationTools = [
 ];
 
 export default function CreationHubPage() {
-    const { user } = useAuth();
-    const userName = user?.displayName ? `, ${user.displayName.split(' ')[0]}` : '';
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return (
+            <DashboardLayout>
+                <div className="flex h-full w-full items-center justify-center">
+                    <LogoSpinner />
+                </div>
+            </DashboardLayout>
+        );
+    }
+
+    const userFirstName = user?.displayName?.split(' ')?.[0];
+    const welcomeMessage = userFirstName ? `Welcome back, ${userFirstName}. What are we building today?` : 'What are we building today?';
 
     return (
         <DashboardLayout>
@@ -53,7 +66,7 @@ export default function CreationHubPage() {
                 <div className="w-full max-w-6xl mx-auto space-y-12">
                     <div className="text-center space-y-2">
                         <h1 className="text-4xl md:text-5xl font-bold">The Creation Hub</h1>
-                        <p className="text-lg text-muted-foreground">What would you like to build today?</p>
+                        <p className="text-lg text-muted-foreground">{welcomeMessage}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

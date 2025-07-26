@@ -199,7 +199,6 @@ export default function ChatClient() {
 
     abortControllerRef.current = new AbortController();
     setIsLoading(true);
-    let fullResponse = "";
 
     try {
         const aiMessage = await conversationalChat({
@@ -222,7 +221,7 @@ export default function ChatClient() {
 
     } catch (error: any) {
         if (error.name !== 'AbortError') {
-            console.error("Streaming failed:", error);
+            console.error("Non-streaming failed:", error);
             const finalHistory = [...historyForAI, { role: 'model', content: `Sorry, an error occurred: ${error.message}` }];
             setMessages(finalHistory);
             await updateChatSession(sessionId, finalHistory);
