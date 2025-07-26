@@ -89,6 +89,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // User is signed out
       await setSessionCookie(null);
       setUser(null);
+      // If the user is logged out and not on a public page, redirect them.
+      if (!publicRoutes.includes(pathname)) {
+        router.replace('/login');
+      }
     }
     setLoading(false);
   }, [pathname, router]);
