@@ -412,15 +412,15 @@ export default function ChatClient() {
         window.history.replaceState(null, '', `/chat/${newSession.id}`);
         setSession(newSession);
 
-        // Call AI with the correct history
-        getAiResponse(newSession.id, historyForAI);
+        // Call AI with the correct history for the new chat
+        getAiResponse(newSession.id, [userMessage]);
 
       } catch (error) {
         console.error("Failed to create new chat session:", error);
         setIsLoading(false);
       }
     } else {
-      // If we are already in a chat, just call the AI response function
+      // If we are already in a chat, just call the AI response function with existing history
       getAiResponse(chatId, historyForAI);
     }
   }, [user, chatId, messages, getAiResponse]);
