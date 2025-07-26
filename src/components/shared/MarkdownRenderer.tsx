@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button } from "@/components/ui/button";
-import { Copy, Check, Download, Link as LinkIcon, File } from "lucide-react";
+import { Copy, Check, Download } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { saveAs } from "file-saver";
@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 interface MarkdownRendererProps {
   children: string;
   className?: string;
+  mediaUrls?: string[];
 }
 
 const URL_REGEX = /https?:\/\/[^\s/$.?#].[^\s]*/gi;
@@ -85,36 +86,12 @@ const ImageBlock = ({ src, alt }: { src?: string; alt?: string }) => {
 };
 
 
-export default function MarkdownRenderer({ children, className }: MarkdownRendererProps) {
-    const urls = children.match(URL_REGEX);
-    
-    // Check if the URL is part of a markdown image tag
-    const isImageUrl = (url: string) => `![](${url})`.includes(children) || `![some alt](${url})`.includes(children);
-    const textLinks = urls?.filter(url => !url.startsWith('data:image') && !isImageUrl(url));
-    
-    // The main content to render, could be text, image markdown, or both.
+export default function MarkdownRenderer({ children, className, mediaUrls }: MarkdownRendererProps) {
     const mainContent = children;
 
     return (
-        <>
-            {textLinks && textLinks.length > 0 && (
-                <div className="mb-2 space-y-2">
-                    {textLinks.map((url, index) => (
-                        <a 
-                            key={index}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 p-2 rounded-lg border bg-background/50 hover:bg-accent transition-colors"
-                        >
-                            <LinkIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span className="text-sm truncate text-primary">{url}</span>
-                        </a>
-                    ))}
-                </div>
-            )}
+        <div className={cn("prose dark:prose-invert max-w-none break-words", className)}>
             <ReactMarkdown
-                className={cn("prose dark:prose-invert max-w-none break-words", className)}
                 remarkPlugins={[remarkGfm]}
                 components={{
                     code(props) {
@@ -129,6 +106,14 @@ export default function MarkdownRenderer({ children, className }: MarkdownRender
             >
                 {mainContent}
             </ReactMarkdown>
-        </>
+
+            {mediaUrls && mediaUrls.length > 0 && (
+                <div className="mt-4 grid gap-4 grid-cols-1 sm:grid-cols-2">
+                    {mediaUrls.map((url, index) => (
+                        <ImageBlock key={index} src={url} alt={`generated image ${index + 1}`} />
+                    ))}
+                </div>
+            )}
+        </div>
     );
 }

@@ -103,7 +103,11 @@ ${memoryContext}
 `;
 
     const modelConfig: GenerateOptions = {
+<<<<<<< HEAD
         model: 'googleai/gemini-1.5-pro',
+=======
+        model: 'googleai/gemini-2.5-pro', // Corrected model name
+>>>>>>> 92f0811ba2bbaac64cf0f882e87265c3797bc512
         system: systemPrompt,
         tools: Object.values(availableTools),
         toolChoice: 'auto',

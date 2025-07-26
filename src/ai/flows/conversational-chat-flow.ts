@@ -42,7 +42,9 @@ async function getUserSystemPrompt(userId?: string): Promise<string> {
         if (userDoc.exists()) {
             const data = userDoc.data();
             // Prepend the user's custom prompt to the default one to ensure core behaviors are maintained.
-            return `${data.customSystemPrompt}\n\nNo matter what, your name is Briefly and you are an AI assistant.`;
+            return `${data.customSystemPrompt}
+
+No matter what, your name is Briefly and you are an AI assistant.`;
         }
     } catch (error) {
         console.error("Failed to fetch user-specific system prompt:", error);
@@ -123,7 +125,7 @@ const conversationalChatFlow = ai.defineFlow(
         return { role: "model", content: "It seems there are no valid messages in our conversation. Could you please start over?" };
     }
 
-    const modelToUse = 'googleai/gemini-2.5-flash';
+    const modelToUse = 'googleai/gemini-1.5-flash';
     const finalPrompt = {
       model: modelToUse,
       system: systemPrompt,
@@ -132,10 +134,29 @@ const conversationalChatFlow = ai.defineFlow(
     } as GenerateOptions;
 
     const response = await ai.generate(finalPrompt);
-
-    return {
-        role: 'model',
-        content: response.text,
+    const choice = response.choices[0];
+    const textContent = choice.text() || '';
+    let imageUrls: string[] = [];
+    
+    // Look for image generation tool output in the response
+    for (const part of choice.message.content) {
+        if (part.toolResponse && part.toolResponse.name === 'generateImage') {
+            const toolOutput = part.toolResponse.output as { imageUrls: string[] };
+            if (toolOutput && Array.isArray(toolOutput.imageUrls)) {
+                imageUrls.push(...toolOutput.imageUrls);
+            }
+        }
     }
+    
+    const result: Message = {
+        role: 'model',
+        content: textContent,
+    };
+
+    if (imageUrls.length > 0) {
+        result.mediaUrls = imageUrls;
+    }
+
+    return result;
   }
 );

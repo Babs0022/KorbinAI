@@ -14,17 +14,18 @@ import { type Message } from '@/types/ai';
 interface ChatMessageActionsProps {
   message: Message;
   onRegenerate: () => void;
+  projectId?: string; // The chat session ID
 }
 
-export default function ChatMessageActions({ message, onRegenerate }: ChatMessageActionsProps) {
+export default function ChatMessageActions({ message, onRegenerate, projectId }: ChatMessageActionsProps) {
     const [copied, setCopied] = useState(false);
     const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
     const [feedbackRating, setFeedbackRating] = useState<'good' | 'bad' | null>(null);
     const { toast } = useToast();
     const { user } = useAuth();
     
-    // Feedback is identified by the message content for simplicity, in a real app you'd use a unique message ID.
-    const feedbackId = message.content;
+    // We can use the message object itself as a pseudo-ID if it's unique enough for the session
+    const contentId = JSON.stringify(message);
     const [feedbackGiven, setFeedbackGiven] = useState<'good' | 'bad' | null>(null);
 
     const handleCopy = () => {
@@ -36,18 +37,26 @@ export default function ChatMessageActions({ message, onRegenerate }: ChatMessag
     };
 
     const openFeedbackModal = (rating: 'good' | 'bad') => {
+        if (!projectId) {
+            toast({
+                variant: 'destructive',
+                title: 'Cannot Give Feedback',
+                description: 'A chat session must be saved before providing feedback.',
+            });
+            return;
+        }
         setFeedbackRating(rating);
         setIsFeedbackModalOpen(true);
     };
     
     const handleFeedbackSubmit = async (feedback: { tags: string[]; comment: string }) => {
-        if (!user || !feedbackRating) return;
+        if (!user || !feedbackRating || !projectId) return;
 
         try {
             await submitFeedback({
                 userId: user.uid,
-                // In a real app, you would pass a unique message ID instead of content.
-                contentId: feedbackId, 
+                projectId: projectId, // This is the chat session ID
+                contentId: contentId, 
                 rating: feedbackRating,
                 tags: feedback.tags,
                 comment: feedback.comment,
