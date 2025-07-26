@@ -373,7 +373,8 @@ export default function ChatClient() {
         if (error.message === 'AbortError' || abortControllerRef.current?.signal.aborted) {
             setMessages(prev => {
                 const newMessages = [...prev];
-                newMessages[newMessages.length - 1].content += `\n\n*Stream stopped. What else can I help with?*`;
+                newMessages[newMessages.length - 1].content += `
+*Stream stopped. What else can I help with?*`;
                 return newMessages;
             });
         } else {
@@ -479,7 +480,7 @@ export default function ChatClient() {
               <div
                   className={cn(
                     "max-w-xl",
-                     message.role === "user" ? "shadow-md bg-primary text-primary-foreground rounded-xl p-3" : ""
+                     message.role === "user" ? "shadow-md bg-secondary text-foreground rounded-xl p-3" : ""
                   )}
               >
                   {message.mediaUrls && message.mediaUrls.length > 0 && (
@@ -500,6 +501,7 @@ export default function ChatClient() {
                       <ChatMessageActions
                         message={message}
                         onRegenerate={() => handleRegenerate(index)}
+                        projectId={chatId}
                       />
                   )}
               </div>
@@ -518,7 +520,7 @@ export default function ChatClient() {
 
   return (
     <div className="flex flex-col h-screen max-h-screen">
-      <div className="flex-grow overflow-y-auto pt-6 pb-4">
+      <div className="flex-grow overflow-y-auto pt-6 pb-24">
         {renderContent()}
       </div>
        <ChatInputForm
