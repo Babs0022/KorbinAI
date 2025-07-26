@@ -11,7 +11,7 @@ import { LoaderCircle, ImagePlus, X, ArrowUp, Square, Sparkles, Info } from "luc
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
-import { type Message } from "@/types/ai";
+import { type Message, type Streamable } from "@/types/ai";
 import { type ChatSession } from "@/types/chat";
 import { createChatSession, getChatSession, updateChatSession, updateChatSessionMetadata } from "@/services/chatService";
 import { generateTitleForChat } from '@/ai/actions/generate-chat-title-action';
@@ -331,14 +331,10 @@ export default function ChatClient() {
     if (!user) return;
 
     abortControllerRef.current = new AbortController();
-    
-    // Add an empty AI message placeholder
-    const aiMessagePlaceholder: Message = { role: "model", content: "" };
-    setMessages(prev => [...prev, aiMessagePlaceholder]);
     setIsLoading(true);
 
     try {
-      const stream = await conversationalChat({
+      const stream: Streamable<string> = await conversationalChat({
         history: historyForAI,
         userId: user.uid,
       });
@@ -352,6 +348,7 @@ export default function ChatClient() {
           accumulatedResponse += chunk;
           setMessages(prev => {
               const newMessages = [...prev];
+              // This is safe because we already added the placeholder
               newMessages[newMessages.length - 1].content = accumulatedResponse;
               return newMessages;
           });
@@ -373,8 +370,10 @@ export default function ChatClient() {
         if (error.message === 'AbortError' || abortControllerRef.current?.signal.aborted) {
             setMessages(prev => {
                 const newMessages = [...prev];
-                newMessages[newMessages.length - 1].content += `
+                if (newMessages.length > 0) {
+                   newMessages[newMessages.length - 1].content += `
 *Stream stopped. What else can I help with?*`;
+                }
                 return newMessages;
             });
         } else {
@@ -392,9 +391,15 @@ export default function ChatClient() {
     if (!user) return;
 
     const userMessage: Message = { role: "user", content: values.message, mediaUrls: media };
-    setMessages(prev => [...prev, userMessage]); // Optimistically update the UI with user message
+    const aiMessagePlaceholder: Message = { role: "model", content: "" };
+    
+    // Add user message and AI placeholder to the state immediately
+    const updatedMessages = [...messages, userMessage, aiMessagePlaceholder];
+    setMessages(updatedMessages);
 
-    // If there is no current chat session, create one first.
+    // Prepare the history for the AI, which only includes messages up to the user's new one
+    const historyForAI = [...messages, userMessage];
+
     if (!chatId) {
       try {
         setIsLoading(true);
@@ -403,18 +408,19 @@ export default function ChatClient() {
           firstUserMessage: userMessage,
         });
         
+        // Update URL without reload
         window.history.replaceState(null, '', `/chat/${newSession.id}`);
         setSession(newSession);
 
-        getAiResponse(newSession.id, [userMessage]);
+        // Call AI with the correct history
+        getAiResponse(newSession.id, historyForAI);
 
       } catch (error) {
         console.error("Failed to create new chat session:", error);
         setIsLoading(false);
       }
     } else {
-      // If we are already in a chat, just append the message and get the response.
-      const historyForAI = [...messages, userMessage];
+      // If we are already in a chat, just call the AI response function
       getAiResponse(chatId, historyForAI);
     }
   }, [user, chatId, messages, getAiResponse]);
@@ -425,10 +431,13 @@ export default function ChatClient() {
   
   const handleRegenerate = (messageIndex: number) => {
       // The message to regenerate is at `messageIndex`. The user prompt that caused it is at `messageIndex - 1`.
+      if (messageIndex === 0 || !chatId) return;
+
       const userMessageToResend = messages[messageIndex - 1];
-      if (userMessageToResend && userMessageToResend.role === 'user' && chatId) {
-          const historyForAI = messages.slice(0, messageIndex -1);
-          setMessages(historyForAI);
+      if (userMessageToResend && userMessageToResend.role === 'user') {
+          const historyForAI = messages.slice(0, messageIndex);
+          const newPlaceholder: Message = { role: 'model', content: ''};
+          setMessages([...historyForAI, newPlaceholder]);
           getAiResponse(chatId, historyForAI);
       }
   };
@@ -496,22 +505,25 @@ export default function ChatClient() {
                           ))}
                       </div>
                   )}
-                  {message.content && <MarkdownRenderer>{message.content}</MarkdownRenderer>}
-                  {message.role === 'model' && (
-                      <ChatMessageActions
-                        message={message}
-                        onRegenerate={() => handleRegenerate(index)}
-                        projectId={chatId}
-                      />
+                  {isLoading && message.role === 'model' && index === messages.length - 1 && message.content === "" ? (
+                        <div className="flex items-start gap-4 justify-start">
+                            <LogoSpinner />
+                        </div>
+                  ) : (
+                    <>
+                        {message.content && <MarkdownRenderer>{message.content}</MarkdownRenderer>}
+                        {message.role === 'model' && message.content && (
+                            <ChatMessageActions
+                                message={message}
+                                onRegenerate={() => handleRegenerate(index)}
+                                projectId={chatId}
+                            />
+                        )}
+                    </>
                   )}
               </div>
               </div>
           ))}
-              {isLoading && messages[messages.length - 1].role === 'model' && messages[messages.length - 1].content === "" && (
-              <div className="flex items-start gap-4 justify-start">
-              <LogoSpinner />
-              </div>
-          )}
           <div ref={messagesEndRef} />
       </div>
     );
