@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useRef, useEffect, forwardRef, memo, useCallback } from "react";
@@ -147,7 +148,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     };
 
     return (
-        <div className="flex-shrink-0 bg-gradient-to-t from-background via-background/80 to-transparent pt-4 pb-2">
+        <div className="flex-shrink-0 bg-gradient-to-t from-background via-background/80 to-transparent pt-4 pb-4">
             <div className="mx-auto w-full max-w-4xl px-4">
                  {hasMedia && (
                     <div className="mb-4">
@@ -330,34 +331,39 @@ export default function ChatClient() {
     if (!user) return;
 
     abortControllerRef.current = new AbortController();
+    
+    // Add an empty AI message placeholder
+    const aiMessagePlaceholder: Message = { role: "model", content: "" };
+    setMessages(prev => [...prev, aiMessagePlaceholder]);
     setIsLoading(true);
 
     try {
-      const response = await conversationalChat({
+      const stream = await conversationalChat({
         history: historyForAI,
         userId: user.uid,
       });
 
-      if (abortControllerRef.current?.signal.aborted) {
-        throw new Error('AbortError');
-      }
-      
-      let aiMessage: Message;
-      if (typeof response === 'string' && response.trim().length > 0) {
-          aiMessage = { role: "model", content: response };
-      } else {
-          console.error("Invalid response from AI:", response);
-          aiMessage = { role: "model", content: "Sorry, I received an invalid response. Please try again." };
+      let accumulatedResponse = "";
+
+      for await (const chunk of stream) {
+          if (abortControllerRef.current?.signal.aborted) {
+              throw new Error('AbortError');
+          }
+          accumulatedResponse += chunk;
+          setMessages(prev => {
+              const newMessages = [...prev];
+              newMessages[newMessages.length - 1].content = accumulatedResponse;
+              return newMessages;
+          });
       }
 
-      const finalHistory = [...historyForAI, aiMessage];
-      setMessages(finalHistory);
+      const finalHistory = [...historyForAI, { role: "model", content: accumulatedResponse }];
 
       // Update the session in Firestore with the full history
       await updateChatSession(sessionId, finalHistory);
       
       // Now, generate and update the title based on the conversation
-      const newTitle = await generateTitleForChat(historyForAI[0].content, aiMessage.content);
+      const newTitle = await generateTitleForChat(historyForAI[0].content, accumulatedResponse);
       await updateChatSessionMetadata(sessionId, { title: newTitle });
 
       // Update local state with the new title
@@ -365,14 +371,15 @@ export default function ChatClient() {
 
     } catch (error: any) {
         if (error.message === 'AbortError' || abortControllerRef.current?.signal.aborted) {
-            const interruptMessage: Message = { role: "model", content: "*What else can I help you with?*" };
-            const finalHistory = [...historyForAI, interruptMessage];
-            setMessages(finalHistory);
-            await updateChatSession(sessionId, finalHistory);
+            setMessages(prev => {
+                const newMessages = [...prev];
+                newMessages[newMessages.length - 1].content += `\n\n*Stream stopped. What else can I help with?*`;
+                return newMessages;
+            });
         } else {
             console.error("Chat failed:", error);
             const errorMessage: Message = { role: "model", content: `Sorry, I encountered an error. ${error instanceof Error ? error.message : ''}` };
-            setMessages((prev) => [...prev, errorMessage]);
+            setMessages((prev) => [...prev.slice(0, -1), errorMessage]); // Replace placeholder with error
         }
     } finally {
         setIsLoading(false);
@@ -384,34 +391,32 @@ export default function ChatClient() {
     if (!user) return;
 
     const userMessage: Message = { role: "user", content: values.message, mediaUrls: media };
+    setMessages(prev => [...prev, userMessage]); // Optimistically update the UI with user message
 
     // If there is no current chat session, create one first.
     if (!chatId) {
       try {
-        setIsLoading(true); // Show loading state on the main page
+        setIsLoading(true);
         const newSession = await createChatSession({
           userId: user.uid,
           firstUserMessage: userMessage,
         });
         
-        // Immediately navigate to the new chat page.
-        // The rest of the AI interaction will happen on the new page.
-        router.push(`/chat/${newSession.id}`);
-        // No need to call getAiResponse here; the useEffect on the new page will handle loading.
-        // We can, however, call it without awaiting to kickstart the process.
+        window.history.replaceState(null, '', `/chat/${newSession.id}`);
+        setSession(newSession);
+
         getAiResponse(newSession.id, [userMessage]);
 
       } catch (error) {
         console.error("Failed to create new chat session:", error);
-        setIsLoading(false); // Make sure to turn off loading on error
+        setIsLoading(false);
       }
     } else {
       // If we are already in a chat, just append the message and get the response.
       const historyForAI = [...messages, userMessage];
-      setMessages(historyForAI); // Optimistically update the UI
       getAiResponse(chatId, historyForAI);
     }
-  }, [user, chatId, messages, router, getAiResponse]);
+  }, [user, chatId, messages, getAiResponse]);
 
   const handlePromptSuggestionClick = (prompt: string) => {
     handleSendMessage({ message: prompt });
@@ -421,8 +426,8 @@ export default function ChatClient() {
       // The message to regenerate is at `messageIndex`. The user prompt that caused it is at `messageIndex - 1`.
       const userMessageToResend = messages[messageIndex - 1];
       if (userMessageToResend && userMessageToResend.role === 'user' && chatId) {
-          const historyForAI = messages.slice(0, messageIndex);
-          setMessages(historyForAI); // Visually remove the old AI response and subsequent messages
+          const historyForAI = messages.slice(0, messageIndex -1);
+          setMessages(historyForAI);
           getAiResponse(chatId, historyForAI);
       }
   };
@@ -500,7 +505,7 @@ export default function ChatClient() {
               </div>
               </div>
           ))}
-              {isLoading && (
+              {isLoading && messages[messages.length - 1].role === 'model' && messages[messages.length - 1].content === "" && (
               <div className="flex items-start gap-4 justify-start">
               <LogoSpinner />
               </div>
