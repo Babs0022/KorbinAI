@@ -13,6 +13,13 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Add the allowedDevOrigins configuration to whitelist the cloud workstation domain.
+  // This resolves the cross-origin request warnings in the development server logs.
+  devIndicators: {
+    allowedDevOrigins: [
+        '*.cloudworkstations.dev',
+    ]
+  },
   images: {
     unoptimized: true,
     remotePatterns: [
