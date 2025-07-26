@@ -146,15 +146,20 @@ const conversationalChatFlow = ai.defineFlow(
                 ...(imageContext.length > 0 && { imageContext }),
             }
         };
-        const imageUrl = await generateImage(toolRequest.input);
-        
-        const finalResponse: Message = {
-            role: 'model',
-            content: "I've generated an image for you based on your description. Here it is:",
-            mediaUrls: [imageUrl],
-        };
-
-        return finalResponse;
+        try {
+            const imageUrl = await generateImage(toolRequest.input);
+            const finalResponse: Message = {
+                role: 'model',
+                content: "I've generated an image for you based on your description. Here it is:",
+                mediaUrls: [imageUrl],
+            };
+            return finalResponse;
+        } catch (error) {
+            return {
+                role: 'model',
+                content: "I'm sorry, but I couldn't generate the image. There might be an issue with the service or the prompt might have violated a safety policy. Please try again with a different description.",
+            }
+        }
     }
 
 
