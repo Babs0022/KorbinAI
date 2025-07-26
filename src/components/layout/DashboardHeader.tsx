@@ -116,7 +116,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   const handleDelete = async (chatId: string) => {
     try {
         await deleteChatSession(chatId);
-        toast({ title: "Conversation Deleted" });
+        toast({ title: "Conversation Moved to Trash" });
         // If the user deleted the chat they are currently on, redirect them
         if (pathname.includes(chatId)) {
             router.push('/');

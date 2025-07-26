@@ -13,6 +13,7 @@ import {
   serverTimestamp,
   Timestamp,
   deleteDoc,
+  getDocs,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase'; // Use the client-side Firebase instance
 import type { ChatSession } from '@/types/chat';
@@ -70,6 +71,8 @@ export async function createChatSession({ userId, firstUserMessage, firstAiRespo
     updatedAt: serverTimestamp(),
     messages,
     isPinned: false,
+    isDeleted: false, // Add isDeleted flag
+    deletedAt: null, // Add deletedAt field
   };
 
   const chatRef = await addDoc(collection(db, 'chatSessions'), newSessionData);
@@ -94,7 +97,7 @@ export async function getChatSession(chatId: string): Promise<ChatSession | null
     const docRef = doc(db, 'chatSessions', chatId);
     const docSnap = await getDoc(docRef);
 
-    if (!docSnap.exists()) {
+    if (!docSnap.exists() || docSnap.data().isDeleted) {
         return null;
     }
 
@@ -104,6 +107,7 @@ export async function getChatSession(chatId: string): Promise<ChatSession | null
         ...data,
         createdAt: (data.createdAt as Timestamp)?.toDate().toISOString(),
         updatedAt: (data.updatedAt as Timestamp)?.toDate().toISOString(),
+        deletedAt: (data.deletedAt as Timestamp)?.toDate().toISOString() || undefined,
     } as ChatSession;
 }
 
@@ -129,6 +133,7 @@ export function listRecentChatsForUser(userId: string, callback: (chats: ChatSes
   const q = query(
     collection(db, 'chatSessions'),
     where('userId', '==', userId),
+    where('isDeleted', '==', false), // Only show non-deleted chats
     orderBy('updatedAt', 'desc'),
     limit(20)
   );
@@ -150,12 +155,59 @@ export function listRecentChatsForUser(userId: string, callback: (chats: ChatSes
 }
 
 /**
- * Deletes a chat session from Firestore.
+ * Soft-deletes a chat session by setting isDeleted to true.
  */
 export async function deleteChatSession(chatId: string): Promise<void> {
   const docRef = doc(db, 'chatSessions', chatId);
+  await updateDoc(docRef, {
+    isDeleted: true,
+    deletedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Gets all soft-deleted chats for a user.
+ */
+export async function getDeletedChatsForUser(userId: string): Promise<ChatSession[]> {
+    const q = query(
+        collection(db, 'chatSessions'),
+        where('userId', '==', userId),
+        where('isDeleted', '==', true),
+        orderBy('deletedAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            ...data,
+            updatedAt: (data.updatedAt as Timestamp)?.toDate().toISOString(),
+            createdAt: (data.createdAt as Timestamp)?.toDate().toISOString(),
+            deletedAt: (data.deletedAt as Timestamp)?.toDate().toISOString(),
+        } as ChatSession;
+    });
+}
+
+/**
+ * Restores a soft-deleted chat session.
+ */
+export async function restoreChatSession(chatId: string): Promise<void> {
+    const docRef = doc(db, 'chatSessions', chatId);
+    await updateDoc(docRef, {
+        isDeleted: false,
+        deletedAt: null,
+        updatedAt: serverTimestamp(), // Bump updated time so it appears at top of list
+    });
+}
+
+/**
+ * Permanently deletes a chat session from Firestore.
+ */
+export async function permanentlyDeleteChatSession(chatId: string): Promise<void> {
+  const docRef = doc(db, 'chatSessions', chatId);
   await deleteDoc(docRef);
 }
+
 
 /**
  * Updates the metadata of a chat session (e.g., title, isPinned).

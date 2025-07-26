@@ -147,7 +147,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     };
 
     return (
-        <div className="flex-shrink-0 bg-gradient-to-t from-background via-background/80 to-transparent pt-4 pb-2">
+        <div className="flex-shrink-0 bg-gradient-to-t from-background via-background/80 to-transparent pt-4 pb-4">
             <div className="mx-auto w-full max-w-4xl px-4">
                  {hasMedia && (
                     <div className="mb-4">
@@ -474,7 +474,7 @@ export default function ChatClient() {
               <div
                   className={cn(
                     "max-w-xl",
-                     message.role === "user" ? "shadow-md bg-primary text-primary-foreground rounded-xl p-3" : ""
+                     message.role === "user" ? "shadow-md bg-secondary text-foreground rounded-xl p-3" : ""
                   )}
               >
                   {message.mediaUrls && message.mediaUrls.length > 0 && (

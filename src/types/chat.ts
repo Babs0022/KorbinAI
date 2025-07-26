@@ -9,7 +9,9 @@ export const ChatSessionSchema = z.object({
   createdAt: z.string(), // ISO string date
   updatedAt: z.string(), // ISO string date
   messages: z.array(MessageSchema),
-  isPinned: z.boolean().optional(), // Add optional isPinned flag
+  isPinned: z.boolean().optional(),
+  isDeleted: z.boolean().optional(),
+  deletedAt: z.string().optional(), // ISO string date
 });
 
 export type ChatSession = z.infer<typeof ChatSessionSchema>;
