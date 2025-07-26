@@ -70,6 +70,7 @@ export async function createChatSession({ userId, firstUserMessage, firstAiRespo
     updatedAt: serverTimestamp(),
     messages,
     isPinned: false,
+    isDeleted: false,
   };
 
   const chatRef = await addDoc(collection(db, 'chatSessions'), newSessionData);
@@ -83,6 +84,7 @@ export async function createChatSession({ userId, firstUserMessage, firstAiRespo
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
     isPinned: false,
+    isDeleted: false,
   };
 }
 
@@ -129,6 +131,7 @@ export function listRecentChatsForUser(userId: string, callback: (chats: ChatSes
   const q = query(
     collection(db, 'chatSessions'),
     where('userId', '==', userId),
+    where('isDeleted', '==', false),
     orderBy('updatedAt', 'desc'),
     limit(20)
   );
@@ -150,12 +153,63 @@ export function listRecentChatsForUser(userId: string, callback: (chats: ChatSes
 }
 
 /**
- * Deletes a chat session from Firestore.
+ * Moves a chat session to the trash by marking it as deleted.
  */
 export async function deleteChatSession(chatId: string): Promise<void> {
   const docRef = doc(db, 'chatSessions', chatId);
-  await deleteDoc(docRef);
+  await updateDoc(docRef, {
+    isDeleted: true,
+    deletedAt: serverTimestamp(),
+  });
 }
+
+/**
+ * Restores a chat session from the trash.
+ */
+export async function restoreChatSession(chatId: string): Promise<void> {
+    const docRef = doc(db, 'chatSessions', chatId);
+    await updateDoc(docRef, {
+        isDeleted: false,
+        deletedAt: null, // Or use deleteField() if you prefer
+    });
+}
+
+/**
+ * Permanently deletes a chat session from Firestore.
+ */
+export async function permanentlyDeleteChatSession(chatId: string): Promise<void> {
+    const docRef = doc(db, 'chatSessions', chatId);
+    await deleteDoc(docRef);
+}
+
+/**
+ * Fetches all trashed chat sessions for a given user.
+ */
+export function listTrashedChatsForUser(userId: string, callback: (chats: ChatSession[]) => void): () => void {
+    const q = query(
+        collection(db, 'chatSessions'),
+        where('userId', '==', userId),
+        where('isDeleted', '==', true),
+        orderBy('deletedAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const chats = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                updatedAt: (data.updatedAt as Timestamp)?.toDate().toISOString(),
+                createdAt: (data.createdAt as Timestamp)?.toDate().toISOString(),
+                deletedAt: (data.deletedAt as Timestamp)?.toDate().toISOString(),
+            } as ChatSession;
+        });
+        callback(chats);
+    });
+
+    return unsubscribe;
+}
+
 
 /**
  * Updates the metadata of a chat session (e.g., title, isPinned).

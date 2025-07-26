@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link";
@@ -116,13 +117,13 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   const handleDelete = async (chatId: string) => {
     try {
         await deleteChatSession(chatId);
-        toast({ title: "Conversation Deleted" });
+        toast({ title: "Conversation Moved to Trash" });
         // If the user deleted the chat they are currently on, redirect them
         if (pathname.includes(chatId)) {
             router.push('/');
         }
     } catch (error) {
-        toast({ variant: 'destructive', title: "Error", description: "Could not delete conversation." });
+        toast({ variant: 'destructive', title: "Error", description: "Could not move conversation to trash." });
     }
   };
   
