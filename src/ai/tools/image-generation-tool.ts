@@ -8,7 +8,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { GenerateImageInputSchema } from '@/types/ai';
 import { Part } from 'genkit';
 
 export const generateImage = ai.defineTool(
@@ -19,7 +18,7 @@ export const generateImage = ai.defineTool(
       prompt: z.string().describe('A detailed text description of the image to generate.'),
       imageContext: z.array(z.string()).optional().describe('An optional array of image data URIs to use for context.'),
     }),
-    outputSchema: z.string().describe("A markdown string for the generated image, e.g., '![Generated Image](data:image/png;base64,...)'"),
+    outputSchema: z.string().describe("A data URI string for the generated image, e.g., 'data:image/png;base64,...'"),
   },
   async (input) => {
     
@@ -43,7 +42,7 @@ export const generateImage = ai.defineTool(
       throw new Error('Image generation failed to return an image.');
     }
 
-    // Return a markdown-formatted string to embed the image directly.
-    return `![Generated image for prompt: ${input.prompt}](${imageUrl})`;
+    // Return just the data URI. The calling flow will handle the user message.
+    return imageUrl;
   }
 );

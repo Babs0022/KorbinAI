@@ -51,7 +51,7 @@ async function getUserSystemPrompt(userId?: string): Promise<string> {
 
 
 // Export the main async function that calls the flow
-export async function conversationalChat(input: ConversationalChatInput): Promise<string> {
+export async function conversationalChat(input: ConversationalChatInput): Promise<Message> {
   return conversationalChatFlow(input);
 }
 
@@ -60,12 +60,12 @@ const conversationalChatFlow = ai.defineFlow(
   {
     name: 'conversationalChatFlow',
     inputSchema: ConversationalChatInputSchema,
-    outputSchema: z.string(),
+    outputSchema: MessageSchema,
   },
   async ({ history, userId }) => {
     
     if (!history || history.length === 0) {
-      return "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!";
+      return { role: "model", content: "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!" };
     }
 
     const systemPrompt = await getUserSystemPrompt(userId);
@@ -119,7 +119,7 @@ const conversationalChatFlow = ai.defineFlow(
 
     // 4. If, after all filtering, there are no messages left, return a helpful message.
     if (messages.length === 0) {
-        return "It seems there are no valid messages in our conversation. Could you please start over?";
+        return { role: "model", content: "It seems there are no valid messages in our conversation. Could you please start over?" };
     }
 
     const modelToUse = 'googleai/gemini-2.5-flash';
@@ -145,14 +145,23 @@ const conversationalChatFlow = ai.defineFlow(
                 ...(imageContext.length > 0 && { imageContext }),
             }
         };
-        const toolResult = await generateImage(toolRequest.input);
-        const finalResponse = `I've generated an image for you based on your description:\n\n${toolResult}`;
+        const imageUrl = await generateImage(toolRequest.input);
+        
+        const finalResponse: Message = {
+            role: 'model',
+            content: "I've generated an image for you based on your description. Here it is:",
+            mediaUrls: [imageUrl],
+        };
+
         return finalResponse;
     }
 
 
     const response = await ai.generate(finalPrompt);
 
-    return response.text;
+    return {
+        role: 'model',
+        content: response.text,
+    }
   }
 );

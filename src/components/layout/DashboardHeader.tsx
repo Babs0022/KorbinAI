@@ -184,7 +184,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 <DropdownMenuItem asChild><Link href="/dashboard/personalize"><Sparkles className="mr-2 h-4 w-4" />Personalize</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/dashboard/trash"><Trash2 className="mr-2 h-4 w-4" />Trash</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing</Link></DropdownMenuItem>
+                <DropdownMenuItem disabled><CreditCard className="mr-2 h-4 w-4" />Pricing</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild><a href="https://brieflyai.xyz/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
                 <DropdownMenuItem asChild><a href="https://brieflyai.xyz/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>

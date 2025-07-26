@@ -34,6 +34,8 @@ interface ChatInputFormProps {
   onSubmit: (values: FormValues, media?: string[]) => void;
   isLoading: boolean;
   onInterrupt: () => void;
+  showSuggestions: boolean;
+  onDismissSuggestions: () => void;
   onSuggestionClick: (suggestion: string) => void;
   hasMedia: boolean;
 }
@@ -66,7 +68,7 @@ const mediaSuggestionPrompts = [
 
 
 // Memoize the form component to prevent re-renders on parent state changes.
-const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt, onSuggestionClick, hasMedia }, ref) => {
+const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt, showSuggestions, onDismissSuggestions, onSuggestionClick, hasMedia }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [mediaPreviews, setMediaPreviews] = useState<{type: 'image' | 'video' | 'other', url: string, name: string}[]>([]);
@@ -149,8 +151,11 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     return (
         <div className="flex-shrink-0 bg-gradient-to-t from-background via-background/80 to-transparent pt-4 pb-4">
             <div className="mx-auto w-full max-w-4xl px-4">
-                 {hasMedia && (
-                    <div className="mb-4">
+                 {hasMedia && showSuggestions && (
+                    <div className="relative mb-4 p-4 rounded-lg border bg-secondary">
+                        <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={onDismissSuggestions}>
+                            <X className="h-4 w-4" />
+                        </Button>
                         <div className="flex items-center gap-2 mb-2">
                              <Sparkles className="h-4 w-4 text-primary" />
                              <h4 className="text-sm font-semibold text-muted-foreground">What do you want to do with this file?</h4>
@@ -159,7 +164,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                             {mediaSuggestionPrompts.map((prompt) => (
                                 <Button
                                     key={prompt}
-                                    variant="secondary"
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => onSuggestionClick(prompt)}
                                 >
@@ -268,6 +273,7 @@ export default function ChatClient() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(!!chatId); // Only show page loading for existing chats
+  const [showMediaSuggestions, setShowMediaSuggestions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   
@@ -333,7 +339,7 @@ export default function ChatClient() {
     setIsLoading(true);
 
     try {
-      const response = await conversationalChat({
+      const aiMessage = await conversationalChat({
         history: historyForAI,
         userId: user.uid,
       });
@@ -342,14 +348,6 @@ export default function ChatClient() {
         throw new Error('AbortError');
       }
       
-      let aiMessage: Message;
-      if (typeof response === 'string' && response.trim().length > 0) {
-          aiMessage = { role: "model", content: response };
-      } else {
-          console.error("Invalid response from AI:", response);
-          aiMessage = { role: "model", content: "Sorry, I received an invalid response. Please try again." };
-      }
-
       const finalHistory = [...historyForAI, aiMessage];
       setMessages(finalHistory);
 
@@ -383,12 +381,18 @@ export default function ChatClient() {
   const handleSendMessage = useCallback(async (values: FormValues, media?: string[]) => {
     if (!user) return;
 
+    setShowMediaSuggestions(true); // Reset suggestions on new message
     const userMessage: Message = { role: "user", content: values.message, mediaUrls: media };
+    
+    // Optimistically update the UI with user message and AI placeholder
+    const aiPlaceholder: Message = { role: "model", content: "" };
+    const historyForAI = [...messages, userMessage];
+    setMessages([...historyForAI, aiPlaceholder]);
+
 
     // If there is no current chat session, create one first.
     if (!chatId) {
       try {
-        setIsLoading(true); // Show loading state on the main page
         const newSession = await createChatSession({
           userId: user.uid,
           firstUserMessage: userMessage,
@@ -397,18 +401,15 @@ export default function ChatClient() {
         // Immediately navigate to the new chat page.
         // The rest of the AI interaction will happen on the new page.
         router.push(`/chat/${newSession.id}`);
-        // No need to call getAiResponse here; the useEffect on the new page will handle loading.
         // We can, however, call it without awaiting to kickstart the process.
-        getAiResponse(newSession.id, [userMessage]);
+        getAiResponse(newSession.id, historyForAI);
 
       } catch (error) {
         console.error("Failed to create new chat session:", error);
-        setIsLoading(false); // Make sure to turn off loading on error
+        setMessages(messages); // Revert optimistic update on error
       }
     } else {
       // If we are already in a chat, just append the message and get the response.
-      const historyForAI = [...messages, userMessage];
-      setMessages(historyForAI); // Optimistically update the UI
       getAiResponse(chatId, historyForAI);
     }
   }, [user, chatId, messages, router, getAiResponse]);
@@ -490,8 +491,13 @@ export default function ChatClient() {
                           ))}
                       </div>
                   )}
-                  {message.content && <MarkdownRenderer>{message.content}</MarkdownRenderer>}
-                  {message.role === 'model' && (
+                  {isLoading && message.role === 'model' && !message.content && !message.mediaUrls ? (
+                      <LogoSpinner />
+                  ) : message.content ? (
+                      <MarkdownRenderer>{message.content}</MarkdownRenderer>
+                  ) : null}
+
+                  {message.role === 'model' && (message.content || message.mediaUrls) && (
                       <ChatMessageActions
                         message={message}
                         onRegenerate={() => handleRegenerate(index)}
@@ -500,11 +506,6 @@ export default function ChatClient() {
               </div>
               </div>
           ))}
-              {isLoading && (
-              <div className="flex items-start gap-4 justify-start">
-              <LogoSpinner />
-              </div>
-          )}
           <div ref={messagesEndRef} />
       </div>
     );
@@ -513,13 +514,15 @@ export default function ChatClient() {
 
   return (
     <div className="flex flex-col h-screen max-h-screen">
-      <div className="flex-grow overflow-y-auto pt-6 pb-4">
+      <div className="flex-grow overflow-y-auto pt-6 pb-20">
         {renderContent()}
       </div>
        <ChatInputForm
         onSubmit={handleSendMessage}
         isLoading={isLoading}
         onInterrupt={handleInterrupt}
+        showSuggestions={showMediaSuggestions}
+        onDismissSuggestions={() => setShowMediaSuggestions(false)}
         onSuggestionClick={handlePromptSuggestionClick}
         hasMedia={messages.some(m => m.mediaUrls && m.mediaUrls.length > 0)}
       />
