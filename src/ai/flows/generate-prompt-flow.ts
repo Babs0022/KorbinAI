@@ -22,7 +22,7 @@ export async function generatePrompt(input: GeneratePromptInput): Promise<Genera
 // Define the Genkit prompt template
 const prompt = ai.definePrompt({
   name: 'generatePromptPrompt',
-  model: 'googleai/gemini-2.5-flash',
+  model: 'googleai/gemini-1.5-pro-latest',
   input: {schema: GeneratePromptInputSchema},
   output: {schema: GeneratePromptOutputSchema},
   prompt: `You are a world-class expert in prompt engineering. Your task is to take a user's simple description of a task and transform it into a highly effective, detailed, and optimized prompt for a large language model.
