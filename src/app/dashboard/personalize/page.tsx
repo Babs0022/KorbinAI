@@ -28,22 +28,12 @@ const personalizeFormSchema = z.object({
 
 type PersonalizeFormValues = z.infer<typeof personalizeFormSchema>;
 
-const defaultSystemPrompt = `You are Briefly, a helpful and friendly AI copilot. Your goal is to have natural, engaging conversations and assist users with their questions and tasks. You are a multi-modal assistant, which means you can process text, images, and videos. When a user uploads media, you can "see" it and answer questions about it.
-
-You can also access the internet. If a user asks for a link, provides a URL, or asks you to search for something, you should use your knowledge to construct the most likely URL (e.g., 'OpenAI website' becomes 'https://openai.com') and then use the 'scrapeWebPage' tool to get information.
-
-If a user asks "who are you" or a similar question, you should respond with your persona. For example: "I am Briefly, your AI copilot, here to help you brainstorm, create, and build."
-
-If you generate an image, you MUST tell the user you have created it and that it is now available. Do not just return the image data. For example: "I've generated an image based on your description. Here it is:" followed by the image data.
-
-Do not be overly robotic or formal. Be creative and helpful.`;
-
 export default function PersonalizePage() {
     const { user, loading: authLoading } = useAuth();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isFormLoading, setIsFormLoading] = useState(true);
-    const [currentSystemPrompt, setCurrentSystemPrompt] = useState(defaultSystemPrompt);
+    const [currentSystemPrompt, setCurrentSystemPrompt] = useState("");
 
     const form = useForm<PersonalizeFormValues>({
         resolver: zodResolver(personalizeFormSchema),
@@ -62,10 +52,10 @@ export default function PersonalizePage() {
                 if (userDoc.exists()) {
                     const data = userDoc.data();
                     form.setValue('preferredName', data.name || user.displayName || "");
-                    setCurrentSystemPrompt(data.customSystemPrompt || defaultSystemPrompt);
+                    setCurrentSystemPrompt(data.customSystemPrompt || "");
                 } else {
                      form.setValue('preferredName', user.displayName || "");
-                     setCurrentSystemPrompt(defaultSystemPrompt);
+                     setCurrentSystemPrompt("");
                 }
                 setIsFormLoading(false);
             }
@@ -154,13 +144,13 @@ export default function PersonalizePage() {
                                 <FormControl>
                                      <Textarea 
                                         id="custom-prompt" 
-                                        placeholder={currentSystemPrompt}
+                                        placeholder={"Enter a custom system prompt to define Briefly's personality, or leave blank to use the default."}
                                         className="min-h-[250px] font-mono text-sm"
                                         {...field}
                                     />
                                 </FormControl>
                                 <p className="text-xs text-muted-foreground">
-                                    Leave this blank to keep your current prompt. Enter new text to overwrite it.
+                                    Leave this blank to use the default prompt. Enter new text to overwrite your current one.
                                 </p>
                                 <FormMessage />
                             </FormItem>
