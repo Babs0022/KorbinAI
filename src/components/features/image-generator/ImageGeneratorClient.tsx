@@ -18,7 +18,6 @@ import { generateImage } from "@/ai/flows/generate-image-flow";
 import type { GenerateImageInput } from "@/types/ai";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
-import Logo from "@/components/shared/Logo";
 import AnimatedLoadingText from "@/components/shared/AnimatedLoadingText";
 
 const styleOptions = [
@@ -28,11 +27,6 @@ const styleOptions = [
   { value: "minimalist line art", label: "Line Art" },
 ];
 
-const ratioOptions = [
-    { value: "1:1", label: "Square (1:1)" },
-    { value: "2:3", label: "Portrait (2:3)" },
-    { value: "16:9", label: "Landscape (16:9)" },
-];
 
 export default function ImageGeneratorClient() {
   const searchParams = useSearchParams();
@@ -42,9 +36,7 @@ export default function ImageGeneratorClient() {
   // Form State
   const [prompt, setPrompt] = useState("");
   const [style, setStyle] = useState(styleOptions[0].value);
-  const [aspectRatio, setAspectRatio] = useState(ratioOptions[0].value);
   const [images, setImages] = useState<string[]>([]);
-  const [count, setCount] = useState(1);
   
   // Generation State
   const [isLoading, setIsLoading] = useState(false);
@@ -100,15 +92,10 @@ export default function ImageGeneratorClient() {
       return;
     }
 
-    // Only add style and aspect ratio if we're generating from scratch
-    const finalPrompt = images.length > 0 
-      ? prompt 
-      : `${prompt}, ${style}, aspect ratio ${aspectRatio}`;
-
     const input: GenerateImageInput = {
-      prompt: finalPrompt,
+      prompt: prompt,
+      style: style,
       imageDataUris: images.length > 0 ? images : undefined,
-      count: count,
     };
 
     try {
@@ -219,30 +206,6 @@ export default function ImageGeneratorClient() {
                                 <Label htmlFor={`style-${value}`} className="flex h-full min-h-[50px] flex-col items-center justify-center rounded-md border-2 border-accent bg-secondary p-3 text-center text-sm hover:cursor-pointer hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 [&:has([data-state=checked])]:border-primary">
                                     {label}
                                 </Label>
-                                </div>
-                            ))}
-                        </RadioGroup>
-                    </div>
-
-                    <div className="space-y-3">
-                        <h3 className="text-lg font-medium">4. Choose an aspect ratio <span className="text-sm font-normal text-muted-foreground">(for new images)</span></h3>
-                        <RadioGroup value={aspectRatio} onValueChange={setAspectRatio}>
-                            {ratioOptions.map(({ value, label }) => (
-                                <div key={value} className="flex items-center space-x-2">
-                                    <RadioGroupItem value={value} id={`ratio-${value}`} />
-                                    <Label htmlFor={`ratio-${value}`} className="text-base">{label}</Label>
-                                </div>
-                            ))}
-                        </RadioGroup>
-                    </div>
-
-                    <div className="space-y-3">
-                        <h3 className="text-lg font-medium">5. Number of images</h3>
-                        <RadioGroup value={String(count)} onValueChange={(val) => setCount(Number(val))}>
-                            {[1, 2, 3, 4].map(num => (
-                                <div key={num} className="flex items-center space-x-2">
-                                    <RadioGroupItem value={String(num)} id={`count-${num}`} />
-                                    <Label htmlFor={`count-${num}`} className="text-base">{num}</Label>
                                 </div>
                             ))}
                         </RadioGroup>

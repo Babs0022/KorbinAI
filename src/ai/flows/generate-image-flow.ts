@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview A flow for generating images using the Imagen 2 model.
+ * @fileOverview A flow for generating images using Gemini.
  *
  * - generateImage - A function that handles image generation with various options.
  */
@@ -23,39 +23,44 @@ const generateImageFlow = ai.defineFlow(
   },
   async (input: z.infer<typeof GenerateImageInputSchema>) => {
     
-    const { prompt, imageDataUris, count = 1, style, aspectRatio, negativePrompt } = input;
+    const { prompt, imageDataUris, style } = input;
 
-    // Base prompt for the model
-    let finalPrompt = prompt;
-    if (style) {
-      finalPrompt += `, in the style of ${style}`;
+    let finalPrompt;
+    const promptParts = [];
+
+    // If context images are provided, add them to the prompt
+    if (imageDataUris && imageDataUris.length > 0) {
+        imageDataUris.forEach(url => {
+            promptParts.push({ media: { url } });
+        });
     }
-    if (aspectRatio) {
-      finalPrompt += `, aspect ratio ${aspectRatio}`;
+
+    // Add the text part of the prompt
+    let textPrompt = prompt;
+    if (style && (!imageDataUris || imageDataUris.length === 0)) {
+        textPrompt += `, in the style of ${style}`;
     }
+    promptParts.push({ text: textPrompt });
+    
+    finalPrompt = promptParts;
 
     try {
-      const llmResponse = await ai.generate({
-        model: 'googleai/imagen-2',
+      const { media } = await ai.generate({
+        // IMPORTANT: This is the correct model for image generation in this context.
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
         prompt: finalPrompt,
         config: {
-          numImages: count,
-          negativePrompt,
+            // This configuration is required by the model.
+            responseModalities: ['TEXT', 'IMAGE'],
         },
-        context: imageDataUris ? imageDataUris.map(url => ({ media: { url } })) : undefined,
       });
 
-      if (!llmResponse.media) {
-        throw new Error('Image generation failed to return any images.');
-      }
-      
-      const imageUrl = llmResponse.media.url;
-
-      if (!imageUrl) {
+      if (!media?.url) {
         throw new Error('Image generation failed to return an image URL.');
       }
 
-      return { imageUrls: [imageUrl] };
+      // This model only generates one image at a time.
+      return { imageUrls: [media.url] };
 
     } catch (error) {
       console.error('Image generation flow failed:', error);

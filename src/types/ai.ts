@@ -137,10 +137,7 @@ export type GenerateFullContentDraftOutput = z.infer<typeof GenerateFullContentD
 export const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('A detailed text description of the image to generate, or instructions on how to modify the context images.'),
   imageDataUris: z.array(z.string()).optional().describe("An optional array of images to use as context for the generation, as data URIs. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
-  count: z.number().int().min(1).max(4).default(1).describe("The number of images to generate."),
   style: z.string().optional().describe("The artistic style of the image (e.g., 'photorealistic', 'anime')."),
-  aspectRatio: z.string().optional().describe("The desired aspect ratio (e.g., '1:1', '16:9')."),
-  negativePrompt: z.string().optional().describe("A description of what to avoid in the image."),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 export const GenerateImageOutputSchema = z.object({
