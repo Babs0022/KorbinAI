@@ -20,9 +20,10 @@ import { Sparkles, Save, LoaderCircle } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// The customSystemPrompt is now optional and can be an empty string
 const personalizeFormSchema = z.object({
   preferredName: z.string().min(1, "Preferred name cannot be empty."),
-  customSystemPrompt: z.string().min(10, "Custom prompt must be at least 10 characters."),
+  customSystemPrompt: z.string().optional(),
 });
 
 type PersonalizeFormValues = z.infer<typeof personalizeFormSchema>;
@@ -42,6 +43,7 @@ export default function PersonalizePage() {
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isFormLoading, setIsFormLoading] = useState(true);
+    const [currentSystemPrompt, setCurrentSystemPrompt] = useState(defaultSystemPrompt);
 
     const form = useForm<PersonalizeFormValues>({
         resolver: zodResolver(personalizeFormSchema),
@@ -59,15 +61,11 @@ export default function PersonalizePage() {
                 const userDoc = await getDoc(userDocRef);
                 if (userDoc.exists()) {
                     const data = userDoc.data();
-                    form.reset({
-                        preferredName: data.name || user.displayName || "",
-                        customSystemPrompt: data.customSystemPrompt || defaultSystemPrompt,
-                    });
+                    form.setValue('preferredName', data.name || user.displayName || "");
+                    setCurrentSystemPrompt(data.customSystemPrompt || defaultSystemPrompt);
                 } else {
-                     form.reset({
-                        preferredName: user.displayName || "",
-                        customSystemPrompt: defaultSystemPrompt,
-                    });
+                     form.setValue('preferredName', user.displayName || "");
+                     setCurrentSystemPrompt(defaultSystemPrompt);
                 }
                 setIsFormLoading(false);
             }
@@ -90,7 +88,8 @@ export default function PersonalizePage() {
             const userDocRef = doc(db, "users", user.uid);
             await setDoc(userDocRef, {
                 name: values.preferredName,
-                customSystemPrompt: values.customSystemPrompt,
+                // Only update the prompt if the user entered something new. Otherwise, keep the existing one.
+                customSystemPrompt: values.customSystemPrompt ? values.customSystemPrompt : currentSystemPrompt,
             }, { merge: true });
 
             toast({
@@ -155,13 +154,13 @@ export default function PersonalizePage() {
                                 <FormControl>
                                      <Textarea 
                                         id="custom-prompt" 
-                                        placeholder="e.g., 'Always respond in a witty and slightly sarcastic tone.'" 
+                                        placeholder={currentSystemPrompt}
                                         className="min-h-[250px] font-mono text-sm"
                                         {...field}
                                     />
                                 </FormControl>
                                 <p className="text-xs text-muted-foreground">
-                                    This is an advanced feature. Briefly will adapt to this prompt when generating responses for you.
+                                    Leave this blank to keep your current prompt. Enter new text to overwrite it.
                                 </p>
                                 <FormMessage />
                             </FormItem>
