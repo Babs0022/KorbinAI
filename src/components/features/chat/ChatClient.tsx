@@ -270,7 +270,7 @@ export default function ChatClient() {
       return (
         <div className="flex-grow flex flex-col items-center justify-center p-4">
             <div className="text-center space-y-4 max-w-full">
-                <h1 className="text-3xl sm:text-4xl font-bold break-words">Hello, {user?.displayName?.split(' ')[0] || 'friend'}.</h1>
+                <h1 className="text-3xl sm:text-4xl font-bold break-words text-primary">Hello, {user?.displayName?.split(' ')[0] || 'friend'}.</h1>
                 <p className="text-lg sm:text-xl text-muted-foreground">What shall we create today?</p>
             </div>
         </div>
