@@ -18,12 +18,13 @@ export async function analyzePrompt(input: AnalyzePromptInput): Promise<AnalyzeP
   return analyzePromptFlow(input);
 }
 
-const promptTemplate = ai.definePrompt({
-  name: 'analyzePromptPrompt',
-  model: 'googleai/gemini-1.5-pro-latest',
-  input: { schema: AnalyzePromptInputSchema },
-  output: { schema: AnalyzePromptOutputSchema },
-  prompt: `You are a helpful assistant that directs users to the correct tool for their task.
+const prompt = ai.definePrompt(
+  {
+    name: 'analyzePromptPrompt',
+    model: 'googleai/gemini-1.5-flash',
+    input: { schema: AnalyzePromptInputSchema },
+    output: { schema: AnalyzePromptOutputSchema },
+    prompt: `You are a helpful assistant that directs users to the correct tool for their task.
 Based on the user's generated prompt, determine which of the following tools is the most appropriate.
 
 Here are the available tools and their purposes:
@@ -36,12 +37,13 @@ Here are the available tools and their purposes:
 Your task:
 1. Analyze the following prompt.
 2. Determine the best tool.
-3. Provide a user-friendly suggestion on how to proceed. For example, if the best tool is 'image-generator', the suggestion could be "Let's bring this to life with the Image Generator." If no tool is suitable, the suggestion should be an empty string.
+3. Provide a user-friendly suggestion on how to proceed. For example, if the best tool is 'image-generator', the suggestion could be "Let's bring this to life with the Image Generator." If no tool is suitable, the suggestion should be an "empty string".
 
 Prompt to analyze:
 {{prompt}}
 `,
-});
+  }
+);
 
 const analyzePromptFlow = ai.defineFlow(
   {
@@ -50,12 +52,9 @@ const analyzePromptFlow = ai.defineFlow(
     outputSchema: AnalyzePromptOutputSchema,
   },
   async (input): Promise<AnalyzePromptOutput> => {
-    const llmResponse = await ai.generate({
-      prompt: promptTemplate,
-      input,
-    });
-
-    const output = llmResponse.structured();
+    
+    const response = await prompt(input);
+    const output = response.output;
     
     if (!output) {
       throw new Error('Failed to get structured output from the AI model.');

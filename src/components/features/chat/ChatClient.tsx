@@ -35,12 +35,9 @@ interface ChatInputFormProps {
   isLoading: boolean;
   onInterrupt: () => void;
   onSuggestionClick: (prompt: string) => void;
-  hasMedia: boolean;
 }
 
-const mediaSuggestionPrompts = [ "Describe this in detail.", "Write a social media post about this.", "What is the main subject of this file?", "Generate a witty caption for this picture." ];
-
-const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt, onSuggestionClick, hasMedia }, ref) => {
+const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt, onSuggestionClick }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [mediaPreviews, setMediaPreviews] = useState<{type: 'image' | 'video' | 'other', url: string, name: string}[]>([]);
@@ -99,15 +96,6 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     return (
         <div className="flex-shrink-0 bg-gradient-to-t from-background via-background/80 to-transparent pt-4 pb-4">
             <div className="mx-auto w-full max-w-4xl px-4">
-                 {hasMedia && (
-                    <div className="mb-4">
-                        <div className="flex items-center gap-2 mb-2">
-                             <Sparkles className="h-4 w-4 text-primary" />
-                             <h4 className="text-sm font-semibold text-muted-foreground">What do you want to do with this file?</h4>
-                        </div>
-                        <div className="flex flex-wrap gap-2">{mediaSuggestionPrompts.map(p => <Button key={p} variant="secondary" size="sm" onClick={() => onSuggestionClick(p)}>{p}</Button>)}</div>
-                    </div>
-                 )}
                 <FormProvider {...form}>
                     <form ref={ref} onSubmit={form.handleSubmit(handleFormSubmit)} className="rounded-xl border bg-secondary">
                         {mediaPreviews.length > 0 && (
@@ -331,7 +319,7 @@ export default function ChatClient() {
       <div className="flex-grow overflow-y-auto flex flex-col pt-6 pb-24">
         {renderContent()}
       </div>
-       <ChatInputForm onSubmit={handleSendMessage} isLoading={isLoading} onInterrupt={handleInterrupt} onSuggestionClick={handlePromptSuggestionClick} hasMedia={messages.some(m => !!m.mediaUrls && m.mediaUrls.length > 0)} />
+       <ChatInputForm onSubmit={handleSendMessage} isLoading={isLoading} onInterrupt={handleInterrupt} onSuggestionClick={handlePromptSuggestionClick} />
     </div>
   );
 }
