@@ -38,13 +38,6 @@ interface ChatInputFormProps {
   hasMedia: boolean;
 }
 
-const promptSuggestions = [
-    { title: "Write a blog post", prompt: "Write a blog post about the future of renewable energy..." },
-    { title: "Summarize this article", prompt: "Can you please visit https://www.theverge.com/... and summarize it?" },
-    { title: "Brainstorm marketing ideas", prompt: "Brainstorm three creative marketing slogans for a new brand of eco-friendly sneakers." },
-    { title: "Multi-task: Create and explain", prompt: "Generate an image of a futuristic cityscape at night, then write a short story about it." }
-];
-
 const mediaSuggestionPrompts = [ "Describe this in detail.", "Write a social media post about this.", "What is the main subject of this file?", "Generate a witty caption for this picture." ];
 
 const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt, onSuggestionClick, hasMedia }, ref) => {
@@ -276,9 +269,9 @@ export default function ChatClient() {
     if (messages.length === 0) {
       return (
         <div className="flex-grow flex flex-col items-center justify-center p-4">
-            <div className="w-full max-w-4xl mx-auto space-y-12">
-                <div className="text-center space-y-4 max-w-full"><h1 className="text-3xl sm:text-4xl font-bold break-words">Hello, {user?.displayName?.split(' ')[0] || 'friend'}.</h1><p className="text-lg sm:text-xl text-muted-foreground">What shall we create today?</p></div>
-                <div className="space-y-4">{promptSuggestions.map((p, i) => <Card key={i} className="cursor-pointer hover:border-primary transition-colors" onClick={() => handlePromptSuggestionClick(p.prompt)}><CardHeader><CardTitle className="text-base">{p.title}</CardTitle></CardHeader></Card>)}</div>
+            <div className="text-center space-y-4 max-w-full">
+                <h1 className="text-3xl sm:text-4xl font-bold break-words">Hello, {user?.displayName?.split(' ')[0] || 'friend'}.</h1>
+                <p className="text-lg sm:text-xl text-muted-foreground">What shall we create today?</p>
             </div>
         </div>
       );
