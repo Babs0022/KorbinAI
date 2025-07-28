@@ -328,7 +328,7 @@ export default function ChatClient() {
 
   return (
     <div className="flex flex-col h-screen max-h-screen">
-      <div className="flex-grow overflow-y-auto pt-6 pb-24">
+      <div className="flex-grow overflow-y-auto flex flex-col pt-6 pb-24">
         {renderContent()}
       </div>
        <ChatInputForm onSubmit={handleSendMessage} isLoading={isLoading} onInterrupt={handleInterrupt} onSuggestionClick={handlePromptSuggestionClick} hasMedia={messages.some(m => !!m.mediaUrls && m.mediaUrls.length > 0)} />
