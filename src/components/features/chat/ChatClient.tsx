@@ -6,7 +6,7 @@ import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useParams } from "next/navigation";
-import { LoaderCircle, ImagePlus, X, ArrowUp, Square, Sparkles, Info } from "lucide-react";
+import { LoaderCircle, ImagePlus, X, ArrowUp, Square, Info } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { type Message } from "@/types/ai";
@@ -296,7 +296,7 @@ export default function ChatClient() {
                   {isLoading && message.role === 'model' && !message.content && !message.mediaUrls ? (
                       <LogoSpinner />
                   ) : message.content ? (
-                      <MarkdownRenderer mediaUrls={message.mediaUrls}>{message.content}</MarkdownRenderer>
+                      <MarkdownRenderer mediaUrls={message.role === 'model' ? message.mediaUrls : undefined}>{message.content}</MarkdownRenderer>
                   ) : null}
 
                   {message.role === 'model' && (message.content || message.mediaUrls) && (

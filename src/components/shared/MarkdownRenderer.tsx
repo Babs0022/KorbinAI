@@ -20,8 +20,6 @@ interface MarkdownRendererProps {
   mediaUrls?: string[];
 }
 
-const URL_REGEX = /https?:\/\/[^\s/$.?#].[^\s]*/gi;
-
 const CodeBlock = ({ className, children }: { className?: string; children: React.ReactNode }) => {
     const { toast } = useToast();
     const [copied, setCopied] = useState(false);
@@ -106,14 +104,6 @@ export default function MarkdownRenderer({ children, className, mediaUrls }: Mar
             >
                 {mainContent}
             </ReactMarkdown>
-
-            {mediaUrls && mediaUrls.length > 0 && (
-                <div className="mt-4 grid gap-4 grid-cols-1 sm:grid-cols-2">
-                    {mediaUrls.map((url, index) => (
-                        <ImageBlock key={index} src={url} alt={`generated image ${index + 1}`} />
-                    ))}
-                </div>
-            )}
         </div>
     );
 }
