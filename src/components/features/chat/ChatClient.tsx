@@ -21,7 +21,6 @@ import MarkdownRenderer from "@/components/shared/MarkdownRenderer";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import ChatMessageActions from "./ChatMessageActions";
 
 const formSchema = z.object({
@@ -34,10 +33,9 @@ interface ChatInputFormProps {
   onSubmit: (values: FormValues, media?: string[]) => void;
   isLoading: boolean;
   onInterrupt: () => void;
-  onSuggestionClick: (prompt: string) => void;
 }
 
-const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt, onSuggestionClick }, ref) => {
+const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [mediaPreviews, setMediaPreviews] = useState<{type: 'image' | 'video' | 'other', url: string, name: string}[]>([]);
@@ -201,11 +199,14 @@ export default function ChatClient() {
         }
 
     } catch (error: any) {
-        if (error.name !== 'AbortError') {
+        if (error.name !== 'AbortError' && error.message !== 'AbortError') {
             console.error("Non-streaming failed:", error);
             const finalHistory = [...historyForAI, { role: 'model', content: `Sorry, an error occurred: ${error.message}` }];
             setMessages(finalHistory);
             await updateChatSession(sessionId, finalHistory);
+        } else {
+            // Remove the placeholder message if the request was aborted
+            setMessages(historyForAI.slice(0, -1));
         }
     } finally {
         setIsLoading(false);
@@ -238,8 +239,6 @@ export default function ChatClient() {
       getAiResponse(chatId, historyForAI, userMessage);
     }
   }, [user, chatId, messages, router, getAiResponse]);
-  
-  const handlePromptSuggestionClick = (prompt: string) => handleSendMessage({ message: prompt });
   
   const handleRegenerate = (messageIndex: number) => {
     if (!chatId || messageIndex === 0) return;
@@ -319,7 +318,7 @@ export default function ChatClient() {
       <div className="flex-grow overflow-y-auto flex flex-col pt-6 pb-24">
         {renderContent()}
       </div>
-       <ChatInputForm onSubmit={handleSendMessage} isLoading={isLoading} onInterrupt={handleInterrupt} onSuggestionClick={handlePromptSuggestionClick} />
+       <ChatInputForm onSubmit={handleSendMessage} isLoading={isLoading} onInterrupt={handleInterrupt} />
     </div>
   );
 }
