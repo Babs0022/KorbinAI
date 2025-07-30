@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Settings, LogOut, FolderKanban, Bot, Sun, Moon, Monitor, CreditCard, FileText, Shield, Feather, Bolt, Image as ImageIcon, Code2, MessageSquare, Plus, MessageSquareText, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid, SquarePen, Sparkles } from "lucide-react";
+import { User, Settings, LogOut, FolderKanban, Bot, Sun, Moon, Monitor, CreditCard, FileText, Shield, ClipboardPen, Terminal, ImagePlus, Code, MessageSquare, Plus, MessageSquareText, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid, SquarePen, Sparkles } from "lucide-react";
 import { useSidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
