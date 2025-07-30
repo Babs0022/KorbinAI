@@ -118,7 +118,7 @@ const conversationalChatFlow = ai.defineFlow(
         return { role: "model", content: "It seems there are no valid messages in our conversation. Could you please start over?" };
     }
 
-    const modelToUse = 'googleai/gemini-1.5-flash';
+    const modelToUse = 'googleai/gemini-2.5-pro';
     const finalPrompt: GenerateOptions = {
       model: modelToUse,
       system: systemPrompt,

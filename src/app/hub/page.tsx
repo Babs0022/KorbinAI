@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Feather, Bolt, Image as ImageIcon, Code2, ArrowRight } from 'lucide-react';
+import { ClipboardPen, Terminal, Image as ImagePlus, Code, ArrowRight } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +12,7 @@ import LogoSpinner from '@/components/shared/LogoSpinner';
 const creationTools = [
   {
     id: 'feature-written-content',
-    icon: Feather,
+    icon: ClipboardPen,
     title: 'Briefly for Creators',
     description: 'Generate high-quality blog posts, emails, social media updates, and more from a simple description.',
     href: '/written-content',
@@ -20,7 +20,7 @@ const creationTools = [
   },
   {
     id: 'feature-prompt-generator',
-    icon: Bolt,
+    icon: Terminal,
     title: 'Briefly for Prompters',
     description: 'Need to use another AI? Craft detailed, optimized prompts for any model or task to get the best results.',
     href: '/prompt-generator',
@@ -28,7 +28,7 @@ const creationTools = [
   },
   {
     id: 'feature-image-generator',
-    icon: ImageIcon,
+    icon: ImagePlus,
     title: 'Briefly for Artists',
     description: 'Create unique, stunning images and art from a text description. You can even provide your own images for context.',
     href: '/image-generator',
@@ -36,7 +36,7 @@ const creationTools = [
   },
   {
     id: 'feature-structured-data',
-    icon: Code2,
+    icon: Code,
     title: 'Briefly for Analysts',
     description: 'Generate structured data like JSON or CSV from a plain-English description, perfect for populating components.',
     href: '/structured-data',
