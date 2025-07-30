@@ -294,7 +294,8 @@ export default function WrittenContentClient() {
                         isSaving={state.isSaving}
                         onSaveContent={handleSave} 
                         onStartNew={handleReset} 
-                        onFeedback={handleFeedback} 
+                        onFeedback={handleFeedback}
+                        projectId={state.projectId} 
                       />;
           default:
               return null;

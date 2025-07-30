@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Save, Copy, Download, FileText, RefreshCw, ThumbsUp, ThumbsDown, Check } from 'lucide-react';
+import { Save, Copy, Download, FileText, RefreshCw, ThumbsUp, ThumbsDown, Check, LoaderCircle } from 'lucide-react';
 import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,7 @@ interface ContentExporterProps {
   onSaveContent: () => void;
   onStartNew: () => void;
   onFeedback: (feedback: 'good' | 'bad') => void;
+  projectId: string | null;
 }
 
 export default function ContentExporter({
@@ -23,6 +24,7 @@ export default function ContentExporter({
   onSaveContent,
   onStartNew,
   onFeedback,
+  projectId,
 }: ContentExporterProps) {
   const { toast } = useToast();
   const [feedbackGiven, setFeedbackGiven] = useState<'good' | 'bad' | null>(null);
@@ -134,11 +136,10 @@ export default function ContentExporter({
             Start New Content
         </Button>
         <div className="relative">
-          <Button disabled={true}>
-              <Save className="mr-2 h-4 w-4" />
-              Save to My Projects
+          <Button onClick={onSaveContent} disabled={isSaving || !!projectId}>
+              {isSaving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {projectId ? 'Saved!' : 'Save to My Projects'}
           </Button>
-          <Badge variant="secondary" className="absolute -top-2 -right-3">Coming Soon</Badge>
         </div>
       </div>
     </div>
