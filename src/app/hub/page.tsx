@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Feather, Bolt, Image as ImageIcon, Code2, ArrowRight } from 'lucide-react';
+import { ClipboardPen, Bolt, Image as ImageIcon, Code2, ArrowRight } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +12,7 @@ import LogoSpinner from '@/components/shared/LogoSpinner';
 const creationTools = [
   {
     id: 'feature-written-content',
-    icon: Feather,
+    icon: ClipboardPen,
     title: 'Briefly for Creators',
     description: 'Generate high-quality blog posts, emails, social media updates, and more from a simple description.',
     href: '/written-content',
