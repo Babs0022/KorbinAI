@@ -9,16 +9,16 @@ import type { Project } from "@/types/project";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, FolderKanban, Feather, Code2, Image, Bolt, MessageSquare, ArrowRight, UserPlus } from "lucide-react";
+import { PlusCircle, FolderKanban, ClipboardPen, Terminal, ImagePlus, Code, MessageSquare, ArrowRight, UserPlus } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from "@/lib/utils";
 
 const projectTypeIcons: Record<Project['type'], React.ReactNode> = {
-    'written-content': <Feather className="h-6 w-6" />,
-    'prompt': <Bolt className="h-6 w-6" />,
-    'structured-data': <Code2 className="h-6 w-6" />,
-    'image-generator': <Image className="h-6 w-6" />,
+    'written-content': <ClipboardPen className="h-6 w-6" />,
+    'prompt': <Terminal className="h-6 w-6" />,
+    'structured-data': <Code className="h-6 w-6" />,
+    'image-generator': <ImagePlus className="h-6 w-6" />,
     'chat': <MessageSquare className="h-6 w-6" />,
 };
 
