@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { ClipboardPen, Bolt, Image as ImageIcon, Code2, ArrowRight } from 'lucide-react';
+import { ClipboardPen, Terminal, Image as ImageIcon, Code2, ArrowRight } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,7 +20,7 @@ const creationTools = [
   },
   {
     id: 'feature-prompt-generator',
-    icon: Bolt,
+    icon: Terminal,
     title: 'Briefly for Prompters',
     description: 'Need to use another AI? Craft detailed, optimized prompts for any model or task to get the best results.',
     href: '/prompt-generator',
