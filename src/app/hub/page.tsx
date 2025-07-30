@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { ClipboardPen, Terminal, Image as ImageIcon, Code2, ArrowRight } from 'lucide-react';
+import { ClipboardPen, Terminal, Image as ImagePlus, Code2, ArrowRight } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,7 +28,7 @@ const creationTools = [
   },
   {
     id: 'feature-image-generator',
-    icon: ImageIcon,
+    icon: ImagePlus,
     title: 'Briefly for Artists',
     description: 'Create unique, stunning images and art from a text description. You can even provide your own images for context.',
     href: '/image-generator',
