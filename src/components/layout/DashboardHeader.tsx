@@ -250,7 +250,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Written Content">
                     <Link href="/written-content">
-                        <Feather />
+                        <ClipboardPen />
                         <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Written Content</span>
                     </Link>
                 </SidebarMenuButton>
@@ -258,7 +258,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Prompt Generator">
                     <Link href="/prompt-generator">
-                        <Bolt />
+                        <Terminal />
                         <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Prompt Generator</span>
                     </Link>
                 </SidebarMenuButton>
@@ -266,7 +266,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Image Generator">
                     <Link href="/image-generator">
-                        <ImageIcon />
+                        <ImagePlus />
                         <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Image Generator</span>
                     </Link>
                 </SidebarMenuButton>
@@ -274,7 +274,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Structured Data">
                     <Link href="/structured-data">
-                        <Code2 />
+                        <Code />
                         <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Structured Data</span>
                     </Link>
                 </SidebarMenuButton>
