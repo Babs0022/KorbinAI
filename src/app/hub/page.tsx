@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { ClipboardPen, Terminal, Image as ImagePlus, Code2, ArrowRight } from 'lucide-react';
+import { ClipboardPen, Terminal, Image as ImagePlus, Code, ArrowRight } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,7 +36,7 @@ const creationTools = [
   },
   {
     id: 'feature-structured-data',
-    icon: Code2,
+    icon: Code,
     title: 'Briefly for Analysts',
     description: 'Generate structured data like JSON or CSV from a plain-English description, perfect for populating components.',
     href: '/structured-data',
