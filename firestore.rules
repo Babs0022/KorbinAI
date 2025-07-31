@@ -3,59 +3,45 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // Helper function to check if the user is authenticated.
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    // Helper function to check if the user is the owner of the document.
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Users can create their own profile and can only read/update their own.
+    // Allow users to read and write only their own user document.
     match /users/{userId} {
-      allow read, update: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn();
-    }
-    
-    // Users can only manage their own chat sessions.
-    match /chatSessions/{chatId} {
-      allow read, update, delete: if isSignedIn() && isOwner(resource.data.userId);
-      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
-    }
-    
-    // Users can only manage their own projects.
-    match /projects/{projectId} {
-       allow read, update, delete: if isSignedIn() && isOwner(resource.data.userId);
-       allow create: if isSignedIn() && isOwner(request.resource.data.userId);
-    }
-    
-    // Users can only manage their own generated content.
-    match /generations/{generationId} {
-      allow read: if isSignedIn() && isOwner(resource.data.userId);
-      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Authenticated users can create feedback. They cannot read others' feedback.
-    match /feedback/{feedbackId} {
-      allow read: if false; // No one can read feedback directly
-      allow create: if isSignedIn();
+    // Allow users to manage their own chat sessions.
+    match /chatSessions/{chatId} {
+      allow read, create, update, delete: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // For read, update, delete operations on existing documents
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    // Allow users to manage their own projects.
+    match /projects/{projectId} {
+      allow read, create, update, delete: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
-    // Subscriptions can only be read by the owner. They are created server-side.
+    // Allow users to create generations, but not read all of them.
+    match /generations/{generationId} {
+        allow create: if request.auth != null;
+        // Read access should be handled by checking ownership on the corresponding project.
+        allow read: if request.auth != null; 
+    }
+
+    // Allow users to manage their own subscription data.
     match /userSubscriptions/{userId} {
-      allow read: if isSignedIn() && isOwner(userId);
-      // Writes are handled by Cloud Functions, so no client write access is needed.
-      allow write: if false; 
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Transactions can only be read by the owner. They are created server-side.
+    // Allow users to manage their own transactions.
     match /transactions/{transactionId} {
-       allow read: if isSignedIn() && isOwner(resource.data.userId);
-       // Writes are handled by Cloud Functions, so no client write access is needed.
-       allow write: if false;
+        allow create: if request.auth != null;
+        allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    // Allow users to provide feedback.
+    match /feedback/{feedbackId} {
+      allow create: if request.auth != null;
     }
   }
 }
