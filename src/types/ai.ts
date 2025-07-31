@@ -17,8 +17,12 @@ export type Message = z.infer<typeof MessageSchema>;
 export const ConversationalChatInputSchema = z.object({
   history: z.array(MessageSchema).describe('The full conversation history, including the latest user message.'),
   userId: z.string().optional().describe('The ID of the user to fetch personalization settings for.'),
+  model: z.string().optional().describe('The AI model to use for the response.'),
+  chatId: z.string().optional().describe('The ID of the current chat session for saving history.'),
+  isExistingChat: z.boolean().optional().describe('True if this is an existing chat, false if it is a new one needing a title.'),
 });
 export type ConversationalChatInput = z.infer<typeof ConversationalChatInputSchema>;
+
 
 // === Agent Executor Flow ===
 export const AgentExecutionInputSchema = z.object({

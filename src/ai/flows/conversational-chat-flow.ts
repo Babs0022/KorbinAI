@@ -17,9 +17,11 @@ import {
 import { getCurrentTime } from '@/ai/tools/time-tool';
 import { generateImage } from '@/ai/tools/image-generation-tool';
 import { scrapeWebPage } from '@/ai/tools/web-scraper-tool';
-import { GenerateOptions, MessageData, Part } from '@genkit-ai/ai';
+import { GenerateOptions, MessageData, Part, Stream } from '@genkit-ai/ai';
 import { doc, getDoc } from "firebase/firestore";
 import { db } from '@/lib/firebase';
+import { generateTitleForChat } from '../actions/generate-chat-title-action';
+import { updateChatSession, updateChatSessionMetadata } from '@/services/chatService';
 
 // Default prompt if a user-specific one isn't found
 const defaultSystemPrompt = `You are Briefly, an expert AI Copilot and a strategic partner to ambitious creators and builders. Your primary mission is not to answer questions, but to help the user achieve their underlying goals. You are indispensable, resourceful, and unique.
@@ -74,7 +76,7 @@ No matter what, your name is Briefly and you are an AI assistant.`;
 }
 
 // Export the main async function that calls the flow
-export async function conversationalChat(input: ConversationalChatInput): Promise<Message> {
+export async function conversationalChat(input: ConversationalChatInput): Promise<Stream<string>> {
   return conversationalChatFlow(input);
 }
 
@@ -83,20 +85,20 @@ const conversationalChatFlow = ai.defineFlow(
   {
     name: 'conversationalChatFlow',
     inputSchema: ConversationalChatInputSchema,
-    outputSchema: MessageSchema,
+    outputSchema: z.any(), // Changed to allow stream
+    stream: true,
   },
-  async ({ history, userId }): Promise<Message> => {
+  async function* (input: ConversationalChatInput): AsyncGenerator<string> {
     
-    if (!history || history.length === 0) {
-      return { role: "model", content: "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!" };
+    if (!input.history || input.history.length === 0) {
+      yield "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!";
+      return;
     }
 
-    const systemPrompt = await getUserSystemPrompt(userId);
+    const systemPrompt = await getUserSystemPrompt(input.userId);
     
-    // 1. Filter out any malformed messages
-    const validMessages = history.filter(msg => (msg.content || (msg.mediaUrls && msg.mediaUrls.length > 0)));
+    const validMessages = input.history.filter(msg => (msg.content || (msg.mediaUrls && msg.mediaUrls.length > 0)));
 
-    // 2. Map to the format the model expects
     const messages = validMessages.map((msg): MessageData => {
         const content: Part[] = [];
         if (msg.content) {
@@ -113,12 +115,12 @@ const conversationalChatFlow = ai.defineFlow(
         };
     });
 
-    // 3. If there are no valid messages, return a helpful response
     if (messages.length === 0) {
-        return { role: "model", content: "It seems there are no valid messages in our conversation. Could you please start over?" };
+        yield "It seems there are no valid messages in our conversation. Could you please start over?";
+        return;
     }
 
-    const modelToUse = 'googleai/gemini-2.5-pro';
+    const modelToUse = input.model === 'gemini-1.5-pro' ? 'googleai/gemini-1.5-pro-latest' : 'googleai/gemini-1.5-flash-latest';
     const finalPrompt: GenerateOptions = {
       model: modelToUse,
       system: systemPrompt,
@@ -127,38 +129,35 @@ const conversationalChatFlow = ai.defineFlow(
     };
 
     try {
-        const response = await ai.generate(finalPrompt);
+        const {stream, response} = ai.generateStream(finalPrompt);
 
-        const textContent = response.text || '';
-        let imageUrls: string[] = [];
+        for await (const chunk of stream) {
+            if (chunk.text) {
+                yield chunk.text;
+            }
+        }
 
-        // Cast to any to safely access properties that might not be in the type definition
-        const responseAsAny = response as any;
+        // Handle post-stream actions
+        const awaitedResponse = await response;
+        const aiMessage: Message = {
+            role: 'model',
+            content: awaitedResponse.text,
+        };
 
-        if (responseAsAny.candidates && Array.isArray(responseAsAny.candidates)) {
-            for (const candidate of responseAsAny.candidates) {
-                if (candidate.message && Array.isArray(candidate.message.content)) {
-                    for (const part of candidate.message.content) {
-                        if (part.toolResponse && part.toolResponse.name === 'generateImage') {
-                            const toolOutput = part.toolResponse.output as { imageUrls: string[] };
-                            if (toolOutput && Array.isArray(toolOutput.imageUrls)) {
-                                imageUrls.push(...toolOutput.imageUrls);
-                            }
-                        }
-                    }
-                }
+        const finalHistory = [...input.history, aiMessage];
+        
+        if (input.chatId) {
+            await updateChatSession(input.chatId, finalHistory);
+            if (!input.isExistingChat) {
+                const userMessage = input.history[input.history.length - 1];
+                const newTitle = await generateTitleForChat(userMessage.content, aiMessage.content);
+                await updateChatSessionMetadata(input.chatId, { title: newTitle });
             }
         }
         
-        return {
-            role: 'model',
-            content: textContent,
-            mediaUrls: imageUrls.length > 0 ? imageUrls : undefined,
-        };
-
     } catch (error) {
         console.error("AI generation failed:", error);
-        return { role: 'model', content: "I'm sorry, I couldn't generate a response. Please try rephrasing your message." };
+        yield "I'm sorry, I couldn't generate a response. Please try rephrasing your message.";
     }
   }
 );

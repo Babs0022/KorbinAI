@@ -6,14 +6,13 @@ import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useParams } from "next/navigation";
-import { LoaderCircle, ImagePlus, X, ArrowUp, Square, Info } from "lucide-react";
+import { LoaderCircle, ImagePlus, X, ArrowUp, Square, Info, Bot, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { type Message } from "@/types/ai";
 import { type ChatSession } from "@/types/chat";
-import { createChatSession, getChatSession, updateChatSession, updateChatSessionMetadata } from "@/services/chatService";
+import { createChatSession, getChatSession, updateChatSession } from "@/services/chatService";
 import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
-import { generateTitleForChat } from '@/ai/actions/generate-chat-title-action';
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +21,15 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
 import ChatMessageActions from "./ChatMessageActions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const formSchema = z.object({
   message: z.string(),
@@ -29,13 +37,37 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const ModelSelector = ({ model, setModel }: { model: string, setModel: (model: string) => void }) => {
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1 text-sm rounded-lg">
+                    <Bot className="h-4 w-4" />
+                    {model === 'gemini-1.5-pro' ? 'Gemini 1.5 Pro' : 'Gemini 1.5 Flash'}
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+                <DropdownMenuLabel>Select a model</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup value={model} onValueChange={setModel}>
+                    <DropdownMenuRadioItem value="gemini-1.5-flash">Gemini 1.5 Flash</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="gemini-1.5-pro">Gemini 1.5 Pro</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+};
+
 interface ChatInputFormProps {
   onSubmit: (values: FormValues, media?: string[]) => void;
   isLoading: boolean;
   onInterrupt: () => void;
+  model: string;
+  setModel: (model: string) => void;
 }
 
-const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt }, ref) => {
+const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt, model, setModel }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [mediaPreviews, setMediaPreviews] = useState<{type: 'image' | 'video' | 'other', url: string, name: string}[]>([]);
@@ -113,6 +145,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                             <div className="flex items-center gap-2">
                                 <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}><ImagePlus className="h-5 w-5 text-muted-foreground" /><span className="sr-only">Upload media</span></Button>
                                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple accept="image/*,video/mp4,video/quicktime,application/pdf,text/plain,.csv,.json,.xml" />
+                                <ModelSelector model={model} setModel={setModel} />
                             </div>
                             <Button type={isLoading ? "button" : "submit"} size="sm" className="rounded-lg" disabled={isButtonDisabled && !isLoading} onClick={isLoading ? onInterrupt : undefined}>
                                 {isLoading ? <Square className="h-5 w-5" /> : <ArrowUp className="h-5 w-5" />}
@@ -136,6 +169,7 @@ export default function ChatClient() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(!!chatId);
+  const [model, setModel] = useState('gemini-1.5-flash');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -173,46 +207,48 @@ export default function ChatClient() {
     abortControllerRef.current?.abort();
   };
 
-  const getAiResponse = useCallback(async (sessionId: string, historyForAI: Message[], userMessage: Message) => {
+  const getAiResponse = useCallback(async (currentChatId: string, historyForAI: Message[]) => {
     if (!user) return;
 
     abortControllerRef.current = new AbortController();
     setIsLoading(true);
 
     try {
-        const aiMessage = await conversationalChat({
+        const stream = await conversationalChat({
             history: historyForAI,
             userId: user.uid,
+            model,
+            chatId: currentChatId,
+            isExistingChat: !!chatId,
         });
 
-        if (abortControllerRef.current?.signal.aborted) {
-            throw new Error('AbortError');
+        for await (const chunk of stream) {
+            if (abortControllerRef.current?.signal.aborted) {
+                // If aborted, clean up the placeholder and stop.
+                setMessages(prev => prev.slice(0, prev.length - 1));
+                break;
+            }
+            setMessages(prev => {
+                const newMessages = [...prev];
+                const lastMessage = newMessages[newMessages.length - 1];
+                if (lastMessage && lastMessage.role === 'model') {
+                    lastMessage.content += chunk;
+                }
+                return newMessages;
+            });
         }
-        
-        const finalHistory = [...historyForAI, aiMessage];
-        setMessages(finalHistory);
-        await updateChatSession(sessionId, finalHistory);
-
-        if (!chatId) {
-            const newTitle = await generateTitleForChat(userMessage.content, aiMessage.content);
-            await updateChatSessionMetadata(sessionId, { title: newTitle });
-        }
-
     } catch (error: any) {
         if (error.name !== 'AbortError' && error.message !== 'AbortError') {
-            console.error("Non-streaming failed:", error);
+            console.error("Streaming failed:", error);
             const finalHistory = [...historyForAI, { role: 'model', content: `Sorry, an error occurred: ${error.message}` }];
             setMessages(finalHistory);
-            await updateChatSession(sessionId, finalHistory);
-        } else {
-            // Remove the placeholder message if the request was aborted
-            setMessages(historyForAI.slice(0, -1));
+            await updateChatSession(currentChatId, finalHistory);
         }
     } finally {
         setIsLoading(false);
         abortControllerRef.current = null;
     }
-  }, [user, chatId]);
+  }, [user, model, chatId]);
 
   const handleSendMessage = useCallback(async (values: FormValues, media?: string[]) => {
     if (!user) return;
@@ -229,26 +265,23 @@ export default function ChatClient() {
           firstUserMessage: userMessage,
         });
         router.push(`/chat/${newSession.id}`);
-        getAiResponse(newSession.id, historyForAI, userMessage);
+        getAiResponse(newSession.id, historyForAI);
 
       } catch (error) {
         console.error("Failed to create new chat session:", error);
         setMessages(messages); 
       }
     } else {
-      getAiResponse(chatId, historyForAI, userMessage);
+      getAiResponse(chatId, historyForAI);
     }
   }, [user, chatId, messages, router, getAiResponse]);
   
   const handleRegenerate = (messageIndex: number) => {
     if (!chatId || messageIndex === 0) return;
-    const userMessage = messages[messageIndex - 1];
-    if (userMessage?.role === 'user') {
-      const historyForAI = messages.slice(0, messageIndex - 1);
-      const newMessages = [...historyForAI, userMessage, { role: 'model', content: '' }];
-      setMessages(newMessages);
-      getAiResponse(chatId, newMessages, userMessage);
-    }
+    const previousMessages = messages.slice(0, messageIndex);
+    const aiPlaceholder: Message = { role: "model", content: "" };
+    setMessages([...previousMessages, aiPlaceholder]);
+    getAiResponse(chatId, previousMessages);
   };
   
   const renderContent = () => {
@@ -292,13 +325,13 @@ export default function ChatClient() {
                           ))}
                       </div>
                   )}
-                  {isLoading && message.role === 'model' && !message.content && !message.mediaUrls ? (
+                  {isLoading && message.role === 'model' && index === messages.length - 1 && !message.content ? (
                       <LogoSpinner />
                   ) : message.content ? (
                       <MarkdownRenderer mediaUrls={message.role === 'model' ? message.mediaUrls : undefined}>{message.content}</MarkdownRenderer>
                   ) : null}
 
-                  {message.role === 'model' && (message.content || message.mediaUrls) && (
+                  {message.role === 'model' && (message.content || message.mediaUrls) && (!isLoading || index < messages.length - 1) && (
                       <ChatMessageActions
                         message={message}
                         onRegenerate={() => handleRegenerate(index)}
@@ -318,7 +351,13 @@ export default function ChatClient() {
       <div className="flex-grow overflow-y-auto flex flex-col pt-6 pb-24">
         {renderContent()}
       </div>
-       <ChatInputForm onSubmit={handleSendMessage} isLoading={isLoading} onInterrupt={handleInterrupt} />
+       <ChatInputForm 
+          onSubmit={handleSendMessage} 
+          isLoading={isLoading} 
+          onInterrupt={handleInterrupt}
+          model={model}
+          setModel={setModel}
+       />
     </div>
   );
 }
