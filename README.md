@@ -6,18 +6,65 @@ BrieflyAI is your AI co-pilot for turning ideas into products. It's a web applic
 
 BrieflyAI provides an integrated suite of AI-powered tools that assist in various stages of product development. Instead of juggling multiple, disconnected services, you can move seamlessly from brainstorming to building within a single, cohesive environment.
 
-### Key Features
+### Core Features
 
-Based on the application's AI flows, BrieflyAI includes the following creation tools:
+BrieflyAI provides a suite of powerful tools to accelerate your creative workflow. Here are some of the core features and best practices for using them:
 
-*   **Written Content Assistant**: Generates professional-quality text for blog posts, emails, social media updates, and more. You can specify the topic, tone, audience, and keywords. (`generate-written-content-flow.ts`)
-*   **Prompt Generator**: A meta-tool that helps you craft detailed, optimized, and effective prompts for any AI model or task. (`generate-prompt-flow.ts`)
-*   **Content Outlining & Drafting**: Helps you structure your content by generating outlines and then expanding sections into full drafts. (`generate-content-outline-flow.ts`, `expand-outline-section-flow.ts`)
-*   **Image Generator**: Creates unique images and art from text descriptions. (`generate-image-flow.ts`)
-*   **Structured Data Assistant**: Generates structured data like JSON, CSV, or XML from a plain-English description, perfect for populating components or creating datasets. (`generate-structured-data-flow.ts`)
-*   **Conversational Chat**: A flexible chat interface for interacting with the AI. (`conversational-chat-flow.ts`)
+*   **Written Content Assistant**
+    *   **Purpose:** To generate high-quality written content for various use cases, such as blog posts, marketing copy, or technical documentation.
+    *   **Best Practices:**
+        *   Be specific in your request. Instead of "write a blog post about cars," try "write a blog post about the benefits of electric cars for city dwellers."
+        *   Specify the desired tone (e.g., professional, casual, witty) and target audience (e.g., developers, marketers, general consumers).
+        *   Provide keywords to guide the content generation and improve SEO.
 
-All generated assets can be saved as **Projects**, allowing you to keep your work organized and accessible.
+*   **Prompt Generator**
+    *   **Purpose:** To help you create effective prompts for any AI model. This is a "meta" tool that assists you in the art of prompt engineering.
+    *   **Best Practices:**
+        *   Start with a simple idea and let the generator expand on it.
+        *   Experiment with different prompt structures and see how they affect the outcome.
+        *   Use the generated prompts as a starting point and refine them to fit your specific needs.
+
+*   **Content Outlining & Drafting**
+    *   **Purpose:** To help you structure your content and generate drafts section by section. This is particularly useful for long-form content like articles or reports.
+    *   **Best Practices:**
+        *   Start by generating an outline to ensure a logical flow.
+        *   Review and refine the outline before generating the full draft.
+        *   Generate drafts for each section individually to maintain control over the content.
+
+*   **Image Generator**
+    *   **Purpose:** To create unique images and illustrations from text descriptions.
+    *   **Best Practices:**
+        *   Be descriptive in your prompts. Include details about the subject, style, colors, and composition.
+        *   Use negative prompts to exclude unwanted elements from the image.
+        *   Iterate on your prompts to refine the generated images.
+
+*   **Structured Data Assistant**
+    *   **Purpose:** To generate structured data in formats like JSON, CSV, or XML. This is useful for creating datasets, populating databases, or generating configuration files.
+    *   **Best Practices:**
+        *   Clearly define the schema of the desired data, including field names and data types.
+        *   Provide examples of the data you want to generate to guide the AI.
+        *   Validate the generated data to ensure it meets your requirements.
+
+*   **Conversational Chat**
+    *   **Purpose:** To provide a flexible and interactive way to communicate with the AI. This is useful for brainstorming, asking questions, or getting quick answers.
+    *   **Best Practices:**
+        *   Be clear and concise in your questions.
+        *   Provide context to help the AI understand your request.
+        *   Use the chat history to build on previous conversations and maintain context.
+
+## How It Works
+
+BrieflyAI operates on a decoupled architecture that separates the frontend, AI logic, and backend services. This allows for a scalable and maintainable system.
+
+1.  **Frontend (Next.js):** The user interacts with a Next.js application that provides the user interface for all the AI tools. When a user makes a request (e.g., "generate a blog post"), the frontend calls the appropriate Genkit AI flow.
+
+2.  **AI Layer (Genkit):** The AI flows are defined in the `src/ai/flows` directory and are managed by Genkit. When a flow is triggered, Genkit interacts with the configured AI model (in this case, Google AI) to perform the requested task. The flows are designed to be modular and can be easily extended or modified.
+
+3.  **Backend Services (Firebase Functions):** For tasks that require server-side logic beyond the scope of the AI flows (e.g., payment processing), the application uses Firebase Functions. These are small, single-purpose functions that can be triggered by HTTP requests or other Firebase events.
+
+4.  **Database (PostgreSQL via Data Connect):** All data, such as user projects and generated content, is stored in a PostgreSQL database on Google Cloud SQL. Firebase Data Connect provides a secure GraphQL API layer on top of the database, allowing the frontend to query and mutate data in a structured way.
+
+This architecture ensures that the application is robust, scalable, and easy to develop for.
 
 ## Tech Stack
 
