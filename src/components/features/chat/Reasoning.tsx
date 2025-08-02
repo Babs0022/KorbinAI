@@ -36,7 +36,7 @@ export default function Reasoning({ steps, isStreaming }: ReasoningProps) {
         <ChevronDown
           className={cn(
             "h-4 w-4 transition-transform ml-auto",
-            isExpanded ? "rotate-188" : ""
+            isExpanded ? "rotate-180" : ""
           )}
         />
       </button>
