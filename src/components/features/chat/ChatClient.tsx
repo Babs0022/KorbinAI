@@ -189,7 +189,14 @@ export default function ChatClient() {
         for await (const chunk of stream) {
             if (abortControllerRef.current?.signal.aborted) {
                 // If aborted, clean up the placeholder and stop.
-                setMessages(prev => prev.slice(0, prev.length - 1));
+                setMessages(prev => {
+                    const lastMessage = prev[prev.length-1];
+                    // Remove the placeholder only if it's still empty
+                    if (lastMessage && lastMessage.role === 'model' && !lastMessage.content) {
+                        return prev.slice(0, prev.length - 1);
+                    }
+                    return prev;
+                });
                 break;
             }
             setMessages(prev => {

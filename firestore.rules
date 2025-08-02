@@ -3,53 +3,46 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default deny all reads/writes
+    // Default deny: By default, no one has access to any documents.
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Allow users to read and update their own user document
+    // Allow users to read and update their own user document.
     match /users/{userId} {
       allow read, update: if request.auth.uid == userId;
-      allow create: if request.auth.uid != null;
     }
 
-    // Allow users to manage their own chat sessions
+    // Allow users to create, read, update, and delete their own chat sessions.
     match /chatSessions/{chatId} {
-      allow read, delete, update: if request.auth.uid == resource.data.userId;
+      allow read, update, delete: if request.auth.uid == resource.data.userId;
       allow create: if request.auth.uid == request.resource.data.userId;
     }
 
-    // Allow users to manage their own projects
+    // Allow users to create, read, update, and delete their own projects.
     match /projects/{projectId} {
-       allow read, delete, update: if request.auth.uid == resource.data.userId;
-       allow create: if request.auth.uid == request.resource.data.userId;
+      allow read, update, delete: if request.auth.uid == resource.data.userId;
+      allow create: if request.auth.uid == request.resource.data.userId;
     }
     
-    // Allow users to manage their own generations
+    // Allow users to create and read their own generation data.
     match /generations/{generationId} {
-       allow read, delete, update: if request.auth.uid == resource.data.userId;
-       allow create: if request.auth.uid == request.resource.data.userId;
+      allow read: if request.auth.uid == resource.data.userId;
+      allow create: if request.auth.uid == request.resource.data.userId;
     }
-    
-    // Allow users to read their own subscription data
+
+    // Allow users to read and create their own subscriptions.
+    // Updates and deletes should be handled by secure backend functions.
     match /userSubscriptions/{userId} {
-        allow read: if request.auth.uid == userId;
-        // Writes are handled by backend Cloud Functions
-        allow write: if false;
+      allow read: if request.auth.uid == userId;
+      allow create: if request.auth.uid == userId;
     }
     
-    // Allow users to read their own transaction data
+    // Allow users to read and create their own transactions.
+    // Updates and deletes should be handled by secure backend functions.
     match /transactions/{transactionId} {
-        allow read: if request.auth.uid == resource.data.userId;
-         // Writes are handled by backend Cloud Functions
-        allow write: if false;
-    }
-    
-    // Allow users to manage their own feedback
-    match /feedback/{feedbackId} {
-        allow read, update: if request.auth.uid == resource.data.userId;
-        allow create: if request.auth.uid == request.resource.data.userId;
+       allow read: if request.auth.uid == resource.data.userId;
+       allow create: if request.auth.uid == request.resource.data.userId;
     }
   }
 }
