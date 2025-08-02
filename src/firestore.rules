@@ -1,0 +1,53 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default deny all access to prevent unauthorized reads/writes.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Allow users to manage their own user document.
+    match /users/{userId} {
+      allow read, update: if request.auth.uid == userId;
+      // Allow any authenticated user to create their own user document.
+      allow create: if request.auth.uid == userId;
+    }
+
+    // Allow users to manage their own chat sessions.
+    match /chatSessions/{chatId} {
+      // Allow creation if the new document's userId matches the user's uid.
+      allow create: if request.auth.uid == request.resource.data.userId;
+      // Allow read, update, delete on existing documents if the user is the owner.
+      allow read, update, delete: if request.auth.uid == resource.data.userId;
+    }
+    
+    // Allow users to manage their own projects and generations.
+    match /projects/{projectId} {
+      allow create: if request.auth.uid == request.resource.data.userId;
+      allow read, update, delete: if request.auth.uid == resource.data.userId;
+    }
+    match /generations/{generationId} {
+      allow create: if request.auth.uid == request.resource.data.userId;
+      allow read: if request.auth.uid == resource.data.userId;
+    }
+    
+    // Allow users to read their own subscription data.
+    // Writes are handled by trusted backend functions.
+    match /userSubscriptions/{userId} {
+      allow read: if request.auth.uid == userId;
+    }
+
+    // Allow users to read their own transaction history.
+    // Writes are handled by trusted backend functions.
+    match /transactions/{transactionId} {
+      allow read: if request.auth.uid == resource.data.userId;
+    }
+
+    // Allow any authenticated user to submit feedback.
+    match /feedback/{feedbackId} {
+      allow create: if request.auth.uid == request.resource.data.userId;
+    }
+  }
+}
