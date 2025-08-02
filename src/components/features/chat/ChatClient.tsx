@@ -21,15 +21,6 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
 import ChatMessageActions from "./ChatMessageActions";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const formSchema = z.object({
   message: z.string(),
@@ -37,37 +28,13 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const ModelSelector = ({ model, setModel }: { model: string, setModel: (model: string) => void }) => {
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-1 text-sm rounded-lg">
-                    <Bot className="h-4 w-4" />
-                    {model === 'gemini-1.5-pro' ? 'Gemini 1.5 Pro' : 'Gemini 1.5 Flash'}
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-                <DropdownMenuLabel>Select a model</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuRadioGroup value={model} onValueChange={setModel}>
-                    <DropdownMenuRadioItem value="gemini-1.5-flash">Gemini 1.5 Flash</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="gemini-1.5-pro">Gemini 1.5 Pro</DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-};
-
 interface ChatInputFormProps {
   onSubmit: (values: FormValues, media?: string[]) => void;
   isLoading: boolean;
   onInterrupt: () => void;
-  model: string;
-  setModel: (model: string) => void;
 }
 
-const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt, model, setModel }, ref) => {
+const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [mediaPreviews, setMediaPreviews] = useState<{type: 'image' | 'video' | 'other', url: string, name: string}[]>([]);
@@ -145,7 +112,6 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                             <div className="flex items-center gap-2">
                                 <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}><ImagePlus className="h-5 w-5 text-muted-foreground" /><span className="sr-only">Upload media</span></Button>
                                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple accept="image/*,video/mp4,video/quicktime,application/pdf,text/plain,.csv,.json,.xml" />
-                                <ModelSelector model={model} setModel={setModel} />
                             </div>
                             <Button type={isLoading ? "button" : "submit"} size="sm" className="rounded-lg" disabled={isButtonDisabled && !isLoading} onClick={isLoading ? onInterrupt : undefined}>
                                 {isLoading ? <Square className="h-5 w-5" /> : <ArrowUp className="h-5 w-5" />}
@@ -169,7 +135,6 @@ export default function ChatClient() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(!!chatId);
-  const [model, setModel] = useState('gemini-1.5-flash');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -217,7 +182,6 @@ export default function ChatClient() {
         const stream = await conversationalChat({
             history: historyForAI,
             userId: user.uid,
-            model,
             chatId: currentChatId,
             isExistingChat: !!chatId,
         });
@@ -248,7 +212,7 @@ export default function ChatClient() {
         setIsLoading(false);
         abortControllerRef.current = null;
     }
-  }, [user, model, chatId]);
+  }, [user, chatId]);
 
   const handleSendMessage = useCallback(async (values: FormValues, media?: string[]) => {
     if (!user) return;
@@ -355,8 +319,6 @@ export default function ChatClient() {
           onSubmit={handleSendMessage} 
           isLoading={isLoading} 
           onInterrupt={handleInterrupt}
-          model={model}
-          setModel={setModel}
        />
     </div>
   );

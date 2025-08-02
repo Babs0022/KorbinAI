@@ -120,7 +120,7 @@ const conversationalChatFlow = ai.defineFlow(
         return;
     }
 
-    const modelToUse = input.model === 'gemini-1.5-pro' ? 'googleai/gemini-1.5-pro-latest' : 'googleai/gemini-1.5-flash-latest';
+    const modelToUse = 'googleai/gemini-1.5-flash-latest';
     const finalPrompt: GenerateOptions = {
       model: modelToUse,
       system: systemPrompt,
