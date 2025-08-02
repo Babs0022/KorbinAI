@@ -137,6 +137,7 @@ export default function ChatClient() {
   const [isPageLoading, setIsPageLoading] = useState(!!chatId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isSubmittingRef = useRef(false);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -175,75 +176,62 @@ export default function ChatClient() {
   const getAiResponse = useCallback(async (currentChatId: string, historyForAI: Message[]) => {
     if (!user) return;
 
-    abortControllerRef.current = new AbortController();
     setIsLoading(true);
 
     try {
-        const stream = await conversationalChat({
+        const responseText = await conversationalChat({
             history: historyForAI,
             userId: user.uid,
             chatId: currentChatId,
             isExistingChat: !!chatId,
         });
 
-        for await (const chunk of stream) {
-            if (abortControllerRef.current?.signal.aborted) {
-                // If aborted, clean up the placeholder and stop.
-                setMessages(prev => {
-                    const lastMessage = prev[prev.length-1];
-                    // Remove the placeholder only if it's still empty
-                    if (lastMessage && lastMessage.role === 'model' && !lastMessage.content) {
-                        return prev.slice(0, prev.length - 1);
-                    }
-                    return prev;
-                });
-                break;
+        setMessages(prev => {
+            const newMessages = [...prev];
+            const lastMessage = newMessages[newMessages.length - 1];
+            if (lastMessage && lastMessage.role === 'model') {
+                lastMessage.content = responseText;
             }
-            setMessages(prev => {
-                const newMessages = [...prev];
-                const lastMessage = newMessages[newMessages.length - 1];
-                if (lastMessage && lastMessage.role === 'model') {
-                    lastMessage.content += chunk;
-                }
-                return newMessages;
-            });
-        }
+            return newMessages;
+        });
+
     } catch (error: any) {
-        if (error.name !== 'AbortError' && error.message !== 'AbortError') {
-            console.error("Streaming failed:", error);
-            const finalHistory = [...historyForAI, { role: 'model', content: `Sorry, an error occurred: ${error.message}` }];
-            setMessages(finalHistory);
-            await updateChatSession(currentChatId, finalHistory);
-        }
+        console.error("Request failed:", error);
+        const finalHistory = [...historyForAI, { role: 'model', content: `Sorry, an error occurred: ${error.message}` }];
+        setMessages(finalHistory);
+        await updateChatSession(currentChatId, finalHistory);
     } finally {
         setIsLoading(false);
-        abortControllerRef.current = null;
     }
   }, [user, chatId]);
 
   const handleSendMessage = useCallback(async (values: FormValues, media?: string[]) => {
-    if (!user) return;
-    const userMessage: Message = { role: "user", content: values.message, mediaUrls: media };
-    
-    const aiPlaceholder: Message = { role: "model", content: "" };
-    const historyForAI = [...messages, userMessage];
-    setMessages([...historyForAI, aiPlaceholder]);
+    if (!user || isSubmittingRef.current) return;
 
-    if (!chatId) {
-      try {
+    isSubmittingRef.current = true;
+    try {
+      const userMessage: Message = { role: "user", content: values.message, mediaUrls: media };
+      
+      const aiPlaceholder: Message = { role: "model", content: "" };
+      const historyForAI = [...messages, userMessage];
+      setMessages([...historyForAI, aiPlaceholder]);
+
+      if (!chatId) {
         const newSession = await createChatSession({
           userId: user.uid,
           firstUserMessage: userMessage,
         });
         router.push(`/chat/${newSession.id}`);
-        getAiResponse(newSession.id, historyForAI);
-
-      } catch (error) {
-        console.error("Failed to create new chat session:", error);
-        setMessages(messages); 
+        await getAiResponse(newSession.id, historyForAI);
+      } else {
+        await getAiResponse(chatId, historyForAI);
       }
-    } else {
-      getAiResponse(chatId, historyForAI);
+    } catch (error) {
+      console.error("Error handling message sending:", error);
+      // Optionally revert UI changes or show an error toast
+      setMessages(messages);
+    } finally {
+      isSubmittingRef.current = false;
     }
   }, [user, chatId, messages, router, getAiResponse]);
   

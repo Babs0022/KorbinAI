@@ -17,34 +17,54 @@ import {
 import { getCurrentTime } from '@/ai/tools/time-tool';
 import { generateImage } from '@/ai/tools/image-generation-tool';
 import { scrapeWebPage } from '@/ai/tools/web-scraper-tool';
-import { GenerateOptions, MessageData, Part, Stream } from '@genkit-ai/ai';
-import { doc, getDoc } from "firebase/firestore";
-import { db } from '@/lib/firebase';
+import { GenerateOptions, MessageData, Part } from '@genkit-ai/ai';
+import { adminDb } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { generateTitleForChat } from '../actions/generate-chat-title-action';
-import { updateChatSession, updateChatSessionMetadata } from '@/services/chatService';
 
 // Default prompt if a user-specific one isn't found
-const defaultSystemPrompt = `You are Briefly, an expert AI Copilot and a strategic partner to ambitious creators and builders. Your primary mission is not just to answer questions, but to help the user achieve their underlying goals. You are indispensable, resourceful, and unique.
-
-Your persona is proactive and helpful. When a user asks for something, first provide a direct, high-quality answer. Then, immediately anticipate their next logical step and offer to help.
-
-For example, if a user asks for a landing page, you provide the code and then might say, "Now that you have the landing page, the next step is often to write a welcome email for new subscribers. Would you like me to draft that for you?"
-
-If a request requires current information (e.g., news, facts, data), use your web scraping tool to find relevant information and cite your sources by providing links at the end of your response.
-
-You have access to the user's project history. Use it to maintain consistency in tone, style, and content. Your goal is to be a true, evolving partner.`;
+const defaultSystemPrompt = `You are Briefly, an expert AI Copilot and a strategic partner to ambitious creators and builders. Your primary mission is not to answer questions, but to help the user achieve their underlying goals. You are indispensable, resourceful, and unique.
+You will operate according to the following four inviolable principles:
+Principle 1: The BrieflyAI Method™ - Our Proprietary Frameworks
+You will NEVER provide a generic, vanilla AI response. For every core task, you will apply our unique, opinionated, and proprietary playbooks. These methods are our "secret sauce."
+ * For Content Creation: You will always apply "The BrieflyAI Method for Authority Content." This means every article you generate must follow the "Hook, Value, Action" structure, use the "Problem-Agitate-Solve" formula in the introduction, and end with a single, unambiguous call to action.
+ * For Application Building: You will always apply "The BrieflyAI Principles of Modern Web Design." This means every app you generate must be built on a professional, scalable, component-based architecture using a modern tech stack.
+ * For All Other Tasks: You will first deconstruct the user's goal and then apply a relevant, expert-level framework to the solution.
+Why this makes us unreplicatable: Competitors can use the same base models (like Gemini), but they do not have our proprietary methods. Our outputs will always be more structured, strategic, and valuable because we are not just generators; we are expert systems with a strong point of view.
+Principle 2: Proactive Goal Discovery - Thinking Two Steps Ahead
+You will never simply fulfill the user's literal request. Your primary job is to analyze their request to understand their deeper, unstated goal.
+ * The Workflow:
+   * First, provide a direct, high-quality answer to the user's immediate question.
+   * Then, immediately follow up by anticipating their next need and proactively offering to help.
+ * Example:
+   * User: "Can you generate a landing page for my new fitness app?"
+   * You: (Generates the landing page code). Then immediately asks: "Now that you have the landing page, the next logical step is to write the welcome email for new subscribers. Would you like me to draft that for you based on the content of the page we just created?"
+Why this makes us indispensable: We don't just complete tasks; we manage projects. We relieve the user of the mental burden of figuring out "what's next." This makes you a true copilot, not just a tool.
+Principle 3: Grounded in Reality - The Resourceful Expert
+You will not rely solely on your pre-trained knowledge. You must be the most resourceful and up-to-date assistant on the planet.
+ * The Workflow: When a user's request requires current information, facts, or data, you will:
+   * Use your integrated web search tool to find the most relevant, authoritative sources.
+   * Synthesize the information from those sources to formulate your answer.
+   * Cite your sources. At the end of your response, you will provide a "Sources" section with links to the articles you used.
+Why this makes us the go-to source: We are not a black box. Our answers are verifiable and trustworthy. This builds immense user confidence and makes our output immediately usable for professional work.
+Principle 4: Personalized & Learning - The Evolving Partnership
+You are not a stateless machine. You will remember and learn from your interactions with each user to create a deeply personalized experience.
+ * The Workflow:
+   * You will have access to the user's project history.
+   * When generating a new output, you will reference the user's previous creations to maintain consistency in tone, style, and content.
+   * You will use the feedback from the "Thumbs Up/Down" system to continuously refine the quality of your responses for that specific user.
+Why this makes us unreplicatable: Our competitors can build a generic tool. We are building a personal copilot that gets smarter and more helpful for each user the more they use it. The user's investment in teaching Briefly creates a deep, personal moat that no competitor can cross.`;
 
 async function getUserSystemPrompt(userId?: string): Promise<string> {
     if (!userId) {
         return defaultSystemPrompt;
     }
     try {
-        const userDocRef = doc(db, "users", userId);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
+        const userDocRef = adminDb.collection("users").doc(userId);
+        const userDoc = await userDocRef.get();
+        if (userDoc.exists) {
             const data = userDoc.data();
-            // Fallback to default if the custom prompt is empty or just whitespace
-            if (data.customSystemPrompt && data.customSystemPrompt.trim()) {
+            if (data && data.customSystemPrompt && data.customSystemPrompt.trim()) {
                 return `${data.customSystemPrompt}\n\nNo matter what, your name is Briefly and you are an AI assistant.`;
             }
         }
@@ -54,24 +74,17 @@ async function getUserSystemPrompt(userId?: string): Promise<string> {
     return defaultSystemPrompt;
 }
 
-// Export the main async function that calls the flow
-export async function conversationalChat(input: ConversationalChatInput): Promise<Stream<string>> {
-  return conversationalChatFlow(input);
-}
-
-// Define the Genkit flow
-const conversationalChatFlow = ai.defineFlow(
+// Define and export the Genkit flow
+export const conversationalChat = ai.defineFlow(
   {
-    name: 'conversationalChatFlow',
+    name: 'conversationalChat',
     inputSchema: ConversationalChatInputSchema,
-    outputSchema: z.any(), // Changed to allow stream
-    stream: true,
+    outputSchema: z.string(),
   },
-  async function* (input: ConversationalChatInput): AsyncGenerator<string> {
+  async (input: ConversationalChatInput): Promise<string> => {
     
     if (!input.history || input.history.length === 0) {
-      yield "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!";
-      return;
+      return "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!";
     }
 
     const systemPrompt = await getUserSystemPrompt(input.userId);
@@ -95,11 +108,10 @@ const conversationalChatFlow = ai.defineFlow(
     });
 
     if (messages.length === 0) {
-        yield "It seems there are no valid messages in our conversation. Could you please start over?";
-        return;
+        return "It seems there are no valid messages in our conversation. Could you please start over?";
     }
 
-    const modelToUse = 'googleai/gemini-1.5-flash-latest';
+    const modelToUse = 'googleai/gemini-2.5-pro';
     const finalPrompt: GenerateOptions = {
       model: modelToUse,
       system: systemPrompt,
@@ -108,44 +120,59 @@ const conversationalChatFlow = ai.defineFlow(
     };
 
     try {
-        const {stream, response} = ai.generateStream(finalPrompt);
+        const response = await ai.generate(finalPrompt);
+        const fullResponseText = response.text || '';
 
-        let accumulatedText = '';
-        for await (const chunk of stream) {
-            if (chunk.text) {
-                yield chunk.text;
-                accumulatedText += chunk.text;
-            }
-        }
+        // Fire-and-forget database updates
+        (async () => {
+            try {
+                const aiMessage: Message = {
+                    role: 'model',
+                    content: fullResponseText,
+                };
 
-        // Handle post-stream actions
-        const awaitedResponse = await response;
-        // Use accumulatedText if response text is empty, as stream provides the full text.
-        const fullResponseText = awaitedResponse.text || accumulatedText;
+                const finalHistory = [...input.history, aiMessage];
+                
+                if (input.chatId) {
+                    const chatRef = adminDb.collection('chatSessions').doc(input.chatId);
+                    
+                    const sanitizedMessages = finalHistory.map(message => {
+                        const sanitized: Message = {
+                            role: message.role,
+                            content: message.content ?? '',
+                        };
+                        if (message.mediaUrls && message.mediaUrls.length > 0) {
+                            sanitized.mediaUrls = message.mediaUrls;
+                        }
+                        return sanitized;
+                    });
 
-        const aiMessage: Message = {
-            role: 'model',
-            content: fullResponseText,
-        };
+                    const updateData: { messages: Message[], updatedAt: FieldValue, title?: string } = {
+                        messages: sanitizedMessages,
+                        updatedAt: FieldValue.serverTimestamp(),
+                    };
 
-        const finalHistory = [...input.history, aiMessage];
-        
-        if (input.chatId) {
-            await updateChatSession(input.chatId, finalHistory);
-            // Only generate title for new chats
-            if (!input.isExistingChat) {
-                const userMessage = input.history.find(m => m.role === 'user');
-                if (userMessage) {
-                    const newTitle = await generateTitleForChat(userMessage.content, aiMessage.content);
-                    await updateChatSessionMetadata(input.chatId, { title: newTitle });
+                    if (!input.isExistingChat) {
+                        const userMessage = input.history.find(m => m.role === 'user');
+                        if (userMessage) {
+                            const newTitle = await generateTitleForChat(userMessage.content, aiMessage.content);
+                            updateData.title = newTitle;
+                        }
+                    }
+                    
+                    await chatRef.update(updateData);
                 }
+            } catch (dbError) {
+                console.error("Failed to save chat session with Admin SDK:", dbError);
             }
-        }
+        })();
+
+        return fullResponseText;
         
     } catch (error) {
         console.error("AI generation failed:", error);
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        yield `I'm sorry, I couldn't generate a response due to an error: ${errorMessage}. Please try rephrasing your message.`;
+        return `I'm sorry, I couldn't generate a response due to an error: ${errorMessage}. Please try rephrasing your message.`;
     }
   }
 );
