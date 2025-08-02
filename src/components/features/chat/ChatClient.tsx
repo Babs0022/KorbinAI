@@ -12,7 +12,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { type Message } from "@/types/ai";
 import { type ChatSession } from "@/types/chat";
 import { createChatSession, getChatSession, updateChatSession } from "@/services/chatService";
-import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,10 +30,9 @@ type FormValues = z.infer<typeof formSchema>;
 interface ChatInputFormProps {
   onSubmit: (values: FormValues, media?: string[]) => void;
   isLoading: boolean;
-  onInterrupt: () => void;
 }
 
-const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onInterrupt }, ref) => {
+const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [mediaPreviews, setMediaPreviews] = useState<{type: 'image' | 'video' | 'other', url: string, name: string}[]>([]);
@@ -113,9 +111,9 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                 <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}><ImagePlus className="h-5 w-5 text-muted-foreground" /><span className="sr-only">Upload media</span></Button>
                                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple accept="image/*,video/mp4,video/quicktime,application/pdf,text/plain,.csv,.json,.xml" />
                             </div>
-                            <Button type={isLoading ? "button" : "submit"} size="sm" className="rounded-lg" disabled={isButtonDisabled && !isLoading} onClick={isLoading ? onInterrupt : undefined}>
-                                {isLoading ? <Square className="h-5 w-5" /> : <ArrowUp className="h-5 w-5" />}
-                                <span className="sr-only">{isLoading ? 'Stop' : 'Send'}</span>
+                            <Button type="submit" size="sm" className="rounded-lg" disabled={isButtonDisabled}>
+                                {isLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <ArrowUp className="h-5 w-5" />}
+                                <span className="sr-only">{isLoading ? 'Thinking...' : 'Send'}</span>
                             </Button>
                         </div>
                     </form>
@@ -136,7 +134,6 @@ export default function ChatClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(!!chatId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -168,56 +165,50 @@ export default function ChatClient() {
     loadChat();
   }, [chatId, user, router]);
 
-  const handleInterrupt = () => {
-    abortControllerRef.current?.abort();
-  };
-
   const getAiResponse = useCallback(async (currentChatId: string, historyForAI: Message[]) => {
     if (!user) return;
-
-    abortControllerRef.current = new AbortController();
+    
     setIsLoading(true);
 
     try {
-        const stream = await conversationalChat({
-            history: historyForAI,
-            userId: user.uid,
-            chatId: currentChatId,
-            isExistingChat: !!chatId,
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                history: historyForAI,
+                userId: user.uid,
+                chatId: currentChatId,
+                isExistingChat: !!chatId,
+            }),
         });
 
-        for await (const chunk of stream) {
-            if (abortControllerRef.current?.signal.aborted) {
-                // If aborted, clean up the placeholder and stop.
-                setMessages(prev => {
-                    const lastMessage = prev[prev.length-1];
-                    // Remove the placeholder only if it's still empty
-                    if (lastMessage && lastMessage.role === 'model' && !lastMessage.content) {
-                        return prev.slice(0, prev.length - 1);
-                    }
-                    return prev;
-                });
-                break;
-            }
-            setMessages(prev => {
-                const newMessages = [...prev];
-                const lastMessage = newMessages[newMessages.length - 1];
-                if (lastMessage && lastMessage.role === 'model') {
-                    lastMessage.content += chunk;
-                }
-                return newMessages;
-            });
+        if (!res.ok) {
+            throw new Error(`API error: ${res.statusText}`);
         }
+        
+        const data = await res.json();
+        const aiResponseContent = data.response;
+
+        const aiMessage: Message = {
+            role: 'model',
+            content: aiResponseContent,
+        };
+        
+        // Replace the placeholder with the actual response
+        setMessages(prev => [...prev.slice(0, prev.length - 1), aiMessage]);
+        
     } catch (error: any) {
-        if (error.name !== 'AbortError' && error.message !== 'AbortError') {
-            console.error("Streaming failed:", error);
-            const finalHistory = [...historyForAI, { role: 'model', content: `Sorry, an error occurred: ${error.message}` }];
-            setMessages(finalHistory);
-            await updateChatSession(currentChatId, finalHistory);
-        }
+        console.error("API call failed:", error);
+        const errorMessage = `Sorry, an error occurred: ${error.message}`;
+        setMessages(prev => {
+            const newMessages = [...prev.slice(0, prev.length - 1)];
+            newMessages.push({ role: 'model', content: errorMessage });
+            return newMessages;
+        });
+        const finalHistory = [...historyForAI, { role: 'model', content: errorMessage }];
+        await updateChatSession(currentChatId, finalHistory);
     } finally {
         setIsLoading(false);
-        abortControllerRef.current = null;
     }
   }, [user, chatId]);
 
@@ -325,7 +316,6 @@ export default function ChatClient() {
        <ChatInputForm 
           onSubmit={handleSendMessage} 
           isLoading={isLoading} 
-          onInterrupt={handleInterrupt}
        />
     </div>
   );

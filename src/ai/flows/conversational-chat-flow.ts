@@ -17,7 +17,7 @@ import {
 import { getCurrentTime } from '@/ai/tools/time-tool';
 import { generateImage } from '@/ai/tools/image-generation-tool';
 import { scrapeWebPage } from '@/ai/tools/web-scraper-tool';
-import { GenerateOptions, MessageData, Part, Stream } from '@genkit-ai/ai';
+import { GenerateOptions, MessageData, Part } from '@genkit-ai/ai';
 import { doc, getDoc } from "firebase/firestore";
 import { db } from '@/lib/firebase';
 import { generateTitleForChat } from '../actions/generate-chat-title-action';
@@ -55,7 +55,7 @@ async function getUserSystemPrompt(userId?: string): Promise<string> {
 }
 
 // Export the main async function that calls the flow
-export async function conversationalChat(input: ConversationalChatInput): Promise<Stream<string>> {
+export async function conversationalChat(input: ConversationalChatInput): Promise<string> {
   return conversationalChatFlow(input);
 }
 
@@ -64,14 +64,12 @@ const conversationalChatFlow = ai.defineFlow(
   {
     name: 'conversationalChatFlow',
     inputSchema: ConversationalChatInputSchema,
-    outputSchema: z.any(), // Changed to allow stream
-    stream: true,
+    outputSchema: z.string(),
   },
-  async function* (input: ConversationalChatInput): AsyncGenerator<string> {
+  async (input: ConversationalChatInput): Promise<string> => {
     
     if (!input.history || input.history.length === 0) {
-      yield "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!";
-      return;
+      return "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!";
     }
 
     const systemPrompt = await getUserSystemPrompt(input.userId);
@@ -95,8 +93,7 @@ const conversationalChatFlow = ai.defineFlow(
     });
 
     if (messages.length === 0) {
-        yield "It seems there are no valid messages in our conversation. Could you please start over?";
-        return;
+        return "It seems there are no valid messages in our conversation. Could you please start over?";
     }
 
     const modelToUse = 'googleai/gemini-1.5-flash-latest';
@@ -108,20 +105,8 @@ const conversationalChatFlow = ai.defineFlow(
     };
 
     try {
-        const {stream, response} = ai.generateStream(finalPrompt);
-
-        let accumulatedText = '';
-        for await (const chunk of stream) {
-            if (chunk.text) {
-                yield chunk.text;
-                accumulatedText += chunk.text;
-            }
-        }
-
-        // Handle post-stream actions
-        const awaitedResponse = await response;
-        // Use accumulatedText if response text is empty, as stream provides the full text.
-        const fullResponseText = awaitedResponse.text || accumulatedText;
+        const response = await ai.generate(finalPrompt);
+        const fullResponseText = response.text;
 
         const aiMessage: Message = {
             role: 'model',
@@ -142,10 +127,12 @@ const conversationalChatFlow = ai.defineFlow(
             }
         }
         
+        return fullResponseText;
+        
     } catch (error) {
         console.error("AI generation failed:", error);
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        yield `I'm sorry, I couldn't generate a response due to an error: ${errorMessage}. Please try rephrasing your message.`;
+        return `I'm sorry, I couldn't generate a response due to an error: ${errorMessage}. Please try rephrasing your message.`;
     }
   }
 );
