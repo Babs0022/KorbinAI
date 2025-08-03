@@ -82,11 +82,10 @@ export const conversationalChat = ai.defineFlow(
     outputSchema: z.string(),
     streamSchema: z.string(),
   },
-  async function* (input: ConversationalChatInput): AsyncGenerator<string> {
+  async (input: ConversationalChatInput) => {
     
     if (!input.history || input.history.length === 0) {
-      yield "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!";
-      return;
+      return "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!";
     }
 
     const systemPrompt = await getUserSystemPrompt(input.userId);
@@ -110,32 +109,20 @@ export const conversationalChat = ai.defineFlow(
     });
 
     if (messages.length === 0) {
-      yield "It seems there are no valid messages in our conversation. Could you please start over?";
-      return;
+      return "It seems there are no valid messages in our conversation. Could you please start over?";
     }
 
     const modelToUse = 'googleai/gemini-1.5-pro';
-    const finalPrompt: GenerateOptions = {
-      model: modelToUse,
-      system: systemPrompt,
-      messages: messages,
-      tools: [getCurrentTime, generateImage, scrapeWebPage],
-    };
-
-    let fullResponseText = '';
+    
     try {
-        const responseStream = ai.generate({ ...finalPrompt, stream: true });
+        const response = await ai.generate({
+            model: modelToUse,
+            system: systemPrompt,
+            messages: messages,
+            tools: [getCurrentTime, generateImage, scrapeWebPage],
+        });
 
-        for await (const chunk of responseStream.stream) {
-            const chunkText = chunk.text();
-            if (chunkText) {
-                yield chunkText;
-                fullResponseText += chunkText;
-            }
-        }
-
-        // Wait for the full response to complete to get final details
-        const finalResponse = await responseStream.response;
+        const fullResponseText = response.text();
 
         // Fire-and-forget database updates
         (async () => {
@@ -183,10 +170,11 @@ export const conversationalChat = ai.defineFlow(
             }
         })();
         
+        return fullResponseText;
     } catch (error) {
         console.error("AI generation failed:", error);
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        yield `I'm sorry, I couldn't generate a response due to an error: ${errorMessage}. Please try rephrasing your message.`;
+        throw new Error(`I'm sorry, I couldn't generate a response due to an error: ${errorMessage}. Please try rephrasing your message.`);
     }
   }
 );

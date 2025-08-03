@@ -20,7 +20,6 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
 import ChatMessageActions from "./ChatMessageActions";
-import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
 
 const formSchema = z.object({
   message: z.string(),
@@ -135,7 +134,6 @@ export default function ChatClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(!!chatId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
   const isSubmittingRef = useRef(false);
 
   const scrollToBottom = useCallback(() => {
@@ -174,21 +172,27 @@ export default function ChatClient() {
     setIsLoading(true);
 
     try {
-        const responseText = await conversationalChat({
-            history: historyForAI,
-            userId: user.uid,
-            chatId: currentChatId,
-            isExistingChat: !!chatId,
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                history: historyForAI,
+                userId: user.uid,
+                chatId: currentChatId,
+                isExistingChat: !!chatId,
+            }),
         });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'The API returned an error.');
+        }
 
-        setMessages(prev => {
-            const newMessages = [...prev];
-            const lastMessage = newMessages[newMessages.length - 1];
-            if (lastMessage && lastMessage.role === 'model') {
-                lastMessage.content = responseText;
-            }
-            return newMessages;
-        });
+        const data = await response.json();
+        const responseText = data.response;
+        
+        setMessages(prev => [...prev, { role: 'model', content: responseText }]);
+        await updateChatSession(currentChatId, [...historyForAI, { role: 'model', content: responseText }]);
 
     } catch (error: any) {
         console.error("Request failed:", error);
@@ -207,24 +211,29 @@ export default function ChatClient() {
     try {
       const userMessage: Message = { role: "user", content: values.message, mediaUrls: media };
       
-      const aiPlaceholder: Message = { role: "model", content: "" };
       const historyForAI = [...messages, userMessage];
-      setMessages([...historyForAI, aiPlaceholder]);
+      setMessages(historyForAI); // Update UI immediately with user message
+      
+      const aiPlaceholder: Message = { role: "model", content: "" };
+      setMessages(prev => [...prev, aiPlaceholder]); // Add placeholder for AI response
 
-      if (!chatId) {
+      let currentChatId = chatId;
+
+      if (!currentChatId) {
         const newSession = await createChatSession({
           userId: user.uid,
           firstUserMessage: userMessage,
         });
         router.push(`/chat/${newSession.id}`);
-        await getAiResponse(newSession.id, historyForAI);
-      } else {
-        await getAiResponse(chatId, historyForAI);
+        currentChatId = newSession.id;
       }
+      
+      await getAiResponse(currentChatId, historyForAI);
+      
     } catch (error) {
       console.error("Error handling message sending:", error);
-      // Optionally revert UI changes or show an error toast
-      setMessages(messages);
+      // Revert UI to show only the user message if AI call fails immediately
+      setMessages(messages.slice(0, -1));
     } finally {
       isSubmittingRef.current = false;
     }
@@ -232,7 +241,7 @@ export default function ChatClient() {
   
   const handleRegenerate = (messageIndex: number) => {
     if (!chatId || messageIndex === 0) return;
-    const previousMessages = messages.slice(0, messageIndex);
+    const previousMessages = messages.slice(0, messageIndex - 1); // Exclude the message to be regenerated
     const aiPlaceholder: Message = { role: "model", content: "" };
     setMessages([...previousMessages, aiPlaceholder]);
     getAiResponse(chatId, previousMessages);
