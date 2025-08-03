@@ -47,25 +47,12 @@ function sanitizeMessageForFirestore(message: Message): Message {
 
 /**
  * Creates a new chat session in Firestore using the client SDK.
- * If the AI's first response is provided, it generates a title.
- * Otherwise, it sets a temporary title.
+ * It sets a temporary title, which will be updated by the backend flow later.
  */
-export async function createChatSession({ userId, firstUserMessage, firstAiResponse }: CreateChatSessionInput): Promise<ChatSession> {
+export async function createChatSession({ userId, firstUserMessage }: CreateChatSessionInput): Promise<ChatSession> {
   const sanitizedUserMessage = sanitizeMessageForFirestore(firstUserMessage);
   const messages = [sanitizedUserMessage];
-  let title: string;
-
-  if (firstAiResponse) {
-    const sanitizedAiMessage = sanitizeMessageForFirestore(firstAiResponse);
-    messages.push(sanitizedAiMessage);
-    // Generate the real title if both messages are present
-    title = await generateTitleForChat(sanitizedUserMessage.content, sanitizedAiMessage.content);
-  } else {
-    // Create a temporary title if only the user message is present
-    const userMessageContent = firstUserMessage.content || "New Chat";
-    title = await generateTitleForChat(userMessageContent, '');
-  }
-
+  const title = "New Chat"; // Use a simple placeholder title initially
 
   const newSessionData = {
     userId,

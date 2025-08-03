@@ -112,7 +112,7 @@ export const conversationalChat = ai.defineFlow(
       return "It seems there are no valid messages in our conversation. Could you please start over?";
     }
 
-    const modelToUse = 'googleai/gemini-2.5-pro';
+    const modelToUse = 'googleai/gemini-1.5-pro';
     
     try {
         const response = await ai.generate({
@@ -126,7 +126,7 @@ export const conversationalChat = ai.defineFlow(
 
         // Fire-and-forget database updates
         (async () => {
-            if (!fullResponseText.trim()) return;
+            if (!fullResponseText.trim() || !input.chatId) return;
 
             try {
                 const aiMessage: Message = {
@@ -135,36 +135,35 @@ export const conversationalChat = ai.defineFlow(
                 };
 
                 const finalHistory = [...input.history, aiMessage];
+                const chatRef = adminDb.collection('chatSessions').doc(input.chatId);
                 
-                if (input.chatId) {
-                    const chatRef = adminDb.collection('chatSessions').doc(input.chatId);
-                    
-                    const sanitizedMessages = finalHistory.map(message => {
-                        const sanitized: Message = {
-                            role: message.role,
-                            content: message.content ?? '',
-                        };
-                        if (message.mediaUrls && message.mediaUrls.length > 0) {
-                            sanitized.mediaUrls = message.mediaUrls;
-                        }
-                        return sanitized;
-                    });
-
-                    const updateData: { messages: Message[], updatedAt: FieldValue, title?: string } = {
-                        messages: sanitizedMessages,
-                        updatedAt: FieldValue.serverTimestamp(),
+                const sanitizedMessages = finalHistory.map(message => {
+                    const sanitized: Message = {
+                        role: message.role,
+                        content: message.content ?? '',
                     };
-
-                    if (!input.isExistingChat) {
-                        const userMessage = input.history.find(m => m.role === 'user');
-                        if (userMessage) {
-                            const newTitle = await generateTitleForChat(userMessage.content, aiMessage.content);
-                            updateData.title = newTitle;
-                        }
+                    if (message.mediaUrls && message.mediaUrls.length > 0) {
+                        sanitized.mediaUrls = message.mediaUrls;
                     }
-                    
-                    await chatRef.update(updateData);
+                    return sanitized;
+                });
+
+                const updateData: { messages: Message[], updatedAt: FieldValue, title?: string } = {
+                    messages: sanitizedMessages,
+                    updatedAt: FieldValue.serverTimestamp(),
+                };
+
+                // If this is a new chat, generate and set the title.
+                if (!input.isExistingChat) {
+                    const userMessage = input.history.find(m => m.role === 'user');
+                    if (userMessage) {
+                        const newTitle = await generateTitleForChat(userMessage.content, aiMessage.content);
+                        updateData.title = newTitle;
+                    }
                 }
+                
+                await chatRef.update(updateData);
+                
             } catch (dbError) {
                 console.error("Failed to save chat session with Admin SDK:", dbError);
             }
