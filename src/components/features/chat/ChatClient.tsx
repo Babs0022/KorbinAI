@@ -6,7 +6,7 @@ import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useParams } from "next/navigation";
-import { LoaderCircle, ImagePlus, X, ArrowUp, Square, Info, Bot, ChevronDown } from "lucide-react";
+import { LoaderCircle, ImagePlus, X, Info, Bot, ChevronDown, CircleStop, MoveUp } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { type Message } from "@/types/ai";
@@ -46,6 +46,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     const isButtonDisabled = isLoading || (!messageValue?.trim() && mediaPreviews.length === 0);
 
     const handleFormSubmit = (values: FormValues) => {
+        if (isLoading) return; // Prevent submission while loading
         if (!values.message.trim() && mediaPreviews.length === 0) {
             toast({ title: "Empty message", description: "Please enter a message or upload an image.", variant: "destructive" });
             return;
@@ -107,14 +108,15 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                             <FormItem><FormControl><Textarea placeholder={"Ask Briefly anything..."} className="text-lg min-h-[90px] bg-secondary border-0 focus-visible:ring-0 resize-none placeholder:text-lg" autoComplete="off" disabled={isLoading} onKeyDown={handleKeyDown} {...field} /></FormControl></FormItem>
                         )} />
                         <div className="flex items-center justify-between p-2">
+                            <div/>
                             <div className="flex items-center gap-2">
                                 <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}><ImagePlus className="h-5 w-5 text-muted-foreground" /><span className="sr-only">Upload media</span></Button>
                                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple accept="image/*,video/mp4,video/quicktime,application/pdf,text/plain,.csv,.json,.xml" />
+                                <Button type="submit" size="sm" className="rounded-lg" disabled={!messageValue?.trim() && mediaPreviews.length === 0}>
+                                    {isLoading ? <CircleStop className="h-5 w-5 text-primary" /> : <MoveUp className="h-5 w-5" />}
+                                    <span className="sr-only">{isLoading ? 'Stop' : 'Send'}</span>
+                                </Button>
                             </div>
-                            <Button type="submit" size="sm" className="rounded-lg" disabled={isButtonDisabled}>
-                                {isLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <ArrowUp className="h-5 w-5" />}
-                                <span className="sr-only">{isLoading ? 'Thinking...' : 'Send'}</span>
-                            </Button>
                         </div>
                     </form>
                 </FormProvider>
