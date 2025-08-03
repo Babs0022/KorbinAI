@@ -80,11 +80,13 @@ export const conversationalChat = ai.defineFlow(
     name: 'conversationalChat',
     inputSchema: ConversationalChatInputSchema,
     outputSchema: z.string(),
+    streamSchema: z.string(),
   },
-  async (input: ConversationalChatInput): Promise<string> => {
+  async function* (input: ConversationalChatInput): AsyncGenerator<string> {
     
     if (!input.history || input.history.length === 0) {
-      return "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!";
+      yield "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!";
+      return;
     }
 
     const systemPrompt = await getUserSystemPrompt(input.userId);
@@ -108,10 +110,11 @@ export const conversationalChat = ai.defineFlow(
     });
 
     if (messages.length === 0) {
-        return "It seems there are no valid messages in our conversation. Could you please start over?";
+      yield "It seems there are no valid messages in our conversation. Could you please start over?";
+      return;
     }
 
-    const modelToUse = 'googleai/gemini-2.5-pro';
+    const modelToUse = 'googleai/gemini-1.5-pro';
     const finalPrompt: GenerateOptions = {
       model: modelToUse,
       system: systemPrompt,
@@ -119,12 +122,25 @@ export const conversationalChat = ai.defineFlow(
       tools: [getCurrentTime, generateImage, scrapeWebPage],
     };
 
+    let fullResponseText = '';
     try {
-        const response = await ai.generate(finalPrompt);
-        const fullResponseText = response.text || '';
+        const responseStream = ai.generate({ ...finalPrompt, stream: true });
+
+        for await (const chunk of responseStream.stream) {
+            const chunkText = chunk.text();
+            if (chunkText) {
+                yield chunkText;
+                fullResponseText += chunkText;
+            }
+        }
+
+        // Wait for the full response to complete to get final details
+        const finalResponse = await responseStream.response;
 
         // Fire-and-forget database updates
         (async () => {
+            if (!fullResponseText.trim()) return;
+
             try {
                 const aiMessage: Message = {
                     role: 'model',
@@ -166,13 +182,11 @@ export const conversationalChat = ai.defineFlow(
                 console.error("Failed to save chat session with Admin SDK:", dbError);
             }
         })();
-
-        return fullResponseText;
         
     } catch (error) {
         console.error("AI generation failed:", error);
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        return `I'm sorry, I couldn't generate a response due to an error: ${errorMessage}. Please try rephrasing your message.`;
+        yield `I'm sorry, I couldn't generate a response due to an error: ${errorMessage}. Please try rephrasing your message.`;
     }
   }
 );
