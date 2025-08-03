@@ -18,13 +18,8 @@ import { getCurrentTime } from '@/ai/tools/time-tool';
 import { generateImage } from '@/ai/tools/image-generation-tool';
 import { scrapeWebPage } from '@/ai/tools/web-scraper-tool';
 import { GenerateOptions, MessageData, Part } from '@genkit-ai/ai';
-<<<<<<< HEAD
-import { doc, getDoc } from "firebase/firestore";
-import { db } from '@/lib/firebase';
-=======
 import { adminDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
->>>>>>> c85475496d46c88cc2869cabc685e23fea0c8655
 import { generateTitleForChat } from '../actions/generate-chat-title-action';
 
 // Default prompt if a user-specific one isn't found
@@ -79,18 +74,8 @@ async function getUserSystemPrompt(userId?: string): Promise<string> {
     return defaultSystemPrompt;
 }
 
-<<<<<<< HEAD
-// Export the main async function that calls the flow
-export async function conversationalChat(input: ConversationalChatInput): Promise<string> {
-  return conversationalChatFlow(input);
-}
-
-// Define the Genkit flow
-const conversationalChatFlow = ai.defineFlow(
-=======
 // Define and export the Genkit flow
 export const conversationalChat = ai.defineFlow(
->>>>>>> c85475496d46c88cc2869cabc685e23fea0c8655
   {
     name: 'conversationalChat',
     inputSchema: ConversationalChatInputSchema,
@@ -136,9 +121,6 @@ export const conversationalChat = ai.defineFlow(
 
     try {
         const response = await ai.generate(finalPrompt);
-<<<<<<< HEAD
-        const fullResponseText = response.text;
-=======
         const fullResponseText = response.text || '';
 
         // Fire-and-forget database updates
@@ -164,7 +146,6 @@ export const conversationalChat = ai.defineFlow(
                         }
                         return sanitized;
                     });
->>>>>>> c85475496d46c88cc2869cabc685e23fea0c8655
 
                     const updateData: { messages: Message[], updatedAt: FieldValue, title?: string } = {
                         messages: sanitizedMessages,
@@ -186,8 +167,6 @@ export const conversationalChat = ai.defineFlow(
             }
         })();
 
-        return fullResponseText;
-        
         return fullResponseText;
         
     } catch (error) {

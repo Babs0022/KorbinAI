@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
 import ChatMessageActions from "./ChatMessageActions";
+import { conversationalChat } from "@/ai/flows/conversational-chat-flow";
 
 const formSchema = z.object({
   message: z.string(),
@@ -134,11 +135,8 @@ export default function ChatClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(!!chatId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-<<<<<<< HEAD
-=======
   const abortControllerRef = useRef<AbortController | null>(null);
   const isSubmittingRef = useRef(false);
->>>>>>> c85475496d46c88cc2869cabc685e23fea0c8655
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -172,47 +170,6 @@ export default function ChatClient() {
 
   const getAiResponse = useCallback(async (currentChatId: string, historyForAI: Message[]) => {
     if (!user) return;
-<<<<<<< HEAD
-    
-    setIsLoading(true);
-
-    try {
-        const res = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                history: historyForAI,
-                userId: user.uid,
-                chatId: currentChatId,
-                isExistingChat: !!chatId,
-            }),
-        });
-
-        if (!res.ok) {
-            throw new Error(`API error: ${res.statusText}`);
-        }
-        
-        const data = await res.json();
-        const aiResponseContent = data.response;
-
-        const aiMessage: Message = {
-            role: 'model',
-            content: aiResponseContent,
-        };
-        
-        // Replace the placeholder with the actual response
-        setMessages(prev => [...prev.slice(0, prev.length - 1), aiMessage]);
-        
-    } catch (error: any) {
-        console.error("API call failed:", error);
-        const errorMessage = `Sorry, an error occurred: ${error.message}`;
-        setMessages(prev => {
-            const newMessages = [...prev.slice(0, prev.length - 1)];
-            newMessages.push({ role: 'model', content: errorMessage });
-            return newMessages;
-        });
-        const finalHistory = [...historyForAI, { role: 'model', content: errorMessage }];
-=======
 
     setIsLoading(true);
 
@@ -237,7 +194,6 @@ export default function ChatClient() {
         console.error("Request failed:", error);
         const finalHistory = [...historyForAI, { role: 'model', content: `Sorry, an error occurred: ${error.message}` }];
         setMessages(finalHistory);
->>>>>>> c85475496d46c88cc2869cabc685e23fea0c8655
         await updateChatSession(currentChatId, finalHistory);
     } finally {
         setIsLoading(false);
