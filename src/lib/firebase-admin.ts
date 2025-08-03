@@ -1,15 +1,15 @@
+import * as admin from 'firebase-admin';
 
-import admin from 'firebase-admin';
+// This file initializes the Firebase Admin SDK for server-side operations.
+// It checks if the app is already initialized to prevent errors in hot-reloading environments.
 
-// Check if the app is already initialized to prevent errors
 if (!admin.apps.length) {
-  // Initialize the app
-  admin.initializeApp();
-  // Set the firestore settings right after initialization
-  admin.firestore().settings({
-    ignoreUndefinedProperties: true,
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
   });
 }
 
-// Export the initialized firestore instance
-export const db = admin.firestore();
+const adminDb = admin.firestore();
+const adminAuth = admin.auth();
+
+export { adminDb, adminAuth };

@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'BrieflyAI',
   description: 'AI-powered content creation and automation',
-  manifest: '/manifest.json',
+  
   icons: {
     icon: '/icon.png',
     shortcut: '/icon.png',
