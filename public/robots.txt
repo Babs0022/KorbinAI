@@ -1,0 +1,11 @@
+# Allow all user agents
+User-agent: *
+Allow: /
+
+# Disallow crawling of specific directories
+Disallow: /api/
+Disallow: /admin/
+Disallow: /tmp/
+
+# Sitemap location
+Sitemap: https://brieflyai.xyz/sitemap.xml

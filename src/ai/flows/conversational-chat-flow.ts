@@ -112,7 +112,7 @@ export const conversationalChat = ai.defineFlow(
       return "It seems there are no valid messages in our conversation. Could you please start over?";
     }
 
-    const modelToUse = 'googleai/gemini-1.5-pro';
+    const modelToUse = 'googleai/gemini-2.5-pro';
     
     try {
         const response = await ai.generate({

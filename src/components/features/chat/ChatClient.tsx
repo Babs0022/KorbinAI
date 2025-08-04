@@ -6,7 +6,7 @@ import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useParams } from "next/navigation";
-import { LoaderCircle, ImagePlus, X, Info, Bot, ChevronDown, CircleStop, MoveUp } from "lucide-react";
+import { LoaderCircle, ImagePlus, X, Info, Bot, ChevronDown, CircleStop, ArrowUp } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { type Message } from "@/types/ai";
@@ -113,7 +113,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                 <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}><ImagePlus className="h-5 w-5 text-muted-foreground" /><span className="sr-only">Upload media</span></Button>
                                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple accept="image/*,video/mp4,video/quicktime,application/pdf,text/plain,.csv,.json,.xml" />
                                 <Button type="submit" size="sm" className="rounded-lg" disabled={!messageValue?.trim() && mediaPreviews.length === 0}>
-                                    {isLoading ? <CircleStop className="h-5 w-5 text-primary" /> : <MoveUp className="h-5 w-5" />}
+                                    {isLoading ? <CircleStop className="h-5 w-5" /> : <ArrowUp className="h-5 w-5" />}
                                     <span className="sr-only">{isLoading ? 'Stop' : 'Send'}</span>
                                 </Button>
                             </div>
@@ -198,7 +198,8 @@ export default function ChatClient() {
 
     } catch (error: any) {
         console.error("Request failed:", error);
-        const finalHistory = [...historyForAI, { role: 'model', content: `Sorry, an error occurred: ${error.message}` }];
+        const errorMessage: Message = { role: 'model', content: `Sorry, an error occurred: ${error.message}` };
+        const finalHistory = [...historyForAI, errorMessage];
         setMessages(finalHistory);
         await updateChatSession(currentChatId, finalHistory);
     } finally {
@@ -251,66 +252,78 @@ export default function ChatClient() {
   
   const renderContent = () => {
     if (isPageLoading) return <div className="flex flex-grow flex-col items-center justify-center"><LoaderCircle className="h-8 w-8 animate-spin text-primary" /></div>;
-    if (messages.length === 0) {
-      return (
-        <div className="flex-grow flex flex-col items-center justify-center p-4">
-            <div className="text-center space-y-4 max-w-full">
-                <h1 className="text-3xl sm:text-4xl font-bold break-words text-primary">Hello, {user?.displayName?.split(' ')[0] || 'friend'}.</h1>
-                <p className="text-lg sm:text-xl text-muted-foreground">What shall we create today?</p>
+    if (messages.length > 0) {
+        return (
+            <div className="w-full max-w-4xl mx-auto space-y-8 px-4">
+                {messages.map((message, index) => (
+                    <div
+                    key={index}
+                    className={cn(
+                        "flex items-start gap-4 w-full",
+                        message.role === "user" ? "justify-end" : "justify-start"
+                    )}
+                    >
+                    <div
+                        className={cn(
+                            "max-w-xl",
+                            message.role === "user" ? "shadow-md bg-secondary text-foreground rounded-xl p-3" : ""
+                        )}
+                    >
+                        {message.mediaUrls && message.mediaUrls.length > 0 && message.role === 'user' && (
+                            <div className="grid grid-cols-2 gap-2 mb-2">
+                                {message.mediaUrls.map((url, i) => (
+                                    <div key={i} className="relative aspect-square">
+                                        {url.startsWith('data:video') ? (
+                                            <video src={url} className="rounded-lg object-cover w-full h-full" controls />
+                                        ) : (
+                                            <Image src={url} alt={`User upload ${i + 1}`} fill sizes="150px" className="rounded-lg object-cover" />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {isLoading && message.role === 'model' && index === messages.length - 1 && !message.content ? (
+                            <LogoSpinner />
+                        ) : message.content ? (
+                            <MarkdownRenderer mediaUrls={message.role === 'model' ? message.mediaUrls : undefined}>{message.content}</MarkdownRenderer>
+                        ) : null}
+
+                        {message.role === 'model' && (message.content || message.mediaUrls) && (!isLoading || index < messages.length - 1) && (
+                            <ChatMessageActions
+                                message={message}
+                                onRegenerate={() => handleRegenerate(index)}
+                                projectId={chatId}
+                            />
+                        )}
+                    </div>
+                    </div>
+                ))}
+                <div ref={messagesEndRef} />
+            </div>
+        );
+    }
+    return null; // Don't render anything if there are no messages
+  };
+  
+  // New layout for the initial "hello" screen
+  if (!chatId && messages.length === 0 && !isPageLoading) {
+    return (
+        <div className="flex flex-col h-full items-center justify-center text-center p-4">
+            <div className="w-full max-w-4xl">
+                <div className="mb-4">
+                    <h1 className="text-3xl sm:text-4xl font-bold break-words text-primary">Hello, {user?.displayName?.split(' ')[0] || 'friend'}!</h1>
+                    <p className="text-lg sm:text-xl text-muted-foreground">What shall we create today?</p>
+                </div>
+               <ChatInputForm 
+                  onSubmit={handleSendMessage} 
+                  isLoading={isLoading} 
+               />
             </div>
         </div>
-      );
-    }
-    return (
-      <div className="w-full max-w-4xl mx-auto space-y-8 px-4">
-          {messages.map((message, index) => (
-              <div
-              key={index}
-              className={cn(
-                  "flex items-start gap-4 w-full",
-                  message.role === "user" ? "justify-end" : "justify-start"
-              )}
-              >
-              <div
-                  className={cn(
-                    "max-w-xl",
-                     message.role === "user" ? "shadow-md bg-secondary text-foreground rounded-xl p-3" : ""
-                  )}
-              >
-                  {message.mediaUrls && message.mediaUrls.length > 0 && message.role === 'user' && (
-                      <div className="grid grid-cols-2 gap-2 mb-2">
-                          {message.mediaUrls.map((url, i) => (
-                            <div key={i} className="relative aspect-square">
-                                {url.startsWith('data:video') ? (
-                                    <video src={url} className="rounded-lg object-cover w-full h-full" controls />
-                                ) : (
-                                    <Image src={url} alt={`User upload ${i + 1}`} fill sizes="150px" className="rounded-lg object-cover" />
-                                )}
-                            </div>
-                          ))}
-                      </div>
-                  )}
-                  {isLoading && message.role === 'model' && index === messages.length - 1 && !message.content ? (
-                      <LogoSpinner />
-                  ) : message.content ? (
-                      <MarkdownRenderer mediaUrls={message.role === 'model' ? message.mediaUrls : undefined}>{message.content}</MarkdownRenderer>
-                  ) : null}
-
-                  {message.role === 'model' && (message.content || message.mediaUrls) && (!isLoading || index < messages.length - 1) && (
-                      <ChatMessageActions
-                        message={message}
-                        onRegenerate={() => handleRegenerate(index)}
-                        projectId={chatId}
-                      />
-                  )}
-              </div>
-              </div>
-          ))}
-          <div ref={messagesEndRef} />
-      </div>
     );
-  };
+  }
 
+  // Standard chat layout
   return (
     <div className="flex flex-col h-screen max-h-screen">
       <div className="flex-grow overflow-y-auto flex flex-col pt-6 pb-24">

@@ -4,6 +4,7 @@ import { getAuth, initializeAuth, browserLocalPersistence, type Auth } from 'fir
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
+
 // Define the configuration object directly in this file
 // This ensures that the variables are read at the time of initialization
 const firebaseConfig = {
@@ -25,5 +26,6 @@ const auth: Auth = initializeAuth(app, {
 
 const storage: FirebaseStorage = getStorage(app);
 const db: Firestore = getFirestore(app);
+
 
 export { app, auth, storage, db };

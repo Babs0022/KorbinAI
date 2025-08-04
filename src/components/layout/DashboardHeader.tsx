@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Link from "next/link";
@@ -182,7 +181,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
               </DropdownMenuLabel>
                <DropdownMenuSeparator />
                 <DropdownMenuItem asChild><Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><Link href="/dashboard/personalize"><Sparkles className="mr-2 h-4 w-4" />Personalize</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/dashboard/trash"><Trash2 className="mr-2 h-4 w-4" />Trash</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild disabled><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing</Link></DropdownMenuItem>
@@ -215,104 +213,204 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   }
 
   const SidebarNav = () => (
-    <nav className="flex flex-col gap-2 p-2">
+    <div className="flex-1 flex flex-col gap-2 p-2 overflow-y-auto">
+      <nav className="flex flex-col gap-2">
         <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                    <Link href="/">
-                        <SquarePen />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>New Chat</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                    <Link href="/hub">
-                        <LayoutGrid />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Creation Hub</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                    <Link href="/dashboard/projects">
-                        <FolderKanban />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Projects</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/">
+                <SquarePen />
+                <span
+                  className={cn(
+                    "transition-opacity",
+                    state === "collapsed" && !isMobile && "opacity-0"
+                  )}
+                >
+                  New Chat
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/hub">
+                <LayoutGrid />
+                <span
+                  className={cn(
+                    "transition-opacity",
+                    state === "collapsed" && !isMobile && "opacity-0"
+                  )}
+                >
+                  Creation Hub
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/dashboard/projects">
+                <FolderKanban />
+                <span
+                  className={cn(
+                    "transition-opacity",
+                    state === "collapsed" && !isMobile && "opacity-0"
+                  )}
+                >
+                  Projects
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
 
-        <div className="px-2 py-2 text-xs font-medium text-sidebar-foreground/70 group-data-[state=collapsed]:opacity-0 transition-opacity">
-            Briefs
+        <div
+          className={cn(
+            "px-2 py-2 text-xs font-medium text-sidebar-foreground/70 transition-opacity",
+            state === "collapsed" && !isMobile && "opacity-0"
+          )}
+        >
+          Briefs
         </div>
         <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Written Content">
-                    <Link href="/written-content">
-                        <ClipboardPen />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Written Content</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Prompt Generator">
-                    <Link href="/prompt-generator">
-                        <Terminal />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Prompt Generator</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Image Generator">
-                    <Link href="/image-generator">
-                        <ImagePlus />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Image Generator</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Structured Data">
-                    <Link href="/structured-data">
-                        <Code />
-                        <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>Structured Data</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Written Content">
+              <Link href="/written-content">
+                <ClipboardPen />
+                <span
+                  className={cn(
+                    "transition-opacity",
+                    state === "collapsed" && !isMobile && "opacity-0"
+                  )}
+                >
+                  Written Content
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Prompt Generator">
+              <Link href="/prompt-generator">
+                <Terminal />
+                <span
+                  className={cn(
+                    "transition-opacity",
+                    state === "collapsed" && !isMobile && "opacity-0"
+                  )}
+                >
+                  Prompt Generator
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Image Generator">
+              <Link href="/image-generator">
+                <ImagePlus />
+                <span
+                  className={cn(
+                    "transition-opacity",
+                    state === "collapsed" && !isMobile && "opacity-0"
+                  )}
+                >
+                  Image Generator
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Structured Data">
+              <Link href="/structured-data">
+                <Code />
+                <span
+                  className={cn(
+                    "transition-opacity",
+                    state === "collapsed" && !isMobile && "opacity-0"
+                  )}
+                >
+                  Structured Data
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
-        
-        <div className="px-2 py-2 text-xs font-medium text-sidebar-foreground/70 group-data-[state=collapsed]:opacity-0 transition-opacity">
-            Recents
-        </div>
-        <SidebarMenu>
-             {recentChats.map(chat => (
-                <SidebarMenuItem key={chat.id}>
-                    <div className="relative flex items-center w-full group">
-                        <SidebarMenuButton asChild tooltip={{children: chat.title, className: "max-w-xs truncate"}} isActive={pathname.includes(`/chat/${chat.id}`)} className="flex-1 pr-8">
-                            <Link href={`/chat/${chat.id}`} className="flex items-center gap-2 truncate w-full justify-start">
-                                {chat.isPinned && <Pin className="h-3 w-3 shrink-0 text-primary" />}
-                                <span className={cn("transition-opacity truncate", state === 'collapsed' && !isMobile && 'opacity-0')}>{chat.title}</span>
-                            </Link>
-                        </SidebarMenuButton>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-48">
-                                <DropdownMenuItem onSelect={() => handleTogglePin(chat)}><Pin className="mr-2 h-4 w-4"/>{chat.isPinned ? "Unpin" : "Pin"}</DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => openRenameDialog(chat)}><Pencil className="mr-2 h-4 w-4"/>Rename</DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => handleShare(chat.id)}><Share className="mr-2 h-4 w-4"/>Share</DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onSelect={() => handleDelete(chat.id)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </SidebarMenuItem>
-             ))}
-        </SidebarMenu>
-    </nav>
+      </nav>
+
+      <div
+        className={cn(
+          "px-2 py-2 text-xs font-medium text-sidebar-foreground/70 transition-opacity",
+          state === "collapsed" && !isMobile && "opacity-0"
+        )}
+      >
+        Recents
+      </div>
+      <SidebarMenu className="flex-1 overflow-y-auto">
+        {recentChats.map((chat) => (
+          <SidebarMenuItem key={chat.id}>
+            <div className="relative flex items-center w-full group">
+              <SidebarMenuButton
+                asChild
+                tooltip={{
+                  children: chat.title,
+                  className: "max-w-xs truncate",
+                }}
+                isActive={pathname.includes(`/chat/${chat.id}`)}
+                className="flex-1 pr-8"
+              >
+                <Link
+                  href={`/chat/${chat.id}`}
+                  className="flex items-center gap-2 truncate w-full justify-start"
+                >
+                  {chat.isPinned && (
+                    <Pin className="h-3 w-3 shrink-0 text-primary" />
+                  )}
+                  <span
+                    className={cn(
+                      "transition-opacity truncate",
+                      state === "collapsed" && !isMobile && "opacity-0"
+                    )}
+                  >
+                    {chat.title}
+                  </span>
+                </Link>
+              </SidebarMenuButton>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48">
+                  <DropdownMenuItem onClick={() => handleTogglePin(chat)}>
+                    <Pin className="mr-2 h-4 w-4" />
+                    {chat.isPinned ? "Unpin" : "Pin"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openRenameDialog(chat)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleShare(chat.id)}>
+                    <Share className="mr-2 h-4 w-4" />
+                    Share
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => handleDelete(chat.id)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
+    </div>
   );
 
   if (variant === 'sidebar') {
@@ -324,7 +422,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>BrieflyAI</span>
                  </Link>
             </div>
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 flex flex-col overflow-hidden">
                 <SidebarNav />
             </div>
             <div className="p-2 border-t">
