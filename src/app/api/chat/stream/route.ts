@@ -1,7 +1,18 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { getGenerativeModel } from "firebase/ai";
-import { ai } from '@/lib/firebase';
+import { app as firebaseApp } from '@/lib/firebase'; // Correctly import the initialized Firebase app
+import { genkit } from 'genkit'; // Import genkit itself
+import { googleAI } from '@genkit-ai/googleai'; // Import the plugin
+
+// This is the correct way to initialize the AI object for server-side use.
+// It should not be imported from the client-side firebase config.
+const ai = genkit({
+  plugins: [
+      googleAI(),
+  ],
+});
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,7 +22,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    const model = getGenerativeModel(ai, { model: "gemini-1.5-flash" });
+    const model = getGenerativeModel(ai as any, { model: "gemini-1.5-flash" });
 
     const chat = model.startChat({
       history: [
