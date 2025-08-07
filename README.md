@@ -1,14 +1,14 @@
-# BrieflyAI
+# KorbinAI
 
-BrieflyAI is your AI co-pilot for turning ideas into products. It's a web application designed to accelerate the creation process for both non-technical creatives and developers who want to build and ship applications, websites, and other digital projects with the help of AI.
+KorbinAI is your AI co-pilot for turning ideas into products. It's a web application designed to accelerate the creation process for both non-technical creatives and developers who want to build and ship applications, websites, and other digital projects with the help of AI.
 
 ## What does it do?
 
-BrieflyAI provides an integrated suite of AI-powered tools that assist in various stages of product development. Instead of juggling multiple, disconnected services, you can move seamlessly from brainstorming to building within a single, cohesive environment.
+KorbinAI provides an integrated suite of AI-powered tools that assist in various stages of product development. Instead of juggling multiple, disconnected services, you can move seamlessly from brainstorming to building within a single, cohesive environment.
 
 ### Key Features
 
-Based on the application's AI flows, BrieflyAI includes the following creation tools:
+Based on the application's AI flows, KorbinAI includes the following creation tools:
 
 *   **Written Content Assistant**: Generates professional-quality text for blog posts, emails, social media updates, and more. You can specify the topic, tone, audience, and keywords. (`generate-written-content-flow.ts`)
 *   **Prompt Generator**: A meta-tool that helps you craft detailed, optimized, and effective prompts for any AI model or task. (`generate-prompt-flow.ts`)
@@ -21,7 +21,7 @@ All generated assets can be saved as **Projects**, allowing you to keep your wor
 
 ## Tech Stack
 
-BrieflyAI is built with a modern, full-stack architecture:
+KorbinAI is built with a modern, full-stack architecture:
 
 *   **Framework:** [Next.js](https://nextjs.org/) (v15 with Turbopack)
 *   **AI Integration:** [Genkit](https://firebase.google.com/docs/genkit) with the Google AI plugin.

@@ -65,7 +65,7 @@ const CurrentPlanCard = ({ subscription }: { subscription: UserSubscription }) =
         <CardContent>
             <div className="space-y-2">
                 <p className="font-semibold text-xl">
-                    BrieflyAI Pro <Badge variant="outline" className="ml-2 align-middle capitalize">{subscription.billingCycle}</Badge>
+                    KorbinAI Pro <Badge variant="outline" className="ml-2 align-middle capitalize">{subscription.billingCycle}</Badge>
                 </p>
                 {subscription.currentPeriodEnd && (
                     <p className="text-muted-foreground">
@@ -166,7 +166,7 @@ export default function BillingPage() {
                             <div className="mx-auto w-fit rounded-full bg-primary/10 p-4 mb-4">
                                 <Sparkles className="h-10 w-10 text-primary" />
                             </div>
-                            <CardTitle className="text-3xl">BrieflyAI Pro</CardTitle>
+                            <CardTitle className="text-3xl">KorbinAI Pro</CardTitle>
                             <CardDescription className="text-lg text-muted-foreground">
                                 Unlock all features and supercharge your creativity.
                             </CardDescription>

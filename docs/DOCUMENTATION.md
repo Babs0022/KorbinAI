@@ -1,14 +1,14 @@
-# BrieflyAI: Comprehensive Technical Documentation & User Guide
+# KorbinAI: Comprehensive Technical Documentation & User Guide
 
 ---
 
 ## **Part 1: Foundational Concepts**
 
-This section provides a high-level overview of BrieflyAI's core mission, architecture, and the fundamental concepts that underpin the entire platform.
+This section provides a high-level overview of KorbinAI's core mission, architecture, and the fundamental concepts that underpin the entire platform.
 
-### **1.1. Introduction to BrieflyAI**
+### **1.1. Introduction to KorbinAI**
 
-Welcome to BrieflyAI, your intelligent partner for accelerating the creation of high-quality content and production-ready code. BrieflyAI is a comprehensive suite of AI-powered tools designed to streamline your workflow, whether you're a content creator, a marketer, a developer, or an artist.
+Welcome to KorbinAI, your intelligent partner for accelerating the creation of high-quality content and production-ready code. KorbinAI is a comprehensive suite of AI-powered tools designed to streamline your workflow, whether you're a content creator, a marketer, a developer, or an artist.
 
 Our core mission is to bridge the gap between your ideas and the final product. We provide intuitive, powerful assistants that understand your needs and help you generate everything from blog posts and social media campaigns to complex applications and structured data, all from simple, plain-English descriptions.
 
@@ -26,24 +26,24 @@ To achieve this, we employ a hybrid, layered architecture that combines the spee
 ### **1.3. Core Concepts Explained**
 
 #### **1.3.1. The Creation Hub**
-The Creation Hub is your central dashboard and the starting point for all your creative work. It is designed to be an intuitive, user-friendly interface that provides quick access to all of BrieflyAI's powerful tools.
+The Creation Hub is your central dashboard and the starting point for all your creative work. It is designed to be an intuitive, user-friendly interface that provides quick access to all of KorbinAI's powerful tools.
 
 #### **1.3.2. Projects**
 Every asset you generate, whether it's a blog post, an image, or a piece of code, can be saved as a **Project**. This allows you to keep your work organized, accessible, and ready for future use. Each project is stored with its associated metadata, including the type of content, the date of creation, and a summary of the generated asset.
 
 #### **1.3.3. Tools & Flows**
-BrieflyAI's functionality is organized into a series of **Tools** and **Flows**.
+KorbinAI's functionality is organized into a series of **Tools** and **Flows**.
 *   **Tools:** These are specialized functions that the AI can use to perform specific tasks, such as generating an image, writing a piece of code, or analyzing a prompt.
 *   **Flows:** These are more complex, multi-step processes that orchestrate multiple tools to achieve a larger goal. For example, the "Written Content Assistant" is a flow that uses several tools to generate an outline, write a draft, and format the final output.
 
 #### **1.3.4. The AI Core: Genkit**
-BrieflyAI is powered by **Genkit**, a powerful, open-source framework for building production-ready AI applications. Genkit provides the underlying infrastructure for defining and executing our AI flows, managing our models, and ensuring the reliability and scalability of our platform.
+KorbinAI is powered by **Genkit**, a powerful, open-source framework for building production-ready AI applications. Genkit provides the underlying infrastructure for defining and executing our AI flows, managing our models, and ensuring the reliability and scalability of our platform.
 
 ---
 
 ## **Part 2: In-Depth Feature Guides**
 
-This section provides a detailed breakdown of each of BrieflyAI's core features, including their purpose, capabilities, and best practices for use.
+This section provides a detailed breakdown of each of KorbinAI's core features, including their purpose, capabilities, and best practices for use.
 
 ### **2.1. Written Content Assistant**
 

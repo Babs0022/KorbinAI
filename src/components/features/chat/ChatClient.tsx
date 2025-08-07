@@ -105,7 +105,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                             </div>
                         )}
                         <FormField control={form.control} name="message" render={({ field }) => (
-                            <FormItem><FormControl><Textarea placeholder={"Ask Briefly anything..."} className="text-lg min-h-[90px] bg-secondary border-0 focus-visible:ring-0 resize-none placeholder:text-lg" autoComplete="off" disabled={isLoading} onKeyDown={handleKeyDown} {...field} /></FormControl></FormItem>
+                            <FormItem><FormControl><Textarea placeholder={"Ask Korbin anything..."} className="text-lg min-h-[90px] bg-secondary border-0 focus-visible:ring-0 resize-none placeholder:text-lg" autoComplete="off" disabled={isLoading} onKeyDown={handleKeyDown} {...field} /></FormControl></FormItem>
                         )} />
                         <div className="flex items-center justify-between p-2">
                             <div/>
@@ -120,7 +120,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                         </div>
                     </form>
                 </FormProvider>
-                <div className="flex items-center justify-center gap-2 mt-3 text-xs text-muted-foreground"><Info className="h-3.5 w-3.5" /><span>Briefly can make mistakes, do well to double check it</span></div>
+                <div className="flex items-center justify-center gap-2 mt-3 text-xs text-muted-foreground"><Info className="h-3.5 w-3.5" /><span>Korbin can make mistakes, do well to double check it</span></div>
             </div>
         </div>
     );

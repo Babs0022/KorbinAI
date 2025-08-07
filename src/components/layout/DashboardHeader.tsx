@@ -185,8 +185,8 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 <DropdownMenuItem asChild><Link href="/dashboard/trash"><Trash2 className="mr-2 h-4 w-4" />Trash</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild disabled><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><a href="https://brieflyai.xyz/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
-                <DropdownMenuItem asChild><a href="https://brieflyai.xyz/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>
+                <DropdownMenuItem asChild><a href="https://korbinai.com/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
+                <DropdownMenuItem asChild><a href="https://korbinai.com/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <div className="px-2 py-1.5 text-sm flex justify-between items-center">
                     <span>Subscription</span>
@@ -257,77 +257,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                   )}
                 >
                   Projects
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-
-        <div
-          className={cn(
-            "px-2 py-2 text-xs font-medium text-sidebar-foreground/70 transition-opacity",
-            state === "collapsed" && !isMobile && "opacity-0"
-          )}
-        >
-          Briefs
-        </div>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Written Content">
-              <Link href="/written-content">
-                <ClipboardPen />
-                <span
-                  className={cn(
-                    "transition-opacity",
-                    state === "collapsed" && !isMobile && "opacity-0"
-                  )}
-                >
-                  Written Content
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Prompt Generator">
-              <Link href="/prompt-generator">
-                <Terminal />
-                <span
-                  className={cn(
-                    "transition-opacity",
-                    state === "collapsed" && !isMobile && "opacity-0"
-                  )}
-                >
-                  Prompt Generator
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Image Generator">
-              <Link href="/image-generator">
-                <ImagePlus />
-                <span
-                  className={cn(
-                    "transition-opacity",
-                    state === "collapsed" && !isMobile && "opacity-0"
-                  )}
-                >
-                  Image Generator
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Structured Data">
-              <Link href="/structured-data">
-                <Code />
-                <span
-                  className={cn(
-                    "transition-opacity",
-                    state === "collapsed" && !isMobile && "opacity-0"
-                  )}
-                >
-                  Structured Data
                 </span>
               </Link>
             </SidebarMenuButton>
@@ -419,7 +348,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <div className="flex items-center justify-between gap-2 p-4 border-b">
                  <Link href="/" className={cn("flex items-center gap-2 font-semibold text-lg", state === 'collapsed' && !isMobile && "justify-center")}>
                     <span><Logo /></span>
-                    <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>BrieflyAI</span>
+                    <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>KorbinAI</span>
                  </Link>
             </div>
             <div className="flex-1 flex flex-col overflow-hidden">

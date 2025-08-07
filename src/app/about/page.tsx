@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { Lightbulb, Bot, BrainCircuit, Goal, Puzzle } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'About - BrieflyAI',
-  description: 'BrieflyAI is not just a tool, but a proactive, goal-oriented AI partner designed to understand and execute complex, high-level goals.',
+  title: 'About - KorbinAI',
+  description: 'KorbinAI is not just a tool, but a proactive, goal-oriented AI partner designed to understand and execute complex, high-level goals.',
 };
 
 export default function AboutPage() {
@@ -27,12 +27,12 @@ export default function AboutPage() {
             <div className="space-y-4">
               <h2 className="text-3xl font-bold tracking-tight">Our Vision: A Proactive Partner</h2>
               <p className="text-muted-foreground leading-relaxed">
-                The objective is to create an AI agent that is not merely a tool but a proactive partner. As outlined in our architectural blueprint, this agent is designed to understand complex, high-level goals.
+                The objective is to create an AI assistant that is not merely a tool but a proactive partner. As outlined in our architectural blueprint, this agent is designed to understand complex, high-level goals.
               </p>
               <ul className="space-y-3 text-muted-foreground">
                 <li className="flex items-start">
                   <Goal className="w-6 h-6 mr-3 mt-1 text-primary" />
-                  <span>Independently create and execute multi-step plans to achieve your objectives.</span>
+                  <span>execute multi-step plans to achieve your objectives.</span>
                 </li>
                 <li className="flex items-start">
                   <BrainCircuit className="w-6 h-6 mr-3 mt-1 text-primary" />
@@ -46,7 +46,7 @@ export default function AboutPage() {
             </div>
             <div>
               {/* You can replace this with a diagram or a more abstract visual */}
-              <img src="/icon.png" alt="BrieflyAI Vision" className="rounded-lg shadow-xl w-2/3 mx-auto" />
+              <img src="/icon.png" alt="KorbinAI Vision" className="rounded-lg shadow-xl w-2/3 mx-auto" />
             </div>
           </div>
         </section>

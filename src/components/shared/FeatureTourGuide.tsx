@@ -8,22 +8,22 @@ import { ArrowRight, Sparkles, X } from 'lucide-react';
 const tourStops = [
     {
         target: '#feature-written-content',
-        title: 'Briefly for Creators',
+        title: 'KorbinAI for Creators',
         content: 'Generate high-quality blog posts, emails, social media updates, and more from a simple description.',
     },
     {
         target: '#feature-prompt-generator',
-        title: 'Briefly for Prompters',
+        title: 'KorbinAI for Prompters',
         content: 'Need to use another AI? Craft detailed, optimized prompts for any model or task to get the best results.',
     },
     {
         target: '#feature-image-generator',
-        title: 'Briefly for Artists',
+        title: 'KorbinAI for Artists',
         content: 'Create unique, stunning images and art from a text description. You can even provide your own images for context.',
     },
     {
         target: '#feature-structured-data',
-        title: 'Briefly for Analysts',
+        title: 'KorbinAI for Analysts',
         content: 'Generate structured data like JSON or CSV from a plain-English description, perfect for populating components.',
     },
 ];
@@ -33,7 +33,7 @@ export default function FeatureTourGuide() {
     const [isTourActive, setIsTourActive] = useState(false);
 
     useEffect(() => {
-        const hasSeenTour = localStorage.getItem('hasSeenBrieflyAIFeatureTour');
+        const hasSeenTour = localStorage.getItem('hasSeenKorbinAIFeatureTour');
         if (!hasSeenTour) {
             // Start the tour after a short delay to ensure the page is rendered
             setTimeout(() => {
@@ -74,7 +74,7 @@ export default function FeatureTourGuide() {
         document.querySelectorAll('.tour-highlight').forEach(el => {
             el.classList.remove('tour-highlight');
         });
-        localStorage.setItem('hasSeenBrieflyAIFeatureTour', 'true');
+        localStorage.setItem('hasSeenKorbinAIFeatureTour', 'true');
     };
 
     if (!isTourActive) {
@@ -96,7 +96,7 @@ export default function FeatureTourGuide() {
                         <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
                             <Sparkles className="w-8 h-8 text-primary" />
                         </div>
-                        <h2 className="text-2xl font-bold text-foreground">Welcome to BrieflyAI!</h2>
+                        <h2 className="text-2xl font-bold text-foreground">Welcome to KorbinAI!</h2>
                         <p className="text-muted-foreground">Let's take a quick tour of the creation tools available to you.</p>
                         <Button size="lg" onClick={() => setStep(0)}>Start Tour</Button>
                     </div>

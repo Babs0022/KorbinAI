@@ -23,7 +23,7 @@ const planDetails: Record<string, {
     annually: { amount: number; plan_code: string; };
 }> = {
     pro: {
-        name: "BrieflyAI Pro",
+        name: "KorbinAI Pro",
         monthly: {
             amount: 20 * 100, // $20 in cents
             plan_code: "PLN_apm944j0mz7armb",
@@ -88,7 +88,7 @@ export async function processChargeSuccessEvent(eventData: PaystackChargeSuccess
         userRecord = await admin.auth().getUserByEmail(email);
         logger.info(`[Paystack] Found user UID ${userRecord.uid} for email ${email}.`);
     } catch (error) {
-        logger.error(`[Paystack] CRITICAL: Could not find a user with email ${email}. A user must sign up in BrieflyAI with this email first.`, { email, error });
+        logger.error(`[Paystack] CRITICAL: Could not find a user with email ${email}. A user must sign up in KorbinAI with this email first.`, { email, error });
         return; // Stop processing if no user can be found
     }
 

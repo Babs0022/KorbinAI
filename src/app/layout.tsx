@@ -10,12 +10,12 @@ import './globals.css';
 const figtree = Figtree({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'BrieflyAI - AI-Powered Content Creation and Automation',
-  description: 'BrieflyAI is an AI-powered platform for content creation, automation, and optimization. Boost your productivity with our suite of tools for writing, SEO, and more.',
-  keywords: ['ai content creation', 'automation tools', 'seo optimization', 'content marketing', 'ai writing assistant'],
-  authors: [{ name: 'BrieflyAI Team', url: 'https://brieflyai.xyz' }],
-  creator: 'BrieflyAI',
-  publisher: 'BrieflyAI',
+  title: 'KorbinAI',
+  description: 'An AI assistant that actually gets it.',
+  keywords: ['ai content creation', 'automation tools', 'ai copilot', 'content marketing', 'ai writing assistant'],
+  authors: [{ name: 'KorbinAI Team', url: 'https://korbinai.com' }],
+  creator: 'KorbinAI',
+  publisher: 'KorbinAI',
   
   icons: {
     icon: '/icon.png',
@@ -28,16 +28,16 @@ export const metadata: Metadata = {
   },
   
   openGraph: {
-    title: 'BrieflyAI - AI-Powered Content Creation and Automation',
-    description: 'Boost your productivity with BrieflyAI, an AI-powered platform for content creation, automation, and SEO optimization.',
-    url: 'https://brieflyai.xyz',
-    siteName: 'BrieflyAI',
+    title: 'KorbinAI',
+    description: 'An AI assistant that actually gets it.',
+    url: 'https://korbinai.com',
+    siteName: 'KorbinAI',
     images: [
       {
-        url: 'https://brieflyai.xyz/og-image.png', // Update with your actual OG image URL
+        url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'BrieflyAI - AI-Powered Content Creation and Automation',
+        alt: 'KorbinAI - An AI assistant that actually gets it.',
       },
     ],
     locale: 'en_US',
@@ -46,10 +46,10 @@ export const metadata: Metadata = {
   
   twitter: {
     card: 'summary_large_image',
-    title: 'BrieflyAI - AI-Powered Content Creation and Automation',
-    description: 'Boost your productivity with BrieflyAI, an AI-powered platform for content creation, automation, and SEO optimization.',
-    creator: '@brieflyai', // Update with your Twitter handle
-    images: ['https://brieflyai.xyz/og-image.png'], // Update with your actual OG image URL
+    title: 'KorbinAI',
+    description: 'An AI assistant that actually gets it.',
+    creator: '@korbinai',
+    images: ['/og-image.png'],
   },
   
   robots: {
@@ -65,11 +65,11 @@ export const metadata: Metadata = {
   },
   
   verification: {
-    google: 'your-google-site-verification-code', // Update with your verification code
+    google: 'your-google-site-verification-code',
   },
   
   alternates: {
-    canonical: 'https://brieflyai.xyz',
+    canonical: 'https://korbinai.com',
   },
 };
 

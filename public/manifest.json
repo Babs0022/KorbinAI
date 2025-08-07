@@ -1,6 +1,6 @@
 {
-    "name": "BrieflyAI",
-    "short_name": "BrieflyAI",
+    "name": "KorbinAI",
+    "short_name": "KorbinAI",
     "description": "An AI Assistant That Actually Gets It.",
     "start_url": "/",
     "display": "standalone",

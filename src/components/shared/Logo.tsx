@@ -11,7 +11,7 @@ const Logo = ({ className }: LogoProps) => {
     <div className={cn("flex items-center space-x-2", className)}>
       <Image
         src="/icon.png"
-        alt="BrieflyAI Logo"
+        alt="KorbinAI Logo"
         width={32}
         height={32}
       />

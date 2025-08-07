@@ -8,4 +8,4 @@ Disallow: /admin/
 Disallow: /tmp/
 
 # Sitemap location
-Sitemap: https://brieflyai.xyz/sitemap.xml
+Sitemap: https://korbinai.com/sitemap.xml

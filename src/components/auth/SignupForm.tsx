@@ -154,11 +154,11 @@ export default function SignupForm() {
       <div className="space-y-4">
         <div className="text-sm text-muted-foreground">
             By signing up, you agree to our{" "}
-            <a href="https://brieflyai.xyz/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+            <a href="https://korbinai.com/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                 Terms of Service
             </a>{" "}
             and{" "}
-            <a href="https://brieflyai.xyz/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+            <a href="https://korbinai.com/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                 Privacy Policy
             </a>
             .

@@ -48,18 +48,22 @@ export async function generateTitleForChat(userMessage: string, aiResponse: stri
         return "New Chat";
     }
 
-    // Handle case where user sends only an image
     if (!userMessage) {
         return "Chat about an image";
     }
 
+    const fallbackTitle = userMessage.split(' ').slice(0, 5).join(' ');
+
     try {
         const response = await titlePrompt({ userMessage, aiResponse });
-        // Use a fallback to ensure a title is always returned.
-        return response.output() || userMessage.split(' ').slice(0, 5).join(' ') + '...';
+
+        // Access .text as a PROPERTY, not a function
+        const generatedTitle = response.text;
+
+        return generatedTitle || fallbackTitle;
+
     } catch (error) {
         console.error("Failed to generate chat title:", error);
-        // Fallback to simple truncation if AI fails
-        return userMessage.split(' ').slice(0, 5).join(' ') + '...';
+        return fallbackTitle;
     }
 }
