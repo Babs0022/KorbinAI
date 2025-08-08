@@ -1,4 +1,5 @@
 
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { Figtree } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
@@ -10,6 +11,7 @@ import './globals.css';
 const figtree = Figtree({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('http://localhost:3000'),
   title: 'KorbinAI',
   description: 'An AI assistant that actually gets it.',
   keywords: ['ai content creation', 'automation tools', 'ai copilot', 'content marketing', 'ai writing assistant'],
@@ -88,7 +90,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <GoogleAnalytics />
+            <Suspense fallback={null}>
+              <GoogleAnalytics />
+            </Suspense>
             {children}
             <Toaster />
           </AuthProvider>

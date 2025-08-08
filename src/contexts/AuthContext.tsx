@@ -156,7 +156,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     // Send verification email
-    await sendEmailVerification(user, { url: `${window.location.origin}/` });
+    if (typeof window !== 'undefined') {
+      await sendEmailVerification(user, { url: `${window.location.origin}/` });
+    } else {
+      await sendEmailVerification(user);
+    }
 
     // Let the onAuthStateChanged listener handle the redirect to /verify-email
   };
