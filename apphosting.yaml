@@ -40,7 +40,3 @@ env:
   # Support Email for contact links
   - variable: NEXT_PUBLIC_SUPPORT_EMAIL
     value: "team@korbinai.com"
-
-     # Google Application Credentials
-  - variable: GOOGLE_APPLICATION_CREDENTIALS
-    value: GOOGLE_APPLICATION_CREDENTIALS
