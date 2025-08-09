@@ -32,35 +32,87 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const userInterruptedRef = useRef(false);
 
+  // Stop audio playback safely
   const stopAudioPlayback = useCallback(() => {
     if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.currentTime = 0;
+        if (!isNaN(audioRef.current.duration)) {
+             audioRef.current.currentTime = 0;
+        }
     }
   }, []);
-
-  const startListening = useCallback(() => {
-    if (isMuted || !recognitionRef.current || voiceState === VoiceState.Listening) return;
-    try {
-        stopAudioPlayback();
-        setVoiceState(VoiceState.Listening);
-        recognitionRef.current.start();
-    } catch (e) {
-        // This can happen if start() is called while it's already running.
-        console.warn("Speech recognition already started.", e);
-    }
-  }, [isMuted, voiceState, stopAudioPlayback]);
   
   const stopListening = useCallback(() => {
-    if (!recognitionRef.current || voiceState !== VoiceState.Listening) return;
-    try {
+    if (recognitionRef.current) {
         recognitionRef.current.stop();
-        setVoiceState(VoiceState.Processing);
-    } catch (e) {
-        console.warn("Speech recognition already stopped.", e);
     }
-  }, [voiceState]);
+    if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+    }
+  }, []);
+  
+  // Start listening safely
+  const startListening = useCallback(() => {
+    if (isMuted || !recognitionRef.current || voiceState === VoiceState.Listening) return;
+    
+    stopAudioPlayback();
+    setVoiceState(VoiceState.Listening);
+    userInterruptedRef.current = false;
+    
+    try {
+        recognitionRef.current.start();
+    } catch (e) {
+        console.warn("Speech recognition could not be started, likely already active.", e);
+    }
+  }, [isMuted, voiceState, stopAudioPlayback]);
+
+  // Main handler for processing spoken user input
+  const handleUserSpeech = useCallback(async (transcript: string) => {
+    if (!transcript) {
+        setVoiceState(VoiceState.Idle);
+        return;
+    }
+    
+    setVoiceState(VoiceState.Processing);
+    const userMessage: Message = { role: 'user', content: transcript };
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+
+    try {
+      const aiResponseText = await conversationalChat({ history: newMessages, userId: user?.uid });
+      const aiMessage: Message = { role: 'model', content: aiResponseText };
+      setMessages(prev => [...prev, aiMessage]);
+
+      // Only speak if the user hasn't started talking again
+      if (userInterruptedRef.current) {
+          setVoiceState(VoiceState.Idle);
+          return;
+      }
+
+      setVoiceState(VoiceState.Speaking);
+      const { audioDataUri } = await textToSpeech({ text: aiResponseText });
+      
+      // Check for interruption again right before playing
+      if (userInterruptedRef.current) {
+          setVoiceState(VoiceState.Idle);
+          return;
+      }
+
+      if (audioRef.current) {
+          audioRef.current.src = audioDataUri;
+          await audioRef.current.play();
+          // The onended event will handle transitioning back to idle/listening
+      }
+
+    } catch (err: any) {
+      console.error("Voice mode error:", err);
+      setError(err.message || "An unknown error occurred.");
+      setVoiceState(VoiceState.Idle);
+    }
+  }, [messages, setMessages, user?.uid]);
+
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -72,101 +124,89 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
     }
     
     recognitionRef.current = new SpeechRecognition();
-    recognitionRef.current.continuous = true;
-    recognitionRef.current.interimResults = true;
+    recognitionRef.current.continuous = false; // Process speech after a pause
+    recognitionRef.current.interimResults = false;
 
     recognitionRef.current.onresult = (event: any) => {
-      if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
-      
-      let finalTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        }
+      const transcript = event.results[event.results.length - 1][0].transcript.trim();
+      if (transcript) {
+        handleUserSpeech(transcript);
       }
-
-      if (finalTranscript.trim()) {
-        stopListening();
-        handleUserSpeech(finalTranscript.trim());
-      }
-
-      silenceTimeoutRef.current = setTimeout(() => {
-        stopListening();
-      }, 1500); 
     };
-
-    // This handles interruptions. If the user starts speaking, stop the AI's audio.
+    
+    // Fired when the user starts speaking
     recognitionRef.current.onaudiostart = () => {
         if (voiceState === VoiceState.Speaking) {
+            userInterruptedRef.current = true;
             stopAudioPlayback();
         }
     };
 
+    // Fired when recognition service ends
     recognitionRef.current.onend = () => {
-      if (voiceState === VoiceState.Listening) {
-        startListening();
-      }
+        // Automatically restart listening if we are in a listenable state
+        if (voiceState === VoiceState.Listening || voiceState === VoiceState.Idle) {
+            startListening();
+        }
+    };
+
+    recognitionRef.current.onerror = (event: any) => {
+        if (event.error !== 'no-speech') {
+            console.error('Speech recognition error:', event.error);
+            setError(`Speech recognition error: ${event.error}`);
+        }
     };
     
     startListening();
 
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      stopAudioPlayback();
-      if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
+    // Setup audio element for AI speech
+    audioRef.current = new Audio();
+    audioRef.current.onended = () => {
+        if (!userInterruptedRef.current) {
+             setVoiceState(VoiceState.Idle);
+        }
     };
-  }, [startListening, stopListening, stopAudioPlayback, voiceState]);
 
-  const handleUserSpeech = async (transcript: string) => {
-    if (!transcript) {
-      setVoiceState(VoiceState.Idle);
-      startListening();
-      return;
-    }
-
-    const userMessage: Message = { role: 'user', content: transcript };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-
-    try {
-      const aiResponseText = await conversationalChat({ history: newMessages, userId: user?.uid });
-      const aiMessage: Message = { role: 'model', content: aiResponseText };
-      setMessages(prev => [...prev, aiMessage]);
-
-      setVoiceState(VoiceState.Speaking);
-      const { audioDataUri } = await textToSpeech({ text: aiResponseText });
-      
+    return () => {
+      stopListening();
+      stopAudioPlayback();
       if (audioRef.current) {
-          audioRef.current.src = audioDataUri;
-          audioRef.current.play();
-          audioRef.current.onended = () => {
-              if (voiceState === VoiceState.Speaking) { // Ensure it wasn't interrupted
-                  setVoiceState(VoiceState.Idle);
-                  startListening();
-              }
-          };
+          audioRef.current.onended = null;
       }
-
-    } catch (err: any) {
-      console.error("Voice mode error:", err);
-      setError(err.message || "An unknown error occurred.");
-      setVoiceState(VoiceState.Idle);
-    }
-  };
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
+  // Effect to manage state transitions back to listening
+  useEffect(() => {
+    if (voiceState === VoiceState.Idle && !isMuted) {
+        const timer = setTimeout(() => startListening(), 100);
+        return () => clearTimeout(timer);
+    }
+    if (voiceState !== VoiceState.Listening && !isMuted) {
+        stopListening();
+    }
+  }, [voiceState, isMuted, startListening, stopListening]);
+
+
   const toggleMute = () => {
       setIsMuted(prev => {
           const newMutedState = !prev;
           if (newMutedState) {
-              if (recognitionRef.current) recognitionRef.current.stop();
+              stopListening();
+              stopAudioPlayback();
               setVoiceState(VoiceState.Idle);
           } else {
               startListening();
           }
           return newMutedState;
       });
+  };
+
+  const handleClose = () => {
+    stopListening();
+    stopAudioPlayback();
+    onClose();
   };
 
   const renderVisualizer = () => {
@@ -197,7 +237,7 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
                     key={i}
                     className={cn(baseClasses, barClasses)}
                     style={{
-                        height: `${Math.sin(i * 0.2 + Date.now() * 0.005) * 40 + 60}%`,
+                        height: `${ voiceState !== VoiceState.Idle ? (Math.sin(i * 0.2 + Date.now() * 0.005) * 40 + 60) : 10}%`,
                         animationDelay: `${i * 10}ms`
                     }}
                 />
@@ -214,7 +254,7 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
             <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
             <h2 className="text-2xl font-bold">Voice Mode Error</h2>
             <p className="text-muted-foreground">{error}</p>
-            <Button onClick={onClose}>Close</Button>
+            <Button onClick={handleClose}>Close</Button>
         </div>
       </div>
     );
@@ -239,7 +279,7 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
           variant="destructive"
           size="lg"
           className="rounded-full w-20 h-20"
-          onClick={onClose}
+          onClick={handleClose}
         >
           <PhoneOff className="h-8 w-8" />
         </Button>
