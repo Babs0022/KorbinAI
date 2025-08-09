@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Mic, MicOff, PhoneOff, AlertTriangle } from 'lucide-react';
+import { Mic, MicOff, PhoneOff, AlertTriangle, LoaderCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,10 +31,12 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
 
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const userInterruptedRef = useRef(false);
+  
+  // Ref to track if the component is mounted to prevent state updates on unmounted components
+  const isMounted = useRef(true);
 
-  // Stop audio playback safely
+  // --- Core Functions ---
+
   const stopAudioPlayback = useCallback(() => {
     if (audioRef.current) {
         audioRef.current.pause();
@@ -43,209 +45,187 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
         }
     }
   }, []);
-  
-  const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-        recognitionRef.current.stop();
-    }
-    if (silenceTimeoutRef.current) {
-        clearTimeout(silenceTimeoutRef.current);
-    }
-  }, []);
-  
-  // Start listening safely
+
   const startListening = useCallback(() => {
-    if (isMuted || !recognitionRef.current || voiceState === VoiceState.Listening) return;
+    if (isMuted || !recognitionRef.current || !isMounted.current) return;
     
+    // Don't start listening if already listening or processing
+    if (voiceState === VoiceState.Listening || voiceState === VoiceState.Processing) return;
+
     stopAudioPlayback();
     setVoiceState(VoiceState.Listening);
-    userInterruptedRef.current = false;
     
     try {
-        recognitionRef.current.start();
+      recognitionRef.current.start();
     } catch (e) {
-        console.warn("Speech recognition could not be started, likely already active.", e);
+      console.warn("Speech recognition could not be started, likely already active.", e);
     }
   }, [isMuted, voiceState, stopAudioPlayback]);
 
-  // Main handler for processing spoken user input
-  const handleUserSpeech = useCallback(async (transcript: string) => {
-    if (!transcript) {
-        setVoiceState(VoiceState.Idle);
-        return;
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
     }
-    
+  }, []);
+
+  const processAndRespond = useCallback(async (transcript: string) => {
+    if (!transcript.trim() || !isMounted.current) {
+      startListening(); // If transcript is empty, just go back to listening
+      return;
+    }
+
     setVoiceState(VoiceState.Processing);
+    
     const userMessage: Message = { role: 'user', content: transcript };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
 
     try {
       const aiResponseText = await conversationalChat({ history: newMessages, userId: user?.uid });
+      
+      if (!isMounted.current) return; // Check if component is still mounted
+
       const aiMessage: Message = { role: 'model', content: aiResponseText };
       setMessages(prev => [...prev, aiMessage]);
-
-      // Only speak if the user hasn't started talking again
-      if (userInterruptedRef.current) {
-          setVoiceState(VoiceState.Idle);
-          return;
-      }
 
       setVoiceState(VoiceState.Speaking);
       const { audioDataUri } = await textToSpeech({ text: aiResponseText });
       
-      // Check for interruption again right before playing
-      if (userInterruptedRef.current) {
-          setVoiceState(VoiceState.Idle);
-          return;
-      }
+      if (!isMounted.current) return;
 
       if (audioRef.current) {
-          audioRef.current.src = audioDataUri;
-          await audioRef.current.play();
-          // The onended event will handle transitioning back to idle/listening
+        audioRef.current.src = audioDataUri;
+        await audioRef.current.play();
+        // The 'onended' event on the audio element will handle transitioning back to listening
+      } else {
+        startListening(); // Fallback if audio element isn't ready
       }
 
     } catch (err: any) {
+      if (!isMounted.current) return;
       console.error("Voice mode error:", err);
       setError(err.message || "An unknown error occurred.");
       setVoiceState(VoiceState.Idle);
     }
-  }, [messages, setMessages, user?.uid]);
+  }, [messages, setMessages, user?.uid, startListening]);
 
+
+  // --- Lifecycle and Event Handlers ---
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setError("Speech recognition is not supported in your browser.");
-      return;
-    }
+    isMounted.current = true;
     
-    recognitionRef.current = new SpeechRecognition();
-    recognitionRef.current.continuous = false; // Process speech after a pause
-    recognitionRef.current.interimResults = false;
-
-    recognitionRef.current.onresult = (event: any) => {
-      const transcript = event.results[event.results.length - 1][0].transcript.trim();
-      if (transcript) {
-        handleUserSpeech(transcript);
-      }
-    };
-    
-    // Fired when the user starts speaking
-    recognitionRef.current.onaudiostart = () => {
-        if (voiceState === VoiceState.Speaking) {
-            userInterruptedRef.current = true;
-            stopAudioPlayback();
+    // --- Initialize Web Speech API ---
+    if (typeof window !== 'undefined') {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          setError("Speech recognition is not supported in your browser.");
+          return;
         }
-    };
+        
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false; // We want to process after each phrase
+        recognitionRef.current.interimResults = false;
 
-    // Fired when recognition service ends
-    recognitionRef.current.onend = () => {
-        // Automatically restart listening if we are in a listenable state
-        if (voiceState === VoiceState.Listening || voiceState === VoiceState.Idle) {
+        recognitionRef.current.onresult = (event: any) => {
+          const transcript = event.results[event.results.length - 1][0].transcript.trim();
+          processAndRespond(transcript);
+        };
+        
+        recognitionRef.current.onend = () => {
+          if (isMounted.current && voiceState === VoiceState.Listening) {
+            // If it ended while we were supposed to be listening, start again.
+            // This handles cases where the browser times out the recognition.
             startListening();
-        }
-    };
+          }
+        };
 
-    recognitionRef.current.onerror = (event: any) => {
-        if (event.error !== 'no-speech') {
-            console.error('Speech recognition error:', event.error);
-            setError(`Speech recognition error: ${event.error}`);
-        }
-    };
-    
-    startListening();
+        recognitionRef.current.onerror = (event: any) => {
+            if (event.error === 'no-speech' || event.error === 'audio-capture') {
+                // These are common, non-critical errors. Just restart listening.
+                setVoiceState(VoiceState.Idle);
+            } else {
+                console.error('Speech recognition error:', event.error);
+                setError(`Speech recognition error: ${event.error}`);
+            }
+        };
 
-    // Setup audio element for AI speech
-    audioRef.current = new Audio();
-    audioRef.current.onended = () => {
-        if (!userInterruptedRef.current) {
-             setVoiceState(VoiceState.Idle);
-        }
-    };
+        // --- Initialize Audio Element ---
+        audioRef.current = new Audio();
+        audioRef.current.onended = () => {
+          setVoiceState(VoiceState.Idle); // Back to idle after speaking is done
+        };
 
+        // Start listening for the first time
+        startListening();
+    }
+
+
+    // --- Cleanup function ---
     return () => {
+      isMounted.current = false;
       stopListening();
       stopAudioPlayback();
       if (audioRef.current) {
-          audioRef.current.onended = null;
+        audioRef.current.onended = null;
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  
-  // Effect to manage state transitions back to listening
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
+
+  // Effect to automatically start listening when idle
   useEffect(() => {
     if (voiceState === VoiceState.Idle && !isMuted) {
-        const timer = setTimeout(() => startListening(), 100);
-        return () => clearTimeout(timer);
+      const timer = setTimeout(() => {
+        if (isMounted.current) {
+           startListening();
+        }
+      }, 100); // Small delay to prevent rapid-fire restarts
+      return () => clearTimeout(timer);
     }
-    if (voiceState !== VoiceState.Listening && !isMuted) {
-        stopListening();
-    }
-  }, [voiceState, isMuted, startListening, stopListening]);
+  }, [voiceState, isMuted, startListening]);
 
-
-  const toggleMute = () => {
-      setIsMuted(prev => {
-          const newMutedState = !prev;
-          if (newMutedState) {
-              stopListening();
-              stopAudioPlayback();
-              setVoiceState(VoiceState.Idle);
-          } else {
-              startListening();
-          }
-          return newMutedState;
-      });
-  };
 
   const handleClose = () => {
-    stopListening();
-    stopAudioPlayback();
     onClose();
   };
 
   const renderVisualizer = () => {
       const bars = Array.from({ length: 60 });
-      const baseClasses = "w-1 transition-all duration-300 ease-in-out rounded-full";
-      let barClasses = "";
-      
+      let barClasses = "bg-muted";
+      let stateText = "Idle. Say something to start.";
+
       switch (voiceState) {
         case VoiceState.Listening:
           barClasses = "bg-green-500 animate-pulse";
+          stateText = "Listening...";
           break;
         case VoiceState.Processing:
-          barClasses = "bg-yellow-500 animate-pulse";
-          break;
+           return <div className="flex flex-col items-center gap-4"><LoaderCircle className="h-16 w-16 animate-spin text-primary" /><p className="text-muted-foreground">Korbin is thinking...</p></div>;
         case VoiceState.Speaking:
           barClasses = "bg-blue-500 animate-pulse";
-          break;
-        case VoiceState.Idle:
-        default:
-          barClasses = "bg-muted";
+          stateText = "Korbin is speaking...";
           break;
       }
       
       return (
-        <div className="flex items-center justify-center gap-1 h-32">
-            {bars.map((_, i) => (
-                <div
-                    key={i}
-                    className={cn(baseClasses, barClasses)}
-                    style={{
-                        height: `${ voiceState !== VoiceState.Idle ? (Math.sin(i * 0.2 + Date.now() * 0.005) * 40 + 60) : 10}%`,
-                        animationDelay: `${i * 10}ms`
-                    }}
-                />
-            ))}
+        <div className="flex flex-col items-center justify-center gap-8 h-32">
+            <div className="flex items-end justify-center gap-1 h-full">
+                {bars.map((_, i) => (
+                    <div
+                        key={i}
+                        className={cn("w-1 transition-all duration-300 ease-in-out rounded-full", barClasses)}
+                        style={{
+                            height: `${ voiceState !== VoiceState.Idle ? (Math.sin(i * 0.2 + Date.now() * 0.005) * 40 + 60) : 10}%`,
+                            animationDelay: `${i * 10}ms`
+                        }}
+                    />
+                ))}
+            </div>
+            <p className="text-muted-foreground text-sm">{stateText}</p>
         </div>
     );
   };
-  
 
   if (error) {
     return (
@@ -261,7 +241,7 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
   }
 
   return (
-    <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-between p-8">
+    <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex flex-col items-center justify-between p-8">
       <div className="flex-grow flex items-center justify-center w-full">
         {renderVisualizer()}
       </div>
@@ -271,7 +251,7 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
           variant="secondary"
           size="lg"
           className="rounded-full w-20 h-20"
-          onClick={toggleMute}
+          onClick={() => setIsMuted(!isMuted)}
         >
           {isMuted ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
         </Button>
