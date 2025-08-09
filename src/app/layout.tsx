@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   creator: 'KorbinAI',
   publisher: 'KorbinAI',
   
+  manifest: '/manifest.json',
+
   icons: {
     icon: '/icon.png',
     shortcut: '/icon.png',
