@@ -229,6 +229,7 @@ export default function ChatClient() {
 
     try {
       const isNewChat = !currentChatId;
+      let finalHistory: Message[] | null = null;
 
       if (isNewChat) {
         const newSession = await createChatSession({
@@ -236,10 +237,11 @@ export default function ChatClient() {
           firstUserMessage: userMessage,
         });
         currentChatId = newSession.id;
+        finalHistory = await getAiResponse(currentChatId!, historyForAI);
+      } else {
+        finalHistory = await getAiResponse(currentChatId!, historyForAI);
       }
-      
-      const finalHistory = await getAiResponse(currentChatId!, historyForAI);
-      
+
       if (isNewChat && finalHistory) {
         router.push(`/chat/${currentChatId}`);
       }
@@ -321,6 +323,7 @@ export default function ChatClient() {
             onClose={() => setIsVoiceModeActive(false)}
             messages={messages}
             setMessages={setMessages}
+            chatId={chatId}
         />
     )
   }
@@ -359,3 +362,5 @@ export default function ChatClient() {
     </div>
   );
 }
+
+    

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Mic, MicOff, PhoneOff, AlertTriangle, LoaderCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -9,11 +10,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { type Message } from '@/types/ai';
 import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
 import { conversationalChat } from '@/ai/flows/conversational-chat-flow';
+import { createChatSession } from '@/services/chatService';
 
 interface VoiceModeProps {
   onClose: () => void;
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  chatId?: string;
 }
 
 enum VoiceState {
@@ -23,19 +26,17 @@ enum VoiceState {
   Speaking
 }
 
-export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeProps) {
+export default function VoiceMode({ onClose, messages, setMessages, chatId: initialChatId }: VoiceModeProps) {
   const { user } = useAuth();
+  const router = useRouter();
+  const [chatId, setChatId] = useState(initialChatId);
   const [voiceState, setVoiceState] = useState<VoiceState>(VoiceState.Idle);
   const [isMuted, setIsMuted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  
-  // Ref to track if the component is mounted to prevent state updates on unmounted components
   const isMounted = useRef(true);
-
-  // --- Core Functions ---
 
   const stopAudioPlayback = useCallback(() => {
     if (audioRef.current) {
@@ -48,13 +49,10 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
 
   const startListening = useCallback(() => {
     if (isMuted || !recognitionRef.current || !isMounted.current) return;
-    
-    // Don't start listening if already listening or processing
     if (voiceState === VoiceState.Listening || voiceState === VoiceState.Processing) return;
 
     stopAudioPlayback();
     setVoiceState(VoiceState.Listening);
-    
     try {
       recognitionRef.current.start();
     } catch (e) {
@@ -70,8 +68,13 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
 
   const processAndRespond = useCallback(async (transcript: string) => {
     if (!transcript.trim() || !isMounted.current) {
-      startListening(); // If transcript is empty, just go back to listening
+      startListening();
       return;
+    }
+    
+    if (!user) {
+        setError("You must be logged in to use voice mode.");
+        return;
     }
 
     setVoiceState(VoiceState.Processing);
@@ -81,12 +84,33 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
     setMessages(newMessages);
 
     try {
-      const aiResponseText = await conversationalChat({ history: newMessages, userId: user?.uid });
+      let currentChatId = chatId;
+      const isNewChat = !currentChatId;
       
-      if (!isMounted.current) return; // Check if component is still mounted
+      if (isNewChat) {
+          const newSession = await createChatSession({
+              userId: user.uid,
+              firstUserMessage: userMessage,
+          });
+          currentChatId = newSession.id;
+          setChatId(currentChatId);
+      }
+      
+      const aiResponseText = await conversationalChat({
+        history: newMessages,
+        userId: user.uid,
+        chatId: currentChatId,
+        isExistingChat: !isNewChat,
+      });
+      
+      if (!isMounted.current) return;
 
       const aiMessage: Message = { role: 'model', content: aiResponseText };
       setMessages(prev => [...prev, aiMessage]);
+      
+      if (isNewChat) {
+        router.push(`/chat/${currentChatId}`);
+      }
 
       setVoiceState(VoiceState.Speaking);
       const { audioDataUri } = await textToSpeech({ text: aiResponseText });
@@ -96,9 +120,8 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
       if (audioRef.current) {
         audioRef.current.src = audioDataUri;
         await audioRef.current.play();
-        // The 'onended' event on the audio element will handle transitioning back to listening
       } else {
-        startListening(); // Fallback if audio element isn't ready
+        startListening();
       }
 
     } catch (err: any) {
@@ -107,15 +130,11 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
       setError(err.message || "An unknown error occurred.");
       setVoiceState(VoiceState.Idle);
     }
-  }, [messages, setMessages, user?.uid, startListening]);
-
-
-  // --- Lifecycle and Event Handlers ---
+  }, [messages, setMessages, user, chatId, startListening, router]);
 
   useEffect(() => {
     isMounted.current = true;
     
-    // --- Initialize Web Speech API ---
     if (typeof window !== 'undefined') {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -124,7 +143,7 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
         }
         
         recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false; // We want to process after each phrase
+        recognitionRef.current.continuous = false;
         recognitionRef.current.interimResults = false;
 
         recognitionRef.current.onresult = (event: any) => {
@@ -134,15 +153,12 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
         
         recognitionRef.current.onend = () => {
           if (isMounted.current && voiceState === VoiceState.Listening) {
-            // If it ended while we were supposed to be listening, start again.
-            // This handles cases where the browser times out the recognition.
             startListening();
           }
         };
 
         recognitionRef.current.onerror = (event: any) => {
             if (event.error === 'no-speech' || event.error === 'audio-capture') {
-                // These are common, non-critical errors. Just restart listening.
                 setVoiceState(VoiceState.Idle);
             } else {
                 console.error('Speech recognition error:', event.error);
@@ -150,18 +166,14 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
             }
         };
 
-        // --- Initialize Audio Element ---
         audioRef.current = new Audio();
         audioRef.current.onended = () => {
-          setVoiceState(VoiceState.Idle); // Back to idle after speaking is done
+          setVoiceState(VoiceState.Idle);
         };
 
-        // Start listening for the first time
         startListening();
     }
 
-
-    // --- Cleanup function ---
     return () => {
       isMounted.current = false;
       stopListening();
@@ -170,25 +182,18 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
         audioRef.current.onended = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only once on mount
+  }, []);
 
-  // Effect to automatically start listening when idle
   useEffect(() => {
     if (voiceState === VoiceState.Idle && !isMuted) {
       const timer = setTimeout(() => {
         if (isMounted.current) {
            startListening();
         }
-      }, 100); // Small delay to prevent rapid-fire restarts
+      }, 100);
       return () => clearTimeout(timer);
     }
   }, [voiceState, isMuted, startListening]);
-
-
-  const handleClose = () => {
-    onClose();
-  };
 
   const renderVisualizer = () => {
       const bars = Array.from({ length: 60 });
@@ -234,7 +239,7 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
             <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
             <h2 className="text-2xl font-bold">Voice Mode Error</h2>
             <p className="text-muted-foreground">{error}</p>
-            <Button onClick={handleClose}>Close</Button>
+            <Button onClick={onClose}>Close</Button>
         </div>
       </div>
     );
@@ -259,7 +264,7 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
           variant="destructive"
           size="lg"
           className="rounded-full w-20 h-20"
-          onClick={handleClose}
+          onClick={onClose}
         >
           <PhoneOff className="h-8 w-8" />
         </Button>
@@ -268,3 +273,5 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
     </div>
   );
 }
+
+    
