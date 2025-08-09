@@ -29,7 +29,6 @@ enum VoiceState {
 export default function VoiceMode({ onClose, messages, setMessages, chatId: initialChatId }: VoiceModeProps) {
   const { user } = useAuth();
   const router = useRouter();
-  const [chatId, setChatId] = useState(initialChatId);
   const [voiceState, setVoiceState] = useState<VoiceState>(VoiceState.Idle);
   const [isMuted, setIsMuted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +36,7 @@ export default function VoiceMode({ onClose, messages, setMessages, chatId: init
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isMounted = useRef(true);
+  const currentChatIdRef = useRef(initialChatId);
 
   const stopAudioPlayback = useCallback(() => {
     if (audioRef.current) {
@@ -84,22 +84,23 @@ export default function VoiceMode({ onClose, messages, setMessages, chatId: init
     setMessages(newMessages);
 
     try {
-      let currentChatId = chatId;
-      const isNewChat = !currentChatId;
+      let chatIdToUse = currentChatIdRef.current;
+      const isNewChat = !chatIdToUse;
       
       if (isNewChat) {
           const newSession = await createChatSession({
               userId: user.uid,
               firstUserMessage: userMessage,
           });
-          currentChatId = newSession.id;
-          setChatId(currentChatId);
+          chatIdToUse = newSession.id;
+          currentChatIdRef.current = chatIdToUse; // Persist the new ID for this session
+          router.push(`/chat/${chatIdToUse}`);
       }
       
       const aiResponseText = await conversationalChat({
         history: newMessages,
         userId: user.uid,
-        chatId: currentChatId,
+        chatId: chatIdToUse!,
         isExistingChat: !isNewChat,
       });
       
@@ -108,10 +109,6 @@ export default function VoiceMode({ onClose, messages, setMessages, chatId: init
       const aiMessage: Message = { role: 'model', content: aiResponseText };
       setMessages(prev => [...prev, aiMessage]);
       
-      if (isNewChat) {
-        router.push(`/chat/${currentChatId}`);
-      }
-
       setVoiceState(VoiceState.Speaking);
       const { audioDataUri } = await textToSpeech({ text: aiResponseText });
       
@@ -130,7 +127,7 @@ export default function VoiceMode({ onClose, messages, setMessages, chatId: init
       setError(err.message || "An unknown error occurred.");
       setVoiceState(VoiceState.Idle);
     }
-  }, [messages, setMessages, user, chatId, startListening, router]);
+  }, [messages, setMessages, user, startListening, router]);
 
   useEffect(() => {
     isMounted.current = true;
@@ -153,6 +150,7 @@ export default function VoiceMode({ onClose, messages, setMessages, chatId: init
         
         recognitionRef.current.onend = () => {
           if (isMounted.current && voiceState === VoiceState.Listening) {
+            // This ensures listening continues unless we are processing or speaking
             startListening();
           }
         };
@@ -170,6 +168,13 @@ export default function VoiceMode({ onClose, messages, setMessages, chatId: init
         audioRef.current.onended = () => {
           setVoiceState(VoiceState.Idle);
         };
+        
+        // When user speaks while AI is talking
+        recognitionRef.current.onaudiostart = () => {
+            if (voiceState === VoiceState.Speaking) {
+                stopAudioPlayback();
+            }
+        };
 
         startListening();
     }
@@ -181,17 +186,17 @@ export default function VoiceMode({ onClose, messages, setMessages, chatId: init
       if (audioRef.current) {
         audioRef.current.onended = null;
       }
+      if(recognitionRef.current) {
+        recognitionRef.current.onaudiostart = null;
+      }
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   useEffect(() => {
-    if (voiceState === VoiceState.Idle && !isMuted) {
-      const timer = setTimeout(() => {
-        if (isMounted.current) {
-           startListening();
-        }
-      }, 100);
-      return () => clearTimeout(timer);
+    // If we're idle, not muted, and component is mounted, start listening
+    if (voiceState === VoiceState.Idle && !isMuted && isMounted.current) {
+        startListening();
     }
   }, [voiceState, isMuted, startListening]);
 
@@ -273,5 +278,3 @@ export default function VoiceMode({ onClose, messages, setMessages, chatId: init
     </div>
   );
 }
-
-    
