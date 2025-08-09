@@ -1,4 +1,5 @@
 
+
 import { z } from 'zod';
 
 export const FeedbackRatingSchema = z.enum(['good', 'bad']);
@@ -16,3 +17,17 @@ export const FeedbackSchema = z.object({
 });
 
 export type Feedback = z.infer<typeof FeedbackSchema>;
+
+
+export const UserReportSchema = z.object({
+    id: z.string(),
+    userId: z.string(),
+    email: z.string(),
+    reportType: z.enum(['feedback', 'bug']),
+    message: z.string(),
+    page: z.string(),
+    status: z.enum(['new', 'in-progress', 'resolved']),
+    createdAt: z.any(), // Firestore Timestamp
+});
+
+export type UserReport = z.infer<typeof UserReportSchema>;

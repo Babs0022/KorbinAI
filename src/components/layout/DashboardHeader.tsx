@@ -11,17 +11,13 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Settings, LogOut, FolderKanban, Bot, Sun, Moon, Monitor, CreditCard, FileText, Shield, ClipboardPen, Terminal, ImagePlus, Code, MessageSquare, Plus, MessageSquareText, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid, SquarePen, Sparkles } from "lucide-react";
+import { User, Settings, LogOut, FolderKanban, Sun, Moon, Monitor, CreditCard, FileText, Shield, LifeBuoy, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid, SquarePen } from "lucide-react";
 import { useSidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -33,6 +29,7 @@ import { listRecentChatsForUser, deleteChatSession, updateChatSessionMetadata } 
 import type { ChatSession } from "@/types/chat";
 import { usePathname, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import FeedbackReporter from "../shared/FeedbackReporter";
 
 
 interface DashboardHeaderProps {
@@ -87,6 +84,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [chatToRename, setChatToRename] = useState<ChatSession | null>(null);
   const [newChatName, setNewChatName] = useState("");
+  const [isFeedbackReporterOpen, setIsFeedbackReporterOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -165,28 +163,33 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     }
     if (user) {
       return (
-         <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" className="relative h-10 w-10 p-0 rounded-full">
-                    <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
-                        <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                    </Avatar>
-                 </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64" align="end" forceMount>
-               <DropdownMenuLabel className="font-normal">
-                 <p className="text-sm font-medium leading-none">{user.displayName}</p>
-                 <p className="text-xs leading-none text-muted-foreground truncate pt-1">{user.email}</p>
-              </DropdownMenuLabel>
-               <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><Link href="/dashboard/trash"><Trash2 className="mr-2 h-4 w-4" />Trash</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild disabled><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing</Link></DropdownMenuItem>
+         <>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 p-0 rounded-full">
+                        <Avatar className="h-10 w-10">
+                            <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
+                            <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                        </Avatar>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                    <p className="text-xs leading-none text-muted-foreground truncate pt-1">{user.email}</p>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><a href="https://korbinai.com/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
-                <DropdownMenuItem asChild><a href="https://korbinai.com/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/dashboard/trash"><Trash2 className="mr-2 h-4 w-4" />Trash</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing & Billing</Link></DropdownMenuItem>
+                <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setIsFeedbackReporterOpen(true)}>
+                        <LifeBuoy className="mr-2 h-4 w-4" />
+                        Feedback & Bugs
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href="https://korbinai.com/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href="https://korbinai.com/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <div className="px-2 py-1.5 text-sm flex justify-between items-center">
                     <span>Subscription</span>
@@ -199,8 +202,10 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 <DropdownMenuItem onSelect={logout} className="text-destructive focus:text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />Sign Out
                 </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <FeedbackReporter isOpen={isFeedbackReporterOpen} onOpenChange={setIsFeedbackReporterOpen} />
+         </>
       )
     }
     return (
@@ -417,7 +422,8 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     </DialogFooter>
                 </DialogContent>
              </Dialog>
-
+             
+             <FeedbackReporter isOpen={isFeedbackReporterOpen} onOpenChange={setIsFeedbackReporterOpen} />
         </div>
     );
   }

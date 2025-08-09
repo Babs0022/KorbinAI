@@ -47,3 +47,40 @@ export async function submitFeedback({ userId, projectId, contentId, rating, tag
   console.log(`Feedback ${feedbackRef.id} saved for project ${projectId} by user ${userId}.`);
   return feedbackRef.id;
 }
+
+
+interface SubmitReportInput {
+    userId: string;
+    email: string;
+    reportType: 'feedback' | 'bug';
+    message: string;
+    page: string;
+}
+
+/**
+ * Saves a user-submitted feedback or bug report to Firestore.
+ * @param {SubmitReportInput} input - The report data.
+ * @returns {Promise<string>} The ID of the newly created report document.
+ */
+export async function submitUserReport({ userId, email, reportType, message, page }: SubmitReportInput): Promise<string> {
+    if (!userId || !reportType || !message) {
+        throw new Error('User ID, report type, and a message are required.');
+    }
+
+    const reportRef = db.collection('userReports').doc();
+
+    const newReportData = {
+        userId,
+        email,
+        reportType,
+        message,
+        page,
+        status: 'new', // Default status for new reports
+        createdAt: FieldValue.serverTimestamp(),
+    };
+
+    await reportRef.set(newReportData);
+
+    console.log(`Report ${reportRef.id} saved for user ${userId}.`);
+    return reportRef.id;
+}
