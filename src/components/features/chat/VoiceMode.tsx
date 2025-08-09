@@ -33,17 +33,34 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const stopAudioPlayback = useCallback(() => {
+    if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+    }
+  }, []);
+
   const startListening = useCallback(() => {
-    if (isMuted || !recognitionRef.current) return;
-    setVoiceState(VoiceState.Listening);
-    recognitionRef.current.start();
-  }, [isMuted]);
+    if (isMuted || !recognitionRef.current || voiceState === VoiceState.Listening) return;
+    try {
+        stopAudioPlayback();
+        setVoiceState(VoiceState.Listening);
+        recognitionRef.current.start();
+    } catch (e) {
+        // This can happen if start() is called while it's already running.
+        console.warn("Speech recognition already started.", e);
+    }
+  }, [isMuted, voiceState, stopAudioPlayback]);
   
   const stopListening = useCallback(() => {
-    if (!recognitionRef.current) return;
-    recognitionRef.current.stop();
-    setVoiceState(VoiceState.Processing);
-  }, []);
+    if (!recognitionRef.current || voiceState !== VoiceState.Listening) return;
+    try {
+        recognitionRef.current.stop();
+        setVoiceState(VoiceState.Processing);
+    } catch (e) {
+        console.warn("Speech recognition already stopped.", e);
+    }
+  }, [voiceState]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -61,13 +78,10 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
     recognitionRef.current.onresult = (event: any) => {
       if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
       
-      let interimTranscript = '';
       let finalTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
           finalTranscript += event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
         }
       }
 
@@ -76,33 +90,34 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
         handleUserSpeech(finalTranscript.trim());
       }
 
-      // Reset silence timeout
       silenceTimeoutRef.current = setTimeout(() => {
         stopListening();
-      }, 1500); // Stop listening after 1.5s of silence
+      }, 1500); 
+    };
+
+    // This handles interruptions. If the user starts speaking, stop the AI's audio.
+    recognitionRef.current.onaudiostart = () => {
+        if (voiceState === VoiceState.Speaking) {
+            stopAudioPlayback();
+        }
     };
 
     recognitionRef.current.onend = () => {
       if (voiceState === VoiceState.Listening) {
-        // If it ended unexpectedly while it should be listening, restart it.
         startListening();
       }
     };
     
-    // Start listening as soon as the component mounts
     startListening();
 
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
+      stopAudioPlayback();
       if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [startListening, stopListening, stopAudioPlayback, voiceState]);
 
   const handleUserSpeech = async (transcript: string) => {
     if (!transcript) {
@@ -120,7 +135,6 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
       const aiMessage: Message = { role: 'model', content: aiResponseText };
       setMessages(prev => [...prev, aiMessage]);
 
-      // Convert AI text to speech and play it
       setVoiceState(VoiceState.Speaking);
       const { audioDataUri } = await textToSpeech({ text: aiResponseText });
       
@@ -128,8 +142,10 @@ export default function VoiceMode({ onClose, messages, setMessages }: VoiceModeP
           audioRef.current.src = audioDataUri;
           audioRef.current.play();
           audioRef.current.onended = () => {
-              setVoiceState(VoiceState.Idle);
-              startListening();
+              if (voiceState === VoiceState.Speaking) { // Ensure it wasn't interrupted
+                  setVoiceState(VoiceState.Idle);
+                  startListening();
+              }
           };
       }
 
