@@ -13,7 +13,7 @@ const creationTools = [
   {
     id: 'feature-written-content',
     icon: ClipboardPen,
-    title: 'Briefly for Creators',
+    title: 'Korbin for Creators',
     description: 'Generate high-quality blog posts, emails, social media updates, and more from a simple description.',
     href: '/written-content',
     badge: 'Write',
@@ -21,7 +21,7 @@ const creationTools = [
   {
     id: 'feature-prompt-generator',
     icon: Terminal,
-    title: 'Briefly for Prompters',
+    title: 'Korbin for Prompters',
     description: 'Need to use another AI? Craft detailed, optimized prompts for any model or task to get the best results.',
     href: '/prompt-generator',
     badge: 'Optimize',
@@ -29,7 +29,7 @@ const creationTools = [
   {
     id: 'feature-image-generator',
     icon: ImagePlus,
-    title: 'Briefly for Artists',
+    title: 'Korbin for Artists',
     description: 'Create unique, stunning images and art from a text description. You can even provide your own images for context.',
     href: '/image-generator',
     badge: 'Create',
@@ -37,7 +37,7 @@ const creationTools = [
   {
     id: 'feature-structured-data',
     icon: Code,
-    title: 'Briefly for Analysts',
+    title: 'Korbin for Analysts',
     description: 'Generate structured data like JSON or CSV from a plain-English description, perfect for populating components.',
     href: '/structured-data',
     badge: 'Build',
@@ -103,3 +103,5 @@ export default function CreationHubPage() {
         </DashboardLayout>
     );
 }
+
+    

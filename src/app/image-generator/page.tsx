@@ -18,7 +18,7 @@ export default function ImageGeneratorPage() {
 
         <div className="text-center">
           <h1 className="mb-2 text-4xl font-bold md:text-5xl">
-            Briefly for Artists
+            Korbin for Artists
           </h1>
           <p className="mb-12 text-lg text-muted-foreground">
             Describe your vision, choose a style, and I'll bring it to life.
@@ -33,3 +33,5 @@ export default function ImageGeneratorPage() {
     </main>
   );
 }
+
+    

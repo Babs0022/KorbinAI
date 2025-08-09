@@ -18,7 +18,7 @@ export default function StructuredDataPage() {
 
         <div className="text-center">
           <h1 className="mb-2 text-4xl font-bold md:text-5xl">
-            Briefly for Analysts
+            Korbin for Analysts
           </h1>
           <p className="mb-12 text-lg text-muted-foreground">
             Describe the data you need, and I'll generate and refine it with you.
@@ -33,3 +33,5 @@ export default function StructuredDataPage() {
     </main>
   );
 }
+
+    

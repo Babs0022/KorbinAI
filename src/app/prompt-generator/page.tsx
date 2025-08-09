@@ -18,7 +18,7 @@ export default function PromptGeneratorPage() {
 
         <div className="text-center">
           <h1 className="mb-2 text-4xl font-bold md:text-5xl">
-            Briefly for Prompters
+            Korbin for Prompters
           </h1>
           <p className="mb-12 text-lg text-muted-foreground">
             Describe a task, and I'll craft an optimized prompt for you.
@@ -33,3 +33,5 @@ export default function PromptGeneratorPage() {
     </main>
   );
 }
+
+    
