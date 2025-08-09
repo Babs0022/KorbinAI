@@ -24,9 +24,11 @@ export const UserReportSchema = z.object({
     userId: z.string(),
     email: z.string(),
     reportType: z.enum(['feedback', 'bug']),
+    subject: z.string(),
     message: z.string(),
     page: z.string(),
     status: z.enum(['new', 'in-progress', 'resolved']),
+    attachmentUrl: z.string().url().optional(),
     createdAt: z.any(), // Firestore Timestamp
 });
 

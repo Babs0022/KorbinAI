@@ -4,6 +4,7 @@
 import admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { FeedbackRating } from '@/types/feedback';
+import { v4 as uuidv4 } from 'uuid';
 
 // Initialize Firebase Admin SDK if not already initialized
 if (admin.apps.length === 0) {
@@ -48,13 +49,47 @@ export async function submitFeedback({ userId, projectId, contentId, rating, tag
   return feedbackRef.id;
 }
 
+/**
+ * Uploads a report attachment to Firebase Cloud Storage.
+ * @param userId The ID of the user uploading the file.
+ * @param file The file object to upload.
+ * @returns A promise that resolves to the public URL of the uploaded file.
+ */
+async function uploadReportAttachment(userId: string, file: File): Promise<string> {
+    const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+    if (!bucketName) {
+        console.error('Firebase Storage bucket name is not configured.');
+        throw new Error('Storage service is not configured.');
+    }
+    const bucket = admin.storage().bucket(bucketName);
+
+    const fileId = uuidv4();
+    const fileExtension = file.name.split('.').pop() || 'bin';
+    const filePath = `user-reports/${userId}/${fileId}.${fileExtension}`;
+    const storageFile = bucket.file(filePath);
+
+    // Convert the File object to a Buffer
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    await storageFile.save(buffer, {
+        metadata: { contentType: file.type },
+    });
+    
+    // Make the file public to be viewable
+    await storageFile.makePublic();
+
+    return storageFile.publicUrl();
+}
+
 
 interface SubmitReportInput {
     userId: string;
     email: string;
     reportType: 'feedback' | 'bug';
+    subject: string;
     message: string;
     page: string;
+    attachmentFile?: File;
 }
 
 /**
@@ -62,9 +97,14 @@ interface SubmitReportInput {
  * @param {SubmitReportInput} input - The report data.
  * @returns {Promise<string>} The ID of the newly created report document.
  */
-export async function submitUserReport({ userId, email, reportType, message, page }: SubmitReportInput): Promise<string> {
-    if (!userId || !reportType || !message) {
-        throw new Error('User ID, report type, and a message are required.');
+export async function submitUserReport({ userId, email, reportType, subject, message, page, attachmentFile }: SubmitReportInput): Promise<string> {
+    if (!userId || !reportType || !message || !subject) {
+        throw new Error('User ID, report type, subject, and a message are required.');
+    }
+
+    let attachmentUrl: string | undefined = undefined;
+    if (attachmentFile) {
+        attachmentUrl = await uploadReportAttachment(userId, attachmentFile);
     }
 
     const reportRef = db.collection('userReports').doc();
@@ -73,10 +113,12 @@ export async function submitUserReport({ userId, email, reportType, message, pag
         userId,
         email,
         reportType,
+        subject,
         message,
         page,
         status: 'new', // Default status for new reports
         createdAt: FieldValue.serverTimestamp(),
+        ...(attachmentUrl && { attachmentUrl }),
     };
 
     await reportRef.set(newReportData);

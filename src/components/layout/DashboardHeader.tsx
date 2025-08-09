@@ -29,7 +29,6 @@ import { listRecentChatsForUser, deleteChatSession, updateChatSessionMetadata } 
 import type { ChatSession } from "@/types/chat";
 import { usePathname, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import FeedbackReporter from "../shared/FeedbackReporter";
 
 
 interface DashboardHeaderProps {
@@ -84,7 +83,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [chatToRename, setChatToRename] = useState<ChatSession | null>(null);
   const [newChatName, setNewChatName] = useState("");
-  const [isFeedbackReporterOpen, setIsFeedbackReporterOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -184,10 +182,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <DropdownMenuItem asChild><Link href="/dashboard/trash"><Trash2 className="mr-2 h-4 w-4" />Trash</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing & Billing</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => setIsFeedbackReporterOpen(true)}>
-                        <LifeBuoy className="mr-2 h-4 w-4" />
-                        Feedback & Bugs
-                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/dashboard/feedback"><LifeBuoy className="mr-2 h-4 w-4" />Feedback & Bugs</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><a href="https://korbinai.com/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
                     <DropdownMenuItem asChild><a href="https://korbinai.com/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -204,7 +199,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-            <FeedbackReporter isOpen={isFeedbackReporterOpen} onOpenChange={setIsFeedbackReporterOpen} />
          </>
       )
     }
@@ -422,8 +416,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     </DialogFooter>
                 </DialogContent>
              </Dialog>
-             
-             <FeedbackReporter isOpen={isFeedbackReporterOpen} onOpenChange={setIsFeedbackReporterOpen} />
         </div>
     );
   }
