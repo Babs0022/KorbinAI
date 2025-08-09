@@ -180,7 +180,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <DropdownMenuItem asChild><Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/dashboard/trash"><Trash2 className="mr-2 h-4 w-4" />Trash</Link></DropdownMenuItem>
-                    <DropdownMenuItem asChild><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing & Billing</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild disabled><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing & Billing</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
                     <DropdownMenuItem asChild><Link href="/dashboard/feedback"><LifeBuoy className="mr-2 h-4 w-4" />Feedback & Bugs</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><a href="https://korbinai.com/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
