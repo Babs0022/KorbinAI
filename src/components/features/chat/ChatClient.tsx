@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
 import ChatMessageActions from "./ChatMessageActions";
+import Logo from "@/components/shared/Logo";
 
 const formSchema = z.object({
   message: z.string(),
@@ -310,9 +311,13 @@ export default function ChatClient() {
     return (
         <div className="flex flex-col h-full items-center justify-center text-center p-4">
             <div className="w-full max-w-4xl">
-                <div className="mb-4">
-                    <h1 className="text-3xl sm:text-4xl font-bold break-words text-primary">Hello, {user?.displayName?.split(' ')[0] || 'friend'}!</h1>
-                    <p className="text-lg sm:text-xl text-muted-foreground">What shall we create today?</p>
+                <div className="mb-8 space-y-4">
+                    <div className="animate-bounce-subtle inline-block">
+                        <Logo />
+                    </div>
+                    <h1 className="text-4xl sm:text-5xl font-bold break-words text-primary">
+                        What's good, {user?.displayName?.split(' ')[0] || 'friend'}?
+                    </h1>
                 </div>
                <ChatInputForm 
                   onSubmit={handleSendMessage} 
