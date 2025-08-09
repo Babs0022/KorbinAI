@@ -6,12 +6,12 @@ import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useParams } from "next/navigation";
-import { LoaderCircle, ImagePlus, X, Info, Bot, ChevronDown, CircleStop, ArrowUp } from "lucide-react";
+import { LoaderCircle, ImagePlus, X, Info, ArrowUp, Mic } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { type Message } from "@/types/ai";
 import { type ChatSession } from "@/types/chat";
-import { createChatSession, getChatSession, updateChatSession } from "@/services/chatService";
+import { createChatSession, getChatSession } from "@/services/chatService";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
 import ChatMessageActions from "./ChatMessageActions";
-import Logo from "@/components/shared/Logo";
+import VoiceMode from "./VoiceMode";
 
 const formSchema = z.object({
   message: z.string(),
@@ -31,9 +31,10 @@ type FormValues = z.infer<typeof formSchema>;
 interface ChatInputFormProps {
   onSubmit: (values: FormValues, media?: string[]) => void;
   isLoading: boolean;
+  onVoiceModeClick: () => void;
 }
 
-const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading }, ref) => {
+const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onVoiceModeClick }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [mediaPreviews, setMediaPreviews] = useState<{type: 'image' | 'video' | 'other', url: string, name: string}[]>([]);
@@ -109,12 +110,14 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                             <FormItem><FormControl><Textarea placeholder={"Ask Korbin anything..."} className="text-lg min-h-[90px] bg-secondary border-0 focus-visible:ring-0 resize-none placeholder:text-lg" autoComplete="off" disabled={isLoading} onKeyDown={handleKeyDown} {...field} /></FormControl></FormItem>
                         )} />
                         <div className="flex items-center justify-between p-2">
-                            <div/>
                             <div className="flex items-center gap-2">
                                 <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={() => fileInputRef.current?.click()} disabled={isLoading}><ImagePlus className="h-5 w-5 text-muted-foreground" /><span className="sr-only">Upload media</span></Button>
                                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple accept="image/*,video/mp4,video/quicktime,application/pdf,text/plain,.csv,.json,.xml" />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={onVoiceModeClick} disabled={isLoading}><Mic className="h-5 w-5 text-muted-foreground" /><span className="sr-only">Activate Voice Mode</span></Button>
                                 <Button type="submit" size="sm" className="rounded-lg" disabled={!messageValue?.trim() && mediaPreviews.length === 0}>
-                                    {isLoading ? <CircleStop className="h-5 w-5" /> : <ArrowUp className="h-5 w-5" />}
+                                    {isLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <ArrowUp className="h-5 w-5" />}
                                     <span className="sr-only">{isLoading ? 'Stop' : 'Send'}</span>
                                 </Button>
                             </div>
@@ -136,6 +139,7 @@ export default function ChatClient() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(!!chatId);
+  const [isVoiceModeActive, setIsVoiceModeActive] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isSubmittingRef = useRef(false);
 
@@ -197,14 +201,12 @@ export default function ChatClient() {
         const aiMessage: Message = { role: 'model', content: responseText };
         finalHistory = [...historyForAI, aiMessage];
         setMessages(finalHistory);
-        await updateChatSession(currentChatId, finalHistory);
 
     } catch (error: any) {
         console.error("Request failed:", error);
         const errorMessage: Message = { role: 'model', content: `Sorry, an error occurred: ${error.message}` };
         finalHistory = [...historyForAI, errorMessage];
         setMessages(finalHistory);
-        await updateChatSession(currentChatId, finalHistory);
     } finally {
         setIsLoading(false);
     }
@@ -217,19 +219,18 @@ export default function ChatClient() {
     isSubmittingRef.current = true;
     
     let currentChatId = chatId;
-    const isNewChat = !currentChatId;
+    
+    const userMessage: Message = { role: "user", content: values.message, mediaUrls: media };
+    const historyForAI = [...messages, userMessage];
+    setMessages(historyForAI);
+    
+    const aiPlaceholder: Message = { role: "model", content: "" };
+    setMessages(prev => [...prev, aiPlaceholder]);
 
     try {
-      const userMessage: Message = { role: "user", content: values.message, mediaUrls: media };
-      
-      const historyForAI = [...messages, userMessage];
-      setMessages(historyForAI);
-      
-      const aiPlaceholder: Message = { role: "model", content: "" };
-      setMessages(prev => [...prev, aiPlaceholder]);
+      const isNewChat = !currentChatId;
 
       if (isNewChat) {
-        // Create session in DB first to get an ID
         const newSession = await createChatSession({
           userId: user.uid,
           firstUserMessage: userMessage,
@@ -237,17 +238,14 @@ export default function ChatClient() {
         currentChatId = newSession.id;
       }
       
-      // Now get the AI response using the correct chat ID
-      await getAiResponse(currentChatId!, historyForAI);
+      const finalHistory = await getAiResponse(currentChatId!, historyForAI);
       
-      // If it was a new chat, navigate only after the response is back
-      if (isNewChat) {
+      if (isNewChat && finalHistory) {
         router.push(`/chat/${currentChatId}`);
       }
       
     } catch (error) {
       console.error("Error handling message sending:", error);
-      // Revert UI to show only the user message if AI call fails immediately
       setMessages(messages.slice(0, -1));
     } finally {
       isSubmittingRef.current = false;
@@ -256,7 +254,7 @@ export default function ChatClient() {
   
   const handleRegenerate = (messageIndex: number) => {
     if (!chatId || messageIndex === 0) return;
-    const previousMessages = messages.slice(0, messageIndex - 1); // Exclude the message to be regenerated
+    const previousMessages = messages.slice(0, messageIndex - 1);
     const aiPlaceholder: Message = { role: "model", content: "" };
     setMessages([...previousMessages, aiPlaceholder]);
     getAiResponse(chatId, previousMessages);
@@ -317,6 +315,16 @@ export default function ChatClient() {
     return null; // Don't render anything if there are no messages
   };
   
+  if (isVoiceModeActive) {
+    return (
+        <VoiceMode
+            onClose={() => setIsVoiceModeActive(false)}
+            messages={messages}
+            setMessages={setMessages}
+        />
+    )
+  }
+
   // New layout for the initial "hello" screen
   if (!chatId && messages.length === 0 && !isPageLoading) {
     return (
@@ -330,6 +338,7 @@ export default function ChatClient() {
                <ChatInputForm 
                   onSubmit={handleSendMessage} 
                   isLoading={isLoading} 
+                  onVoiceModeClick={() => setIsVoiceModeActive(true)}
                />
             </div>
         </div>
@@ -345,9 +354,8 @@ export default function ChatClient() {
        <ChatInputForm 
           onSubmit={handleSendMessage} 
           isLoading={isLoading} 
+          onVoiceModeClick={() => setIsVoiceModeActive(true)}
        />
     </div>
   );
 }
-
-    

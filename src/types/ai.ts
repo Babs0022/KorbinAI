@@ -273,3 +273,13 @@ export const OptimizeContentOutputSchema = z.object({
   optimizedContent: z.string().describe("The optimized content or a list of suggestions, formatted as a markdown string."),
 });
 export type OptimizeContentOutput = z.infer<typeof OptimizeContentOutputSchema>;
+
+// === text-to-speech-flow ===
+export const TextToSpeechInputSchema = z.object({
+    text: z.string().describe('The text to be converted to speech.'),
+});
+export type TextToSpeechInput = z.infer<typeof TextToSpeechInputSchema>;
+export const TextToSpeechOutputSchema = z.object({
+    audioDataUri: z.string().describe("A data URI representing the generated audio file in WAV format."),
+});
+export type TextToSpeechOutput = z.infer<typeof TextToSpeechOutputSchema>;

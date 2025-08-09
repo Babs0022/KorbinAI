@@ -1,4 +1,3 @@
-
 // This file is used to register Genkit flows for local development.
 // It has been cleaned up to only import active and implemented flows.
 import './flows/generate-written-content-flow';
@@ -17,6 +16,7 @@ import './flows/generate-section-draft-flow';
 import './flows/optimize-content-flow';
 import './flows/generate-data-refinement-suggestions-flow';
 import './flows/conversational-chat-flow';
+import './flows/text-to-speech-flow';
 import './tools/time-tool';
 import './tools/image-generation-tool';
 import './tools/web-scraper-tool';
