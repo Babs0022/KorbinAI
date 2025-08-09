@@ -170,10 +170,10 @@ export default function ChatClient() {
   }, [chatId, user, router]);
 
   const getAiResponse = useCallback(async (currentChatId: string, historyForAI: Message[]) => {
-    if (!user) return;
+    if (!user) return null;
 
     setIsLoading(true);
-
+    let finalHistory: Message[] | null = null;
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
@@ -194,45 +194,56 @@ export default function ChatClient() {
         const data = await response.json();
         const responseText = data.response;
         
-        setMessages(prev => [...prev, { role: 'model', content: responseText }]);
-        await updateChatSession(currentChatId, [...historyForAI, { role: 'model', content: responseText }]);
+        const aiMessage: Message = { role: 'model', content: responseText };
+        finalHistory = [...historyForAI, aiMessage];
+        setMessages(finalHistory);
+        await updateChatSession(currentChatId, finalHistory);
 
     } catch (error: any) {
         console.error("Request failed:", error);
         const errorMessage: Message = { role: 'model', content: `Sorry, an error occurred: ${error.message}` };
-        const finalHistory = [...historyForAI, errorMessage];
+        finalHistory = [...historyForAI, errorMessage];
         setMessages(finalHistory);
         await updateChatSession(currentChatId, finalHistory);
     } finally {
         setIsLoading(false);
     }
+    return finalHistory;
   }, [user, chatId]);
 
   const handleSendMessage = useCallback(async (values: FormValues, media?: string[]) => {
     if (!user || isSubmittingRef.current) return;
 
     isSubmittingRef.current = true;
+    
+    let currentChatId = chatId;
+    const isNewChat = !currentChatId;
+
     try {
       const userMessage: Message = { role: "user", content: values.message, mediaUrls: media };
       
       const historyForAI = [...messages, userMessage];
-      setMessages(historyForAI); // Update UI immediately with user message
+      setMessages(historyForAI);
       
       const aiPlaceholder: Message = { role: "model", content: "" };
-      setMessages(prev => [...prev, aiPlaceholder]); // Add placeholder for AI response
+      setMessages(prev => [...prev, aiPlaceholder]);
 
-      let currentChatId = chatId;
-
-      if (!currentChatId) {
+      if (isNewChat) {
+        // Create session in DB first to get an ID
         const newSession = await createChatSession({
           userId: user.uid,
           firstUserMessage: userMessage,
         });
-        router.push(`/chat/${newSession.id}`);
         currentChatId = newSession.id;
       }
       
-      await getAiResponse(currentChatId, historyForAI);
+      // Now get the AI response using the correct chat ID
+      await getAiResponse(currentChatId!, historyForAI);
+      
+      // If it was a new chat, navigate only after the response is back
+      if (isNewChat) {
+        router.push(`/chat/${currentChatId}`);
+      }
       
     } catch (error) {
       console.error("Error handling message sending:", error);
@@ -338,3 +349,5 @@ export default function ChatClient() {
     </div>
   );
 }
+
+    
