@@ -12,7 +12,7 @@ const Logo = ({ className, width = 32, height = 32 }: LogoProps) => {
   return (
     <div className={cn("flex items-center space-x-2", className)}>
       <Image
-        src="/icon.png"
+        src="/KorbinAI.svg"
         alt="KorbinAI Logo"
         width={width}
         height={height}

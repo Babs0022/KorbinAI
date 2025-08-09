@@ -311,10 +311,7 @@ export default function ChatClient() {
     return (
         <div className="flex flex-col h-full items-center justify-center text-center p-4">
             <div className="w-full max-w-4xl">
-                <div className="mb-8 space-y-4">
-                    <div className="animate-bounce-subtle inline-block">
-                        <Logo className="w-20 h-20" />
-                    </div>
+                <div className="mb-8 space-y-2">
                     <h1 className="text-4xl sm:text-5xl font-bold break-words text-primary">
                         What's good, {user?.displayName?.split(' ')[0] || 'friend'}?
                     </h1>

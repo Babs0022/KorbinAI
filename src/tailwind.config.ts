@@ -110,16 +110,6 @@ export default {
             '0%': { transform: 'rotate(0deg)' },
             '100%': { transform: 'rotate(360deg)' },
         },
-        'bounce-subtle': {
-          '0%, 100%': {
-            transform: 'translateY(-20%)',
-            animationTimingFunction: 'cubic-bezier(0.8, 0, 1, 1)',
-          },
-          '50%': {
-            transform: 'translateY(0)',
-            animationTimingFunction: 'cubic-bezier(0, 0, 0.2, 1)',
-          },
-        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -127,7 +117,6 @@ export default {
         'fade-in': 'fade-in 0.5s ease-out forwards',
         'marquee-slow': 'marquee-slow 60s linear infinite',
         'spin-slow': 'spin-slow 1.5s linear infinite',
-        'bounce-subtle': 'bounce-subtle 1.5s infinite',
       },
     },
   },
