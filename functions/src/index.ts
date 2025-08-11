@@ -1,21 +1,15 @@
 import { onRequest } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
-import * as admin from "firebase-admin";
 import * as crypto from "crypto";
 import cors from "cors";
 import { processChargeSuccessEvent } from "./paystack";
 import { processNowPaymentsWebhook } from "./nowpayments";
 import { PaystackChargeSuccessData } from "./types";
 import { sendBulkEmail as sendBulkEmailFunction } from "./email";
+import './firebase-admin'; // Ensure admin is initialized
 
 // --- Initialization ---
 const corsHandler = cors({ origin: true });
-
-// Initialize without arguments to automatically use Application Default Credentials.
-// This is the standard and most reliable method for Cloud Functions.
-if (!admin.apps.length) {
-    admin.initializeApp();
-}
 
 // --- Webhook Handlers ---
 
