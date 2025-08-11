@@ -4,6 +4,8 @@
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
+import type { UserReport } from '@/types/feedback';
+
 
 interface VerificationRequest {
     id: string;
@@ -109,4 +111,33 @@ export async function denyVerificationRequest(adminUserId: string, requestUserId
 
     const requestRef = adminDb.collection('verificationRequests').doc(requestUserId);
     await requestRef.update({ status: 'denied', updatedAt: FieldValue.serverTimestamp() });
+}
+
+/**
+ * Fetches all user-submitted reports (feedback and bugs).
+ * This function is protected and can only be called by an admin.
+ * @param {string} adminUserId - The UID of the admin user making the request.
+ * @returns {Promise<UserReport[]>} A list of all user reports.
+ */
+export async function getAllUserReports(adminUserId: string): Promise<UserReport[]> {
+    if (!await isAdmin(adminUserId)) {
+        throw new HttpsError('permission-denied', 'You must be an admin to perform this action.');
+    }
+
+    const snapshot = await adminDb.collection('userReports')
+        .orderBy('createdAt', 'desc')
+        .get();
+
+    if (snapshot.empty) {
+        return [];
+    }
+    
+    return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate().toISOString(),
+        } as UserReport;
+    });
 }

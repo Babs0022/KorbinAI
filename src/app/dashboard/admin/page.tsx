@@ -4,17 +4,18 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPendingVerificationRequests, approveVerificationRequest, denyVerificationRequest } from '@/services/adminService';
+import { getPendingVerificationRequests, approveVerificationRequest, denyVerificationRequest, getAllUserReports } from '@/services/adminService';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert } from 'lucide-react';
+import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import type { UserReport } from '@/types/feedback';
 
 interface VerificationRequest {
     id: string;
@@ -30,6 +31,7 @@ export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
+  const [reports, setReports] = useState<UserReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -51,16 +53,21 @@ export default function AdminPage() {
     return () => unsubscribe();
   }, [user, authLoading]);
   
-  // Fetch pending requests if user is an admin
+  // Fetch data if user is an admin
   useEffect(() => {
       if (isAdmin === true && user) {
           setIsLoading(true);
-          getPendingVerificationRequests(user.uid)
-            .then(setRequests)
-            .catch(err => {
-                toast({ variant: 'destructive', title: 'Error', description: err.message });
-            })
-            .finally(() => setIsLoading(false));
+          Promise.all([
+            getPendingVerificationRequests(user.uid),
+            getAllUserReports(user.uid)
+          ]).then(([verificationRequests, userReports]) => {
+              setRequests(verificationRequests);
+              setReports(userReports);
+          }).catch(err => {
+              toast({ variant: 'destructive', title: 'Error', description: err.message });
+          }).finally(() => {
+              setIsLoading(false);
+          });
       } else if (isAdmin === false) {
           setIsLoading(false);
       }
@@ -116,6 +123,8 @@ export default function AdminPage() {
       }
 
       return (
+        <div className="space-y-12">
+          {/* Verification Requests Card */}
           <Card>
             <CardHeader>
               <CardTitle>Pending Verification Requests</CardTitle>
@@ -178,6 +187,59 @@ export default function AdminPage() {
               </Table>
             </CardContent>
           </Card>
+          
+          {/* User Feedback & Reports Card */}
+           <Card>
+            <CardHeader>
+              <CardTitle>User Feedback & Bug Reports</CardTitle>
+              <CardDescription>All user-submitted reports are listed here.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Subject</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Submitted</TableHead>
+                    <TableHead>Attachment</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reports.length > 0 ? reports.map((report) => (
+                    <TableRow key={report.id}>
+                      <TableCell>
+                         <Badge variant={report.reportType === 'bug' ? 'destructive' : 'secondary'} className="capitalize">
+                            {report.reportType === 'bug' ? <Bug className="mr-2 h-3.5 w-3.5" /> : <MessageCircle className="mr-2 h-3.5 w-3.5" />}
+                            {report.reportType}
+                        </Badge>
+                      </TableCell>
+                       <TableCell>
+                        <p className="font-medium truncate max-w-xs">{report.subject}</p>
+                        <p className="text-sm text-muted-foreground truncate max-w-xs">{report.message}</p>
+                      </TableCell>
+                      <TableCell>{report.email}</TableCell>
+                      <TableCell>{formatDistanceToNow(new Date(report.createdAt), { addSuffix: true })}</TableCell>
+                      <TableCell>
+                        {report.attachmentUrl ? (
+                            <a href={report.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline">
+                                View <FileText className="h-3 w-3" />
+                            </a>
+                        ) : 'None'}
+                      </TableCell>
+                    </TableRow>
+                  )) : (
+                    <TableRow>
+                        <TableCell colSpan={5} className="text-center h-24">
+                            No user reports have been submitted yet.
+                        </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
       );
   }
 
