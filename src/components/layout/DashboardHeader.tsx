@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Settings, LogOut, FolderKanban, Sun, Moon, Monitor, CreditCard, FileText, Shield, LifeBuoy, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid, SquarePen, ShieldCheck } from "lucide-react";
+import { User, Settings, LogOut, FolderKanban, Sun, Moon, Monitor, CreditCard, FileText, Shield, LifeBuoy, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid, SquarePen, ShieldCheck, BadgeCheck } from "lucide-react";
 import { useSidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -29,6 +29,8 @@ import { listRecentChatsForUser, deleteChatSession, updateChatSessionMetadata } 
 import type { ChatSession } from "@/types/chat";
 import { usePathname, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 
 interface DashboardHeaderProps {
@@ -76,6 +78,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   const { subscription } = useSubscription();
   const { state, isMobile } = useSidebar();
   const [recentChats, setRecentChats] = useState<ChatSession[]>([]);
+  const [isVerified, setIsVerified] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
@@ -86,7 +89,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
 
   useEffect(() => {
     if (user) {
-      const unsubscribe = listRecentChatsForUser(user.uid, (chats) => {
+      const unsubscribeChats = listRecentChatsForUser(user.uid, (chats) => {
         // Sort chats to show pinned ones first, then by date
         const sortedChats = chats.sort((a, b) => {
           if (a.isPinned && !b.isPinned) return -1;
@@ -96,7 +99,16 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
         });
         setRecentChats(sortedChats);
       });
-      return () => unsubscribe();
+      
+      const userDocRef = doc(db, 'users', user.uid);
+      const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
+          setIsVerified(docSnap.data()?.isVerified === true);
+      });
+
+      return () => {
+          unsubscribeChats();
+          unsubscribeUser();
+      };
     }
   }, [user]);
 
@@ -165,15 +177,21 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-10 w-10 p-0 rounded-full">
-                        <Avatar className="h-10 w-10">
-                            <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
-                            <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                        </Avatar>
+                        <div className="relative">
+                            <Avatar className="h-10 w-10">
+                                <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
+                                <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                            </Avatar>
+                             {isVerified && <BadgeCheck className="absolute -bottom-1 -right-1 h-5 w-5 text-primary bg-background rounded-full" />}
+                        </div>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-64" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
-                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                    <p className="text-sm font-medium leading-none flex items-center gap-1.5">
+                        {user.displayName}
+                        {isVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                    </p>
                     <p className="text-xs leading-none text-muted-foreground truncate pt-1">{user.email}</p>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -364,12 +382,18 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                              <Button variant="ghost" className="w-full justify-start items-center gap-3 p-2 h-auto">
-                                <Avatar className="h-10 w-10">
-                                    <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
-                                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                                </Avatar>
+                                <div className="relative">
+                                    <Avatar className="h-10 w-10">
+                                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
+                                        <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                                    </Avatar>
+                                     {isVerified && <BadgeCheck className="absolute -bottom-1 -right-1 h-5 w-5 text-primary bg-background rounded-full" />}
+                                </div>
                                 <div className={cn("text-left transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>
-                                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                                    <p className="text-sm font-medium leading-none flex items-center gap-1.5">
+                                        {user.displayName}
+                                        {isVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                                    </p>
                                     <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                                 </div>
                              </Button>
@@ -438,3 +462,5 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     </header>
   );
 }
+
+    

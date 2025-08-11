@@ -9,7 +9,7 @@ import { z } from "zod";
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { doc, updateDoc, onSnapshot } from "firebase/firestore";
 import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
-import { LoaderCircle, User, Key, Image as ImageIcon, CreditCard, Eye, EyeOff, Upload, CheckCircle, Award, Clock } from "lucide-react";
+import { LoaderCircle, User, Key, CreditCard, Eye, EyeOff, Upload, Award, Clock, BadgeCheck } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { auth, db } from "@/lib/firebase";
@@ -67,6 +67,7 @@ export default function AccountManagementPage() {
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
   const [verificationStatus, setVerificationStatus] = useState<'verified' | 'pending' | 'not_submitted'>('not_submitted');
+  const [isVerified, setIsVerified] = useState(false);
   
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -87,7 +88,7 @@ export default function AccountManagementPage() {
   });
 
   const verificationForm = useForm<z.infer<typeof verificationSchema>>({
-    resolver: zodResolver(verificationSchema),
+    resolver: zodResolver(verificationFormSchema),
     defaultValues: {
       tweetUrl: "",
     },
@@ -95,60 +96,56 @@ export default function AccountManagementPage() {
   
   // Refactored useEffect for handling verification status
   useEffect(() => {
-    if (user) {
-      profileForm.reset({ name: user.displayName || "" });
-      setSelectedAvatar(user.photoURL || '');
-      
-      const userDocRef = doc(db, "users", user.uid);
-      const verificationReqRef = doc(db, "verificationRequests", user.uid);
+    if (!user) return;
+    
+    profileForm.reset({ name: user.displayName || "" });
+    setSelectedAvatar(user.photoURL || '');
+    
+    // Listener for user document (isVerified flag)
+    const userDocRef = doc(db, "users", user.uid);
+    const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
+      const userData = docSnap.data();
+      const verified = userData?.isVerified === true;
+      setIsVerified(verified);
 
-      let isVerified = false;
-      let requestIsPending = false;
+      if (verified) {
+        setVerificationStatus('verified');
+      } else {
+        // Only check verificationRequests if user is not verified
+        const verificationReqRef = doc(db, "verificationRequests", user.uid);
+        getDoc(verificationReqRef).then(reqSnap => {
+          if (reqSnap.exists() && reqSnap.data()?.status === 'pending') {
+            setVerificationStatus('pending');
+          } else {
+            setVerificationStatus('not_submitted');
+          }
+        });
+      }
+    });
 
-      const updateUserStatus = () => {
-        if (isVerified) {
-          setVerificationStatus('verified');
-        } else if (requestIsPending) {
-          setVerificationStatus('pending');
-        } else {
-          setVerificationStatus('not_submitted');
-        }
-      };
+    // Listener for subscription
+    setIsSubscriptionLoading(true);
+    const subDocRef = doc(db, "userSubscriptions", user.uid);
+    const unsubscribeSub = onSnapshot(subDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setSubscription({
+          ...data,
+          currentPeriodEnd: data.currentPeriodEnd?.toDate(),
+          currentPeriodStart: data.currentPeriodStart?.toDate(),
+        } as UserSubscription);
+      } else {
+        setSubscription(null);
+      }
+      setIsSubscriptionLoading(false);
+    });
 
-      const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
-        isVerified = docSnap.exists() && docSnap.data()?.isVerified === true;
-        updateUserStatus();
-      });
-
-      const unsubscribeVerification = onSnapshot(verificationReqRef, (reqSnap) => {
-        requestIsPending = reqSnap.exists() && reqSnap.data()?.status === 'pending';
-        updateUserStatus();
-      });
-      
-      // Handle subscription loading separately
-      setIsSubscriptionLoading(true);
-      const subDocRef = doc(db, "userSubscriptions", user.uid);
-      const unsubscribeSub = onSnapshot(subDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setSubscription({
-            ...data,
-            currentPeriodEnd: data.currentPeriodEnd?.toDate(),
-            currentPeriodStart: data.currentPeriodStart?.toDate(),
-          } as UserSubscription);
-        } else {
-          setSubscription(null);
-        }
-        setIsSubscriptionLoading(false);
-      });
-
-      return () => {
-          unsubscribeUser();
-          unsubscribeVerification();
-          unsubscribeSub();
-      };
-    }
+    return () => {
+      unsubscribeUser();
+      unsubscribeSub();
+    };
   }, [user, profileForm]);
+
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -212,6 +209,7 @@ export default function AccountManagementPage() {
             title: "Submission Received!",
             description: "Thank you! We will review your submission shortly.",
         });
+        setVerificationStatus('pending'); // Manually set status to pending on success
         verificationForm.reset();
     } catch (error: any) {
         toast({
@@ -366,8 +364,7 @@ export default function AccountManagementPage() {
       <main className="flex flex-1 flex-col p-4 md:p-8">
         <div className="w-full max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            Account Management 
-            {verificationStatus === 'verified' && <CheckCircle className="h-7 w-7 text-yellow-400" />}
+            Account Management
           </h1>
           <p className="text-muted-foreground mt-2 mb-10">Manage your profile, password, and subscription.</p>
 
@@ -388,10 +385,11 @@ export default function AccountManagementPage() {
                                 <Label htmlFor="custom-avatar-upload">
                                     <Upload className="h-4 w-4" />
                                     <span className="sr-only">Upload Image</span>
-                                    <Input id="custom-avatar-upload" type="file" className="sr-only" accept="image/png, image/jpeg" onChange={handleAvatarFileChange} />
                                 </Label>
                             </Button>
+                             {isVerified && <BadgeCheck className="absolute bottom-0 right-0 h-8 w-8 text-primary bg-background rounded-full p-1" />}
                         </div>
+                        <Input id="custom-avatar-upload" type="file" className="sr-only" accept="image/png, image/jpeg" onChange={handleAvatarFileChange} />
                     </div>
                     
                     <FormField
