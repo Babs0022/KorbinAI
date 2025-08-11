@@ -79,6 +79,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   const { state, isMobile } = useSidebar();
   const [recentChats, setRecentChats] = useState<ChatSession[]>([]);
   const [isVerified, setIsVerified] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
@@ -104,10 +105,16 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
       const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
           setIsVerified(docSnap.data()?.isVerified === true);
       });
+      
+      const adminDocRef = doc(db, 'admins', user.uid);
+      const unsubscribeAdmin = onSnapshot(adminDocRef, (docSnap) => {
+          setIsAdmin(docSnap.exists());
+      });
 
       return () => {
           unsubscribeChats();
           unsubscribeUser();
+          unsubscribeAdmin();
       };
     }
   }, [user]);
@@ -198,7 +205,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <DropdownMenuItem asChild><Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/dashboard/trash"><Trash2 className="mr-2 h-4 w-4" />Trash</Link></DropdownMenuItem>
-                    <DropdownMenuItem asChild><Link href="/dashboard/admin"><ShieldCheck className="mr-2 h-4 w-4" />Admin</Link></DropdownMenuItem>
+                    {isAdmin && <DropdownMenuItem asChild><Link href="/dashboard/admin"><ShieldCheck className="mr-2 h-4 w-4" />Admin</Link></DropdownMenuItem>}
                     <DropdownMenuItem asChild disabled><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing & Billing</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
                     <DropdownMenuItem asChild><Link href="/dashboard/feedback"><LifeBuoy className="mr-2 h-4 w-4" />Feedback & Bugs</Link></DropdownMenuItem>
@@ -462,5 +469,3 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     </header>
   );
 }
-
-    
