@@ -45,7 +45,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     });
 
     const messageValue = useWatch({ control: form.control, name: 'message' });
-    const isButtonDisabled = isLoading || (!messageValue?.trim() && mediaPreviews.length === 0);
+    const hasContent = messageValue?.trim() || mediaPreviews.length > 0;
 
     const handleFormSubmit = (values: FormValues) => {
         if (isLoading) return; // Prevent submission while loading
@@ -60,7 +60,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     };
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (event.key === 'Enter' && !event.shiftKey && !isButtonDisabled) {
+        if (event.key === 'Enter' && !event.shiftKey && hasContent) {
             event.preventDefault();
             form.handleSubmit(handleFormSubmit)();
         }
@@ -91,6 +91,33 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
     
     const removeMedia = (index: number) => setMediaPreviews(p => p.filter((_, i) => i !== index));
 
+    const ActionButton = () => {
+      if (isLoading) {
+        return (
+          <Button size="sm" className="rounded-lg" disabled>
+            <LoaderCircle className="h-5 w-5 animate-spin" />
+            <span className="sr-only">Sending</span>
+          </Button>
+        );
+      }
+
+      if (hasContent) {
+        return (
+          <Button type="submit" size="sm" className="rounded-lg">
+            <ArrowUp className="h-5 w-5" />
+            <span className="sr-only">Send</span>
+          </Button>
+        );
+      }
+
+      return (
+        <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={onVoiceModeClick}>
+          <Mic className="h-5 w-5 text-muted-foreground" />
+          <span className="sr-only">Activate Voice Mode</span>
+        </Button>
+      );
+    };
+
     return (
         <div className="flex-shrink-0 bg-gradient-to-t from-background via-background/80 to-transparent pt-4 pb-4">
             <div className="mx-auto w-full max-w-4xl px-4">
@@ -115,11 +142,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
                                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple accept="image/*,video/mp4,video/quicktime,application/pdf,text/plain,.csv,.json,.xml" />
                             </div>
                             <div className="flex items-center gap-2">
-                                <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={onVoiceModeClick} disabled={isLoading}><Mic className="h-5 w-5 text-muted-foreground" /><span className="sr-only">Activate Voice Mode</span></Button>
-                                <Button type="submit" size="sm" className="rounded-lg" disabled={!messageValue?.trim() && mediaPreviews.length === 0}>
-                                    {isLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <ArrowUp className="h-5 w-5" />}
-                                    <span className="sr-only">{isLoading ? 'Stop' : 'Send'}</span>
-                                </Button>
+                                <ActionButton />
                             </div>
                         </div>
                     </form>
@@ -362,5 +385,3 @@ export default function ChatClient() {
     </div>
   );
 }
-
-    
