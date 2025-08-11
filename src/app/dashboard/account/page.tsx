@@ -104,21 +104,21 @@ export default function AccountManagementPage() {
       const verificationReqRef = doc(db, "verificationRequests", user.uid);
       
       const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
-          if (docSnap.exists() && docSnap.data()?.isVerified === true) {
-              setVerificationStatus('verified');
-          }
+        if (docSnap.exists() && docSnap.data()?.isVerified === true) {
+          setVerificationStatus('verified');
+        } else {
+          // If not verified, check the request status
+          const unsubscribeVerification = onSnapshot(verificationReqRef, (reqSnap) => {
+            if (reqSnap.exists() && reqSnap.data()?.status === 'pending') {
+              setVerificationStatus('pending');
+            } else {
+              setVerificationStatus('not_submitted');
+            }
+          });
+          return () => unsubscribeVerification();
+        }
       });
       
-      if (verificationStatus !== 'verified') {
-        const unsubscribeVerification = onSnapshot(verificationReqRef, (docSnap) => {
-            if (docSnap.exists() && docSnap.data()?.status === 'pending') {
-                setVerificationStatus('pending');
-            } else if (verificationStatus !== 'verified') {
-                setVerificationStatus('not_submitted');
-            }
-        });
-        return () => unsubscribeVerification();
-      }
 
       const unsubscribeSub = onSnapshot(subDocRef, (docSnap) => {
         if (docSnap.exists()) {
@@ -139,7 +139,7 @@ export default function AccountManagementPage() {
           unsubscribeSub();
       };
     }
-  }, [user, profileForm, verificationStatus]);
+  }, [user, profileForm]);
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
