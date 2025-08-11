@@ -4,24 +4,27 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPendingVerificationRequests, approveVerificationRequest, denyVerificationRequest, getAllUserReports, getAdminDashboardUsers } from '@/services/adminService';
+import { getPendingVerificationRequests, approveVerificationRequest, denyVerificationRequest, getAdminDashboardUsers } from '@/services/adminService';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users, Mail, Copy, FolderKanban } from 'lucide-react';
+import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users, Mail, Copy, FolderKanban, TrendingUp, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, format } from 'date-fns';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { UserReport } from '@/types/feedback';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import type { AdminUserView } from '@/services/adminService';
+import type { AdminDashboardData, AdminUserView, UserSignUpData } from '@/services/adminService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Line, LineChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { getAllUserReports } from '@/services/feedbackService';
+
 
 interface VerificationRequest {
     id: string;
@@ -38,8 +41,8 @@ export default function AdminPage() {
   const { toast } = useToast();
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
   const [reports, setReports] = useState<UserReport[]>([]);
-  const [users, setUsers] = useState<AdminUserView[]>([]);
-  const [totalProjects, setTotalProjects] = useState(0);
+  const [dashboardData, setDashboardData] = useState<AdminDashboardData | null>(null);
+  
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -72,11 +75,10 @@ export default function AdminPage() {
             getPendingVerificationRequests(user.uid),
             getAllUserReports(user.uid),
             getAdminDashboardUsers(user.uid),
-          ]).then(([verificationRequests, userReports, dashboardData]) => {
+          ]).then(([verificationRequests, userReports, adminData]) => {
               setRequests(verificationRequests);
               setReports(userReports);
-              setUsers(dashboardData.users);
-              setTotalProjects(dashboardData.totalProjects);
+              setDashboardData(adminData);
           }).catch(err => {
               toast({ variant: 'destructive', title: 'Error', description: err.message });
           }).finally(() => {
@@ -94,6 +96,8 @@ export default function AdminPage() {
       await approveVerificationRequest(user.uid, requestUserId);
       toast({ title: 'Request Approved', description: 'User has been verified.' });
       setRequests(prev => prev.filter(r => r.userId !== requestUserId));
+      // Optionally re-fetch dashboard data
+      getAdminDashboardUsers(user.uid).then(setDashboardData);
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } finally {
@@ -116,7 +120,8 @@ export default function AdminPage() {
   };
   
   const handleCopyEmails = () => {
-    const allEmails = users.map(u => u.email).filter(Boolean).join(', ');
+    if (!dashboardData) return;
+    const allEmails = dashboardData.users.map(u => u.email).filter(Boolean).join(', ');
     navigator.clipboard.writeText(allEmails);
     toast({ title: 'Emails Copied', description: 'All user emails have been copied to your clipboard.' });
   };
@@ -147,6 +152,8 @@ export default function AdminPage() {
           )
       }
 
+      const users = dashboardData?.users || [];
+
       return (
         <Tabs defaultValue="overview" className="w-full">
             <TabsList className="grid w-full grid-cols-5">
@@ -164,38 +171,89 @@ export default function AdminPage() {
                             <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{users.length}</div>
-                            <p className="text-xs text-muted-foreground">All registered users</p>
+                            <div className="text-2xl font-bold">{dashboardData?.totalUsers ?? 0}</div>
                         </CardContent>
                     </Card>
                     <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Verified Users</CardTitle>
+                            <BadgeCheck className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{dashboardData?.totalVerifiedUsers ?? 0}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
+                            <CreditCard className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{dashboardData?.totalActiveSubscriptions ?? 0}</div>
+                        </CardContent>
+                    </Card>
+                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
                             <FolderKanban className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{totalProjects}</div>
-                            <p className="text-xs text-muted-foreground">All saved projects</p>
+                            <div className="text-2xl font-bold">{dashboardData?.totalProjects ?? 0}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Chats</CardTitle>
+                            <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{dashboardData?.totalChats ?? 0}</div>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Pending Verifications</CardTitle>
-                            <BadgeCheck className="h-4 w-4 text-muted-foreground" />
+                            <User className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{requests.length}</div>
-                            <p className="text-xs text-muted-foreground">Requests needing review</p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Open Feedback/Bugs</CardTitle>
+                            <CardTitle className="text-sm font-medium">Open Feedback</CardTitle>
                             <Bug className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{reports.length}</div>
-                            <p className="text-xs text-muted-foreground">Total submitted reports</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Credits Used</CardTitle>
+                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">N/A</div>
+                            <p className="text-xs text-muted-foreground">Coming Soon</p>
+                        </CardContent>
+                    </Card>
+                </div>
+                <div className="mt-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>User Sign-ups (Last 30 Days)</CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[350px]">
+                             <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={dashboardData?.userSignUps}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="date" />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Line type="monotone" dataKey="count" stroke="#8884d8" name="New Users" />
+                                </LineChart>
+                            </ResponsiveContainer>
                         </CardContent>
                     </Card>
                 </div>

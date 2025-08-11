@@ -3,7 +3,7 @@
 
 import admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import type { FeedbackRating } from '@/types/feedback';
+import type { FeedbackRating, UserReport } from '@/types/feedback';
 import { v4 as uuidv4 } from 'uuid';
 
 // Initialize Firebase Admin SDK if not already initialized
@@ -158,4 +158,29 @@ export async function submitVerificationRequest({ userId, tweetUrl }: SubmitVeri
 
     console.log(`Verification request for user ${userId} has been submitted.`);
     return requestRef.id;
+}
+
+
+/**
+ * Fetches all user-submitted reports (feedback and bugs).
+ * In a real app, this should be protected and only callable by an admin.
+ * @returns {Promise<UserReport[]>} A list of all user reports.
+ */
+export async function getAllUserReports(): Promise<UserReport[]> {
+    const snapshot = await db.collection('userReports')
+        .orderBy('createdAt', 'desc')
+        .get();
+
+    if (snapshot.empty) {
+        return [];
+    }
+    
+    return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate().toISOString(),
+        } as UserReport;
+    });
 }
