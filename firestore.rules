@@ -1,65 +1,59 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // By default, deny all reads and writes.
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Allow users to read their own user document.
+    // Users can read their own user document and admins can read any.
     match /users/{userId} {
-      allow read, update: if request.auth.uid == userId;
+      allow read: if request.auth.uid == userId || exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow create, update: if request.auth.uid == userId;
     }
 
-    // Allow users to read their own subscription document.
+    // Allow admins to read/write to the admins collection.
+    match /admins/{adminId} {
+      allow read, write: if exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Projects are owned by users.
+    match /projects/{projectId} {
+      allow read, create, update, delete: if request.auth.uid == resource.data.userId;
+    }
+
+    // Generations are linked to projects and owned by users.
+    match /generations/{generationId} {
+      allow read, create, update, delete: if request.auth.uid == resource.data.userId;
+    }
+
+    // Chat sessions are owned by users.
+    match /chatSessions/{chatId} {
+      allow read, create, update, delete: if request.auth.uid == resource.data.userId;
+    }
+    
+    // User Subscriptions are private to each user.
     match /userSubscriptions/{userId} {
-      allow read: if request.auth.uid == userId;
-    }
-
-    // Allow users to create and read their own verification request.
-    match /verificationRequests/{userId} {
-        allow create: if request.auth.uid == userId;
         allow read: if request.auth.uid == userId;
     }
     
-    // Allow admins to read all verification requests
-    match /verificationRequests/{requestId} {
-        allow read: if exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-    }
-    
-    // Admins collection: only readable by admins themselves to check status
-    match /admins/{userId} {
-      allow read: if request.auth.uid == userId;
-    }
-
-    // Allow users to manage their own chat sessions.
-    match /chatSessions/{chatId} {
-      allow read, write: if request.auth.uid == resource.data.userId;
-    }
-    
-    // Allow users to create their own projects (metadata).
-    match /projects/{projectId} {
-        allow create: if request.auth.uid == request.resource.data.userId;
+    // Transactions are private to each user.
+    match /transactions/{transactionId} {
         allow read: if request.auth.uid == resource.data.userId;
     }
 
-    // Allow users to create their own generations (content).
-    match /generations/{generationId} {
+    // Feedback can be created by any authenticated user. Admins can read.
+    match /feedback/{feedbackId} {
         allow create: if request.auth.uid == request.resource.data.userId;
-        // Only allow reading a generation if you own the corresponding project.
-        allow read: if exists(/databases/$(database)/documents/projects/{projectId}) &&
-                    get(/databases/$(database)/documents/projects/{projectId}).data.generationId == resource.id &&
-                    get(/databases/$(database)/documents/projects/{projectId}).data.userId == request.auth.uid;
+        allow read: if exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // Allow users to submit feedback and reports.
-    match /feedback/{feedbackId} {
-      allow create: if request.auth.uid == request.resource.data.userId;
-    }
+    // User reports can be created by any authenticated user. Admins can read.
     match /userReports/{reportId} {
-      allow create: if request.auth.uid == request.resource.data.userId;
+        allow create: if request.auth.uid == request.resource.data.userId;
+        allow read: if exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Verification requests can be created/read by the user, and read/updated by admins.
+    match /verificationRequests/{userId} {
+        allow read, create: if request.auth.uid == userId;
+        allow read, update: if exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
   }
 }
