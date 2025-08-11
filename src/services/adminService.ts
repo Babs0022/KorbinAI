@@ -90,7 +90,8 @@ export async function approveVerificationRequest(adminUserId: string, requestUse
 
     const batch = adminDb.batch();
 
-    batch.update(userRef, { isVerified: true });
+    // Use set with merge:true to create the doc if it doesn't exist, or update it if it does.
+    batch.set(userRef, { isVerified: true }, { merge: true });
     batch.update(requestRef, { status: 'approved', updatedAt: FieldValue.serverTimestamp() });
 
     await batch.commit();
