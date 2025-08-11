@@ -151,7 +151,7 @@ export default function AccountManagementPage() {
   };
 
 
-  async function onProfileSubmit(values: z.infer<typeof profileFormSchema>) {
+  async function onProfileSubmit(values: z.infer<typeof profileFormSchema>>) {
     if (!user || !auth.currentUser) return;
     setIsProfileSubmitting(true);
     let photoURL = selectedAvatar;
@@ -179,29 +179,6 @@ export default function AccountManagementPage() {
     }
   }
   
-  async function onPasswordSubmit(values: z.infer<typeof passwordFormSchema>>) {
-    if (!user || !auth.currentUser || !user.email) return;
-
-    setIsPasswordSubmitting(true);
-    try {
-      const credential = EmailAuthProvider.credential(user.email, values.currentPassword);
-      await reauthenticateWithCredential(auth.currentUser, credential);
-      await updatePassword(auth.currentUser, values.newPassword);
-      
-      toast({ title: "Password Updated", description: "Your password has been changed successfully." });
-      passwordForm.reset();
-
-    } catch (error: any) {
-       toast({
-        variant: "destructive",
-        title: "Password Change Failed",
-        description: error.code === 'auth/wrong-password' ? 'The current password you entered is incorrect.' : error.message,
-      });
-    } finally {
-      setIsPasswordSubmitting(false);
-    }
-  }
-
   async function onVerificationSubmit(values: z.infer<typeof verificationSchema>>) {
     if (!user) return;
     setIsVerificationSubmitting(true);
@@ -226,6 +203,29 @@ export default function AccountManagementPage() {
     }
   }
   
+  async function onPasswordSubmit(values: z.infer<typeof passwordFormSchema>>) {
+    if (!user || !auth.currentUser || !user.email) return;
+
+    setIsPasswordSubmitting(true);
+    try {
+      const credential = EmailAuthProvider.credential(user.email, values.currentPassword);
+      await reauthenticateWithCredential(auth.currentUser, credential);
+      await updatePassword(auth.currentUser, values.newPassword);
+      
+      toast({ title: "Password Updated", description: "Your password has been changed successfully." });
+      passwordForm.reset();
+
+    } catch (error: any) {
+       toast({
+        variant: "destructive",
+        title: "Password Change Failed",
+        description: error.code === 'auth/wrong-password' ? 'The current password you entered is incorrect.' : error.message,
+      });
+    } finally {
+      setIsPasswordSubmitting(false);
+    }
+  }
+
   const renderSubscriptionStatus = () => {
     if (isSubscriptionLoading) {
       return (
