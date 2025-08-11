@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users } from 'lucide-react';
+import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users, Mail, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, format } from 'date-fns';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -19,6 +19,9 @@ import type { UserReport } from '@/types/feedback';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import type { AdminUserView } from '@/services/adminService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 interface VerificationRequest {
     id: string;
@@ -39,6 +42,9 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
 
   // Check for admin status
   useEffect(() => {
@@ -106,6 +112,12 @@ export default function AdminPage() {
       setIsProcessing(null);
     }
   };
+  
+  const handleCopyEmails = () => {
+    const allEmails = users.map(u => u.email).filter(Boolean).join(', ');
+    navigator.clipboard.writeText(allEmails);
+    toast({ title: 'Emails Copied', description: 'All user emails have been copied to your clipboard.' });
+  };
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
@@ -135,10 +147,11 @@ export default function AdminPage() {
 
       return (
         <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="users">Users</TabsTrigger>
                 <TabsTrigger value="verification">Verification</TabsTrigger>
                 <TabsTrigger value="feedback">Feedback/Bugs</TabsTrigger>
+                <TabsTrigger value="email">Email</TabsTrigger>
             </TabsList>
             <TabsContent value="users" className="mt-6">
                 <Card>
@@ -311,6 +324,52 @@ export default function AdminPage() {
                     </Table>
                     </CardContent>
                 </Card>
+            </TabsContent>
+            <TabsContent value="email" className="mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-2">
+                         <Card>
+                            <CardHeader>
+                                <CardTitle>Draft Email</CardTitle>
+                                <CardDescription>Compose an email to send to all users.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="subject">Subject</Label>
+                                    <Input id="subject" placeholder="Announcing our new feature!" value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="body">Body</Label>
+                                    <Textarea id="body" placeholder="Hi {{user.name}}, we're excited to share..." className="min-h-[300px]" value={emailBody} onChange={(e) => setEmailBody(e.target.value)} />
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button disabled>
+                                        Send to {users.length} Users (Coming Soon)
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <div>
+                        <Card>
+                             <CardHeader>
+                                <CardTitle>User Emails</CardTitle>
+                                <CardDescription>A list of all registered user emails.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <Button variant="outline" className="w-full" onClick={handleCopyEmails}>
+                                    <Copy className="mr-2 h-4 w-4" />
+                                    Copy All Emails
+                                </Button>
+                                <div className="h-96 overflow-y-auto rounded-md border p-3 bg-secondary/50">
+                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
+                                        {users.map(u => u.email).filter(Boolean).join('\n')}
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
             </TabsContent>
         </Tabs>
       );
