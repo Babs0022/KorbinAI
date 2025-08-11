@@ -51,12 +51,6 @@ const passwordFormSchema = z.object({
   path: ["confirmPassword"],
 });
 
-const avatarSeeds = [
-  "Leo", "Mia", "Omar", "Sofia", "Kenji",
-  "Priya", "Carlos", "Fatima", "Aiden", "Chloe"
-];
-const avatars = avatarSeeds.map(seed => `https://api.dicebear.com/8.x/avataaars/png?seed=${seed}&size=100`);
-
 
 export default function AccountManagementPage() {
   const { user, loading } = useAuth();
@@ -89,7 +83,7 @@ export default function AccountManagementPage() {
   useEffect(() => {
     if (user) {
       profileForm.reset({ name: user.displayName || "" });
-      setSelectedAvatar(user.photoURL || avatars[0]);
+      setSelectedAvatar(user.photoURL || '');
       
       setIsSubscriptionLoading(true);
       const subDocRef = doc(db, "userSubscriptions", user.uid);
@@ -261,36 +255,18 @@ export default function AccountManagementPage() {
                 <Form {...profileForm}>
                   <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
                     <div className="flex flex-col items-center gap-6">
-                        <Avatar className="w-24 h-24">
-                            <AvatarImage src={selectedAvatar} alt="Selected Avatar" />
-                            <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        
-                        <div className="w-full space-y-2">
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-sm font-medium flex items-center gap-2 text-muted-foreground"><ImageIcon className="w-4 h-4"/> Select an Avatar</h3>
-                                 <Button asChild variant="outline" size="sm">
-                                    <Label htmlFor="custom-avatar-upload">
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        Upload Image
-                                        <Input id="custom-avatar-upload" type="file" className="sr-only" accept="image/png, image/jpeg" onChange={handleAvatarFileChange} />
-                                    </Label>
-                                </Button>
-                            </div>
-                            <div className="grid grid-cols-4 gap-4 sm:grid-cols-5">
-                                {avatars.map((avatarUrl, index) => (
-                                    <button type="button" key={index} onClick={() => { setSelectedAvatar(avatarUrl); setCustomAvatarFile(null); }}>
-                                        <NextImage 
-                                            src={avatarUrl}
-                                            width={100}
-                                            height={100}
-                                            alt={`Avatar ${index + 1}`}
-                                            className={cn("rounded-full transition-all", selectedAvatar === avatarUrl ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'opacity-70 hover:opacity-100')}
-                                            data-ai-hint="person avatar"
-                                        />
-                                    </button>
-                                ))}
-                            </div>
+                        <div className="relative">
+                            <Avatar className="w-24 h-24">
+                                <AvatarImage src={selectedAvatar} alt="Selected Avatar" />
+                                <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <Button asChild variant="outline" size="icon" className="absolute -bottom-2 -right-2 rounded-full">
+                                <Label htmlFor="custom-avatar-upload">
+                                    <Upload className="h-4 w-4" />
+                                    <span className="sr-only">Upload Image</span>
+                                    <Input id="custom-avatar-upload" type="file" className="sr-only" accept="image/png, image/jpeg" onChange={handleAvatarFileChange} />
+                                </Label>
+                            </Button>
                         </div>
                     </div>
                     
@@ -427,7 +403,3 @@ export default function AccountManagementPage() {
     </SidebarProvider>
   );
 }
-
-    
-
-    
