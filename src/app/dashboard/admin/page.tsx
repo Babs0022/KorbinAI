@@ -17,13 +17,15 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { UserReport } from '@/types/feedback';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import type { AdminDashboardData, AdminUserView, UserSignUpData } from '@/services/adminService';
+import type { AdminDashboardData } from '@/services/adminService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Line, LineChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { Line, LineChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { getAllUserReports } from '@/services/feedbackService';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 interface VerificationRequest {
@@ -35,6 +37,12 @@ interface VerificationRequest {
     userName?: string;
     userEmail?: string;
 }
+
+const chartMetrics = [
+    { id: 'users', name: 'Users', color: 'hsl(var(--chart-1))' },
+    { id: 'projects', name: 'Projects', color: 'hsl(var(--chart-2))' },
+    { id: 'chats', name: 'Chats', color: 'hsl(var(--chart-3))' },
+];
 
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
@@ -153,6 +161,7 @@ export default function AdminPage() {
       }
 
       const users = dashboardData?.users || [];
+      const timeSeriesData = dashboardData?.timeSeriesData || [];
 
       return (
         <Tabs defaultValue="overview" className="w-full">
@@ -242,16 +251,45 @@ export default function AdminPage() {
                 <div className="mt-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>User Sign-ups (Last 30 Days)</CardTitle>
+                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <CardTitle>Application Analytics</CardTitle>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        {chartMetrics.map(metric => (
+                                            <div key={metric.id} className="flex items-center space-x-2">
+                                                <Checkbox id={`metric-${metric.id}`} defaultChecked />
+                                                <label htmlFor={`metric-${metric.id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                    {metric.name}
+                                                </label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <Select defaultValue="30days">
+                                        <SelectTrigger className="w-[180px]">
+                                            <SelectValue placeholder="Select time range" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="hour">Last Hour</SelectItem>
+                                            <SelectItem value="day">Last 24 Hours</SelectItem>
+                                            <SelectItem value="7days">Last 7 Days</SelectItem>
+                                            <SelectItem value="30days">Last 30 Days</SelectItem>
+                                            <SelectItem value="year">Last Year</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent className="h-[350px]">
                              <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={dashboardData?.userSignUps}>
+                                <LineChart data={timeSeriesData}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="date" />
                                     <YAxis />
                                     <Tooltip />
-                                    <Line type="monotone" dataKey="count" stroke="#8884d8" name="New Users" />
+                                    <Legend />
+                                    {chartMetrics.map(metric => (
+                                        <Line key={metric.id} type="monotone" dataKey={metric.id} stroke={metric.color} name={metric.name} />
+                                    ))}
                                 </LineChart>
                             </ResponsiveContainer>
                         </CardContent>

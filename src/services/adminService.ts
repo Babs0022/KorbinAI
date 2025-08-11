@@ -5,7 +5,7 @@ import { adminDb, adminAuth } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { UserReport } from '@/types/feedback';
-import { subDays, format, eachDayOfInterval } from 'date-fns';
+import { subDays, format, eachDayOfInterval, startOfDay } from 'date-fns';
 
 
 interface VerificationRequest {
@@ -156,9 +156,9 @@ export interface AdminUserView {
     subscriptionPlan?: string;
 }
 
-export interface UserSignUpData {
+export interface TimeSeriesData {
     date: string;
-    count: number;
+    [key: string]: number | string; // e.g., { date: 'Jan 1', users: 5, projects: 10 }
 }
 
 export interface AdminDashboardData {
@@ -168,8 +168,9 @@ export interface AdminDashboardData {
     totalVerifiedUsers: number;
     totalActiveSubscriptions: number;
     totalChats: number;
-    userSignUps: UserSignUpData[];
+    timeSeriesData: TimeSeriesData[];
 }
+
 
 /**
  * Fetches a list of all users and aggregated stats for the admin dashboard.
@@ -180,16 +181,20 @@ export async function getAdminDashboardUsers(adminUserId: string): Promise<Admin
     if (!await isAdmin(adminUserId)) {
         throw new HttpsError('permission-denied', 'You must be an admin to perform this action.');
     }
-
+    
+    const endDate = new Date();
+    const startDate = subDays(endDate, 29);
+    
     const [listUsersResult, projectsSnapshot, chatsSnapshot] = await Promise.all([
         adminAuth.listUsers(1000),
-        adminDb.collection('projects').count().get(),
-        adminDb.collection('chatSessions').count().get(),
+        adminDb.collection('projects').where('createdAt', '>=', startDate).get(),
+        adminDb.collection('chatSessions').where('createdAt', '>=', startDate).get(),
     ]);
 
     let totalVerifiedUsers = 0;
     let totalActiveSubscriptions = 0;
-    const userSignUpsMap: { [key: string]: number } = {};
+    
+    const timeSeriesMap: { [key: string]: { users: number, projects: number, chats: number } } = {};
 
     const enrichedUsers = await Promise.all(
         listUsersResult.users.map(async (userRecord) => {
@@ -206,8 +211,12 @@ export async function getAdminDashboardUsers(adminUserId: string): Promise<Admin
             
             const subscriptionPlan = subDoc.exists ? subDoc.data()?.planId : 'free';
 
-            const creationDate = format(new Date(userRecord.metadata.creationTime), 'yyyy-MM-dd');
-            userSignUpsMap[creationDate] = (userSignUpsMap[creationDate] || 0) + 1;
+            const creationDate = new Date(userRecord.metadata.creationTime);
+            if (creationDate >= startDate) {
+                const formattedDate = format(creationDate, 'yyyy-MM-dd');
+                if (!timeSeriesMap[formattedDate]) timeSeriesMap[formattedDate] = { users: 0, projects: 0, chats: 0 };
+                timeSeriesMap[formattedDate].users++;
+            }
 
             return {
                 uid: userRecord.uid,
@@ -223,27 +232,42 @@ export async function getAdminDashboardUsers(adminUserId: string): Promise<Admin
         })
     );
     
+    projectsSnapshot.docs.forEach(doc => {
+        const creationDate = (doc.data().createdAt as admin.firestore.Timestamp).toDate();
+        const formattedDate = format(creationDate, 'yyyy-MM-dd');
+        if (!timeSeriesMap[formattedDate]) timeSeriesMap[formattedDate] = { users: 0, projects: 0, chats: 0 };
+        timeSeriesMap[formattedDate].projects++;
+    });
+
+    chatsSnapshot.docs.forEach(doc => {
+        const creationDate = (doc.data().createdAt as admin.firestore.Timestamp).toDate();
+        const formattedDate = format(creationDate, 'yyyy-MM-dd');
+        if (!timeSeriesMap[formattedDate]) timeSeriesMap[formattedDate] = { users: 0, projects: 0, chats: 0 };
+        timeSeriesMap[formattedDate].chats++;
+    });
+    
     const sortedUsers = enrichedUsers.sort((a, b) => new Date(b.creationTime).getTime() - new Date(a.creationTime).getTime());
     
-    // Generate sign-up data for the last 30 days
-    const endDate = new Date();
-    const startDate = subDays(endDate, 29);
     const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
-    const userSignUps = dateRange.map(date => {
+    const timeSeriesData = dateRange.map(date => {
         const formattedDate = format(date, 'yyyy-MM-dd');
+        const data = timeSeriesMap[formattedDate] || { users: 0, projects: 0, chats: 0 };
         return {
             date: format(date, 'MMM d'),
-            count: userSignUpsMap[formattedDate] || 0,
+            ...data
         };
     });
 
+    const totalProjects = (await adminDb.collection('projects').count().get()).data().count;
+    const totalChats = (await adminDb.collection('chatSessions').count().get()).data().count;
+
     return {
         users: sortedUsers,
-        totalProjects: projectsSnapshot.data().count,
+        totalProjects,
         totalUsers: listUsersResult.users.length,
         totalVerifiedUsers,
         totalActiveSubscriptions,
-        totalChats: chatsSnapshot.data().count,
-        userSignUps,
+        totalChats,
+        timeSeriesData,
     };
 }
