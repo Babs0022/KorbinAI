@@ -6,6 +6,7 @@ import cors from "cors";
 import { processChargeSuccessEvent } from "./paystack";
 import { processNowPaymentsWebhook } from "./nowpayments";
 import { PaystackChargeSuccessData } from "./types";
+import { sendBulkEmail as sendBulkEmailFunction } from "./email";
 
 // --- Initialization ---
 const corsHandler = cors({ origin: true });
@@ -121,3 +122,7 @@ export const nowpaymentsWebhookHandler = onRequest({ region: "us-central1" }, (r
         }
     });
 });
+
+
+// Export other functions
+export const sendBulkEmail = sendBulkEmailFunction;

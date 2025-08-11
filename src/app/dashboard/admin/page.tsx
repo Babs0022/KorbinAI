@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users, Mail, Copy, FolderKanban, TrendingUp, CreditCard } from 'lucide-react';
+import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users, Mail, Copy, FolderKanban, TrendingUp, CreditCard, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, format } from 'date-fns';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import type { ChartConfig } from '@/components/ui/chart';
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 
 interface VerificationRequest {
@@ -68,6 +69,7 @@ export default function AdminPage() {
   
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [activeChartMetrics, setActiveChartMetrics] = useState<string[]>(['users', 'projects', 'chats']);
 
 
@@ -145,6 +147,27 @@ export default function AdminPage() {
     const allEmails = dashboardData.users.map(u => u.email).filter(Boolean).join(', ');
     navigator.clipboard.writeText(allEmails);
     toast({ title: 'Emails Copied', description: 'All user emails have been copied to your clipboard.' });
+  };
+  
+   const handleSendEmail = async () => {
+    if (!emailSubject.trim() || !emailBody.trim()) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Subject and body cannot be empty.' });
+      return;
+    }
+    setIsSendingEmail(true);
+    try {
+      const functions = getFunctions();
+      const sendBulkEmail = httpsCallable(functions, 'sendBulkEmail');
+      const result = await sendBulkEmail({ subject: emailSubject, body: emailBody });
+      toast({ title: 'Email Sent!', description: (result.data as any).message });
+      setEmailSubject('');
+      setEmailBody('');
+    } catch (error: any) {
+      console.error("Email sending failed:", error);
+      toast({ variant: 'destructive', title: 'Failed to Send Email', description: error.message });
+    } finally {
+      setIsSendingEmail(false);
+    }
   };
 
   const getInitials = (name?: string | null) => {
@@ -496,12 +519,13 @@ export default function AdminPage() {
                                     <Input id="subject" placeholder="Announcing our new feature!" value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="body">Body</Label>
+                                    <Label htmlFor="body">Body (HTML is supported)</Label>
                                     <Textarea id="body" placeholder="Hi {{user.name}}, we're excited to share..." className="min-h-[300px]" value={emailBody} onChange={(e) => setEmailBody(e.target.value)} />
                                 </div>
                                 <div className="flex justify-end">
-                                    <Button disabled>
-                                        Send to {users.length} Users (Coming Soon)
+                                    <Button onClick={handleSendEmail} disabled={isSendingEmail}>
+                                        {isSendingEmail ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                                        Send to {users.length} Users
                                     </Button>
                                 </div>
                             </CardContent>
