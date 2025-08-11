@@ -92,34 +92,42 @@ export default function AccountManagementPage() {
       tweetUrl: "",
     },
   });
-
+  
+  // Refactored useEffect for handling verification status
   useEffect(() => {
     if (user) {
       profileForm.reset({ name: user.displayName || "" });
       setSelectedAvatar(user.photoURL || '');
       
-      setIsSubscriptionLoading(true);
       const userDocRef = doc(db, "users", user.uid);
-      const subDocRef = doc(db, "userSubscriptions", user.uid);
       const verificationReqRef = doc(db, "verificationRequests", user.uid);
-      
-      const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
-        if (docSnap.exists() && docSnap.data()?.isVerified === true) {
+
+      let isVerified = false;
+      let requestIsPending = false;
+
+      const updateUserStatus = () => {
+        if (isVerified) {
           setVerificationStatus('verified');
+        } else if (requestIsPending) {
+          setVerificationStatus('pending');
         } else {
-          // If not verified, check the request status
-          const unsubscribeVerification = onSnapshot(verificationReqRef, (reqSnap) => {
-            if (reqSnap.exists() && reqSnap.data()?.status === 'pending') {
-              setVerificationStatus('pending');
-            } else {
-              setVerificationStatus('not_submitted');
-            }
-          });
-          return () => unsubscribeVerification();
+          setVerificationStatus('not_submitted');
         }
+      };
+
+      const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
+        isVerified = docSnap.exists() && docSnap.data()?.isVerified === true;
+        updateUserStatus();
+      });
+
+      const unsubscribeVerification = onSnapshot(verificationReqRef, (reqSnap) => {
+        requestIsPending = reqSnap.exists() && reqSnap.data()?.status === 'pending';
+        updateUserStatus();
       });
       
-
+      // Handle subscription loading separately
+      setIsSubscriptionLoading(true);
+      const subDocRef = doc(db, "userSubscriptions", user.uid);
       const unsubscribeSub = onSnapshot(subDocRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -136,6 +144,7 @@ export default function AccountManagementPage() {
 
       return () => {
           unsubscribeUser();
+          unsubscribeVerification();
           unsubscribeSub();
       };
     }
@@ -521,3 +530,5 @@ export default function AccountManagementPage() {
     </SidebarProvider>
   );
 }
+
+    
