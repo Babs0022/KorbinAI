@@ -9,11 +9,12 @@ import { z } from "zod";
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { doc, updateDoc, getDoc, onSnapshot } from "firebase/firestore";
 import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
-import { LoaderCircle, User, Key, Image as ImageIcon, CreditCard, Eye, EyeOff, Upload } from "lucide-react";
+import { LoaderCircle, User, Key, Image as ImageIcon, CreditCard, Eye, EyeOff, Upload, CheckCircle, Award } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { auth, db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { submitVerificationRequest } from "@/services/feedbackService";
 
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import DashboardHeader from "@/components/layout/DashboardHeader";
@@ -51,16 +52,21 @@ const passwordFormSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const verificationSchema = z.object({
+  tweetUrl: z.string().url({ message: "Please enter a valid URL." }),
+});
 
 export default function AccountManagementPage() {
   const { user, loading } = useAuth();
   const { toast } = useToast();
   const [isProfileSubmitting, setIsProfileSubmitting] = useState(false);
   const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
+  const [isVerificationSubmitting, setIsVerificationSubmitting] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState("");
   const [customAvatarFile, setCustomAvatarFile] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
+  const [isVerified, setIsVerified] = useState(false);
   
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -80,14 +86,29 @@ export default function AccountManagementPage() {
     },
   });
 
+  const verificationForm = useForm<z.infer<typeof verificationSchema>>({
+    resolver: zodResolver(verificationSchema),
+    defaultValues: {
+      tweetUrl: "",
+    },
+  });
+
   useEffect(() => {
     if (user) {
       profileForm.reset({ name: user.displayName || "" });
       setSelectedAvatar(user.photoURL || '');
       
       setIsSubscriptionLoading(true);
+      const userDocRef = doc(db, "users", user.uid);
       const subDocRef = doc(db, "userSubscriptions", user.uid);
-      const unsubscribe = onSnapshot(subDocRef, (docSnap) => {
+      
+      const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
+          if (docSnap.exists()) {
+              setIsVerified(docSnap.data()?.isVerified === true);
+          }
+      });
+
+      const unsubscribeSub = onSnapshot(subDocRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setSubscription({
@@ -101,7 +122,10 @@ export default function AccountManagementPage() {
         setIsSubscriptionLoading(false);
       });
 
-      return () => unsubscribe();
+      return () => {
+          unsubscribeUser();
+          unsubscribeSub();
+      };
     }
   }, [user, profileForm]);
 
@@ -155,7 +179,7 @@ export default function AccountManagementPage() {
     }
   }
   
-  async function onPasswordSubmit(values: z.infer<typeof passwordFormSchema>) {
+  async function onPasswordSubmit(values: z.infer<typeof passwordFormSchema>>) {
     if (!user || !auth.currentUser || !user.email) return;
 
     setIsPasswordSubmitting(true);
@@ -175,6 +199,30 @@ export default function AccountManagementPage() {
       });
     } finally {
       setIsPasswordSubmitting(false);
+    }
+  }
+
+  async function onVerificationSubmit(values: z.infer<typeof verificationSchema>>) {
+    if (!user) return;
+    setIsVerificationSubmitting(true);
+    try {
+        await submitVerificationRequest({
+            userId: user.uid,
+            tweetUrl: values.tweetUrl,
+        });
+        toast({
+            title: "Submission Received!",
+            description: "Thank you! We will review your submission shortly.",
+        });
+        verificationForm.reset();
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Submission Failed",
+            description: error.message,
+        });
+    } finally {
+        setIsVerificationSubmitting(false);
     }
   }
   
@@ -244,7 +292,10 @@ export default function AccountManagementPage() {
     return (
       <main className="flex flex-1 flex-col p-4 md:p-8">
         <div className="w-full max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold">Account Management</h1>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            Account Management 
+            {isVerified && <CheckCircle className="h-7 w-7 text-yellow-400" />}
+          </h1>
           <p className="text-muted-foreground mt-2 mb-10">Manage your profile, password, and subscription.</p>
 
           <div className="space-y-12">
@@ -299,6 +350,38 @@ export default function AccountManagementPage() {
                   </form>
                 </Form>
             </div>
+            
+            {/* Verification Section */}
+            {!isVerified && (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold flex items-center gap-3"><Award /> Get Verified</h2>
+                    <p className="text-muted-foreground">Get a golden checkmark on your profile! Just make a post about KorbinAI on X (Twitter) and submit the link below.</p>
+                    <Separator />
+                    <Form {...verificationForm}>
+                        <form onSubmit={verificationForm.handleSubmit(onVerificationSubmit)} className="space-y-4">
+                            <FormField
+                            control={verificationForm.control}
+                            name="tweetUrl"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Tweet URL</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="https://x.com/your-username/status/..." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <div className="flex justify-end">
+                                <Button type="submit" disabled={isVerificationSubmitting}>
+                                    {isVerificationSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                                    Submit for Review
+                                </Button>
+                            </div>
+                        </form>
+                    </Form>
+                </div>
+            )}
 
             {/* Change Password Section */}
             <div className="space-y-6">

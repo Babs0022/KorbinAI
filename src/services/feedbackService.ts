@@ -126,3 +126,36 @@ export async function submitUserReport({ userId, email, reportType, subject, mes
     console.log(`Report ${reportRef.id} saved for user ${userId}.`);
     return reportRef.id;
 }
+
+
+interface SubmitVerificationRequestInput {
+    userId: string;
+    tweetUrl: string;
+}
+
+/**
+ * Saves a user's verification request to Firestore for manual review.
+ * @param {SubmitVerificationRequestInput} input - The verification request data.
+ * @returns {Promise<string>} The ID of the newly created request document.
+ */
+export async function submitVerificationRequest({ userId, tweetUrl }: SubmitVerificationRequestInput): Promise<string> {
+    if (!userId || !tweetUrl) {
+        throw new Error('User ID and Tweet URL are required.');
+    }
+
+    const requestRef = db.collection('verificationRequests').doc(userId); // Use userId as doc ID to prevent duplicates
+
+    const newRequestData = {
+        userId,
+        tweetUrl,
+        status: 'pending',
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    // Use set with merge to create or update the request
+    await requestRef.set(newRequestData, { merge: true });
+
+    console.log(`Verification request for user ${userId} has been submitted.`);
+    return requestRef.id;
+}
