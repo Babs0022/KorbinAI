@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -6,38 +7,32 @@ service cloud.firestore {
     // Allow users to read their own user document
     match /users/{userId} {
       allow read: if request.auth.uid == userId;
-      allow create: if request.auth.uid == userId;
-      allow update: if request.auth.uid == userId;
+      allow write: if request.auth.uid == userId; // Allow users to update their own profile
+    }
+
+    // Allow users to read their own verification request
+    match /verificationRequests/{userId} {
+      allow read: if request.auth.uid == userId;
+      allow create: if request.auth.uid == userId; // Allow users to create their own request
+    }
+
+    // Allow users to read their own subscription document
+    match /userSubscriptions/{userId} {
+      allow read: if request.auth.uid == userId;
+    }
+
+    // Allow users to read and manage their own chat sessions
+    match /chatSessions/{chatId} {
+      allow read, create, update, delete: if request.auth.uid == resource.data.userId;
     }
 
     // Allow users to manage their own projects
     match /projects/{projectId} {
-      allow read, write: if request.auth.uid == resource.data.userId;
+        allow read, create, update, delete: if request.auth.uid == resource.data.userId;
     }
 
-    // Allow users to manage their chat sessions
-    match /chatSessions/{chatId} {
-        allow read, write: if request.auth.uid == resource.data.userId;
-    }
-
-    // Allow users to create feedback, but not read/update/delete it
-    match /feedback/{feedbackId} {
-        allow create: if request.auth.uid != null;
-        allow read, update, delete: if false;
-    }
-    
-    // Allow users to create reports, but not read/update/delete them
-    match /userReports/{reportId} {
-        allow create: if request.auth.uid != null;
-        allow read, update, delete: if false;
-    }
-    
-    // Allow users to create/update their own verification request and read it
-    match /verificationRequests/{userId} {
-        allow read, create, update: if request.auth.uid == userId;
-    }
-    
-    // Lock down other collections by default
+    // This is a catch-all that denies all other access.
+    // It's a good security practice.
     match /{document=**} {
       allow read, write: if false;
     }
