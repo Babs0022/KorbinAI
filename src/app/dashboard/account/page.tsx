@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
-import { doc, updateDoc, onSnapshot } from "firebase/firestore";
+import { doc, updateDoc, onSnapshot, getDoc } from "firebase/firestore";
 import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
 import { LoaderCircle, User, Key, CreditCard, Eye, EyeOff, Upload, Award, Clock, BadgeCheck } from "lucide-react";
 
@@ -88,7 +88,7 @@ export default function AccountManagementPage() {
   });
 
   const verificationForm = useForm<z.infer<typeof verificationSchema>>({
-    resolver: zodResolver(verificationFormSchema),
+    resolver: zodResolver(verificationSchema),
     defaultValues: {
       tweetUrl: "",
     },
@@ -110,18 +110,21 @@ export default function AccountManagementPage() {
 
       if (verified) {
         setVerificationStatus('verified');
-      } else {
-        // Only check verificationRequests if user is not verified
-        const verificationReqRef = doc(db, "verificationRequests", user.uid);
-        getDoc(verificationReqRef).then(reqSnap => {
-          if (reqSnap.exists() && reqSnap.data()?.status === 'pending') {
-            setVerificationStatus('pending');
-          } else {
-            setVerificationStatus('not_submitted');
-          }
-        });
       }
     });
+
+    // Listener for verification request status (if not already verified)
+    let unsubscribeReq: () => void;
+    if (!isVerified) {
+        const verificationReqRef = doc(db, "verificationRequests", user.uid);
+        unsubscribeReq = onSnapshot(verificationReqRef, (reqSnap) => {
+            if (reqSnap.exists() && reqSnap.data()?.status === 'pending') {
+                setVerificationStatus('pending');
+            } else {
+                setVerificationStatus('not_submitted');
+            }
+        });
+    }
 
     // Listener for subscription
     setIsSubscriptionLoading(true);
@@ -142,9 +145,10 @@ export default function AccountManagementPage() {
 
     return () => {
       unsubscribeUser();
+      if (unsubscribeReq) unsubscribeReq();
       unsubscribeSub();
     };
-  }, [user, profileForm]);
+  }, [user, profileForm, isVerified]);
 
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -277,9 +281,11 @@ export default function AccountManagementPage() {
   };
   
   const renderVerificationSection = () => {
+      if (isVerified) {
+          return null; // Don't show the card if they are already verified
+      }
+      
       switch (verificationStatus) {
-        case 'verified':
-            return null; // Don't show the card if they are already verified
         case 'pending':
             return (
                  <div className="space-y-6">
