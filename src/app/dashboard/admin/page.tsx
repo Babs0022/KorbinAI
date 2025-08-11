@@ -4,13 +4,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPendingVerificationRequests, approveVerificationRequest, denyVerificationRequest, getAllUserReports, getAllUsers } from '@/services/adminService';
+import { getPendingVerificationRequests, approveVerificationRequest, denyVerificationRequest, getAllUserReports, getAdminDashboardUsers } from '@/services/adminService';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users, Mail, Copy } from 'lucide-react';
+import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users, Mail, Copy, FolderKanban } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, format } from 'date-fns';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -39,6 +39,7 @@ export default function AdminPage() {
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
   const [reports, setReports] = useState<UserReport[]>([]);
   const [users, setUsers] = useState<AdminUserView[]>([]);
+  const [totalProjects, setTotalProjects] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -70,11 +71,12 @@ export default function AdminPage() {
           Promise.all([
             getPendingVerificationRequests(user.uid),
             getAllUserReports(user.uid),
-            getAllUsers(user.uid),
-          ]).then(([verificationRequests, userReports, userList]) => {
+            getAdminDashboardUsers(user.uid),
+          ]).then(([verificationRequests, userReports, dashboardData]) => {
               setRequests(verificationRequests);
               setReports(userReports);
-              setUsers(userList);
+              setUsers(dashboardData.users);
+              setTotalProjects(dashboardData.totalProjects);
           }).catch(err => {
               toast({ variant: 'destructive', title: 'Error', description: err.message });
           }).finally(() => {
@@ -146,13 +148,58 @@ export default function AdminPage() {
       }
 
       return (
-        <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="users">Users</TabsTrigger>
                 <TabsTrigger value="verification">Verification</TabsTrigger>
                 <TabsTrigger value="feedback">Feedback/Bugs</TabsTrigger>
                 <TabsTrigger value="email">Email</TabsTrigger>
             </TabsList>
+            <TabsContent value="overview" className="mt-6">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{users.length}</div>
+                            <p className="text-xs text-muted-foreground">All registered users</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
+                            <FolderKanban className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{totalProjects}</div>
+                            <p className="text-xs text-muted-foreground">All saved projects</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Pending Verifications</CardTitle>
+                            <BadgeCheck className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{requests.length}</div>
+                            <p className="text-xs text-muted-foreground">Requests needing review</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Open Feedback/Bugs</CardTitle>
+                            <Bug className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{reports.length}</div>
+                            <p className="text-xs text-muted-foreground">Total submitted reports</p>
+                        </CardContent>
+                    </Card>
+                </div>
+            </TabsContent>
             <TabsContent value="users" className="mt-6">
                 <Card>
                     <CardHeader>

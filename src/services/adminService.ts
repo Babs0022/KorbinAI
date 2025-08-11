@@ -155,17 +155,23 @@ export interface AdminUserView {
     subscriptionPlan?: string;
 }
 
+export interface AdminDashboardData {
+    users: AdminUserView[];
+    totalProjects: number;
+}
+
 /**
- * Fetches a list of all users with enriched data for the admin dashboard.
+ * Fetches a list of all users and total project count for the admin dashboard.
  * @param {string} adminUserId - The UID of the admin performing the action.
- * @returns {Promise<AdminUserView[]>} A list of user objects.
+ * @returns {Promise<AdminDashboardData>} An object containing the list of users and the total project count.
  */
-export async function getAllUsers(adminUserId: string): Promise<AdminUserView[]> {
+export async function getAdminDashboardUsers(adminUserId: string): Promise<AdminDashboardData> {
     if (!await isAdmin(adminUserId)) {
         throw new HttpsError('permission-denied', 'You must be an admin to perform this action.');
     }
 
     const listUsersResult = await adminAuth.listUsers(1000); // Get up to 1000 users
+    const projectsSnapshot = await adminDb.collection('projects').count().get();
 
     const enrichedUsers = await Promise.all(
         listUsersResult.users.map(async (userRecord) => {
@@ -191,6 +197,11 @@ export async function getAllUsers(adminUserId: string): Promise<AdminUserView[]>
             };
         })
     );
+    
+    const sortedUsers = enrichedUsers.sort((a, b) => new Date(b.creationTime).getTime() - new Date(a.creationTime).getTime());
 
-    return enrichedUsers.sort((a, b) => new Date(b.creationTime).getTime() - new Date(a.creationTime).getTime());
+    return {
+        users: sortedUsers,
+        totalProjects: projectsSnapshot.data().count,
+    };
 }
