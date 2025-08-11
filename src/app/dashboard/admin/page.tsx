@@ -26,6 +26,8 @@ import { Line, LineChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { getAllUserReports } from '@/services/feedbackService';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import type { ChartConfig } from '@/components/ui/chart';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 
 interface VerificationRequest {
@@ -38,11 +40,20 @@ interface VerificationRequest {
     userEmail?: string;
 }
 
-const chartMetrics = [
-    { id: 'users', name: 'Users', color: 'hsl(var(--chart-1))' },
-    { id: 'projects', name: 'Projects', color: 'hsl(var(--chart-2))' },
-    { id: 'chats', name: 'Chats', color: 'hsl(var(--chart-3))' },
-];
+const chartConfig = {
+    users: {
+      label: 'Users',
+      color: 'hsl(var(--chart-1))',
+    },
+    projects: {
+      label: 'Projects',
+      color: 'hsl(var(--chart-2))',
+    },
+    chats: {
+      label: 'Chats',
+      color: 'hsl(var(--chart-3))',
+    },
+} satisfies ChartConfig
 
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
@@ -57,6 +68,8 @@ export default function AdminPage() {
   
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
+  const [activeChartMetrics, setActiveChartMetrics] = useState<string[]>(['users', 'projects', 'chats']);
+
 
   // Check for admin status
   useEffect(() => {
@@ -254,12 +267,14 @@ export default function AdminPage() {
                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <CardTitle>Application Analytics</CardTitle>
                                 <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-2">
-                                        {chartMetrics.map(metric => (
-                                            <div key={metric.id} className="flex items-center space-x-2">
-                                                <Checkbox id={`metric-${metric.id}`} defaultChecked />
-                                                <label htmlFor={`metric-${metric.id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                                    {metric.name}
+                                    <div className="flex items-center gap-4">
+                                        {Object.entries(chartConfig).map(([key, config]) => (
+                                            <div key={key} className="flex items-center space-x-2">
+                                                <Checkbox id={`metric-${key}`} checked={activeChartMetrics.includes(key)} onCheckedChange={(checked) => {
+                                                    setActiveChartMetrics(prev => checked ? [...prev, key] : prev.filter(m => m !== key))
+                                                }} />
+                                                <label htmlFor={`metric-${key}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                    {config.label}
                                                 </label>
                                             </div>
                                         ))}
@@ -279,19 +294,18 @@ export default function AdminPage() {
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent className="h-[350px]">
-                             <ResponsiveContainer width="100%" height="100%">
+                         <CardContent className="h-[350px]">
+                            <ChartContainer config={chartConfig}>
                                 <LineChart data={timeSeriesData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="date" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Legend />
-                                    {chartMetrics.map(metric => (
-                                        <Line key={metric.id} type="monotone" dataKey={metric.id} stroke={metric.color} name={metric.name} />
+                                    <CartesianGrid vertical={false} />
+                                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
+                                    <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
+                                    <ChartLegend content={<ChartLegendContent />} />
+                                    {activeChartMetrics.map((metric) => (
+                                        <Line key={metric} dataKey={metric} type="natural" stroke={`var(--color-${metric})`} strokeWidth={2} dot={false} />
                                     ))}
                                 </LineChart>
-                            </ResponsiveContainer>
+                            </ChartContainer>
                         </CardContent>
                     </Card>
                 </div>
