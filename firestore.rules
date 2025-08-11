@@ -3,38 +3,63 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // By default, deny all reads and writes.
+    match /{document=**} {
+      allow read, write: if false;
+    }
 
-    // Allow users to read their own user document
+    // Allow users to read their own user document.
     match /users/{userId} {
-      allow read: if request.auth.uid == userId;
-      allow write: if request.auth.uid == userId; // Allow users to update their own profile
+      allow read, update: if request.auth.uid == userId;
     }
 
-    // Allow users to read their own verification request
-    match /verificationRequests/{userId} {
-      allow read: if request.auth.uid == userId;
-      allow create: if request.auth.uid == userId; // Allow users to create their own request
-    }
-
-    // Allow users to read their own subscription document
+    // Allow users to read their own subscription document.
     match /userSubscriptions/{userId} {
       allow read: if request.auth.uid == userId;
     }
 
-    // Allow users to read and manage their own chat sessions
+    // Allow users to create and read their own verification request.
+    match /verificationRequests/{userId} {
+        allow create: if request.auth.uid == userId;
+        allow read: if request.auth.uid == userId;
+    }
+    
+    // Allow admins to read all verification requests
+    match /verificationRequests/{requestId} {
+        allow read: if exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Admins collection: only readable by admins themselves to check status
+    match /admins/{userId} {
+      allow read: if request.auth.uid == userId;
+    }
+
+    // Allow users to manage their own chat sessions.
     match /chatSessions/{chatId} {
-      allow read, create, update, delete: if request.auth.uid == resource.data.userId;
+      allow read, write: if request.auth.uid == resource.data.userId;
     }
-
-    // Allow users to manage their own projects
+    
+    // Allow users to create their own projects (metadata).
     match /projects/{projectId} {
-        allow read, create, update, delete: if request.auth.uid == resource.data.userId;
+        allow create: if request.auth.uid == request.resource.data.userId;
+        allow read: if request.auth.uid == resource.data.userId;
     }
 
-    // This is a catch-all that denies all other access.
-    // It's a good security practice.
-    match /{document=**} {
-      allow read, write: if false;
+    // Allow users to create their own generations (content).
+    match /generations/{generationId} {
+        allow create: if request.auth.uid == request.resource.data.userId;
+        // Only allow reading a generation if you own the corresponding project.
+        allow read: if exists(/databases/$(database)/documents/projects/{projectId}) &&
+                    get(/databases/$(database)/documents/projects/{projectId}).data.generationId == resource.id &&
+                    get(/databases/$(database)/documents/projects/{projectId}).data.userId == request.auth.uid;
+    }
+
+    // Allow users to submit feedback and reports.
+    match /feedback/{feedbackId} {
+      allow create: if request.auth.uid == request.resource.data.userId;
+    }
+    match /userReports/{reportId} {
+      allow create: if request.auth.uid == request.resource.data.userId;
     }
   }
 }
