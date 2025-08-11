@@ -1,59 +1,68 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read their own user document and admins can read any.
-    match /users/{userId} {
-      allow read: if request.auth.uid == userId || exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-      allow create, update: if request.auth.uid == userId;
+
+    // Helper function to check if the user is the owner of the data
+    function isOwner(userId) {
+      return request.auth.uid == userId;
     }
 
-    // Allow admins to read/write to the admins collection.
+    // Admins: Can read and write anything
     match /admins/{adminId} {
-      allow read, write: if exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow read, write: if get(/databases/$(database)/documents/admins/$(request.auth.uid)).exists;
     }
 
-    // Projects are owned by users.
-    match /projects/{projectId} {
-      allow read, create, update, delete: if request.auth.uid == resource.data.userId;
+    // Users: Can read/write their own document
+    match /users/{userId} {
+      allow read, update: if isOwner(userId);
+      allow create: if request.auth != null;
     }
 
-    // Generations are linked to projects and owned by users.
-    match /generations/{generationId} {
-      allow read, create, update, delete: if request.auth.uid == resource.data.userId;
-    }
-
-    // Chat sessions are owned by users.
-    match /chatSessions/{chatId} {
-      allow read, create, update, delete: if request.auth.uid == resource.data.userId;
-    }
-    
-    // User Subscriptions are private to each user.
+    // User Subscriptions: Can read their own subscription
     match /userSubscriptions/{userId} {
-        allow read: if request.auth.uid == userId;
-    }
-    
-    // Transactions are private to each user.
-    match /transactions/{transactionId} {
-        allow read: if request.auth.uid == resource.data.userId;
+      allow read, write: if isOwner(userId);
     }
 
-    // Feedback can be created by any authenticated user. Admins can read.
+    // Projects: Can read/write their own projects
+    match /projects/{projectId} {
+      allow read, write: if isOwner(resource.data.userId);
+      allow create: if isOwner(request.resource.data.userId);
+    }
+    
+    // Generations: Can read/write their own generations
+    match /generations/{generationId} {
+        allow read, write: if isOwner(resource.data.userId);
+        allow create: if isOwner(request.resource.data.userId);
+    }
+
+    // Chat Sessions: Can read/write their own chat sessions
+    match /chatSessions/{chatId} {
+      allow read, write: if isOwner(resource.data.userId);
+      allow create: if isOwner(request.resource.data.userId);
+    }
+    
+    // Feedback: Authenticated users can create feedback
     match /feedback/{feedbackId} {
-        allow create: if request.auth.uid == request.resource.data.userId;
-        allow read: if exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-    }
-
-    // User reports can be created by any authenticated user. Admins can read.
-    match /userReports/{reportId} {
-        allow create: if request.auth.uid == request.resource.data.userId;
-        allow read: if exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow create: if request.auth != null;
+      // Admins can read all feedback
+      allow read: if get(/databases/$(database)/documents/admins/$(request.auth.uid)).exists;
     }
     
-    // Verification requests can be created/read by the user, and read/updated by admins.
+    // User Reports: Authenticated users can create reports
+    match /userReports/{reportId} {
+        allow create: if request.auth != null;
+        // Admins can read all reports
+        allow read: if get(/databases/$(database)/documents/admins/$(request.auth.uid)).exists;
+    }
+
+    // Verification Requests: Authenticated users can create/update their own request
     match /verificationRequests/{userId} {
-        allow read, create: if request.auth.uid == userId;
-        allow read, update: if exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+        allow read, write: if isOwner(userId);
+        allow create: if isOwner(request.resource.data.userId);
+        // Admins can read all requests
+        allow read: if get(/databases/$(database)/documents/admins/$(request.auth.uid)).exists;
     }
   }
 }
