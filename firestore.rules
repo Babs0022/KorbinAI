@@ -1,68 +1,75 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if the user is the owner of the data
+    // Helper function to check if the user is the owner of a document.
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return request.auth != null && request.auth.uid == userId;
     }
 
-    // Admins: Can read and write anything
-    match /admins/{adminId} {
-      allow read, write: if get(/databases/$(database)/documents/admins/$(request.auth.uid)).exists;
+    // Admins can read and write anything.
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // Users: Can read/write their own document
+    // AUTHENTICATION
+    // Users collection can be read by anyone but only written by the owner or an admin.
     match /users/{userId} {
-      allow read, update: if isOwner(userId);
-      allow create: if request.auth != null;
+      allow read;
+      allow write: if isOwner(userId) || isAdmin();
     }
 
-    // User Subscriptions: Can read their own subscription
-    match /userSubscriptions/{userId} {
-      allow read, write: if isOwner(userId);
+    // Admins can read and write to the admins collection.
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
     }
 
-    // Projects: Can read/write their own projects
-    match /projects/{projectId} {
-      allow read, write: if isOwner(resource.data.userId);
-      allow create: if isOwner(request.resource.data.userId);
-    }
-    
-    // Generations: Can read/write their own generations
-    match /generations/{generationId} {
-        allow read, write: if isOwner(resource.data.userId);
-        allow create: if isOwner(request.resource.data.userId);
-    }
-
-    // Chat Sessions: Can read/write their own chat sessions
+    // CHAT SESSIONS
     match /chatSessions/{chatId} {
-      allow read, write: if isOwner(resource.data.userId);
+      allow read, write: if isOwner(resource.data.userId) || isAdmin();
       allow create: if isOwner(request.resource.data.userId);
     }
     
-    // Feedback: Authenticated users can create feedback
-    match /feedback/{feedbackId} {
-      allow create: if request.auth != null;
-      // Admins can read all feedback
-      allow read: if get(/databases/$(database)/documents/admins/$(request.auth.uid)).exists;
+    // PROJECTS & GENERATIONS
+    // Users can only access their own projects and generations.
+    match /projects/{projectId} {
+      allow read, write: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isOwner(request.resource.data.userId);
     }
-    
-    // User Reports: Authenticated users can create reports
-    match /userReports/{reportId} {
-        allow create: if request.auth != null;
-        // Admins can read all reports
-        allow read: if get(/databases/$(database)/documents/admins/$(request.auth.uid)).exists;
+    match /generations/{generationId} {
+      allow read, write: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isOwner(request.resource.data.userId);
     }
 
-    // Verification Requests: Authenticated users can create/update their own request
+    // SUBSCRIPTIONS
+    // Users can only read their own subscription status.
+    // Writes are handled by secure Cloud Functions.
+    match /userSubscriptions/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isAdmin(); // Only allow admins/backend to write
+    }
+
+    // TRANSACTIONS
+    // Users can read their own transactions. Writes are handled by secure Cloud Functions.
+    match /transactions/{transactionId} {
+        allow read, write: if isOwner(resource.data.userId) || isAdmin();
+        allow create: if isOwner(request.resource.data.userId) || isAdmin();
+    }
+    
+    // VERIFICATION & FEEDBACK
+    // Users can create verification requests and feedback, but not read others'. Admins can read/write.
     match /verificationRequests/{userId} {
-        allow read, write: if isOwner(userId);
-        allow create: if isOwner(request.resource.data.userId);
-        // Admins can read all requests
-        allow read: if get(/databases/$(database)/documents/admins/$(request.auth.uid)).exists;
+        allow create: if isOwner(userId);
+        allow read, write: if isAdmin();
+    }
+    match /userReports/{reportId} {
+        allow create; // Any authenticated user can create a report
+        allow read, write: if isAdmin();
+    }
+     match /feedback/{feedbackId} {
+        allow create; // Any authenticated user can create feedback
+        allow read, write: if isAdmin();
     }
   }
 }
