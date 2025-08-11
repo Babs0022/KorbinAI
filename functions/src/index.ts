@@ -1,3 +1,9 @@
+
+// IMPORTANT: It's crucial to import and initialize the Firebase Admin SDK first.
+// This ensures that all other modules that use `admin` will have it available
+// when they are imported during the Firebase deployment analysis phase.
+import "./firebase-admin";
+
 import { onRequest } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as crypto from "crypto";
@@ -6,7 +12,6 @@ import { processChargeSuccessEvent } from "./paystack";
 import { processNowPaymentsWebhook } from "./nowpayments";
 import { PaystackChargeSuccessData } from "./types";
 import { sendBulkEmail as sendBulkEmailFunction } from "./email";
-import './firebase-admin'; // Ensure admin is initialized
 
 // --- Initialization ---
 const corsHandler = cors({ origin: true });

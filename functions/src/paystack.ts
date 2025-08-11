@@ -1,14 +1,9 @@
 
-
-
-
-
 import * as logger from "firebase-functions/logger";
-import * as admin from "firebase-admin";
 import Paystack from "paystack-node";
 import { PaystackChargeSuccessData } from "./types";
+import { adminDb, adminAuth } from "./firebase-admin";
 
-const db = admin.firestore();
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 
 if (!PAYSTACK_SECRET_KEY) {
@@ -83,9 +78,9 @@ export async function processChargeSuccessEvent(eventData: PaystackChargeSuccess
     }
     logger.info(`[Paystack] Matched to Internal Plan ID: ${planId} with interval: ${interval}.`);
 
-    let userRecord: admin.auth.UserRecord;
+    let userRecord;
     try {
-        userRecord = await admin.auth().getUserByEmail(email);
+        userRecord = await adminAuth.getUserByEmail(email);
         logger.info(`[Paystack] Found user UID ${userRecord.uid} for email ${email}.`);
     } catch (error) {
         logger.error(`[Paystack] CRITICAL: Could not find a user with email ${email}. A user must sign up in KorbinAI with this email first.`, { email, error });
@@ -114,18 +109,18 @@ export async function processChargeSuccessEvent(eventData: PaystackChargeSuccess
             status: "active",
             paymentMethod: "card",
             billingCycle,
-            currentPeriodStart: admin.firestore.Timestamp.fromDate(paidAtDate),
-            currentPeriodEnd: admin.firestore.Timestamp.fromDate(currentPeriodEndDate),
+            currentPeriodStart: adminDb.Timestamp.fromDate(paidAtDate),
+            currentPeriodEnd: adminDb.Timestamp.fromDate(currentPeriodEndDate),
             paystackReference: reference,
             amountPaid: amount,
             currency,
-            lastEventTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+            lastEventTimestamp: adminDb.FieldValue.serverTimestamp(),
         };
 
         logger.info(`[Paystack] Preparing to write subscription data for user ${userId}:`, subscriptionData);
-        await db.collection("userSubscriptions").doc(String(userId)).set(subscriptionData, { merge: true });
+        await adminDb.collection("userSubscriptions").doc(String(userId)).set(subscriptionData, { merge: true });
 
-        const transactionRef = db.collection("transactions").doc(reference);
+        const transactionRef = adminDb.collection("transactions").doc(reference);
         await transactionRef.set({
             userId,
             planId,
@@ -135,9 +130,9 @@ export async function processChargeSuccessEvent(eventData: PaystackChargeSuccess
             status: "success",
             paymentMethod: "card",
             paystackReference: reference,
-            paidAt: admin.firestore.Timestamp.fromDate(paidAtDate),
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            paidAt: adminDb.Timestamp.fromDate(paidAtDate),
+            createdAt: adminDb.FieldValue.serverTimestamp(),
+            updatedAt: adminDb.FieldValue.serverTimestamp(),
         }, { merge: true });
 
         logger.info(`[Paystack] SUCCESS: Updated subscription for user ${userId} (plan: ${planId}, ref: ${reference}).`);

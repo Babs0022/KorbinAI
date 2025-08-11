@@ -1,8 +1,8 @@
 
 import * as logger from "firebase-functions/logger";
-import * as admin from "firebase-admin";
+import { adminDb, adminAuth } from "./firebase-admin";
+import { FieldValue } from 'firebase-admin/firestore';
 
-const db = admin.firestore();
 
 export async function processNowPaymentsWebhook(event: any): Promise<void> {
     const orderId = event.order_id;
@@ -16,7 +16,7 @@ export async function processNowPaymentsWebhook(event: any): Promise<void> {
     logger.info(`[NOWPayments] Processing successful payment for User ID: ${userId}, Plan: ${planId}, Cycle: ${billingCycle}`);
 
     try {
-        const userRef = await admin.auth().getUser(userId);
+        const userRef = await adminAuth.getUser(userId);
         if (!userRef) {
             logger.error(`[NOWPayments] User with ID ${userId} not found in Firebase Auth.`);
             throw new Error("User not found.");
@@ -37,17 +37,17 @@ export async function processNowPaymentsWebhook(event: any): Promise<void> {
             email: userRef.email,
             status: "active",
             paymentMethod: "crypto",
-            currentPeriodStart: admin.firestore.Timestamp.fromDate(paidAtDate),
-            currentPeriodEnd: admin.firestore.Timestamp.fromDate(currentPeriodEndDate),
+            currentPeriodStart: FieldValue.serverTimestamp(),
+            currentPeriodEnd: FieldValue.serverTimestamp(),
             nowpaymentsPaymentId: event.payment_id,
             amountPaid: event.price_amount,
             currency: event.price_currency,
-            lastEventTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+            lastEventTimestamp: FieldValue.serverTimestamp(),
         };
 
-        await db.collection("userSubscriptions").doc(userId).set(subscriptionData, { merge: true });
+        await adminDb.collection("userSubscriptions").doc(userId).set(subscriptionData, { merge: true });
 
-        const transactionRef = db.collection("transactions").doc(String(event.payment_id));
+        const transactionRef = adminDb.collection("transactions").doc(String(event.payment_id));
         await transactionRef.set({
             userId,
             planId,
@@ -57,9 +57,9 @@ export async function processNowPaymentsWebhook(event: any): Promise<void> {
             status: "success",
             paymentMethod: "crypto",
             nowpaymentsPaymentId: event.payment_id,
-            paidAt: admin.firestore.Timestamp.fromDate(paidAtDate),
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            paidAt: FieldValue.serverTimestamp(),
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
         }, { merge: true });
 
         logger.info(`[NOWPayments] SUCCESS: Updated crypto subscription for user ${userId}.`);
