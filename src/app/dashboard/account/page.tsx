@@ -62,12 +62,11 @@ export default function AccountManagementPage() {
   const [isProfileSubmitting, setIsProfileSubmitting] = useState(false);
   const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
   const [isVerificationSubmitting, setIsVerificationSubmitting] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState("");
+  const [currentAvatar, setCurrentAvatar] = useState("");
   const [customAvatarFile, setCustomAvatarFile] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
   const [verificationStatus, setVerificationStatus] = useState<'verified' | 'pending' | 'not_submitted'>('not_submitted');
-  const [isVerified, setIsVerified] = useState(false);
   
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -94,39 +93,36 @@ export default function AccountManagementPage() {
     },
   });
   
-  // Refactored useEffect for handling verification status
   useEffect(() => {
     if (!user) return;
-    
-    profileForm.reset({ name: user.displayName || "" });
-    setSelectedAvatar(user.photoURL || '');
-    
-    // Listener for user document (isVerified flag)
-    const userDocRef = doc(db, "users", user.uid);
-    const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
-      const userData = docSnap.data();
-      const verified = userData?.isVerified === true;
-      setIsVerified(verified);
 
-      if (verified) {
-        setVerificationStatus('verified');
-      }
+    let unsubscribeUser: () => void;
+    let unsubscribeReq: () => void;
+
+    profileForm.reset({ name: user.displayName || "" });
+    setCurrentAvatar(user.photoURL || '');
+
+    const userDocRef = doc(db, "users", user.uid);
+    unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
+        const userData = docSnap.data();
+        const isVerified = userData?.isVerified === true;
+        
+        // This is the primary flag. If it's true, always set status to verified.
+        if (isVerified) {
+            setVerificationStatus('verified');
+        } else {
+            // Only check for pending requests if the user is not already verified.
+            const verificationReqRef = doc(db, "verificationRequests", user.uid);
+            unsubscribeReq = onSnapshot(verificationReqRef, (reqSnap) => {
+                if (reqSnap.exists() && reqSnap.data()?.status === 'pending') {
+                    setVerificationStatus('pending');
+                } else {
+                    setVerificationStatus('not_submitted');
+                }
+            });
+        }
     });
 
-    // Listener for verification request status (if not already verified)
-    let unsubscribeReq: () => void;
-    if (!isVerified) {
-        const verificationReqRef = doc(db, "verificationRequests", user.uid);
-        unsubscribeReq = onSnapshot(verificationReqRef, (reqSnap) => {
-            if (reqSnap.exists() && reqSnap.data()?.status === 'pending') {
-                setVerificationStatus('pending');
-            } else {
-                setVerificationStatus('not_submitted');
-            }
-        });
-    }
-
-    // Listener for subscription
     setIsSubscriptionLoading(true);
     const subDocRef = doc(db, "userSubscriptions", user.uid);
     const unsubscribeSub = onSnapshot(subDocRef, (docSnap) => {
@@ -144,11 +140,11 @@ export default function AccountManagementPage() {
     });
 
     return () => {
-      unsubscribeUser();
+      if (unsubscribeUser) unsubscribeUser();
       if (unsubscribeReq) unsubscribeReq();
-      unsubscribeSub();
+      if (unsubscribeSub) unsubscribeSub();
     };
-  }, [user, profileForm, isVerified]);
+  }, [user, profileForm]);
 
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,8 +161,7 @@ export default function AccountManagementPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
-        setCustomAvatarFile(result); // Store the base64 string
-        setSelectedAvatar(result); // Show preview
+        setCustomAvatarFile(result);
       };
       reader.readAsDataURL(file);
     }
@@ -176,14 +171,13 @@ export default function AccountManagementPage() {
   async function onProfileSubmit(values: z.infer<typeof profileFormSchema>,){
     if (!user || !auth.currentUser) return;
     setIsProfileSubmitting(true);
-    let photoURL = selectedAvatar;
+    let photoURL = currentAvatar;
 
     try {
       if (customAvatarFile) {
         const storage = getStorage();
         const storageRef = ref(storage, `avatars/${user.uid}`);
         
-        // Upload the base64 string
         const snapshot = await uploadString(storageRef, customAvatarFile, 'data_url');
         photoURL = await getDownloadURL(snapshot.ref);
       }
@@ -213,7 +207,6 @@ export default function AccountManagementPage() {
             title: "Submission Received!",
             description: "Thank you! We will review your submission shortly.",
         });
-        setVerificationStatus('pending'); // Manually set status to pending on success
         verificationForm.reset();
     } catch (error: any) {
         toast({
@@ -281,11 +274,9 @@ export default function AccountManagementPage() {
   };
   
   const renderVerificationSection = () => {
-      if (isVerified) {
-          return null; // Don't show the card if they are already verified
-      }
-      
       switch (verificationStatus) {
+        case 'verified':
+            return null; // Don't show the card if they are already verified
         case 'pending':
             return (
                  <div className="space-y-6">
@@ -298,7 +289,7 @@ export default function AccountManagementPage() {
                         </div>
                     </div>
                 </div>
-            )
+            );
         case 'not_submitted':
         default:
             return (
@@ -366,6 +357,8 @@ export default function AccountManagementPage() {
       )
     }
 
+    const isVerified = verificationStatus === 'verified';
+
     return (
       <main className="flex flex-1 flex-col p-4 md:p-8">
         <div className="w-full max-w-2xl mx-auto">
@@ -381,22 +374,6 @@ export default function AccountManagementPage() {
                 <Separator />
                 <Form {...profileForm}>
                   <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
-                    <div className="flex flex-col items-center gap-6">
-                        <div className="relative">
-                            <Avatar className="w-24 h-24">
-                                <AvatarImage src={selectedAvatar} alt="Selected Avatar" />
-                                <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <Button asChild variant="outline" size="icon" className="absolute -bottom-2 -right-2 rounded-full">
-                                <Label htmlFor="custom-avatar-upload">
-                                    <Upload className="h-4 w-4" />
-                                    <span className="sr-only">Upload Image</span>
-                                </Label>
-                            </Button>
-                             {isVerified && <BadgeCheck className="absolute bottom-0 right-0 h-8 w-8 text-primary bg-background rounded-full p-1" />}
-                        </div>
-                        <Input id="custom-avatar-upload" type="file" className="sr-only" accept="image/png, image/jpeg" onChange={handleAvatarFileChange} />
-                    </div>
                     
                     <FormField
                       control={profileForm.control}
@@ -418,6 +395,26 @@ export default function AccountManagementPage() {
                       </FormControl>
                       <p className="text-xs text-muted-foreground pt-1">Email cannot be changed.</p>
                     </FormItem>
+
+                    <FormItem>
+                        <FormLabel>Profile Picture</FormLabel>
+                        <div className="flex items-center gap-6">
+                            <div className="relative">
+                                <Avatar className="w-20 h-20">
+                                    <AvatarImage src={customAvatarFile || currentAvatar} alt="Current Avatar" />
+                                    <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                {isVerified && <BadgeCheck className="absolute -bottom-1 -right-1 h-7 w-7 text-primary bg-background rounded-full p-0.5" />}
+                            </div>
+                            <div className="flex-grow">
+                                <FormControl>
+                                    <Input id="custom-avatar-upload" type="file" className="w-full" accept="image/png, image/jpeg" onChange={handleAvatarFileChange} />
+                                </FormControl>
+                                <p className="text-xs text-muted-foreground pt-1">Upload a new image to change your avatar (max 2MB).</p>
+                            </div>
+                        </div>
+                    </FormItem>
+
                     <div className="flex justify-end">
                       <Button type="submit" disabled={isProfileSubmitting}>
                         {isProfileSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
@@ -534,5 +531,3 @@ export default function AccountManagementPage() {
     </SidebarProvider>
   );
 }
-
-    
