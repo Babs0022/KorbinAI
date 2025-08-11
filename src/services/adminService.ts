@@ -141,3 +141,56 @@ export async function getAllUserReports(adminUserId: string): Promise<UserReport
         } as UserReport;
     });
 }
+
+
+export interface AdminUserView {
+    uid: string;
+    email?: string;
+    displayName?: string;
+    photoURL?: string;
+    disabled: boolean;
+    creationTime: string;
+    isVerified: boolean;
+    subscriptionStatus: 'active' | 'inactive';
+    subscriptionPlan?: string;
+}
+
+/**
+ * Fetches a list of all users with enriched data for the admin dashboard.
+ * @param {string} adminUserId - The UID of the admin performing the action.
+ * @returns {Promise<AdminUserView[]>} A list of user objects.
+ */
+export async function getAllUsers(adminUserId: string): Promise<AdminUserView[]> {
+    if (!await isAdmin(adminUserId)) {
+        throw new HttpsError('permission-denied', 'You must be an admin to perform this action.');
+    }
+
+    const listUsersResult = await adminAuth.listUsers(1000); // Get up to 1000 users
+
+    const enrichedUsers = await Promise.all(
+        listUsersResult.users.map(async (userRecord) => {
+            const userDocRef = adminDb.collection('users').doc(userRecord.uid);
+            const subDocRef = adminDb.collection('userSubscriptions').doc(userRecord.uid);
+            
+            const [userDoc, subDoc] = await Promise.all([userDocRef.get(), subDocRef.get()]);
+
+            const isVerified = userDoc.exists && userDoc.data()?.isVerified === true;
+            const subscriptionStatus = (subDoc.exists && subDoc.data()?.status === 'active') ? 'active' : 'inactive';
+            const subscriptionPlan = subDoc.exists ? subDoc.data()?.planId : 'free';
+
+            return {
+                uid: userRecord.uid,
+                email: userRecord.email,
+                displayName: userRecord.displayName,
+                photoURL: userRecord.photoURL,
+                disabled: userRecord.disabled,
+                creationTime: new Date(userRecord.metadata.creationTime).toISOString(),
+                isVerified,
+                subscriptionStatus,
+                subscriptionPlan,
+            };
+        })
+    );
+
+    return enrichedUsers.sort((a, b) => new Date(b.creationTime).getTime() - new Date(a.creationTime).getTime());
+}

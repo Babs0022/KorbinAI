@@ -4,18 +4,20 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPendingVerificationRequests, approveVerificationRequest, denyVerificationRequest, getAllUserReports } from '@/services/adminService';
+import { getPendingVerificationRequests, approveVerificationRequest, denyVerificationRequest, getAllUserReports, getAllUsers } from '@/services/adminService';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText } from 'lucide-react';
+import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { UserReport } from '@/types/feedback';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import type { AdminUserView } from '@/services/adminService';
 
 interface VerificationRequest {
     id: string;
@@ -32,6 +34,7 @@ export default function AdminPage() {
   const { toast } = useToast();
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
   const [reports, setReports] = useState<UserReport[]>([]);
+  const [users, setUsers] = useState<AdminUserView[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -59,10 +62,12 @@ export default function AdminPage() {
           setIsLoading(true);
           Promise.all([
             getPendingVerificationRequests(user.uid),
-            getAllUserReports(user.uid)
-          ]).then(([verificationRequests, userReports]) => {
+            getAllUserReports(user.uid),
+            getAllUsers(user.uid),
+          ]).then(([verificationRequests, userReports, userList]) => {
               setRequests(verificationRequests);
               setReports(userReports);
+              setUsers(userList);
           }).catch(err => {
               toast({ variant: 'destructive', title: 'Error', description: err.message });
           }).finally(() => {
@@ -100,6 +105,11 @@ export default function AdminPage() {
       setIsProcessing(null);
     }
   };
+
+  const getInitials = (name?: string | null) => {
+    if (!name) return "U";
+    return name.split(" ").map((n) => n[0]).join("").toUpperCase() || 'U';
+  };
   
   const renderContent = () => {
       if (isLoading || isAdmin === null) {
@@ -124,6 +134,62 @@ export default function AdminPage() {
 
       return (
         <div className="space-y-12">
+          {/* User Management Card */}
+          <Card>
+            <CardHeader>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>A list of all registered users in the application.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>User</TableHead>
+                            <TableHead>Subscription</TableHead>
+                            <TableHead>Joined</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {users.length > 0 ? users.map((u) => (
+                            <TableRow key={u.uid}>
+                                <TableCell>
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-10 w-10">
+                                            <AvatarImage src={u.photoURL} alt={u.displayName} />
+                                            <AvatarFallback>{getInitials(u.displayName)}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <div className="font-medium flex items-center gap-1.5">
+                                                {u.displayName || 'No name'}
+                                                {u.isVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                                            </div>
+                                            <div className="text-sm text-muted-foreground">{u.email}</div>
+                                        </div>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant={u.subscriptionStatus === 'active' ? 'default' : 'secondary'} className="capitalize">
+                                        {u.subscriptionPlan}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>{format(new Date(u.creationTime), 'PP')}</TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="ghost" size="sm" disabled>View Details</Button>
+                                </TableCell>
+                            </TableRow>
+                        )) : (
+                             <TableRow>
+                                <TableCell colSpan={4} className="text-center h-24">
+                                    No users found.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+          </Card>
+
           {/* Verification Requests Card */}
           <Card>
             <CardHeader>
