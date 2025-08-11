@@ -1,6 +1,6 @@
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, initializeAuth, browserLocalPersistence, type Auth } from 'firebase/auth';
+import { getAuth, type Auth } from 'firebase/auth';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
@@ -19,10 +19,8 @@ const firebaseConfig = {
 // This prevents Firebase from being initialized more than once, which is important in a Next.js environment.
 const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Explicitly initialize Auth with local persistence
-const auth: Auth = initializeAuth(app, {
-  persistence: browserLocalPersistence
-});
+// Use getAuth for standard web applications
+const auth: Auth = getAuth(app);
 
 const storage: FirebaseStorage = getStorage(app);
 const db: Firestore = getFirestore(app);
