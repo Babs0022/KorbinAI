@@ -8,7 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { doc, updateDoc, getDoc, onSnapshot } from "firebase/firestore";
-import { LoaderCircle, User, Key, Image as ImageIcon, CreditCard, Eye, EyeOff } from "lucide-react";
+import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
+import { LoaderCircle, User, Key, Image as ImageIcon, CreditCard, Eye, EyeOff, Upload } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { auth, db } from "@/lib/firebase";
@@ -62,6 +63,7 @@ export default function AccountManagementPage() {
   const [isProfileSubmitting, setIsProfileSubmitting] = useState(false);
   const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState("");
+  const [customAvatarFile, setCustomAvatarFile] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
   
@@ -86,13 +88,8 @@ export default function AccountManagementPage() {
   useEffect(() => {
     if (user) {
       profileForm.reset({ name: user.displayName || "" });
-      const currentAvatar = user.photoURL;
-      if (currentAvatar && avatars.includes(currentAvatar)) {
-        setSelectedAvatar(currentAvatar);
-      } else {
-        setSelectedAvatar(avatars[0]);
-      }
-
+      setSelectedAvatar(user.photoURL || avatars[0]);
+      
       setIsSubscriptionLoading(true);
       const subDocRef = doc(db, "userSubscriptions", user.uid);
       const unsubscribe = onSnapshot(subDocRef, (docSnap) => {
@@ -113,15 +110,50 @@ export default function AccountManagementPage() {
     }
   }, [user, profileForm]);
 
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast({
+          variant: "destructive",
+          title: "File too large",
+          description: "Please upload an image smaller than 2MB.",
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setCustomAvatarFile(result); // Store the base64 string
+        setSelectedAvatar(result); // Show preview
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+
   async function onProfileSubmit(values: z.infer<typeof profileFormSchema>) {
     if (!user || !auth.currentUser) return;
     setIsProfileSubmitting(true);
+    let photoURL = selectedAvatar;
+
     try {
-      await updateProfile(auth.currentUser, { displayName: values.name, photoURL: selectedAvatar });
+      if (customAvatarFile) {
+        const storage = getStorage();
+        const storageRef = ref(storage, `avatars/${user.uid}`);
+        
+        // Upload the base64 string
+        const snapshot = await uploadString(storageRef, customAvatarFile, 'data_url');
+        photoURL = await getDownloadURL(snapshot.ref);
+      }
+
+      await updateProfile(auth.currentUser, { displayName: values.name, photoURL: photoURL });
       const userDocRef = doc(db, "users", user.uid);
-      await updateDoc(userDocRef, { name: values.name, photoURL: selectedAvatar });
+      await updateDoc(userDocRef, { name: values.name, photoURL: photoURL });
       toast({ title: "Profile Updated", description: "Your profile has been successfully updated." });
+      setCustomAvatarFile(null); // Clear custom file after successful upload
     } catch (error: any) {
+      console.error("Profile update error: ", error);
       toast({ variant: "destructive", title: "Update Failed", description: error.message });
     } finally {
       setIsProfileSubmitting(false);
@@ -234,10 +266,19 @@ export default function AccountManagementPage() {
                         </Avatar>
                         
                         <div className="w-full space-y-2">
-                            <h3 className="text-sm font-medium flex items-center gap-2 text-muted-foreground"><ImageIcon className="w-4 h-4"/> Select an Avatar</h3>
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-sm font-medium flex items-center gap-2 text-muted-foreground"><ImageIcon className="w-4 h-4"/> Select an Avatar</h3>
+                                 <Button asChild variant="outline" size="sm">
+                                    <Label htmlFor="custom-avatar-upload">
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        Upload Image
+                                        <Input id="custom-avatar-upload" type="file" className="sr-only" accept="image/png, image/jpeg" onChange={handleAvatarFileChange} />
+                                    </Label>
+                                </Button>
+                            </div>
                             <div className="grid grid-cols-4 gap-4 sm:grid-cols-5">
                                 {avatars.map((avatarUrl, index) => (
-                                    <button type="button" key={index} onClick={() => setSelectedAvatar(avatarUrl)}>
+                                    <button type="button" key={index} onClick={() => { setSelectedAvatar(avatarUrl); setCustomAvatarFile(null); }}>
                                         <NextImage 
                                             src={avatarUrl}
                                             width={100}
@@ -385,3 +426,5 @@ export default function AccountManagementPage() {
     </SidebarProvider>
   );
 }
+
+    
