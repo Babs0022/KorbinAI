@@ -18,6 +18,7 @@ import { db } from '@/lib/firebase';
 import type { UserReport } from '@/types/feedback';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import type { AdminUserView } from '@/services/adminService';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface VerificationRequest {
     id: string;
@@ -133,179 +134,185 @@ export default function AdminPage() {
       }
 
       return (
-        <div className="space-y-12">
-          {/* User Management Card */}
-          <Card>
-            <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>A list of all registered users in the application.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
+        <Tabs defaultValue="users" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="users">Users</TabsTrigger>
+                <TabsTrigger value="verification">Verification</TabsTrigger>
+                <TabsTrigger value="feedback">Feedback/Bugs</TabsTrigger>
+            </TabsList>
+            <TabsContent value="users" className="mt-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>User Management</CardTitle>
+                        <CardDescription>A list of all registered users in the application.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>User</TableHead>
+                                    <TableHead>Subscription</TableHead>
+                                    <TableHead>Joined</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {users.length > 0 ? users.map((u) => (
+                                    <TableRow key={u.uid}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-10 w-10">
+                                                    <AvatarImage src={u.photoURL} alt={u.displayName} />
+                                                    <AvatarFallback>{getInitials(u.displayName)}</AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <div className="font-medium flex items-center gap-1.5">
+                                                        {u.displayName || 'No name'}
+                                                        {u.isVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                                                    </div>
+                                                    <div className="text-sm text-muted-foreground">{u.email}</div>
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant={u.subscriptionStatus === 'active' ? 'default' : 'secondary'} className="capitalize">
+                                                {u.subscriptionPlan}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>{format(new Date(u.creationTime), 'PP')}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="sm" disabled>View Details</Button>
+                                        </TableCell>
+                                    </TableRow>
+                                )) : (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center h-24">
+                                            No users found.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="verification" className="mt-6">
+                 <Card>
+                    <CardHeader>
+                    <CardTitle>Pending Verification Requests</CardTitle>
+                    <CardDescription>Review the submissions below to approve or deny verification checkmarks.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                    <Table>
+                        <TableHeader>
                         <TableRow>
                             <TableHead>User</TableHead>
-                            <TableHead>Subscription</TableHead>
-                            <TableHead>Joined</TableHead>
+                            <TableHead>Submitted</TableHead>
+                            <TableHead>Tweet Link</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {users.length > 0 ? users.map((u) => (
-                            <TableRow key={u.uid}>
-                                <TableCell>
-                                    <div className="flex items-center gap-3">
-                                        <Avatar className="h-10 w-10">
-                                            <AvatarImage src={u.photoURL} alt={u.displayName} />
-                                            <AvatarFallback>{getInitials(u.displayName)}</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <div className="font-medium flex items-center gap-1.5">
-                                                {u.displayName || 'No name'}
-                                                {u.isVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
-                                            </div>
-                                            <div className="text-sm text-muted-foreground">{u.email}</div>
-                                        </div>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant={u.subscriptionStatus === 'active' ? 'default' : 'secondary'} className="capitalize">
-                                        {u.subscriptionPlan}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>{format(new Date(u.creationTime), 'PP')}</TableCell>
-                                <TableCell className="text-right">
-                                    <Button variant="ghost" size="sm" disabled>View Details</Button>
-                                </TableCell>
+                        </TableHeader>
+                        <TableBody>
+                        {requests.length > 0 ? requests.map((req) => (
+                            <TableRow key={req.id}>
+                            <TableCell>
+                                <div className="font-medium">{req.userName}</div>
+                                <div className="text-sm text-muted-foreground">{req.userEmail}</div>
+                            </TableCell>
+                            <TableCell>{formatDistanceToNow(new Date(req.createdAt), { addSuffix: true })}</TableCell>
+                            <TableCell>
+                                <a href={req.tweetUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline">
+                                View Tweet <ExternalLink className="h-3 w-3" />
+                                </a>
+                            </TableCell>
+                            <TableCell className="text-right">
+                                <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-green-500 hover:text-green-500 hover:bg-green-500/10"
+                                onClick={() => handleApprove(req.userId)}
+                                disabled={isProcessing === req.userId}
+                                >
+                                {isProcessing === req.userId ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                                <span className="ml-2">Approve</span>
+                                </Button>
+                                <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-500 hover:text-red-500 hover:bg-red-500/10"
+                                onClick={() => handleDeny(req.userId)}
+                                disabled={isProcessing === req.userId}
+                                >
+                                {isProcessing === req.userId ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+                                <span className="ml-2">Deny</span>
+                                </Button>
+                            </TableCell>
                             </TableRow>
                         )) : (
-                             <TableRow>
+                            <TableRow>
                                 <TableCell colSpan={4} className="text-center h-24">
-                                    No users found.
+                                    No pending requests. Great job!
                                 </TableCell>
                             </TableRow>
                         )}
-                    </TableBody>
-                </Table>
-            </CardContent>
-          </Card>
-
-          {/* Verification Requests Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Verification Requests</CardTitle>
-              <CardDescription>Review the submissions below to approve or deny verification checkmarks.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Submitted</TableHead>
-                    <TableHead>Tweet Link</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {requests.length > 0 ? requests.map((req) => (
-                    <TableRow key={req.id}>
-                      <TableCell>
-                        <div className="font-medium">{req.userName}</div>
-                        <div className="text-sm text-muted-foreground">{req.userEmail}</div>
-                      </TableCell>
-                      <TableCell>{formatDistanceToNow(new Date(req.createdAt), { addSuffix: true })}</TableCell>
-                      <TableCell>
-                        <a href={req.tweetUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline">
-                          View Tweet <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-green-500 hover:text-green-500 hover:bg-green-500/10"
-                          onClick={() => handleApprove(req.userId)}
-                          disabled={isProcessing === req.userId}
-                        >
-                          {isProcessing === req.userId ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                          <span className="ml-2">Approve</span>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:text-red-500 hover:bg-red-500/10"
-                          onClick={() => handleDeny(req.userId)}
-                          disabled={isProcessing === req.userId}
-                        >
-                          {isProcessing === req.userId ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
-                          <span className="ml-2">Deny</span>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                        <TableCell colSpan={4} className="text-center h-24">
-                            No pending requests. Great job!
-                        </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-          
-          {/* User Feedback & Reports Card */}
-           <Card>
-            <CardHeader>
-              <CardTitle>User Feedback & Bug Reports</CardTitle>
-              <CardDescription>All user-submitted reports are listed here.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Submitted</TableHead>
-                    <TableHead>Attachment</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {reports.length > 0 ? reports.map((report) => (
-                    <TableRow key={report.id}>
-                      <TableCell>
-                         <Badge variant={report.reportType === 'bug' ? 'destructive' : 'secondary'} className="capitalize">
-                            {report.reportType === 'bug' ? <Bug className="mr-2 h-3.5 w-3.5" /> : <MessageCircle className="mr-2 h-3.5 w-3.5" />}
-                            {report.reportType}
-                        </Badge>
-                      </TableCell>
-                       <TableCell>
-                        <p className="font-medium truncate max-w-xs">{report.subject}</p>
-                        <p className="text-sm text-muted-foreground truncate max-w-xs">{report.message}</p>
-                      </TableCell>
-                      <TableCell>{report.email}</TableCell>
-                      <TableCell>{formatDistanceToNow(new Date(report.createdAt), { addSuffix: true })}</TableCell>
-                      <TableCell>
-                        {report.attachmentUrl ? (
-                            <a href={report.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline">
-                                View <FileText className="h-3 w-3" />
-                            </a>
-                        ) : 'None'}
-                      </TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                        <TableCell colSpan={5} className="text-center h-24">
-                            No user reports have been submitted yet.
-                        </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
+                        </TableBody>
+                    </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="feedback" className="mt-6">
+                <Card>
+                    <CardHeader>
+                    <CardTitle>User Feedback & Bug Reports</CardTitle>
+                    <CardDescription>All user-submitted reports are listed here.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                    <Table>
+                        <TableHeader>
+                        <TableRow>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Subject</TableHead>
+                            <TableHead>User</TableHead>
+                            <TableHead>Submitted</TableHead>
+                            <TableHead>Attachment</TableHead>
+                        </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {reports.length > 0 ? reports.map((report) => (
+                            <TableRow key={report.id}>
+                            <TableCell>
+                                <Badge variant={report.reportType === 'bug' ? 'destructive' : 'secondary'} className="capitalize">
+                                    {report.reportType === 'bug' ? <Bug className="mr-2 h-3.5 w-3.5" /> : <MessageCircle className="mr-2 h-3.5 w-3.5" />}
+                                    {report.reportType}
+                                </Badge>
+                            </TableCell>
+                            <TableCell>
+                                <p className="font-medium truncate max-w-xs">{report.subject}</p>
+                                <p className="text-sm text-muted-foreground truncate max-w-xs">{report.message}</p>
+                            </TableCell>
+                            <TableCell>{report.email}</TableCell>
+                            <TableCell>{formatDistanceToNow(new Date(report.createdAt), { addSuffix: true })}</TableCell>
+                            <TableCell>
+                                {report.attachmentUrl ? (
+                                    <a href={report.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline">
+                                        View <FileText className="h-3 w-3" />
+                                    </a>
+                                ) : 'None'}
+                            </TableCell>
+                            </TableRow>
+                        )) : (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center h-24">
+                                    No user reports have been submitted yet.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                        </TableBody>
+                    </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
       );
   }
 
