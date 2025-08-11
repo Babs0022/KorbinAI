@@ -6,7 +6,7 @@ import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useParams } from "next/navigation";
-import { LoaderCircle, ImagePlus, X, Info, ArrowUp, Mic } from "lucide-react";
+import { LoaderCircle, ImagePlus, X, Info, ArrowUp, AudioLines } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { type Message } from "@/types/ai";
@@ -111,8 +111,8 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
       }
 
       return (
-        <Button type="button" variant="ghost" size="icon" className="rounded-lg" onClick={onVoiceModeClick}>
-          <Mic className="h-5 w-5 text-muted-foreground" />
+        <Button type="button" variant="outline" size="icon" className="rounded-lg" onClick={onVoiceModeClick}>
+          <AudioLines className="h-5 w-5 text-muted-foreground" />
           <span className="sr-only">Activate Voice Mode</span>
         </Button>
       );
