@@ -7,9 +7,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
-import { doc, updateDoc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, updateDoc, onSnapshot } from "firebase/firestore";
 import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
-import { LoaderCircle, User, Key, Image as ImageIcon, CreditCard, Eye, EyeOff, Upload, CheckCircle, Award } from "lucide-react";
+import { LoaderCircle, User, Key, Image as ImageIcon, CreditCard, Eye, EyeOff, Upload, CheckCircle, Award, Clock } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { auth, db } from "@/lib/firebase";
@@ -66,7 +66,7 @@ export default function AccountManagementPage() {
   const [customAvatarFile, setCustomAvatarFile] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
-  const [isVerified, setIsVerified] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<'verified' | 'pending' | 'not_submitted'>('not_submitted');
   
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -101,12 +101,24 @@ export default function AccountManagementPage() {
       setIsSubscriptionLoading(true);
       const userDocRef = doc(db, "users", user.uid);
       const subDocRef = doc(db, "userSubscriptions", user.uid);
+      const verificationReqRef = doc(db, "verificationRequests", user.uid);
       
       const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
-          if (docSnap.exists()) {
-              setIsVerified(docSnap.data()?.isVerified === true);
+          if (docSnap.exists() && docSnap.data()?.isVerified === true) {
+              setVerificationStatus('verified');
           }
       });
+      
+      if (verificationStatus !== 'verified') {
+        const unsubscribeVerification = onSnapshot(verificationReqRef, (docSnap) => {
+            if (docSnap.exists() && docSnap.data()?.status === 'pending') {
+                setVerificationStatus('pending');
+            } else if (verificationStatus !== 'verified') {
+                setVerificationStatus('not_submitted');
+            }
+        });
+        return () => unsubscribeVerification();
+      }
 
       const unsubscribeSub = onSnapshot(subDocRef, (docSnap) => {
         if (docSnap.exists()) {
@@ -127,7 +139,7 @@ export default function AccountManagementPage() {
           unsubscribeSub();
       };
     }
-  }, [user, profileForm]);
+  }, [user, profileForm, verificationStatus]);
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -151,7 +163,7 @@ export default function AccountManagementPage() {
   };
 
 
-  async function onProfileSubmit(values: z.infer<typeof profileFormSchema>>) {
+  async function onProfileSubmit(values: z.infer<typeof profileFormSchema>,){
     if (!user || !auth.currentUser) return;
     setIsProfileSubmitting(true);
     let photoURL = selectedAvatar;
@@ -179,7 +191,7 @@ export default function AccountManagementPage() {
     }
   }
   
-  async function onVerificationSubmit(values: z.infer<typeof verificationSchema>>) {
+  async function onVerificationSubmit(values: z.infer<typeof verificationSchema>) {
     if (!user) return;
     setIsVerificationSubmitting(true);
     try {
@@ -203,7 +215,7 @@ export default function AccountManagementPage() {
     }
   }
   
-  async function onPasswordSubmit(values: z.infer<typeof passwordFormSchema>>) {
+  async function onPasswordSubmit(values: z.infer<typeof passwordFormSchema>) {
     if (!user || !auth.currentUser || !user.email) return;
 
     setIsPasswordSubmitting(true);
@@ -256,6 +268,58 @@ export default function AccountManagementPage() {
       </div>
     );
   };
+  
+  const renderVerificationSection = () => {
+      switch (verificationStatus) {
+        case 'verified':
+            return null; // Don't show the card if they are already verified
+        case 'pending':
+            return (
+                 <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold flex items-center gap-3"><Award /> Get Verified</h2>
+                     <div className="rounded-lg border bg-secondary/50 p-6 flex items-center gap-4">
+                        <Clock className="h-8 w-8 text-muted-foreground" />
+                        <div>
+                            <h3 className="font-semibold text-foreground">Pending Review</h3>
+                            <p className="text-muted-foreground text-sm">Your submission is being reviewed. You'll see your checkmark soon!</p>
+                        </div>
+                    </div>
+                </div>
+            )
+        case 'not_submitted':
+        default:
+            return (
+                 <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold flex items-center gap-3"><Award /> Get Verified</h2>
+                    <p className="text-muted-foreground">Get a golden checkmark on your profile! Just make a post about KorbinAI on X (Twitter) and submit the link below.</p>
+                    <Separator />
+                    <Form {...verificationForm}>
+                        <form onSubmit={verificationForm.handleSubmit(onVerificationSubmit)} className="space-y-4">
+                            <FormField
+                            control={verificationForm.control}
+                            name="tweetUrl"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Tweet URL</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="https://x.com/your-username/status/..." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <div className="flex justify-end">
+                                <Button type="submit" disabled={isVerificationSubmitting}>
+                                    {isVerificationSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                                    Submit for Review
+                                </Button>
+                            </div>
+                        </form>
+                    </Form>
+                </div>
+            );
+      }
+  }
 
   const renderContent = () => {
     if (loading) {
@@ -294,7 +358,7 @@ export default function AccountManagementPage() {
         <div className="w-full max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold flex items-center gap-2">
             Account Management 
-            {isVerified && <CheckCircle className="h-7 w-7 text-yellow-400" />}
+            {verificationStatus === 'verified' && <CheckCircle className="h-7 w-7 text-yellow-400" />}
           </h1>
           <p className="text-muted-foreground mt-2 mb-10">Manage your profile, password, and subscription.</p>
 
@@ -352,36 +416,7 @@ export default function AccountManagementPage() {
             </div>
             
             {/* Verification Section */}
-            {!isVerified && (
-                <div className="space-y-6">
-                    <h2 className="text-2xl font-semibold flex items-center gap-3"><Award /> Get Verified</h2>
-                    <p className="text-muted-foreground">Get a golden checkmark on your profile! Just make a post about KorbinAI on X (Twitter) and submit the link below.</p>
-                    <Separator />
-                    <Form {...verificationForm}>
-                        <form onSubmit={verificationForm.handleSubmit(onVerificationSubmit)} className="space-y-4">
-                            <FormField
-                            control={verificationForm.control}
-                            name="tweetUrl"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Tweet URL</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="https://x.com/your-username/status/..." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                            <div className="flex justify-end">
-                                <Button type="submit" disabled={isVerificationSubmitting}>
-                                    {isVerificationSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                                    Submit for Review
-                                </Button>
-                            </div>
-                        </form>
-                    </Form>
-                </div>
-            )}
+            {renderVerificationSection()}
 
             {/* Change Password Section */}
             <div className="space-y-6">
