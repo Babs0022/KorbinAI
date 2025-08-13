@@ -17,14 +17,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Settings, LogOut, FolderKanban, Sun, Moon, Monitor, CreditCard, FileText, Shield, LifeBuoy, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid, SquarePen, ShieldCheck, BadgeCheck, PanelLeft, Search } from "lucide-react";
+import { User, Settings, LogOut, FolderKanban, Sun, Moon, Monitor, CreditCard, FileText, Shield, LifeBuoy, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid, SquarePen, ShieldCheck, BadgeCheck, PanelLeft, Search, MessageSquare } from "lucide-react";
 import { useSidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import Logo from "@/components/shared/Logo";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Badge } from "../ui/badge";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { listRecentChatsForUser, deleteChatSession, updateChatSessionMetadata } from "@/services/chatService";
 import type { ChatSession } from "@/types/chat";
 import { usePathname, useRouter } from "next/navigation";
@@ -87,6 +87,9 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [chatToRename, setChatToRename] = useState<ChatSession | null>(null);
   const [newChatName, setNewChatName] = useState("");
+  
+  const [isSearchModeActive, setIsSearchModeActive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -118,6 +121,16 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
       };
     }
   }, [user]);
+  
+  const filteredChats = useMemo(() => {
+    if (!searchQuery) {
+        return recentChats.slice(0, 5); // Show 5 most recent if no query
+    }
+    return recentChats.filter(chat =>
+        chat.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, recentChats]);
+
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
@@ -174,69 +187,37 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     toast({ title: "Link Copied", description: "A shareable link has been copied to your clipboard." });
   };
   
-  const UserProfileMenu = () => {
-    if (loading) {
-      return <Skeleton className="h-10 w-10 rounded-full" />
-    }
-    if (user) {
-      return (
-         <>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-10 p-0 rounded-full">
-                        <div className="relative">
-                            <Avatar className="h-10 w-10">
-                                <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
-                                <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                            </Avatar>
-                             {isVerified && <BadgeCheck className="absolute -bottom-1 -right-1 h-5 w-5 text-primary bg-background rounded-full" />}
-                        </div>
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-64" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                    <p className="text-sm font-medium leading-none flex items-center gap-1.5">
-                        {user.displayName}
-                        {isVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground truncate pt-1">{user.email}</p>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild><Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
-                    <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
-                    <DropdownMenuItem asChild><Link href="/dashboard/trash"><Trash2 className="mr-2 h-4 w-4" />Trash</Link></DropdownMenuItem>
-                    {isAdmin && <DropdownMenuItem asChild><Link href="/dashboard/admin"><ShieldCheck className="mr-2 h-4 w-4" />Admin</Link></DropdownMenuItem>}
-                    <DropdownMenuItem asChild disabled><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing & Billing</Link></DropdownMenuItem>
-                <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild><Link href="/dashboard/feedback"><LifeBuoy className="mr-2 h-4 w-4" />Feedback & Bugs</Link></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href="https://korbinai.com/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href="https://korbinai.com/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <div className="px-2 py-1.5 text-sm flex justify-between items-center">
-                    <span>Subscription</span>
-                    <Badge variant={subscription?.status === 'active' ? "default" : "secondary"} className="capitalize">
-                        {subscription?.planId || 'Free'}
-                    </Badge>
+  const SearchMode = () => (
+    <div className="flex-1 flex flex-col gap-2 p-2 overflow-y-auto">
+        <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+                placeholder="Search conversations..." 
+                className="pl-8" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+            />
+        </div>
+        <SidebarMenu className="flex-1 overflow-y-auto">
+            {filteredChats.map((chat) => (
+                <SidebarMenuItem key={chat.id}>
+                    <SidebarMenuButton asChild isActive={pathname.includes(`/chat/${chat.id}`)}>
+                        <Link href={`/chat/${chat.id}`} className="flex items-center gap-2 w-full justify-start">
+                             <MessageSquare className="h-4 w-4 shrink-0" />
+                             <span className="truncate">{chat.title}</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            ))}
+            {searchQuery && filteredChats.length === 0 && (
+                <div className="text-center p-4 text-sm text-muted-foreground">
+                    No results found.
                 </div>
-                <MenuThemeToggle />
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={logout} className="text-destructive focus:text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />Sign Out
-                </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-         </>
-      )
-    }
-    return (
-        <Button asChild>
-            <Link href="/login">
-                Sign In
-            </Link>
-        </Button>
-    );
-  }
-
+            )}
+        </SidebarMenu>
+    </div>
+  );
+  
   const SidebarNav = () => (
     <div className="flex-1 flex flex-col gap-2 p-2 overflow-y-auto">
       <nav className="flex flex-col gap-2">
@@ -378,21 +359,26 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <>
                         <Logo />
                         <div className="flex items-center">
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsSearchModeActive(!isSearchModeActive)}>
                                 <Search className="h-4 w-4" />
                             </Button>
                             <SidebarTrigger />
                         </div>
                     </>
                 ) : (
-                    <div className="relative h-10 w-10 flex items-center justify-center group" onClick={toggleSidebar}>
-                        <Logo className="h-8 w-8 absolute transition-opacity duration-200 opacity-100 group-hover:opacity-0" />
-                        <SidebarTrigger className="absolute inset-0 size-full opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                    <div
+                        className="relative h-10 w-10 flex items-center justify-center group"
+                        onClick={toggleSidebar}
+                        onMouseEnter={(e) => e.currentTarget.querySelector('button')?.classList.remove('opacity-0')}
+                        onMouseLeave={(e) => e.currentTarget.querySelector('button')?.classList.add('opacity-0')}
+                    >
+                        <Logo className="h-8 w-8 transition-opacity duration-200 group-hover:opacity-0" />
+                        <SidebarTrigger className="absolute inset-0 size-full opacity-0 transition-opacity duration-200" />
                     </div>
                 )}
             </div>
             <div className="flex-1 flex flex-col overflow-hidden">
-                <SidebarNav />
+                {isSearchModeActive ? <SearchMode /> : <SidebarNav />}
             </div>
             <div className="p-2 border-t border-transparent">
                 {loading ? (
@@ -472,11 +458,54 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     <header className="sticky top-0 z-30 border-b border-transparent bg-background">
       <div className="flex h-16 items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-2">
-            <span className="hidden font-bold text-lg md:block">KorbinAI</span>
             <SidebarTrigger className="md:hidden" />
+            <span className="hidden font-bold text-lg md:block">KorbinAI</span>
         </div>
         <div className="flex items-center gap-2">
-            <UserProfileMenu />
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 p-0 rounded-full">
+                        <div className="relative">
+                            <Avatar className="h-10 w-10">
+                                <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || "User"} data-ai-hint="person avatar" />
+                                <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+                            </Avatar>
+                             {isVerified && <BadgeCheck className="absolute -bottom-1 -right-1 h-5 w-5 text-primary bg-background rounded-full" />}
+                        </div>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                    <p className="text-sm font-medium leading-none flex items-center gap-1.5">
+                        {user?.displayName}
+                        {isVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground truncate pt-1">{user?.email}</p>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild><Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/dashboard/trash"><Trash2 className="mr-2 h-4 w-4" />Trash</Link></DropdownMenuItem>
+                    {isAdmin && <DropdownMenuItem asChild><Link href="/dashboard/admin"><ShieldCheck className="mr-2 h-4 w-4" />Admin</Link></DropdownMenuItem>}
+                    <DropdownMenuItem asChild disabled><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing & Billing</Link></DropdownMenuItem>
+                <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild><Link href="/dashboard/feedback"><LifeBuoy className="mr-2 h-4 w-4" />Feedback & Bugs</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href="https://korbinai.com/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href="https://korbinai.com/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <div className="px-2 py-1.5 text-sm flex justify-between items-center">
+                    <span>Subscription</span>
+                    <Badge variant={subscription?.status === 'active' ? "default" : "secondary"} className="capitalize">
+                        {subscription?.planId || 'Free'}
+                    </Badge>
+                </div>
+                <MenuThemeToggle />
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={logout} className="text-destructive focus:text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />Sign Out
+                </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
       </div>
     </header>
