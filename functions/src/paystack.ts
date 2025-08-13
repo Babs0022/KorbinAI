@@ -1,10 +1,12 @@
 
 import * as logger from "firebase-functions/logger";
+import * as functions from "firebase-functions";
 import Paystack from "paystack-node";
 import { PaystackChargeSuccessData } from "./types";
 import { adminDb, adminAuth } from "./firebase-admin";
+import { Timestamp, FieldValue } from "firebase-admin/firestore";
 
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
+const PAYSTACK_SECRET_KEY = functions.config().paystack.secret_key;
 
 if (!PAYSTACK_SECRET_KEY) {
     throw new Error("FATAL_ERROR: PAYSTACK_SECRET_KEY is not defined in environment variables. Function cannot start.");
@@ -109,12 +111,12 @@ export async function processChargeSuccessEvent(eventData: PaystackChargeSuccess
             status: "active",
             paymentMethod: "card",
             billingCycle,
-            currentPeriodStart: adminDb.Timestamp.fromDate(paidAtDate),
-            currentPeriodEnd: adminDb.Timestamp.fromDate(currentPeriodEndDate),
+            currentPeriodStart: Timestamp.fromDate(paidAtDate),
+            currentPeriodEnd: Timestamp.fromDate(currentPeriodEndDate),
             paystackReference: reference,
             amountPaid: amount,
             currency,
-            lastEventTimestamp: adminDb.FieldValue.serverTimestamp(),
+            lastEventTimestamp: FieldValue.serverTimestamp(),
         };
 
         logger.info(`[Paystack] Preparing to write subscription data for user ${userId}:`, subscriptionData);
@@ -130,9 +132,9 @@ export async function processChargeSuccessEvent(eventData: PaystackChargeSuccess
             status: "success",
             paymentMethod: "card",
             paystackReference: reference,
-            paidAt: adminDb.Timestamp.fromDate(paidAtDate),
-            createdAt: adminDb.FieldValue.serverTimestamp(),
-            updatedAt: adminDb.FieldValue.serverTimestamp(),
+            paidAt: Timestamp.fromDate(paidAtDate),
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
         }, { merge: true });
 
         logger.info(`[Paystack] SUCCESS: Updated subscription for user ${userId} (plan: ${planId}, ref: ${reference}).`);

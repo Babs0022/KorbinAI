@@ -1,7 +1,7 @@
 
 import * as logger from "firebase-functions/logger";
 import { adminDb, adminAuth } from "./firebase-admin";
-import { FieldValue } from 'firebase-admin/firestore';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 
 
 export async function processNowPaymentsWebhook(event: any): Promise<void> {
@@ -37,8 +37,8 @@ export async function processNowPaymentsWebhook(event: any): Promise<void> {
             email: userRef.email,
             status: "active",
             paymentMethod: "crypto",
-            currentPeriodStart: FieldValue.serverTimestamp(),
-            currentPeriodEnd: FieldValue.serverTimestamp(),
+            currentPeriodStart: Timestamp.fromDate(paidAtDate),
+            currentPeriodEnd: Timestamp.fromDate(currentPeriodEndDate),
             nowpaymentsPaymentId: event.payment_id,
             amountPaid: event.price_amount,
             currency: event.price_currency,
@@ -57,7 +57,7 @@ export async function processNowPaymentsWebhook(event: any): Promise<void> {
             status: "success",
             paymentMethod: "crypto",
             nowpaymentsPaymentId: event.payment_id,
-            paidAt: FieldValue.serverTimestamp(),
+            paidAt: Timestamp.fromDate(paidAtDate),
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         }, { merge: true });

@@ -1,14 +1,14 @@
 
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import { Figtree } from 'next/font/google';
+import { Instrument_Sans } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import './globals.css';
 
-const figtree = Figtree({ subsets: ['latin'] });
+const instrumentSans = Instrument_Sans({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   metadataBase: new URL('http://localhost:3000'),
@@ -84,7 +84,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={figtree.className}>
+      <body className={instrumentSans.className}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

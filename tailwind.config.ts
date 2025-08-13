@@ -18,9 +18,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Figtree', 'sans-serif'],
-        body: ['Figtree', 'sans-serif'],
-        headline: ['Figtree', 'sans-serif'],
+        sans: ['Instrument Sans', 'sans-serif'],
+        body: ['Instrument Sans', 'sans-serif'],
+        headline: ['Instrument Sans', 'sans-serif'],
         code: ['monospace', 'monospace'],
       },
       colors: {

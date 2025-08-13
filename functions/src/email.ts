@@ -1,18 +1,10 @@
 import {onCall} from "firebase-functions/v2/https";
+import * as functions from "firebase-functions";
 import * as logger from "firebase-functions/logger";
 import {Resend} from "resend";
 import {adminAuth, adminDb} from "./firebase-admin";
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const SENDER_EMAIL = process.env.SENDER_EMAIL || "team@korbinai.com";
-
-if (!RESEND_API_KEY) {
-  logger.warn(
-    "RESEND_API_KEY environment variable is not set. Email sending disabled."
-  );
-}
-
-const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 /**
  * Checks if a user is an admin by looking them up in the 'admins' collection.
@@ -28,6 +20,8 @@ async function isAdmin(userId: string): Promise<boolean> {
 export const sendBulkEmail = onCall(
   {region: "us-central1", timeoutSeconds: 540},
   async (request) => {
+    const RESEND_API_KEY = functions.config().resend.api_key;
+    const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
     if (!resend) {
       throw new Error("Email sending service is not configured.");
     }

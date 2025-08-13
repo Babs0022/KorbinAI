@@ -5,6 +5,7 @@
 import "./firebase-admin";
 
 import { onRequest } from "firebase-functions/v2/https";
+import * as functions from "firebase-functions";
 import * as logger from "firebase-functions/logger";
 import * as crypto from "crypto";
 import cors from "cors";
@@ -18,14 +19,8 @@ const corsHandler = cors({ origin: true });
 
 // --- Webhook Handlers ---
 
-// Paystack Webhook
-const PAYSTACK_WEBHOOK_SECRET = process.env.PAYSTACK_WEBHOOK_SECRET;
-
-if (!PAYSTACK_WEBHOOK_SECRET) {
-    logger.error("CRITICAL: PAYSTACK_WEBHOOK_SECRET env var is not set. Webhook verification will fail.");
-}
-
 export const paystackWebhookHandler = onRequest({ region: "us-central1" }, (req, res) => {
+    const PAYSTACK_WEBHOOK_SECRET = functions.config().paystack.webhook_secret;
     corsHandler(req, res, async () => {
         if (!PAYSTACK_WEBHOOK_SECRET) {
             logger.error("[Paystack] Handler called, but PAYSTACK_WEBHOOK_SECRET is not configured. Aborting.");
@@ -64,14 +59,8 @@ export const paystackWebhookHandler = onRequest({ region: "us-central1" }, (req,
 });
 
 
-// NOWPayments Webhook
-const NOWPAYMENTS_IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET_KEY;
-
-if (!NOWPAYMENTS_IPN_SECRET) {
-    logger.warn("Warning: NOWPAYMENTS_IPN_SECRET_KEY env var is not set. Crypto payments will fail.");
-}
-
 export const nowpaymentsWebhookHandler = onRequest({ region: "us-central1" }, (req, res) => {
+    const NOWPAYMENTS_IPN_SECRET = functions.config().nowpayments.ipn_secret_key;
     corsHandler(req, res, async () => {
         if (!NOWPAYMENTS_IPN_SECRET) {
             logger.error("[NOWPayments] Handler called, but IPN secret is not configured.");
