@@ -375,13 +375,13 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <div className="absolute inset-0 group" onClick={toggleSidebar}>
                         <Logo className={cn(
                             "transition-all duration-300 ease-in-out",
-                            state === 'expanded' ? "opacity-100 scale-100" : "opacity-0 scale-75 group-hover:opacity-0 group-hover:scale-75",
-                            state === 'collapsed' && "opacity-0 scale-75"
+                            state === 'expanded' && "opacity-100 scale-100",
+                            state === 'collapsed' && "opacity-100 scale-100 group-hover:opacity-0 group-hover:scale-75"
                         )} />
                         <SidebarTrigger className={cn(
                             "absolute inset-0 transition-all duration-300 ease-in-out size-8",
-                             state === 'expanded' ? "opacity-0 scale-75" : "opacity-100 scale-100 group-hover:scale-110",
-                             state === 'collapsed' && "opacity-100 scale-100"
+                             state === 'expanded' && "opacity-0 scale-75",
+                             state === 'collapsed' && "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-110"
                         )} />
                     </div>
                 </div>
@@ -465,7 +465,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
 
   // Main Header Variant
   return (
-    <header className="sticky top-0 z-30 border-b border-transparent bg-background">
+    <header className="sticky top-0 z-30 border-transparent bg-background">
       <div className="flex h-16 items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-2">
             <span className="font-bold text-lg">KorbinAI</span>
