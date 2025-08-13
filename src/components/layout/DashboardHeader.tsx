@@ -379,12 +379,12 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <Logo className={cn(
                         "transition-all duration-300 ease-in-out",
                         state === 'expanded' && "opacity-100 scale-100",
-                        state === 'collapsed' && "opacity-100 group-hover:opacity-0"
+                        state === 'collapsed' && "opacity-0 group-hover:opacity-100"
                     )} />
                     <SidebarTrigger className={cn(
                         "absolute inset-0 transition-all duration-300 ease-in-out size-8",
                          state === 'expanded' && "opacity-0 scale-75",
-                         state === 'collapsed' && "opacity-0 group-hover:opacity-100"
+                         state === 'collapsed' && "opacity-100 group-hover:opacity-0"
                     )} />
                 </div>
                  <SidebarTrigger className={cn("transition-opacity", state === 'collapsed' && "opacity-0", state === 'expanded' && !isMobile && "block")} />
@@ -470,8 +470,8 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     <header className="sticky top-0 z-30 border-b border-transparent bg-background">
       <div className="flex h-16 items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-2">
-            <SidebarTrigger className={cn("md:hidden", state === 'expanded' && "hidden")} />
             <span className="hidden font-bold text-lg md:block">KorbinAI</span>
+            <SidebarTrigger className="md:hidden" />
         </div>
         <div className="flex items-center gap-2">
             <UserProfileMenu />
