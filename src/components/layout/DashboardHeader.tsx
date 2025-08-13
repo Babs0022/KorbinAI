@@ -371,7 +371,8 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     return (
         <div className="flex flex-col h-full">
             <div className={cn(
-                "flex items-center justify-between p-4 h-16",
+                "flex items-center p-4 h-16",
+                state === 'expanded' && "justify-between",
                 state === 'collapsed' && "justify-center"
             )}>
                 <div className="relative h-8 w-8" onClick={toggleSidebar}>
