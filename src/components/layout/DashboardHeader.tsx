@@ -456,10 +456,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     <header className="sticky top-0 z-30 border-b border-transparent bg-background">
       <div className="flex h-16 items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-2">
-            <SidebarTrigger />
-            <div className="md:hidden">
-                <Logo />
-            </div>
+            <span className="font-bold text-lg">KorbinAI</span>
         </div>
         <div className="flex items-center gap-2">
             <UserProfileMenu />
