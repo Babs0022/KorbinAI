@@ -295,7 +295,7 @@ export default function AccountManagementPage() {
             return (
                  <div className="space-y-6">
                     <h2 className="text-2xl font-semibold flex items-center gap-3"><Award /> Get Verified</h2>
-                    <p className="text-muted-foreground">Get a golden checkmark on your profile! Just make a post about KorbinAI on X (Twitter) and submit the link below.</p>
+                    <p className="text-muted-foreground">Get a golden checkmark on your profile! Follow us on X @korbinai, then craft a post about KorbinAI, tag us, and use the hashtag #korbin. Submit the link to your post below.</p>
                     <Separator />
                     <Form {...verificationForm}>
                         <form onSubmit={verificationForm.handleSubmit(onVerificationSubmit)} className="space-y-4">
@@ -531,3 +531,5 @@ export default function AccountManagementPage() {
     </SidebarProvider>
   );
 }
+
+    
