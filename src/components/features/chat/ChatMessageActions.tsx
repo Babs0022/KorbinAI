@@ -76,6 +76,9 @@ export default function ChatMessageActions({ message, onRegenerate, projectId }:
 
     return (
         <div className="flex items-center gap-2 mt-2">
+            <div className="mr-2">
+                <Logo width={20} height={20} />
+            </div>
             <Button
                 variant="ghost"
                 size="icon"
@@ -101,9 +104,6 @@ export default function ChatMessageActions({ message, onRegenerate, projectId }:
                 <RefreshCw className="h-4 w-4" />
             </Button>
             
-            <div className="ml-2">
-                <Logo width={20} height={20} />
-            </div>
 
             {feedbackRating && (
                 <FeedbackModal
