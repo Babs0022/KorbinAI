@@ -370,10 +370,9 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   if (variant === 'sidebar') {
     return (
         <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between gap-2 p-4 border-b border-transparent">
-                 <Link href="/" className={cn("flex items-center gap-2 font-semibold text-lg", state === 'collapsed' && !isMobile && "justify-center")}>
-                    <span><Logo /></span>
-                    <span className={cn("transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>KorbinAI</span>
+            <div className="flex items-center justify-center p-4 border-b border-transparent h-16">
+                 <Link href="/" className="flex items-center justify-center">
+                    <Logo />
                  </Link>
             </div>
             <div className="flex-1 flex flex-col overflow-hidden">
@@ -469,5 +468,3 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     </header>
   );
 }
-
-    
