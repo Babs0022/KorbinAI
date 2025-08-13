@@ -314,4 +314,47 @@ export async function addCreditsToUser(adminUserId: string, targetUserId: string
     });
 }
 
-    
+
+/**
+ * Adds credits to all users in the system.
+ * This function should only be callable by an admin user.
+ * @param {string} adminUserId - The UID of the admin performing the action.
+ * @param {number} amount - The number of credits to add to each user.
+ */
+export async function addCreditsToAllUsers(adminUserId: string, amount: number): Promise<void> {
+    if (!await isAdmin(adminUserId)) {
+        throw new HttpsError('permission-denied', 'You must be an admin to perform this action.');
+    }
+
+    if (typeof amount !== 'number' || amount <= 0) {
+        throw new HttpsError('invalid-argument', 'Credit amount must be a positive number.');
+    }
+
+    // Firestore batch writes are limited to 500 operations.
+    // We need to process users in batches if there are more than 500.
+    const BATCH_SIZE = 499; // A bit less than 500 to be safe
+    let pageToken: string | undefined = undefined;
+
+    while (true) {
+        const listUsersResult = await adminAuth.listUsers(BATCH_SIZE, pageToken);
+        if (listUsersResult.users.length === 0) {
+            break;
+        }
+
+        const batch = adminDb.batch();
+        listUsersResult.users.forEach(userRecord => {
+            const userDocRef = adminDb.collection('users').doc(userRecord.uid);
+            batch.update(userDocRef, {
+                credits: FieldValue.increment(amount),
+                totalCreditsGranted: FieldValue.increment(amount)
+            });
+        });
+
+        await batch.commit();
+
+        pageToken = listUsersResult.pageToken;
+        if (!pageToken) {
+            break;
+        }
+    }
+}

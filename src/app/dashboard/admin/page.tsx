@@ -4,13 +4,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPendingVerificationRequests, approveVerificationRequest, denyVerificationRequest, getAdminDashboardUsers, addCreditsToUser } from '@/services/adminService';
+import { getPendingVerificationRequests, approveVerificationRequest, denyVerificationRequest, getAdminDashboardUsers, addCreditsToUser, addCreditsToAllUsers } from '@/services/adminService';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users, Mail, Copy, FolderKanban, TrendingUp, CreditCard, Send, Coins, PlusCircle } from 'lucide-react';
+import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users, Mail, Copy, FolderKanban, TrendingUp, CreditCard, Send, Coins, PlusCircle, Gift } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, format } from 'date-fns';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -30,6 +30,17 @@ import type { ChartConfig } from '@/components/ui/chart';
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 
 interface VerificationRequest {
@@ -74,8 +85,10 @@ export default function AdminPage() {
   const [activeChartMetrics, setActiveChartMetrics] = useState<string[]>(['users', 'projects', 'chats']);
 
   const [isCreditDialogOpen, setIsCreditDialogOpen] = useState(false);
+  const [isBulkCreditDialogOpen, setIsBulkCreditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUserView | null>(null);
   const [creditAmount, setCreditAmount] = useState(100);
+  const [bulkCreditAmount, setBulkCreditAmount] = useState(100);
   const [isAddingCredits, setIsAddingCredits] = useState(false);
 
 
@@ -97,22 +110,27 @@ export default function AdminPage() {
   }, [user, authLoading]);
   
   // Fetch data if user is an admin
+  const fetchDashboardData = async () => {
+    if (!user) return;
+     Promise.all([
+        getPendingVerificationRequests(user.uid),
+        getAllUserReports(user.uid),
+        getAdminDashboardUsers(user.uid),
+      ]).then(([verificationRequests, userReports, adminData]) => {
+          setRequests(verificationRequests);
+          setReports(userReports);
+          setDashboardData(adminData);
+      }).catch(err => {
+          toast({ variant: 'destructive', title: 'Error', description: err.message });
+      }).finally(() => {
+          setIsLoading(false);
+      });
+  }
+
   useEffect(() => {
-      if (isAdmin === true && user) {
+      if (isAdmin === true) {
           setIsLoading(true);
-          Promise.all([
-            getPendingVerificationRequests(user.uid),
-            getAllUserReports(user.uid),
-            getAdminDashboardUsers(user.uid),
-          ]).then(([verificationRequests, userReports, adminData]) => {
-              setRequests(verificationRequests);
-              setReports(userReports);
-              setDashboardData(adminData);
-          }).catch(err => {
-              toast({ variant: 'destructive', title: 'Error', description: err.message });
-          }).finally(() => {
-              setIsLoading(false);
-          });
+          fetchDashboardData();
       } else if (isAdmin === false) {
           setIsLoading(false);
       }
@@ -205,6 +223,21 @@ export default function AdminPage() {
         setIsAddingCredits(false);
     }
   };
+  
+  const handleAddCreditsToAll = async () => {
+    if (!user || bulkCreditAmount <= 0) return;
+    setIsAddingCredits(true);
+    try {
+        await addCreditsToAllUsers(user.uid, bulkCreditAmount);
+        toast({ title: 'Credits Distributed!', description: `Successfully added ${bulkCreditAmount} credits to all users.` });
+        setIsBulkCreditDialogOpen(false);
+        await fetchDashboardData(); // Refresh all data
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+        setIsAddingCredits(false);
+    }
+  }
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
@@ -371,9 +404,15 @@ export default function AdminPage() {
             </TabsContent>
             <TabsContent value="users" className="mt-6">
                 <Card>
-                    <CardHeader>
-                        <CardTitle>User Management</CardTitle>
-                        <CardDescription>A list of all registered users in the application.</CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>User Management</CardTitle>
+                            <CardDescription>A list of all registered users in the application.</CardDescription>
+                        </div>
+                        <Button variant="outline" onClick={() => setIsBulkCreditDialogOpen(true)}>
+                            <Gift className="mr-2 h-4 w-4" />
+                            Add Credits to All Users
+                        </Button>
                     </CardHeader>
                     <CardContent>
                         <Table>
@@ -635,9 +674,38 @@ export default function AdminPage() {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+
+        <AlertDialog open={isBulkCreditDialogOpen} onOpenChange={setIsBulkCreditDialogOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Add Credits to All Users</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action will grant credits to every single user in the system. This cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="bulk-credit-amount" className="text-right">Amount</Label>
+                        <Input
+                            id="bulk-credit-amount"
+                            type="number"
+                            value={bulkCreditAmount}
+                            onChange={(e) => setBulkCreditAmount(Number(e.target.value))}
+                            className="col-span-3"
+                        />
+                    </div>
+                </div>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleAddCreditsToAll} disabled={isAddingCredits}>
+                         {isAddingCredits && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                        Confirm & Add Credits
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
       </main>
     </DashboardLayout>
   );
 }
-
-    
