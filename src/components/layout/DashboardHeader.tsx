@@ -76,7 +76,7 @@ function MenuThemeToggle() {
 export default function DashboardHeader({ variant = 'main' }: DashboardHeaderProps) {
   const { user, logout, loading } = useAuth();
   const { subscription } = useSubscription();
-  const { state, isMobile } = useSidebar();
+  const { state, isMobile, toggleSidebar } = useSidebar();
   const [recentChats, setRecentChats] = useState<ChatSession[]>([]);
   const [isVerified, setIsVerified] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -370,10 +370,22 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   if (variant === 'sidebar') {
     return (
         <div className="flex flex-col h-full">
-            <div className="flex items-center justify-center p-4 border-b border-transparent h-16">
-                 <Link href="/" className="flex items-center justify-center">
-                    <Logo />
-                 </Link>
+            <div className="flex items-center justify-between p-4 border-b border-transparent h-16">
+                <div className="relative h-8 w-8">
+                    <div className="absolute inset-0 group" onClick={toggleSidebar}>
+                        <Logo className={cn(
+                            "transition-all duration-300 ease-in-out",
+                            state === 'expanded' ? "opacity-100 scale-100" : "opacity-0 scale-75 group-hover:opacity-0 group-hover:scale-75",
+                            state === 'collapsed' && "opacity-0 scale-75"
+                        )} />
+                        <SidebarTrigger className={cn(
+                            "absolute inset-0 transition-all duration-300 ease-in-out size-8",
+                             state === 'expanded' ? "opacity-0 scale-75" : "opacity-100 scale-100 group-hover:scale-110",
+                             state === 'collapsed' && "opacity-100 scale-100"
+                        )} />
+                    </div>
+                </div>
+                 <SidebarTrigger className={cn("transition-opacity", state === 'collapsed' && "opacity-0")} />
             </div>
             <div className="flex-1 flex flex-col overflow-hidden">
                 <SidebarNav />
