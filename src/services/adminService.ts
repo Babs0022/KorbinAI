@@ -169,7 +169,7 @@ export interface AdminDashboardData {
     totalVerifiedUsers: number;
     totalActiveSubscriptions: number;
     totalChats: number;
-    totalCredits: number;
+    totalCreditsUsed: number;
     timeSeriesData: TimeSeriesData[];
 }
 
@@ -195,7 +195,7 @@ export async function getAdminDashboardUsers(adminUserId: string): Promise<Admin
 
     let totalVerifiedUsers = 0;
     let totalActiveSubscriptions = 0;
-    let totalCredits = 0;
+    let totalCreditsUsed = 0;
     
     const timeSeriesMap: { [key: string]: { users: number, projects: number, chats: number } } = {};
 
@@ -212,7 +212,8 @@ export async function getAdminDashboardUsers(adminUserId: string): Promise<Admin
             if (isVerified) totalVerifiedUsers++;
             
             const credits = userData?.credits ?? 0;
-            totalCredits += credits;
+            const totalCreditsGranted = userData?.totalCreditsGranted ?? 100; // Default to 100 for older users
+            totalCreditsUsed += (totalCreditsGranted - credits);
 
             const subscriptionStatus = (subDoc.exists && subDoc.data()?.status === 'active') ? 'active' : 'inactive';
             if (subscriptionStatus === 'active') totalActiveSubscriptions++;
@@ -277,7 +278,7 @@ export async function getAdminDashboardUsers(adminUserId: string): Promise<Admin
         totalVerifiedUsers,
         totalActiveSubscriptions,
         totalChats,
-        totalCredits,
+        totalCreditsUsed,
         timeSeriesData,
     };
 }
@@ -309,6 +310,7 @@ export async function addCreditsToUser(adminUserId: string, targetUserId: string
 
     await userDocRef.update({
         credits: FieldValue.increment(amount),
+        totalCreditsGranted: FieldValue.increment(amount)
     });
 }
 

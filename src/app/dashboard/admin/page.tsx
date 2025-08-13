@@ -315,8 +315,8 @@ export default function AdminPage() {
                             <Coins className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{dashboardData?.totalCredits.toLocaleString() ?? 'N/A'}</div>
-                            <p className="text-xs text-muted-foreground">Total credits across all users</p>
+                            <div className="text-2xl font-bold">{dashboardData?.totalCreditsUsed.toLocaleString() ?? 'N/A'}</div>
+                            <p className="text-xs text-muted-foreground">Total credits spent by users</p>
                         </CardContent>
                     </Card>
                 </div>

@@ -146,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           createdAt: new Date(),
           customSystemPrompt: defaultSystemPrompt,
           credits: 100, // Initial credits for new users
+          totalCreditsGranted: 100,
         });
       }
       return user;
@@ -177,6 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         photoURL: `https://api.dicebear.com/8.x/avataaars/png?seed=${name}&size=100}`,
         customSystemPrompt: defaultSystemPrompt,
         credits: 100, // Initial credits for new users
+        totalCreditsGranted: 100,
     });
     
     // Send verification email
