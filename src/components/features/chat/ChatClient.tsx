@@ -18,10 +18,10 @@ import { Textarea } from "@/components/ui/textarea";
 import MarkdownRenderer from "@/components/shared/MarkdownRenderer";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import LogoSpinner from "@/components/shared/LogoSpinner";
 import ChatMessageActions from "./ChatMessageActions";
 import VoiceMode from "./VoiceMode";
 import Logo from "@/components/shared/Logo";
+import AnimatedLoadingText from "@/components/shared/AnimatedLoadingText";
 
 const formSchema = z.object({
   message: z.string(),
@@ -319,7 +319,7 @@ export default function ChatClient() {
                             </div>
                         )}
                         {isLoading && message.role === 'model' && index === messages.length - 1 && !message.content ? (
-                            <LogoSpinner />
+                            <AnimatedLoadingText />
                         ) : message.content ? (
                             <MarkdownRenderer mediaUrls={message.role === 'model' ? message.mediaUrls : undefined}>{message.content}</MarkdownRenderer>
                         ) : null}
