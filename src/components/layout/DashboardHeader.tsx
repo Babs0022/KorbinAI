@@ -370,9 +370,12 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   if (variant === 'sidebar') {
     return (
         <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between p-4 border-b border-transparent h-16">
-                <div className="relative h-8 w-8">
-                    <div className="absolute inset-0 group" onClick={toggleSidebar}>
+            <div className={cn(
+                "flex items-center justify-between p-4 h-16",
+                state === 'collapsed' && "justify-center"
+            )}>
+                <div className="relative h-8 w-8" onClick={toggleSidebar}>
+                    <div className="absolute inset-0 group">
                         <Logo className={cn(
                             "transition-all duration-300 ease-in-out",
                             state === 'expanded' && "opacity-100 scale-100",
