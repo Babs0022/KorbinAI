@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { submitFeedback } from '@/services/feedbackService';
 import { useAuth } from '@/contexts/AuthContext';
 import { type Message } from '@/types/ai';
+import Logo from '@/components/shared/Logo';
 
 
 interface ChatMessageActionsProps {
@@ -100,6 +101,10 @@ export default function ChatMessageActions({ message, onRegenerate, projectId }:
                 <RefreshCw className="h-4 w-4" />
             </Button>
             
+            <div className="ml-2">
+                <Logo width={20} height={20} />
+            </div>
+
             {feedbackRating && (
                 <FeedbackModal
                     isOpen={isFeedbackModalOpen}
