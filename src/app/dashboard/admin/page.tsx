@@ -4,20 +4,20 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPendingVerificationRequests, approveVerificationRequest, denyVerificationRequest, getAdminDashboardUsers } from '@/services/adminService';
+import { getPendingVerificationRequests, approveVerificationRequest, denyVerificationRequest, getAdminDashboardUsers, addCreditsToUser } from '@/services/adminService';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users, Mail, Copy, FolderKanban, TrendingUp, CreditCard, Send, Coins } from 'lucide-react';
+import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users, Mail, Copy, FolderKanban, TrendingUp, CreditCard, Send, Coins, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, format } from 'date-fns';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { UserReport } from '@/types/feedback';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import type { AdminDashboardData } from '@/services/adminService';
+import type { AdminDashboardData, AdminUserView } from '@/services/adminService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import type { ChartConfig } from '@/components/ui/chart';
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 
 interface VerificationRequest {
@@ -71,6 +72,11 @@ export default function AdminPage() {
   const [emailBody, setEmailBody] = useState('');
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [activeChartMetrics, setActiveChartMetrics] = useState<string[]>(['users', 'projects', 'chats']);
+
+  const [isCreditDialogOpen, setIsCreditDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<AdminUserView | null>(null);
+  const [creditAmount, setCreditAmount] = useState(100);
+  const [isAddingCredits, setIsAddingCredits] = useState(false);
 
 
   // Check for admin status
@@ -167,6 +173,36 @@ export default function AdminPage() {
       toast({ variant: 'destructive', title: 'Failed to Send Email', description: error.message });
     } finally {
       setIsSendingEmail(false);
+    }
+  };
+
+  const openCreditDialog = (user: AdminUserView) => {
+    setSelectedUser(user);
+    setCreditAmount(100);
+    setIsCreditDialogOpen(true);
+  };
+
+  const handleAddCredits = async () => {
+    if (!user || !selectedUser || creditAmount <= 0) return;
+    setIsAddingCredits(true);
+    try {
+        await addCreditsToUser(user.uid, selectedUser.uid, creditAmount);
+        toast({ title: 'Credits Added', description: `Successfully added ${creditAmount} credits to ${selectedUser.displayName}.` });
+        
+        // Update the UI locally
+        setDashboardData(prevData => {
+            if (!prevData) return null;
+            return {
+                ...prevData,
+                users: prevData.users.map(u => u.uid === selectedUser.uid ? { ...u, credits: u.credits + creditAmount } : u),
+            };
+        });
+
+        setIsCreditDialogOpen(false);
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+        setIsAddingCredits(false);
     }
   };
 
@@ -376,7 +412,9 @@ export default function AdminPage() {
                                         <TableCell>{u.credits}</TableCell>
                                         <TableCell>{format(new Date(u.creationTime), 'PP')}</TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="sm" disabled>View Details</Button>
+                                            <Button variant="outline" size="sm" onClick={() => openCreditDialog(u)}>
+                                                <PlusCircle className="mr-2 h-4 w-4" /> Add Credits
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 )) : (
@@ -568,7 +606,38 @@ export default function AdminPage() {
             {renderContent()}
           </div>
         </div>
+        <Dialog open={isCreditDialogOpen} onOpenChange={setIsCreditDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add Credits to {selectedUser?.displayName}</DialogTitle>
+                    <DialogDescription>
+                        Enter the amount of credits to add to this user's account. Their current balance is {selectedUser?.credits}.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="credit-amount" className="text-right">Amount</Label>
+                        <Input
+                            id="credit-amount"
+                            type="number"
+                            value={creditAmount}
+                            onChange={(e) => setCreditAmount(Number(e.target.value))}
+                            className="col-span-3"
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsCreditDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleAddCredits} disabled={isAddingCredits}>
+                        {isAddingCredits && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                        Add Credits
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
       </main>
     </DashboardLayout>
   );
 }
+
+    

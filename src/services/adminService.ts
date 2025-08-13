@@ -281,3 +281,35 @@ export async function getAdminDashboardUsers(adminUserId: string): Promise<Admin
         timeSeriesData,
     };
 }
+
+
+/**
+ * Adds a specified amount of credits to a user's account.
+ * This function should only be callable by an admin user.
+ * @param {string} adminUserId - The UID of the admin performing the action.
+ * @param {string} targetUserId - The UID of the user to receive credits.
+ * @param {number} amount - The number of credits to add.
+ */
+export async function addCreditsToUser(adminUserId: string, targetUserId: string, amount: number): Promise<void> {
+    if (!await isAdmin(adminUserId)) {
+        throw new HttpsError('permission-denied', 'You must be an admin to perform this action.');
+    }
+    
+    if (typeof amount !== 'number' || amount <= 0) {
+        throw new HttpsError('invalid-argument', 'Credit amount must be a positive number.');
+    }
+
+    const userDocRef = adminDb.collection('users').doc(targetUserId);
+
+    // Check if user exists before attempting to update
+    const userDoc = await userDocRef.get();
+    if (!userDoc.exists) {
+        throw new HttpsError('not-found', `User with ID ${targetUserId} not found.`);
+    }
+
+    await userDocRef.update({
+        credits: FieldValue.increment(amount),
+    });
+}
+
+    
