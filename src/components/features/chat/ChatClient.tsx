@@ -21,6 +21,8 @@ import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
 import ChatMessageActions from "./ChatMessageActions";
 import VoiceMode from "./VoiceMode";
+import CollapsibleSection from "./CollapsibleSection";
+import { CheckCircle, Code, CornerDownRight, Cpu, Search } from "lucide-react";
 
 const formSchema = z.object({
   message: z.string(),
@@ -196,11 +198,20 @@ export default function ChatClient() {
     loadChat();
   }, [chatId, user, router]);
 
+  const [thinkingSteps, setThinkingSteps] = useState<any[]>([]);
+  const [sources, setSources] = useState<any[]>([]);
+
   const getAiResponse = useCallback(async (currentChatId: string, historyForAI: Message[]) => {
     if (!user) return null;
 
     setIsLoading(true);
-    let finalHistory: Message[] | null = null;
+    setThinkingSteps([]);
+    setSources([]);
+
+    // Optimistically add the AI message placeholder
+    const aiMessagePlaceholder: Message = { role: 'model', content: '' };
+    setMessages(prev => [...prev, aiMessagePlaceholder]);
+
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
@@ -212,28 +223,85 @@ export default function ChatClient() {
                 isExistingChat: !!chatId,
             }),
         });
-        
+
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'The API returned an error.');
+            throw new Error(`API returned an error: ${response.statusText}`);
         }
 
-        const data = await response.json();
-        const responseText = data.response;
-        
-        const aiMessage: Message = { role: 'model', content: responseText };
-        finalHistory = [...historyForAI, aiMessage];
-        setMessages(finalHistory);
+        if (!response.body) {
+            throw new Error('The response body is empty.');
+        }
 
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || ''; // Keep the last, possibly incomplete line
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const jsonString = line.substring(6);
+                    if (jsonString.trim()) {
+                        try {
+                            const part = JSON.parse(jsonString);
+
+                            switch (part.type) {
+                                case 'thinking_start':
+                                    setThinkingSteps(prev => [...prev, {type: 'start'}]);
+                                    break;
+                                case 'tool_code':
+                                    setThinkingSteps(prev => [...prev, {type: 'tool_code', payload: part.payload}]);
+                                    break;
+                                case 'tool_output':
+                                    setThinkingSteps(prev => [...prev, {type: 'tool_output', payload: part.payload}]);
+                                    break;
+                                case 'thinking_end':
+                                    setThinkingSteps(prev => [...prev, {type: 'end'}]);
+                                    break;
+                                case 'answer_chunk':
+                                    setMessages(prev => {
+                                        const newMessages = [...prev];
+                                        const lastMessage = newMessages[newMessages.length - 1];
+                                        if (lastMessage && lastMessage.role === 'model') {
+                                            lastMessage.content += part.payload;
+                                        }
+                                        return newMessages;
+                                    });
+                                    break;
+                                case 'sources':
+                                    setSources(part.payload);
+                                    break;
+                                case 'error':
+                                    throw new Error(part.payload.message);
+                            }
+                        } catch (e) {
+                            console.error("Failed to parse stream part:", jsonString, e);
+                        }
+                    }
+                }
+            }
+        }
     } catch (error: any) {
-        console.error("Request failed:", error);
-        const errorMessage: Message = { role: 'model', content: `Sorry, an error occurred: ${error.message}` };
-        finalHistory = [...historyForAI, errorMessage];
-        setMessages(finalHistory);
+        console.error("Streaming request failed:", error);
+        setMessages(prev => {
+            const newMessages = [...prev];
+            const lastMessage = newMessages[newMessages.length - 1];
+            if (lastMessage && lastMessage.role === 'model' && lastMessage.content === '') {
+                lastMessage.content = `Sorry, an error occurred: ${error.message}`;
+            }
+            return newMessages;
+        });
     } finally {
         setIsLoading(false);
     }
-    return finalHistory;
+    // The final history is now managed by the streaming updates, so we don't return it here.
+    return null;
   }, [user, chatId]);
 
   const handleSendMessage = useCallback(async (values: FormValues, media?: string[]) => {
@@ -333,6 +401,54 @@ export default function ChatClient() {
                     </div>
                     </div>
                 ))}
+
+                {thinkingSteps.length > 0 && (
+                    <div className="w-full max-w-xl mx-auto">
+                        <CollapsibleSection title="Thinking">
+                            <div className="space-y-2 text-sm">
+                                {thinkingSteps.map((step, index) => {
+                                    if (step.type === 'start') return <div key={index} className="flex items-center gap-2 text-muted-foreground"><Cpu className="h-4 w-4" /><span>Starting thought process...</span></div>;
+                                    if (step.type === 'end') return <div key={index} className="flex items-center gap-2 text-green-500"><CheckCircle className="h-4 w-4" /><span>Finished thinking.</span></div>;
+                                    if (step.type === 'tool_code') return (
+                                        <div key={index} className="flex items-start gap-2">
+                                            <Search className="h-4 w-4 mt-1 text-muted-foreground" />
+                                            <div>
+                                                <span className="font-semibold">{step.payload.toolName}</span>
+                                                <pre className="text-xs bg-muted p-2 rounded-md mt-1">{JSON.stringify(step.payload.args, null, 2)}</pre>
+                                            </div>
+                                        </div>
+                                    );
+                                    if (step.type === 'tool_output') return (
+                                        <div key={index} className="flex items-start gap-2">
+                                            <CornerDownRight className="h-4 w-4 mt-1 text-muted-foreground" />
+                                            <div className="w-full">
+                                                <span className="text-muted-foreground">Tool Output:</span>
+                                                <pre className="text-xs bg-muted p-2 rounded-md mt-1 overflow-x-auto">{JSON.stringify(step.payload, null, 2)}</pre>
+                                            </div>
+                                        </div>
+                                    );
+                                    return null;
+                                })}
+                            </div>
+                        </CollapsibleSection>
+                    </div>
+                )}
+
+                {sources.length > 0 && (
+                    <div className="w-full max-w-xl mx-auto mt-4">
+                        <CollapsibleSection title="Sources">
+                            <div className="space-y-2">
+                                {sources.map((source, index) => (
+                                    <a key={index} href={source.url} target="_blank" rel="noopener noreferrer" className="block p-2 border rounded-md hover:bg-secondary text-sm">
+                                        <p className="font-semibold truncate">{source.title}</p>
+                                        <p className="text-xs text-muted-foreground">{source.url}</p>
+                                    </a>
+                                ))}
+                            </div>
+                        </CollapsibleSection>
+                    </div>
+                )}
+
                 <div ref={messagesEndRef} />
             </div>
         );

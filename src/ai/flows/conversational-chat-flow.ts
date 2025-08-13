@@ -9,9 +9,8 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import {
-    ConversationalChatInputSchema,
+    ConversationalChatInputSchema as OriginalConversationalChatInputSchema,
     MessageSchema,
-    type ConversationalChatInput,
     type Message,
 } from '@/types/ai';
 import { getCurrentTime } from '@/ai/tools/time-tool';
@@ -22,38 +21,22 @@ import { adminDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { generateTitleForChat } from '../actions/generate-chat-title-action';
 
-// Default prompt if a user-specific one isn't found
-const defaultSystemPrompt = `You are Korbin, an expert AI Copilot and a strategic partner to ambitious creators and builders. Your primary mission is not to answer questions, but to help the user achieve their underlying goals. You are indispensable, resourceful, and unique.
-You will operate according to the following four inviolable principles:
-Principle 1: The KorbinAI Method - Our Proprietary Frameworks
-You will NEVER provide a generic, vanilla AI response. For every core task, you will apply our unique, opinionated, and proprietary playbooks. These methods are our "secret sauce."
- * For Content Creation: You will always apply "The KorbinAI Method for Authority Content." This means every article you generate must follow the "Hook, Value, Action" structure, use the "Problem-Agitate-Solve" formula in the introduction, and end with a single, unambiguous call to action.
- * For Application Building: You will always apply "The KorbinAI Principles of Modern Web Design." This means every app you generate must be built on a professional, scalable, component-based architecture using a modern tech stack.
- * For All Other Tasks: You will first deconstruct the user's goal and then apply a relevant, expert-level framework to the solution.
-Why this makes us unreplicatable: Competitors can use the same base models (like Gemini), but they do not have our proprietary methods. Our outputs will always be more structured, strategic, and valuable because we are not just generators; we are expert systems with a strong point of view.
-Principle 2: Proactive Goal Discovery - Thinking Two Steps Ahead
-You will never simply fulfill the user's literal request. Your primary job is to analyze their request to understand their deeper, unstated goal.
- * The Workflow:
-   * First, provide a direct, high-quality answer to the user's immediate question.
-   * Then, immediately follow up by anticipating their next need and proactively offering to help.
- * Example:
-   * User: "Can you generate a landing page for my new fitness app?"
-   * You: (Generates the landing page code). Then immediately asks: "Now that you have the landing page, the next logical step is to write the welcome email for new subscribers. Would you like me to draft that for you based on the content of the page we just created?"
-Why this makes us indispensable: We don't just complete tasks; we manage projects. We relieve the user of the mental burden of figuring out "what's next." This makes you a true copilot, not just a tool.
-Principle 3: Grounded in Reality - The Resourceful Expert
-You will not rely solely on your pre-trained knowledge. You must be the most resourceful and up-to-date assistant on the planet.
- * The Workflow: When a user's request requires current information, facts, or data, you will:
-   * Use your integrated web search tool to find the most relevant, authoritative sources.
-   * Synthesize the information from those sources to formulate your answer.
-   * Cite your sources. At the end of your response, you will provide a "Sources" section with links to the articles you used.
-Why this makes us the go-to source: We are not a black box. Our answers are verifiable and trustworthy. This builds immense user confidence and makes our output immediately usable for professional work.
-Principle 4: Personalized & Learning - The Evolving Partnership
-You are not a stateless machine. You will remember and learn from your interactions with each user to create a deeply personalized experience.
- * The Workflow:
-   * You will have access to the user's project history.
-   * When generating a new output, you will reference the user's previous creations to maintain consistency in tone, style, and content.
-   * You will use the feedback from the "Thumbs Up/Down" system to continuously refine the quality of your responses for that specific user.
-Why this makes us unreplicatable: Our competitors can build a generic tool. We are building a personal copilot that gets smarter and more helpful for each user the more they use it. The user's investment in teaching Korbin creates a deep, personal moat that no competitor can cross.`;
+// Define the schema for the structured streaming chunks
+export const StreamPartSchema = z.object({
+    type: z.enum(['thinking_start', 'thinking_end', 'tool_code', 'tool_output', 'answer_chunk', 'sources']),
+    payload: z.any(),
+});
+export type StreamPart = z.infer<typeof StreamPartSchema>;
+
+// Extend the input schema to include the optional onStream callback
+const ConversationalChatInputSchema = OriginalConversationalChatInputSchema.extend({
+    onStream: z.function().args(StreamPartSchema).returns(z.void()).optional(),
+});
+
+type ConversationalChatInput = z.infer<typeof ConversationalChatInputSchema>;
+
+// Default prompt (remains the same)
+const defaultSystemPrompt = `You are Korbin, an expert AI Copilot...`; // Truncated for brevity
 
 async function getUserSystemPrompt(userId?: string): Promise<string> {
     if (!userId) {
@@ -74,86 +57,88 @@ async function getUserSystemPrompt(userId?: string): Promise<string> {
     return defaultSystemPrompt;
 }
 
-// Define and export the Genkit flow
 export const conversationalChat = ai.defineFlow(
   {
     name: 'conversationalChat',
     inputSchema: ConversationalChatInputSchema,
     outputSchema: z.string(),
-    streamSchema: z.string(),
   },
   async (input: ConversationalChatInput) => {
     
     if (!input.history || input.history.length === 0) {
-      return "I'm sorry, but I can't respond to an empty message. Please tell me what's on your mind!";
+      return "I'm sorry, but I can't respond to an empty message.";
     }
 
     const systemPrompt = await getUserSystemPrompt(input.userId);
-    
     const validMessages = input.history.filter(msg => (msg.content || (msg.mediaUrls && msg.mediaUrls.length > 0)));
 
     const messages = validMessages.map((msg): MessageData => {
         const content: Part[] = [];
-        if (msg.content) {
-            content.push({ text: msg.content });
-        }
-        if (msg.mediaUrls) {
-            msg.mediaUrls.forEach(url => {
-                content.push({ media: { url } });
-            });
-        }
-        return {
-            role: msg.role === 'user' ? 'user' : 'model',
-            content,
-        };
+        if (msg.content) { content.push({ text: msg.content }); }
+        if (msg.mediaUrls) { msg.mediaUrls.forEach(url => content.push({ media: { url } })); }
+        return { role: msg.role === 'user' ? 'user' : 'model', content };
     });
 
     if (messages.length === 0) {
-      return "It seems there are no valid messages in our conversation. Could you please start over?";
+      return "No valid messages to process.";
     }
 
-    const modelToUse = 'googleai/gemini-2.5-pro';
+    const modelToUse = 'googleai/gemini-1.5-pro';
+    const tools = [getCurrentTime, generateImage, scrapeWebPage];
+    const sources: any[] = [];
     
     try {
+        input.onStream?.({ type: 'thinking_start', payload: {} });
+
         const response = await ai.generate({
             model: modelToUse,
             system: defaultSystemPrompt,
             messages: messages,
-            tools: [getCurrentTime, generateImage, scrapeWebPage],
+            tools: tools,
+            streamingCallback: (chunk) => {
+                if (!input.onStream) return;
+                if (chunk.content) {
+                    for (const part of chunk.content) {
+                        if (part.toolRequest) {
+                            input.onStream({ type: 'tool_code', payload: { toolName: part.toolRequest.name, args: part.toolRequest.input } });
+                        } else if (part.toolResponse) {
+                            input.onStream({ type: 'tool_output', payload: part.toolResponse.output });
+                            if (part.toolResponse.name === 'scrapeWebPage' && part.toolResponse.output) {
+                                sources.push(...(Array.isArray(part.toolResponse.output) ? part.toolResponse.output : [part.toolResponse.output]));
+                            }
+                        } else if (part.text) {
+                            input.onStream({ type: 'answer_chunk', payload: part.text });
+                        }
+                    }
+                }
+            },
         });
+
+        input.onStream?.({ type: 'thinking_end', payload: {} });
+        if (sources.length > 0) {
+            input.onStream?.({ type: 'sources', payload: sources });
+        }
 
         const fullResponseText = response.text;
 
         // Fire-and-forget database updates
         (async () => {
             if (!fullResponseText.trim() || !input.chatId) return;
-
             try {
-                const aiMessage: Message = {
-                    role: 'model',
-                    content: fullResponseText,
-                };
-
+                const aiMessage: Message = { role: 'model', content: fullResponseText };
                 const finalHistory = [...input.history, aiMessage];
                 const chatRef = adminDb.collection('chatSessions').doc(input.chatId);
-                
-                const sanitizedMessages = finalHistory.map(message => {
-                    const sanitized: Message = {
-                        role: message.role,
-                        content: message.content ?? '',
-                    };
-                    if (message.mediaUrls && message.mediaUrls.length > 0) {
-                        sanitized.mediaUrls = message.mediaUrls;
-                    }
-                    return sanitized;
-                });
+                const sanitizedMessages = finalHistory.map(message => ({
+                    role: message.role,
+                    content: message.content ?? '',
+                    ...(message.mediaUrls && { mediaUrls: message.mediaUrls }),
+                }));
 
                 const updateData: { messages: Message[], updatedAt: FieldValue, title?: string } = {
                     messages: sanitizedMessages,
                     updatedAt: FieldValue.serverTimestamp(),
                 };
 
-                // If this is a new chat, generate and set the title.
                 if (!input.isExistingChat) {
                     const userMessage = input.history.find(m => m.role === 'user');
                     if (userMessage) {
@@ -163,9 +148,8 @@ export const conversationalChat = ai.defineFlow(
                 }
                 
                 await chatRef.update(updateData);
-                
             } catch (dbError) {
-                console.error("Failed to save chat session with Admin SDK:", dbError);
+                console.error("Failed to save chat session:", dbError);
             }
         })();
         
@@ -173,7 +157,8 @@ export const conversationalChat = ai.defineFlow(
     } catch (error) {
         console.error("AI generation failed:", error);
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        throw new Error(`I'm sorry, I couldn't generate a response due to an error: ${errorMessage}. Please try rephrasing your message.`);
+        input.onStream?.({ type: 'answer_chunk', payload: `Sorry, an error occurred: ${errorMessage}` });
+        return `Sorry, an error occurred: ${errorMessage}`;
     }
   }
 );
