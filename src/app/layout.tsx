@@ -11,10 +11,10 @@ import './globals.css';
 const instrumentSans = Instrument_Sans({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('http://localhost:3000'),
-  title: 'KorbinAI',
-  description: 'An AI assistant that actually gets it.',
-  keywords: ['ai content creation', 'automation tools', 'ai copilot', 'content marketing', 'ai writing assistant'],
+  metadataBase: new URL('https://korbinai.com'),
+  title: 'KorbinAI - An AI That Actually Gets It',
+  description: 'KorbinAI is your AI co-pilot for turning ideas into products. Move seamlessly from brainstorming to building within a single, cohesive environment.',
+  keywords: ['ai content creation', 'automation tools', 'ai copilot', 'content marketing', 'ai writing assistant', 'genkit', 'nextjs'],
   authors: [{ name: 'KorbinAI Team', url: 'https://korbinai.com' }],
   creator: 'KorbinAI',
   publisher: 'KorbinAI',
@@ -32,16 +32,16 @@ export const metadata: Metadata = {
   },
   
   openGraph: {
-    title: 'KorbinAI',
-    description: 'An AI assistant that actually gets it.',
+    title: 'KorbinAI - An AI That Actually Gets It',
+    description: 'Your AI co-pilot for turning ideas into products. Move seamlessly from brainstorming to building within a single, cohesive environment.',
     url: 'https://korbinai.com',
     siteName: 'KorbinAI',
     images: [
       {
-        url: '/og-image.png',
+        url: '/og-image.png', // This is the image that will be shown in the preview
         width: 1200,
         height: 630,
-        alt: 'KorbinAI - An AI assistant that actually gets it.',
+        alt: 'KorbinAI application interface showing the chat feature.',
       },
     ],
     locale: 'en_US',
@@ -50,10 +50,10 @@ export const metadata: Metadata = {
   
   twitter: {
     card: 'summary_large_image',
-    title: 'KorbinAI',
-    description: 'An AI assistant that actually gets it.',
-    creator: '@korbinai',
-    images: ['/og-image.png'],
+    title: 'KorbinAI - An AI That Actually Gets It',
+    description: 'Your AI co-pilot for turning ideas into products.',
+    creator: '@korbinai', // Your X (Twitter) handle
+    images: ['/og-image.png'], // This image will be used for Twitter cards
   },
   
   robots: {
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
   },
   
   verification: {
-    google: 'your-google-site-verification-code',
+    google: 'your-google-site-verification-code', // You can replace this later
   },
   
   alternates: {
