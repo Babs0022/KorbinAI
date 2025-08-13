@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Settings, LogOut, FolderKanban, Sun, Moon, Monitor, CreditCard, FileText, Shield, LifeBuoy, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid, SquarePen, ShieldCheck, BadgeCheck } from "lucide-react";
+import { User, Settings, LogOut, FolderKanban, Sun, Moon, Monitor, CreditCard, FileText, Shield, LifeBuoy, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid, SquarePen, ShieldCheck, BadgeCheck, PanelLeft } from "lucide-react";
 import { useSidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -380,9 +380,9 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                         {!isMobile && <SidebarTrigger />}
                     </>
                 ) : (
-                    <div className="relative h-8 w-8 group" onClick={toggleSidebar}>
-                        <Logo className="transition-opacity duration-200 group-hover:opacity-0" />
-                        <SidebarTrigger className="absolute inset-0 size-8 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                    <div className="relative h-10 w-10 flex items-center justify-center group" onClick={toggleSidebar}>
+                        <Logo className="absolute transition-opacity duration-200 opacity-100 group-hover:opacity-0" />
+                        <SidebarTrigger className="absolute inset-0 size-full opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
                     </div>
                 )}
             </div>
