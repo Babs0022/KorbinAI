@@ -548,7 +548,7 @@ const SidebarMenuButton = React.forwardRef<
   React.ComponentProps<"button"> & {
     asChild?: boolean
     isActive?: boolean
-    tooltip?: string | React.ComponentProps<typeof TooltipContent>
+    tooltip?: React.ReactNode | React.ComponentProps<typeof TooltipContent>
   } & VariantProps<typeof sidebarMenuButtonVariants>
 >(
   (
@@ -580,12 +580,9 @@ const SidebarMenuButton = React.forwardRef<
     if (!tooltip) {
       return button
     }
-
-    if (typeof tooltip === "string") {
-      tooltip = {
-        children: tooltip,
-      }
-    }
+    
+    const tooltipContent = typeof tooltip === "string" ? <p>{tooltip}</p> : React.isValidElement(tooltip) ? tooltip : <p>{(tooltip as any).children}</p>;
+    const tooltipProps = typeof tooltip === 'object' && !React.isValidElement(tooltip) ? tooltip as React.ComponentProps<typeof TooltipContent> : {};
 
     return (
       <Tooltip>
@@ -594,8 +591,11 @@ const SidebarMenuButton = React.forwardRef<
           side="right"
           align="center"
           hidden={state !== "collapsed" || isMobile}
-          {...tooltip}
-        />
+          className="flex items-center gap-4"
+          {...tooltipProps}
+        >
+          {tooltipContent}
+        </TooltipContent>
       </Tooltip>
     )
   }

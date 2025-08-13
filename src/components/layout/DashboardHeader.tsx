@@ -73,6 +73,15 @@ function MenuThemeToggle() {
     )
 }
 
+const TooltipContentWithShortcut = ({ children, shortcut }: { children: React.ReactNode, shortcut: string }) => (
+    <>
+        <span>{children}</span>
+        <kbd className="ml-4 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+            <span className="text-xs">⌘</span>{shortcut}
+        </kbd>
+    </>
+);
+
 
 export default function DashboardHeader({ variant = 'main' }: DashboardHeaderProps) {
   const { user, logout, loading } = useAuth();
@@ -227,7 +236,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
       <nav className="flex flex-col gap-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild tooltip={<TooltipContentWithShortcut shortcut="K">New Chat</TooltipContentWithShortcut>}>
               <Link href="/">
                 <SquarePen />
                 <span
@@ -242,7 +251,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild tooltip={<TooltipContentWithShortcut shortcut="H">Creation Hub</TooltipContentWithShortcut>}>
               <Link href="/hub">
                 <LayoutGrid />
                 <span
@@ -257,7 +266,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild tooltip={<TooltipContentWithShortcut shortcut="P">Projects</TooltipContentWithShortcut>}>
               <Link href="/dashboard/projects">
                 <FolderKanban />
                 <span
@@ -493,7 +502,11 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     {isAdmin && <DropdownMenuItem asChild><Link href="/dashboard/admin"><ShieldCheck className="mr-2 h-4 w-4" />Admin</Link></DropdownMenuItem>}
                     <DropdownMenuItem asChild disabled><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing & Billing</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild><Link href="/dashboard/feedback"><LifeBuoy className="mr-2 h-4 w-4" />Feedback & Bugs</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        <Link href="/dashboard/feedback">
+                            <LifeBuoy className="mr-2 h-4 w-4" />Feedback & Bugs
+                        </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem asChild><a href="https://korbinai.com/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
                     <DropdownMenuItem asChild><a href="https://korbinai.com/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>
                 <DropdownMenuSeparator />
