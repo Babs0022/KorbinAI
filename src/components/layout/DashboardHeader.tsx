@@ -375,26 +375,24 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 state === 'expanded' && "justify-between",
                 state === 'collapsed' && "justify-center"
             )}>
-                <div className="relative h-8 w-8" onClick={toggleSidebar}>
-                    <div className="absolute inset-0 group">
-                        <Logo className={cn(
-                            "transition-all duration-300 ease-in-out",
-                            state === 'expanded' && "opacity-100 scale-100",
-                            state === 'collapsed' && "opacity-100 scale-100 group-hover:opacity-0 group-hover:scale-75"
-                        )} />
-                        <SidebarTrigger className={cn(
-                            "absolute inset-0 transition-all duration-300 ease-in-out size-8",
-                             state === 'expanded' && "opacity-0 scale-75",
-                             state === 'collapsed' && "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-110"
-                        )} />
-                    </div>
+                <div className="relative h-8 w-8 group" onClick={toggleSidebar}>
+                    <Logo className={cn(
+                        "transition-all duration-300 ease-in-out",
+                        state === 'expanded' && "opacity-100 scale-100",
+                        state === 'collapsed' && "opacity-100 group-hover:opacity-0"
+                    )} />
+                    <SidebarTrigger className={cn(
+                        "absolute inset-0 transition-all duration-300 ease-in-out size-8",
+                         state === 'expanded' && "opacity-0 scale-75",
+                         state === 'collapsed' && "opacity-0 group-hover:opacity-100"
+                    )} />
                 </div>
-                 <SidebarTrigger className={cn("transition-opacity", state === 'collapsed' && "opacity-0")} />
+                 <SidebarTrigger className={cn("transition-opacity", state === 'collapsed' && "opacity-0", state === 'expanded' && !isMobile && "block")} />
             </div>
             <div className="flex-1 flex flex-col overflow-hidden">
                 <SidebarNav />
             </div>
-            <div className="p-2 border-t">
+            <div className="p-2 border-t border-transparent">
                 {loading ? (
                     <div className="flex items-center gap-3 p-2">
                         <Skeleton className="h-10 w-10 rounded-full" />
@@ -472,6 +470,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     <header className="sticky top-0 z-30 border-transparent bg-background">
       <div className="flex h-16 items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-2">
+            <SidebarTrigger className={cn("md:hidden", state === 'expanded' && "hidden")} />
             <span className="font-bold text-lg">KorbinAI</span>
         </div>
         <div className="flex items-center gap-2">
