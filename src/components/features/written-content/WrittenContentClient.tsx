@@ -20,7 +20,7 @@ import { generateContentOutline } from "@/ai/flows/generate-content-outline-flow
 import { generateFullContentDraft } from "@/ai/flows/generate-full-content-draft-flow";
 import { generateSectionDraft } from "@/ai/flows/generate-section-draft-flow";
 import { optimizeContent } from "@/ai/flows/optimize-content-flow";
-import type { ContentIdeaFormData } from "@/types/ai";
+import type { GenerateWrittenContentInput as ContentIdeaFormData } from "@/types/ai";
 
 
 // Services
@@ -98,9 +98,10 @@ export default function WrittenContentClient() {
           const { otherAudience, ...rest } = state.contentIdea as any; // Cast to any to handle otherAudience
           const result = await generateContentOutline({
             ...rest,
-            mainTopic: state.contentIdea.mainTopic!,
-            targetAudience: state.contentIdea.targetAudience === 'Other' ? otherAudience || '' : state.contentIdea.targetAudience || '',
+            mainTopic: state.contentIdea.topic!,
+            targetAudience: state.contentIdea.audience === 'Other' ? otherAudience || '' : state.contentIdea.audience || '',
             keywords: state.contentIdea.keywords || [],
+            userId: user.uid,
           });
           setState(s => ({ ...s, generatedOutline: result.outline.join('\n') }));
       } catch (error) {
@@ -115,16 +116,17 @@ export default function WrittenContentClient() {
     const { otherAudience, ...rest } = state.contentIdea as any;
     return {
         ...rest,
-        mainTopic: state.contentIdea.mainTopic!,
-        targetAudience: state.contentIdea.targetAudience === 'Other' ? otherAudience || '' : state.contentIdea.targetAudience || '',
+        mainTopic: state.contentIdea.topic!,
+        targetAudience: state.contentIdea.audience === 'Other' ? otherAudience || '' : state.contentIdea.audience || '',
         keywords: state.contentIdea.keywords,
         contentType: state.contentIdea.contentType!,
         purpose: state.contentIdea.purpose!,
-        desiredTone: state.contentIdea.desiredTone!,
+        desiredTone: state.contentIdea.tone!,
         desiredLength: state.contentIdea.desiredLength!,
         finalOutline: state.finalOutline.map(item => item.text),
+        userId: user!.uid,
     };
-  }, [state.contentIdea, state.finalOutline]);
+  }, [state.contentIdea, state.finalOutline, user]);
 
 
   const handleDrafting = async (mode: GenerationMode) => {
@@ -250,7 +252,7 @@ export default function WrittenContentClient() {
   const progressPercentage = (currentStep / steps.length) * 100;
   
   const isStep1Complete = 
-    state.contentIdea.mainTopic && state.contentIdea.mainTopic.trim() !== '' && state.contentIdea.purpose && state.contentIdea.purpose.trim() !== '';
+    state.contentIdea.topic && state.contentIdea.topic.trim() !== '' && state.contentIdea.purpose && state.contentIdea.purpose.trim() !== '';
 
   const renderStepContent = () => {
       if (state.isLoading && currentStep !== 1) {

@@ -13,6 +13,8 @@ import {
     type GeneratePromptInput,
     type GeneratePromptOutput,
 } from '@/types/ai';
+import { deductCredits } from '@/services/creditService';
+import { HttpsError } from 'firebase-functions/v2/https';
 
 // Export the main function that the client will call
 export async function generatePrompt(input: GeneratePromptInput): Promise<GeneratePromptOutput> {
@@ -62,6 +64,12 @@ const generatePromptFlow = ai.defineFlow(
     outputSchema: GeneratePromptOutputSchema,
   },
   async (input) => {
+
+    if (!input.userId) {
+      throw new HttpsError('unauthenticated', 'A user ID is required for this operation.');
+    }
+    await deductCredits(input.userId, 1);
+
     const response = await prompt(input);
     const output = response.output;
 

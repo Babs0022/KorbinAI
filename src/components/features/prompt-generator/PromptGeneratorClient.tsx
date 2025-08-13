@@ -115,6 +115,7 @@ export default function PromptGeneratorClient() {
       targetModel: targetModel || undefined,
       outputFormat: outputFormat || undefined,
       imageDataUris: images.length > 0 ? images : undefined,
+      userId: user?.uid,
     };
 
     if (!input.taskDescription) {

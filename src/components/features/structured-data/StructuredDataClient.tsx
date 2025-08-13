@@ -132,6 +132,7 @@ export default function StructuredDataClient() {
       format,
       schemaDefinition: schemaDefinition || undefined,
       imageDataUris: images.length > 0 ? images : undefined,
+      userId: user?.uid,
     };
 
     if (!input.description) {
@@ -183,6 +184,7 @@ export default function StructuredDataClient() {
       schemaDefinition: schemaDefinition || undefined,
       originalData: generatedData,
       refinementInstruction: instruction,
+      userId: user?.uid,
     };
 
     try {

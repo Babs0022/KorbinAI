@@ -34,11 +34,11 @@ export type AgentExecutionInput = z.infer<typeof AgentExecutionInputSchema>;
 // === General Content Idea ===
 export const ContentIdeaFormDataSchema = z.object({
   contentType: z.string(),
-  mainTopic: z.string(),
+  topic: z.string(),
   purpose: z.string(),
-  targetAudience: z.string(),
+  audience: z.string(),
   otherAudience: z.string().optional(),
-  desiredTone: z.string(),
+  tone: z.string(),
   desiredLength: z.string(),
   keywords: z.array(z.string()),
 });
@@ -73,6 +73,7 @@ export type ExpandOutlineSectionOutput = z.infer<typeof ExpandOutlineSectionOutp
 
 // === generate-content-outline-flow ===
 export const GenerateContentOutlineInputSchema = z.object({
+  userId: z.string().optional(),
   contentType: z.string().describe("The type of content (e.g., 'Blog Post', 'Email')."),
   mainTopic: z.string().describe('The core topic of the content.'),
   purpose: z.string().describe('The goal or objective of the content.'),
@@ -120,6 +121,7 @@ export type GenerateDataRefinementSuggestionsOutput = z.infer<typeof GenerateDat
 
 // === generate-full-content-draft-flow ===
 export const GenerateFullContentDraftInputSchema = z.object({
+  userId: z.string().optional(),
   finalOutline: z.array(z.string()).describe("The finalized list of section titles for the content outline."),
   contentType: z.string().describe("The type of content (e.g., 'Blog Post')."),
   mainTopic: z.string().describe('The core topic of the content.'),
@@ -141,6 +143,7 @@ export const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('A detailed text description of the image to generate, or instructions on how to modify the context images.'),
   imageDataUris: z.array(z.string()).optional().describe("An optional array of images to use as context for the generation, as data URIs. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
   style: z.string().optional().describe("The artistic style of the image (e.g., 'photorealistic', 'anime')."),
+  userId: z.string().optional(),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 export const GenerateImageOutputSchema = z.object({
@@ -180,6 +183,7 @@ export const GeneratePromptInputSchema = z.object({
   imageDataUris: z.array(z.string()).optional().describe("An optional array of images provided as context, as data URIs. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
   targetModel: z.string().optional().describe("The specific AI model this prompt is for (e.g., 'Gemini 1.5 Pro', 'Claude 3 Opus')."),
   outputFormat: z.string().optional().describe("The desired format for the AI's output (e.g., 'JSON', 'Markdown', 'a bulleted list')."),
+  userId: z.string().optional(),
 });
 export type GeneratePromptInput = z.infer<typeof GeneratePromptInputSchema>;
 export const GeneratePromptOutputSchema = z.object({
@@ -201,6 +205,7 @@ export type GeneratePromptFormatSuggestionsOutput = z.infer<typeof GeneratePromp
 
 // === generate-section-draft-flow ===
 export const GenerateSectionDraftInputSchema = z.object({
+  userId: z.string().optional(),
   sectionToDraft: z.string().describe('The specific outline section title to be drafted.'),
   fullOutline: z.array(z.string()).describe('The complete list of all section titles in the outline.'),
   mainTopic: z.string().describe('The main topic of the entire piece of content.'),
@@ -225,6 +230,7 @@ export const GenerateStructuredDataInputSchema = z.object({
   imageDataUris: z.array(z.string()).optional().describe("An optional array of images provided as context, as data URIs. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
   originalData: z.string().optional().describe('Existing data to be refined. If present, the flow will refine this data instead of generating new data from the topic.'),
   refinementInstruction: z.string().optional().describe("The instruction for refining the data (e.g., 'Add 10 more records', 'Add a unique ID field')."),
+  userId: z.string().optional(),
 });
 export type GenerateStructuredDataInput = z.infer<typeof GenerateStructuredDataInputSchema>;
 export const GenerateStructuredDataOutputSchema = z.object({
@@ -235,6 +241,7 @@ export type GenerateStructuredDataOutput = z.infer<typeof GenerateStructuredData
 
 // === generate-written-content-flow ===
 export const GenerateWrittenContentInputSchema = z.object({
+  userId: z.string().optional(),
   contentType: z.string().describe("The type of content to generate (e.g., 'Blog Post', 'Email')."),
   tone: z.string().describe("The desired tone of voice (e.g., 'Professional', 'Casual', 'Witty')."),
   topic: z.string().describe('The main topic or message of the content.'),

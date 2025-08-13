@@ -96,6 +96,7 @@ export default function ImageGeneratorClient() {
       prompt: prompt,
       style: style,
       imageDataUris: images.length > 0 ? images : undefined,
+      userId: user?.uid,
     };
 
     try {

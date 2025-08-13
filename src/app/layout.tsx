@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: 'KorbinAI - An AI That Actually Gets It',
   description: 'KorbinAI is your AI co-pilot for turning ideas into products. Move seamlessly from brainstorming to building within a single, cohesive environment.',
   keywords: ['ai content creation', 'automation tools', 'ai copilot', 'content marketing', 'ai writing assistant', 'genkit', 'nextjs'],
-  authors: [{ name: 'KorbinAI Team', url: 'https://korbinai.com' }],
+  authors: [{ name: 'Elijah Babatunde', url: 'https://korbinai.com' }],
   creator: 'KorbinAI',
   publisher: 'KorbinAI',
   

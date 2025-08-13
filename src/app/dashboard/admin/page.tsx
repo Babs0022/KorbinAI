@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users, Mail, Copy, FolderKanban, TrendingUp, CreditCard, Send } from 'lucide-react';
+import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users, Mail, Copy, FolderKanban, TrendingUp, CreditCard, Send, Coins } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, format } from 'date-fns';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -276,11 +276,11 @@ export default function AdminPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Credits Used</CardTitle>
-                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                            <Coins className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">N/A</div>
-                            <p className="text-xs text-muted-foreground">Coming Soon</p>
+                            <div className="text-2xl font-bold">{dashboardData?.totalCredits.toLocaleString() ?? 'N/A'}</div>
+                            <p className="text-xs text-muted-foreground">Total credits across all users</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -345,6 +345,7 @@ export default function AdminPage() {
                                 <TableRow>
                                     <TableHead>User</TableHead>
                                     <TableHead>Subscription</TableHead>
+                                    <TableHead>Credits</TableHead>
                                     <TableHead>Joined</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
@@ -372,6 +373,7 @@ export default function AdminPage() {
                                                 {u.subscriptionPlan}
                                             </Badge>
                                         </TableCell>
+                                        <TableCell>{u.credits}</TableCell>
                                         <TableCell>{format(new Date(u.creationTime), 'PP')}</TableCell>
                                         <TableCell className="text-right">
                                             <Button variant="ghost" size="sm" disabled>View Details</Button>
@@ -379,7 +381,7 @@ export default function AdminPage() {
                                     </TableRow>
                                 )) : (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center h-24">
+                                        <TableCell colSpan={5} className="text-center h-24">
                                             No users found.
                                         </TableCell>
                                     </TableRow>

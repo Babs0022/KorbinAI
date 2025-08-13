@@ -13,6 +13,8 @@ import {
     type GenerateStructuredDataInput,
     type GenerateStructuredDataOutput,
 } from '@/types/ai';
+import { deductCredits } from '@/services/creditService';
+import { HttpsError } from 'firebase-functions/v2/https';
 
 export async function generateStructuredData(input: GenerateStructuredDataInput): Promise<GenerateStructuredDataOutput> {
   return generateStructuredDataFlow(input);
@@ -76,6 +78,12 @@ const generateStructuredDataFlow = ai.defineFlow(
     outputSchema: GenerateStructuredDataOutputSchema,
   },
   async (input) => {
+
+    if (!input.userId) {
+      throw new HttpsError('unauthenticated', 'A user ID is required for this operation.');
+    }
+    await deductCredits(input.userId, 1);
+    
     const response = await prompt(input);
     const output = response.output;
 

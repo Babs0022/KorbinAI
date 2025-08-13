@@ -10,6 +10,8 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { GenerateImageInputSchema, GenerateImageOutputSchema } from '@/types/ai';
 import type { GenerateImageInput } from '@/types/ai';
+import { deductCredits } from '@/services/creditService';
+import { HttpsError } from 'firebase-functions/v2/https';
 
 export async function generateImage(input: GenerateImageInput): Promise<z.infer<typeof GenerateImageOutputSchema>> {
   return generateImageFlow(input);
@@ -23,6 +25,11 @@ const generateImageFlow = ai.defineFlow(
   },
   async (input: z.infer<typeof GenerateImageInputSchema>) => {
     
+    if (!input.userId) {
+      throw new HttpsError('unauthenticated', 'A user ID is required for this operation.');
+    }
+    await deductCredits(input.userId, 1);
+
     const { prompt, imageDataUris, style } = input;
 
     let finalPrompt;

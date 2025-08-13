@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Settings, LogOut, FolderKanban, Sun, Moon, Monitor, CreditCard, FileText, Shield, LifeBuoy, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid, SquarePen, ShieldCheck, BadgeCheck, PanelLeft, Search, MessageSquare } from "lucide-react";
+import { User, Settings, LogOut, FolderKanban, Sun, Moon, Monitor, CreditCard, FileText, Shield, LifeBuoy, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid, SquarePen, ShieldCheck, BadgeCheck, PanelLeft, Search, MessageSquare, Coins } from "lucide-react";
 import { useSidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -31,6 +31,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import type { UserCredits } from "@/types/credit";
 
 
 interface DashboardHeaderProps {
@@ -80,6 +81,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   const [recentChats, setRecentChats] = useState<ChatSession[]>([]);
   const [isVerified, setIsVerified] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userCredits, setUserCredits] = useState<number | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
@@ -106,7 +108,9 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
       
       const userDocRef = doc(db, 'users', user.uid);
       const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
-          setIsVerified(docSnap.data()?.isVerified === true);
+          const userData = docSnap.data() as UserCredits;
+          setIsVerified(userData?.isVerified === true);
+          setUserCredits(userData?.credits ?? 0);
       });
       
       const adminDocRef = doc(db, 'admins', user.uid);
@@ -493,6 +497,12 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <DropdownMenuItem asChild><a href="https://korbinai.com/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
                     <DropdownMenuItem asChild><a href="https://korbinai.com/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>
                 <DropdownMenuSeparator />
+                 <div className="px-2 py-1.5 text-sm flex justify-between items-center">
+                    <span className="flex items-center gap-2"><Coins className="h-4 w-4"/>Credits</span>
+                    <Badge variant={userCredits && userCredits > 0 ? "default" : "secondary"} className="capitalize">
+                        {userCredits ?? '...'}
+                    </Badge>
+                </div>
                 <div className="px-2 py-1.5 text-sm flex justify-between items-center">
                     <span>Subscription</span>
                     <Badge variant={subscription?.status === 'active' ? "default" : "secondary"} className="capitalize">

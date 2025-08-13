@@ -154,6 +154,7 @@ export interface AdminUserView {
     isVerified: boolean;
     subscriptionStatus: 'active' | 'inactive';
     subscriptionPlan?: string;
+    credits: number;
 }
 
 export interface TimeSeriesData {
@@ -168,6 +169,7 @@ export interface AdminDashboardData {
     totalVerifiedUsers: number;
     totalActiveSubscriptions: number;
     totalChats: number;
+    totalCredits: number;
     timeSeriesData: TimeSeriesData[];
 }
 
@@ -193,6 +195,7 @@ export async function getAdminDashboardUsers(adminUserId: string): Promise<Admin
 
     let totalVerifiedUsers = 0;
     let totalActiveSubscriptions = 0;
+    let totalCredits = 0;
     
     const timeSeriesMap: { [key: string]: { users: number, projects: number, chats: number } } = {};
 
@@ -203,8 +206,13 @@ export async function getAdminDashboardUsers(adminUserId: string): Promise<Admin
             
             const [userDoc, subDoc] = await Promise.all([userDocRef.get(), subDocRef.get()]);
 
-            const isVerified = userDoc.exists && userDoc.data()?.isVerified === true;
+            const userData = userDoc.exists ? userDoc.data() : null;
+
+            const isVerified = userData?.isVerified === true;
             if (isVerified) totalVerifiedUsers++;
+            
+            const credits = userData?.credits ?? 0;
+            totalCredits += credits;
 
             const subscriptionStatus = (subDoc.exists && subDoc.data()?.status === 'active') ? 'active' : 'inactive';
             if (subscriptionStatus === 'active') totalActiveSubscriptions++;
@@ -228,6 +236,7 @@ export async function getAdminDashboardUsers(adminUserId: string): Promise<Admin
                 isVerified,
                 subscriptionStatus,
                 subscriptionPlan,
+                credits,
             };
         })
     );
@@ -268,6 +277,7 @@ export async function getAdminDashboardUsers(adminUserId: string): Promise<Admin
         totalVerifiedUsers,
         totalActiveSubscriptions,
         totalChats,
+        totalCredits,
         timeSeriesData,
     };
 }
