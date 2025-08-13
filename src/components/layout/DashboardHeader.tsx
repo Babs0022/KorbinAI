@@ -378,11 +378,11 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 <div className="relative h-8 w-8 group" onClick={toggleSidebar}>
                     <Logo className={cn(
                         "transition-opacity duration-300 ease-in-out",
-                        state === 'expanded' ? "opacity-100" : "opacity-100 group-hover:opacity-0"
+                        state === 'expanded' ? "opacity-100" : "opacity-0 group-hover:opacity-0"
                     )} />
                     <SidebarTrigger className={cn(
                         "absolute inset-0 transition-opacity duration-300 ease-in-out size-8",
-                         state === 'expanded' ? "opacity-0" : "opacity-0 group-hover:opacity-100"
+                         state === 'expanded' ? "opacity-0" : "opacity-100 group-hover:opacity-100"
                     )} />
                 </div>
                  <SidebarTrigger className={cn("transition-opacity", state === 'collapsed' && "opacity-0", state === 'expanded' && !isMobile && "block")} />
