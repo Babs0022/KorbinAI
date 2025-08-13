@@ -372,20 +372,19 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
         <div className="flex flex-col h-full">
             <div className={cn(
                 "flex items-center p-4 h-16",
-                state === 'expanded' && "justify-between",
-                state === 'collapsed' && "justify-center"
+                state === 'expanded' ? "justify-between" : "justify-center"
             )}>
-                <div className="relative h-8 w-8 group" onClick={toggleSidebar}>
-                    <Logo className={cn(
-                        "transition-opacity duration-300 ease-in-out",
-                        state === 'expanded' ? "opacity-100" : "opacity-0 group-hover:opacity-0"
-                    )} />
-                    <SidebarTrigger className={cn(
-                        "absolute inset-0 transition-opacity duration-300 ease-in-out size-8",
-                         state === 'expanded' ? "opacity-0" : "opacity-100 group-hover:opacity-100"
-                    )} />
-                </div>
-                 <SidebarTrigger className={cn("transition-opacity", state === 'collapsed' && "opacity-0", state === 'expanded' && !isMobile && "block")} />
+                {state === 'expanded' ? (
+                    <>
+                        <Logo />
+                        {!isMobile && <SidebarTrigger />}
+                    </>
+                ) : (
+                    <div className="relative h-8 w-8 group" onClick={toggleSidebar}>
+                        <Logo className="transition-opacity duration-200 group-hover:opacity-0" />
+                        <SidebarTrigger className="absolute inset-0 size-8 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                    </div>
+                )}
             </div>
             <div className="flex-1 flex flex-col overflow-hidden">
                 <SidebarNav />
