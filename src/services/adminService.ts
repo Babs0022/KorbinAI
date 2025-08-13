@@ -302,16 +302,12 @@ export async function addCreditsToUser(adminUserId: string, targetUserId: string
 
     const userDocRef = adminDb.collection('users').doc(targetUserId);
 
-    // Check if user exists before attempting to update
-    const userDoc = await userDocRef.get();
-    if (!userDoc.exists) {
-        throw new HttpsError('not-found', `User with ID ${targetUserId} not found.`);
-    }
-
-    await userDocRef.update({
+    // Use `set` with `merge: true` to prevent "not-found" errors.
+    // This will create the document with the fields if it doesn't exist.
+    await userDocRef.set({
         credits: FieldValue.increment(amount),
         totalCreditsGranted: FieldValue.increment(amount)
-    });
+    }, { merge: true });
 }
 
 
@@ -330,9 +326,7 @@ export async function addCreditsToAllUsers(adminUserId: string, amount: number):
         throw new HttpsError('invalid-argument', 'Credit amount must be a positive number.');
     }
 
-    // Firestore batch writes are limited to 500 operations.
-    // We need to process users in batches if there are more than 500.
-    const BATCH_SIZE = 499; // A bit less than 500 to be safe
+    const BATCH_SIZE = 499;
     let pageToken: string | undefined = undefined;
 
     while (true) {
@@ -344,10 +338,11 @@ export async function addCreditsToAllUsers(adminUserId: string, amount: number):
         const batch = adminDb.batch();
         listUsersResult.users.forEach(userRecord => {
             const userDocRef = adminDb.collection('users').doc(userRecord.uid);
-            batch.update(userDocRef, {
+            // Use set with merge: true to avoid "not-found" errors.
+            batch.set(userDocRef, {
                 credits: FieldValue.increment(amount),
                 totalCreditsGranted: FieldValue.increment(amount)
-            });
+            }, { merge: true });
         });
 
         await batch.commit();
