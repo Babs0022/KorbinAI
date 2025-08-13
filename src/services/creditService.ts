@@ -49,8 +49,10 @@ export async function deductCredits(userId: string, amount: number): Promise<voi
       throw new HttpsError('failed-precondition', 'Insufficient credits for this operation.');
     }
 
+    // Atomically decrement credits and increment creditsUsed
     transaction.update(userDocRef, {
       credits: FieldValue.increment(-amount),
+      creditsUsed: FieldValue.increment(amount),
     });
   });
 

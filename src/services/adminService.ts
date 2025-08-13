@@ -212,8 +212,7 @@ export async function getAdminDashboardUsers(adminUserId: string): Promise<Admin
             if (isVerified) totalVerifiedUsers++;
             
             const credits = userData?.credits ?? 0;
-            const totalCreditsGranted = userData?.totalCreditsGranted ?? 100; // Default to 100 for older users
-            totalCreditsUsed += (totalCreditsGranted - credits);
+            totalCreditsUsed += (userData?.creditsUsed ?? 0);
 
             const subscriptionStatus = (subDoc.exists && subDoc.data()?.status === 'active') ? 'active' : 'inactive';
             if (subscriptionStatus === 'active') totalActiveSubscriptions++;
@@ -306,7 +305,6 @@ export async function addCreditsToUser(adminUserId: string, targetUserId: string
     // This will create the document with the fields if it doesn't exist.
     await userDocRef.set({
         credits: FieldValue.increment(amount),
-        totalCreditsGranted: FieldValue.increment(amount)
     }, { merge: true });
 }
 
@@ -341,7 +339,6 @@ export async function addCreditsToAllUsers(adminUserId: string, amount: number):
             // Use set with merge: true to avoid "not-found" errors.
             batch.set(userDocRef, {
                 credits: FieldValue.increment(amount),
-                totalCreditsGranted: FieldValue.increment(amount)
             }, { merge: true });
         });
 
