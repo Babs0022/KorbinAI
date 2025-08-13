@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import LogoSpinner from "@/components/shared/LogoSpinner";
 import ChatMessageActions from "./ChatMessageActions";
 import VoiceMode from "./VoiceMode";
+import Logo from "@/components/shared/Logo";
 
 const formSchema = z.object({
   message: z.string(),
@@ -356,8 +357,9 @@ export default function ChatClient() {
     return (
         <div className="flex flex-col h-full items-center justify-center text-center p-4">
             <div className="w-full max-w-4xl">
-                <div className="mb-8 space-y-2">
-                    <h1 className="text-4xl sm:text-5xl font-bold break-words text-primary">
+                <div className="mb-8 space-y-4 flex flex-col items-center">
+                    <Logo width={64} height={64} />
+                    <h1 className="text-4xl sm:text-5xl font-bold break-words text-primary pt-4">
                         What's good, {user?.displayName?.split(' ')[0] || 'friend'}?
                     </h1>
                 </div>
