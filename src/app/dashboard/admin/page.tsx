@@ -86,6 +86,9 @@ export default function AdminPage() {
 
   const [isCreditDialogOpen, setIsCreditDialogOpen] = useState(false);
   const [isBulkCreditDialogOpen, setIsBulkCreditDialogOpen] = useState(false);
+  const [isDenyDialogOpen, setIsDenyDialogOpen] = useState(false);
+  const [requestToDeny, setRequestToDeny] = useState<VerificationRequest | null>(null);
+  const [denialReason, setDenialReason] = useState('');
   const [selectedUser, setSelectedUser] = useState<AdminUserView | null>(null);
   const [creditAmount, setCreditAmount] = useState(100);
   const [bulkCreditAmount, setBulkCreditAmount] = useState(100);
@@ -152,17 +155,25 @@ export default function AdminPage() {
     }
   };
 
-  const handleDeny = async (requestUserId: string) => {
-    if (!user) return;
-    setIsProcessing(requestUserId);
+  const openDenyDialog = (request: VerificationRequest) => {
+    setRequestToDeny(request);
+    setDenialReason('');
+    setIsDenyDialogOpen(true);
+  };
+  
+  const handleDeny = async () => {
+    if (!user || !requestToDeny) return;
+    setIsProcessing(requestToDeny.userId);
     try {
-      await denyVerificationRequest(user.uid, requestUserId);
+      await denyVerificationRequest(user.uid, requestToDeny.userId, denialReason);
       toast({ title: 'Request Denied' });
-      setRequests(prev => prev.filter(r => r.userId !== requestUserId));
+      setRequests(prev => prev.filter(r => r.userId !== requestToDeny.userId));
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } finally {
       setIsProcessing(null);
+      setIsDenyDialogOpen(false);
+      setRequestToDeny(null);
     }
   };
   
@@ -512,7 +523,7 @@ export default function AdminPage() {
                                 variant="ghost"
                                 size="sm"
                                 className="text-red-500 hover:text-red-500 hover:bg-red-500/10"
-                                onClick={() => handleDeny(req.userId)}
+                                onClick={() => openDenyDialog(req)}
                                 disabled={isProcessing === req.userId}
                                 >
                                 {isProcessing === req.userId ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
@@ -704,6 +715,31 @@ export default function AdminPage() {
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+
+        <Dialog open={isDenyDialogOpen} onOpenChange={setIsDenyDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Deny Verification for {requestToDeny?.userName}</DialogTitle>
+                    <DialogDescription>
+                       Please provide a reason for the denial. This will be shown to the user.
+                    </DialogDescription>
+                </DialogHeader>
+                 <div className="grid gap-4 py-4">
+                    <Textarea
+                        placeholder="e.g., 'The tweet does not tag @korbinai or include the #korbin hashtag.'"
+                        value={denialReason}
+                        onChange={(e) => setDenialReason(e.target.value)}
+                    />
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsDenyDialogOpen(false)}>Cancel</Button>
+                    <Button variant="destructive" onClick={handleDeny} disabled={isProcessing === requestToDeny?.userId}>
+                        {isProcessing === requestToDeny?.userId && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                        Confirm Denial
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
 
       </main>
     </DashboardLayout>

@@ -17,6 +17,7 @@ interface VerificationRequest {
     // User info can be added here
     userName?: string;
     userEmail?: string;
+    denialReason?: string;
 }
 
 /**
@@ -101,18 +102,29 @@ export async function approveVerificationRequest(adminUserId: string, requestUse
 }
 
 /**
- * Denies a verification request.
+ * Denies a verification request, optionally with a reason.
  * @param {string} adminUserId - The UID of the admin performing the action.
  * @param {string} requestUserId - The UID of the user whose request is being denied.
+ * @param {string} [reason] - An optional reason for the denial.
  */
-export async function denyVerificationRequest(adminUserId: string, requestUserId: string): Promise<void> {
+export async function denyVerificationRequest(adminUserId: string, requestUserId: string, reason?: string): Promise<void> {
      if (!await isAdmin(adminUserId)) {
         throw new HttpsError('permission-denied', 'You must be an admin to perform this action.');
     }
 
     const requestRef = adminDb.collection('verificationRequests').doc(requestUserId);
-    await requestRef.update({ status: 'denied', updatedAt: FieldValue.serverTimestamp() });
+    const updateData: { status: string; updatedAt: FirebaseFirestore.FieldValue; denialReason?: string } = {
+        status: 'denied',
+        updatedAt: FieldValue.serverTimestamp(),
+    };
+    
+    if (reason && reason.trim() !== '') {
+        updateData.denialReason = reason;
+    }
+
+    await requestRef.update(updateData);
 }
+
 
 /**
  * Fetches all user-submitted reports (feedback and bugs).

@@ -9,7 +9,7 @@ import { z } from "zod";
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { doc, updateDoc, onSnapshot, getDoc } from "firebase/firestore";
 import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
-import { LoaderCircle, User, Key, CreditCard, Eye, EyeOff, Upload, Award, Clock, BadgeCheck } from "lucide-react";
+import { LoaderCircle, User, Key, CreditCard, Eye, EyeOff, Upload, Award, Clock, BadgeCheck, AlertTriangle } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { auth, db } from "@/lib/firebase";
@@ -19,6 +19,7 @@ import { submitVerificationRequest } from "@/services/feedbackService";
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import DashboardHeader from "@/components/layout/DashboardHeader";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import {
   Form,
@@ -56,6 +57,11 @@ const verificationSchema = z.object({
   tweetUrl: z.string().url({ message: "Please enter a valid URL." }),
 });
 
+interface VerificationStatus {
+    status: 'verified' | 'pending' | 'denied' | 'not_submitted';
+    denialReason?: string;
+}
+
 export default function AccountManagementPage() {
   const { user, loading } = useAuth();
   const { toast } = useToast();
@@ -66,7 +72,7 @@ export default function AccountManagementPage() {
   const [customAvatarFile, setCustomAvatarFile] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
-  const [verificationStatus, setVerificationStatus] = useState<'verified' | 'pending' | 'not_submitted'>('not_submitted');
+  const [verification, setVerification] = useState<VerificationStatus>({ status: 'not_submitted' });
   
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -107,17 +113,22 @@ export default function AccountManagementPage() {
         const userData = docSnap.data();
         const isVerified = userData?.isVerified === true;
         
-        // This is the primary flag. If it's true, always set status to verified.
         if (isVerified) {
-            setVerificationStatus('verified');
+            setVerification({ status: 'verified' });
         } else {
-            // Only check for pending requests if the user is not already verified.
             const verificationReqRef = doc(db, "verificationRequests", user.uid);
             unsubscribeReq = onSnapshot(verificationReqRef, (reqSnap) => {
-                if (reqSnap.exists() && reqSnap.data()?.status === 'pending') {
-                    setVerificationStatus('pending');
+                if (reqSnap.exists()) {
+                    const reqData = reqSnap.data();
+                    if (reqData.status === 'pending') {
+                         setVerification({ status: 'pending' });
+                    } else if (reqData.status === 'denied') {
+                         setVerification({ status: 'denied', denialReason: reqData.denialReason });
+                    } else {
+                         setVerification({ status: 'not_submitted' });
+                    }
                 } else {
-                    setVerificationStatus('not_submitted');
+                    setVerification({ status: 'not_submitted' });
                 }
             });
         }
@@ -274,9 +285,9 @@ export default function AccountManagementPage() {
   };
   
   const renderVerificationSection = () => {
-      switch (verificationStatus) {
+      switch (verification.status) {
         case 'verified':
-            return null; // Don't show the card if they are already verified
+            return null;
         case 'pending':
             return (
                  <div className="space-y-6">
@@ -290,11 +301,29 @@ export default function AccountManagementPage() {
                     </div>
                 </div>
             );
+        case 'denied':
         case 'not_submitted':
         default:
             return (
                  <div className="space-y-6">
                     <h2 className="text-2xl font-semibold flex items-center gap-3"><Award /> Get Verified</h2>
+                    
+                    {verification.status === 'denied' && (
+                        <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>Verification Denied</AlertTitle>
+                            <AlertDescription>
+                                {verification.denialReason ? (
+                                    <>
+                                        <strong>Reason:</strong> {verification.denialReason}
+                                    </>
+                                ) : (
+                                    "Your recent submission was not approved. Please review the requirements and try again."
+                                )}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
                     <p className="text-muted-foreground">Get a golden checkmark on your profile! Follow us on X @korbinai, then craft a post about KorbinAI, tag us, and use the hashtag #korbin. Submit the link to your post below.</p>
                     <Separator />
                     <Form {...verificationForm}>
@@ -315,7 +344,7 @@ export default function AccountManagementPage() {
                             <div className="flex justify-end">
                                 <Button type="submit" disabled={isVerificationSubmitting}>
                                     {isVerificationSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                                    Submit for Review
+                                    {verification.status === 'denied' ? 'Resubmit for Review' : 'Submit for Review'}
                                 </Button>
                             </div>
                         </form>
@@ -357,7 +386,7 @@ export default function AccountManagementPage() {
       )
     }
 
-    const isVerified = verificationStatus === 'verified';
+    const isVerified = verification.status === 'verified';
 
     return (
       <main className="flex flex-1 flex-col p-4 md:p-8">
@@ -531,5 +560,3 @@ export default function AccountManagementPage() {
     </SidebarProvider>
   );
 }
-
-    
