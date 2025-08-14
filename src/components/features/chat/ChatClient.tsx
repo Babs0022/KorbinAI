@@ -6,7 +6,7 @@ import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useParams } from "next/navigation";
-import { LoaderCircle, Paperclip, X, Info, ArrowUp, AudioLines } from "lucide-react";
+import { LoaderCircle, Paperclip, X, Info, ArrowUp } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { type Message } from "@/types/ai";
@@ -32,10 +32,9 @@ type FormValues = z.infer<typeof formSchema>;
 interface ChatInputFormProps {
   onSubmit: (values: FormValues, media?: string[]) => void;
   isLoading: boolean;
-  onVoiceModeClick: () => void;
 }
 
-const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading, onVoiceModeClick }, ref) => {
+const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ onSubmit, isLoading }, ref) => {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [mediaPreviews, setMediaPreviews] = useState<{type: 'image' | 'video' | 'other', url: string, name: string}[]>([]);
@@ -102,16 +101,12 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
         );
       }
 
-      if (hasContent) {
-        return (
-          <Button type="submit" size="sm" className="rounded-lg">
+      return (
+        <Button type="submit" size="sm" className="rounded-lg" disabled={!hasContent}>
             <ArrowUp className="h-5 w-5" />
             <span className="sr-only">Send</span>
-          </Button>
-        );
-      }
-
-      return null;
+        </Button>
+      );
     };
 
     return (
@@ -361,7 +356,6 @@ export default function ChatClient() {
                <ChatInputForm 
                   onSubmit={handleSendMessage} 
                   isLoading={isLoading} 
-                  onVoiceModeClick={() => setIsVoiceModeActive(true)}
                />
             </div>
         </div>
@@ -377,7 +371,6 @@ export default function ChatClient() {
        <ChatInputForm 
           onSubmit={handleSendMessage} 
           isLoading={isLoading} 
-          onVoiceModeClick={() => setIsVoiceModeActive(true)}
        />
     </div>
   );
