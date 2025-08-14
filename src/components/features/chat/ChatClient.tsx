@@ -111,12 +111,7 @@ const ChatInputForm = memo(forwardRef<HTMLFormElement, ChatInputFormProps>(({ on
         );
       }
 
-      return (
-        <Button type="button" variant="outline" size="icon" className="rounded-lg" onClick={onVoiceModeClick}>
-          <AudioLines className="h-5 w-5 text-muted-foreground" />
-          <span className="sr-only">Activate Voice Mode</span>
-        </Button>
-      );
+      return null;
     };
 
     return (
