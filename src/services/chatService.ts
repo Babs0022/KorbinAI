@@ -47,12 +47,23 @@ function sanitizeMessageForFirestore(message: Message): Message {
 
 /**
  * Creates a new chat session in Firestore using the client SDK.
- * It sets a temporary title, which will be updated by the backend flow later.
+ * It generates a better initial title based on the user's message.
  */
 export async function createChatSession({ userId, firstUserMessage }: CreateChatSessionInput): Promise<ChatSession> {
   const sanitizedUserMessage = sanitizeMessageForFirestore(firstUserMessage);
   const messages = [sanitizedUserMessage];
-  const title = "New Chat"; // Use a simple placeholder title initially
+  
+  // Generate a better initial title based on the user's message
+  let title = "New Chat";
+  if (firstUserMessage.content && firstUserMessage.content.trim()) {
+    const content = firstUserMessage.content.trim();
+    // Take first 5-8 words and truncate if too long
+    const words = content.split(' ').slice(0, 8);
+    const truncatedTitle = words.join(' ');
+    title = truncatedTitle.length > 50 ? truncatedTitle.substring(0, 47) + '...' : truncatedTitle;
+  } else if (firstUserMessage.mediaUrls && firstUserMessage.mediaUrls.length > 0) {
+    title = "Media Chat";
+  }
 
   const newSessionData = {
     userId,
@@ -220,4 +231,33 @@ export async function updateChatSessionMetadata(chatId: string, data: { title?: 
         updateData.isPinned = data.isPinned;
     }
     await updateDoc(docRef, updateData);
+}
+
+/**
+ * Regenerates the title for a chat session using AI.
+ * This is useful for existing chats that might have generic titles.
+ */
+export async function regenerateChatTitle(chatId: string, userMessage: string, aiMessage: string): Promise<string> {
+    try {
+        // Import the title generation function dynamically to avoid server/client issues
+        const { generateTitleForChat } = await import('@/ai/actions/generate-chat-title-action');
+        const newTitle = await generateTitleForChat(userMessage, aiMessage);
+        
+        if (newTitle && newTitle.trim()) {
+            await updateChatSessionMetadata(chatId, { title: newTitle.trim() });
+            return newTitle.trim();
+        }
+        return "New Chat";
+    } catch (error) {
+        console.error("Failed to regenerate chat title:", error);
+        // Fallback to a better title based on user message
+        if (userMessage) {
+            const words = userMessage.trim().split(' ').slice(0, 6);
+            const fallbackTitle = words.join(' ');
+            const finalTitle = fallbackTitle.length > 40 ? fallbackTitle.substring(0, 37) + '...' : fallbackTitle;
+            await updateChatSessionMetadata(chatId, { title: finalTitle });
+            return finalTitle;
+        }
+        return "New Chat";
+    }
 }

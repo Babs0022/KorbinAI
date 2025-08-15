@@ -98,6 +98,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [chatToRename, setChatToRename] = useState<ChatSession | null>(null);
   const [newChatName, setNewChatName] = useState("");
+  const [isRegeneratingTitle, setIsRegeneratingTitle] = useState<string | null>(null);
   
   const [isSearchModeActive, setIsSearchModeActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -200,6 +201,36 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     toast({ title: "Link Copied", description: "A shareable link has been copied to your clipboard." });
   };
   
+  const handleRegenerateTitle = async (chat: ChatSession) => {
+    if (!chat.messages || chat.messages.length < 2) {
+      toast({ variant: 'destructive', title: "Error", description: "Need at least one user message and AI response to regenerate title." });
+      return;
+    }
+    
+    setIsRegeneratingTitle(chat.id);
+    try {
+      const userMessage = chat.messages.find(m => m.role === 'user');
+      const aiMessage = chat.messages.find(m => m.role === 'model');
+      
+      if (!userMessage || !aiMessage) {
+        toast({ variant: 'destructive', title: "Error", description: "Could not find user and AI messages." });
+        return;
+      }
+      
+      toast({ title: "Regenerating title...", description: "Using AI to create a better title for this conversation." });
+      
+      // Import the regenerate function dynamically
+      const { regenerateChatTitle } = await import('@/services/chatService');
+      const newTitle = await regenerateChatTitle(chat.id, userMessage.content || '', aiMessage.content || '');
+      
+      toast({ title: "Title Updated", description: `New title: "${newTitle}"` });
+    } catch (error) {
+      toast({ variant: 'destructive', title: "Error", description: "Could not regenerate title." });
+    } finally {
+      setIsRegeneratingTitle(null);
+    }
+  };
+  
   const SearchMode = () => (
     <div className="flex-1 flex flex-col gap-2 p-2 overflow-y-auto">
         <div className="relative">
@@ -217,7 +248,19 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <SidebarMenuButton asChild isActive={pathname.includes(`/chat/${chat.id}`)}>
                         <Link href={`/chat/${chat.id}`} className="flex items-center gap-2 w-full justify-start">
                              <MessageSquare className="h-4 w-4 shrink-0" />
-                             <span className="truncate">{chat.title}</span>
+                             <span className="truncate">
+                               {chat.title === "New Chat" ? (
+                                 <span className="flex items-center gap-2">
+                                   <span className="animate-pulse text-muted-foreground">Generating title...</span>
+                                 </span>
+                               ) : isRegeneratingTitle === chat.id ? (
+                                 <span className="flex items-center gap-2">
+                                   <span className="animate-pulse text-muted-foreground">Regenerating...</span>
+                                 </span>
+                               ) : (
+                                 chat.title
+                               )}
+                             </span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -317,7 +360,17 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                       state === "collapsed" && !isMobile && "opacity-0"
                     )}
                   >
-                    {chat.title}
+                    {chat.title === "New Chat" ? (
+                      <span className="flex items-center gap-2">
+                        <span className="animate-pulse text-muted-foreground">Generating title...</span>
+                      </span>
+                    ) : isRegeneratingTitle === chat.id ? (
+                      <span className="flex items-center gap-2">
+                        <span className="animate-pulse text-muted-foreground">Regenerating...</span>
+                      </span>
+                    ) : (
+                      chat.title
+                    )}
                   </span>
                 </Link>
               </SidebarMenuButton>
@@ -339,6 +392,13 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                   <DropdownMenuItem onClick={() => openRenameDialog(chat)}>
                     <Pencil className="mr-2 h-4 w-4" />
                     Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => handleRegenerateTitle(chat)}
+                    disabled={isRegeneratingTitle === chat.id}
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    {isRegeneratingTitle === chat.id ? "Regenerating..." : "Regenerate Title"}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleShare(chat.id)}>
                     <Share className="mr-2 h-4 w-4" />
