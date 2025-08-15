@@ -126,7 +126,7 @@ export function listRecentChatsForUser(userId: string, callback: (chats: ChatSes
     where('userId', '==', userId),
     where('isDeleted', '==', false),
     orderBy('updatedAt', 'desc'),
-    limit(20)
+    limit(100)
   );
 
   const unsubscribe = onSnapshot(q, (querySnapshot) => {
