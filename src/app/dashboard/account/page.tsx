@@ -9,7 +9,7 @@ import { z } from "zod";
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { doc, updateDoc, onSnapshot, getDoc } from "firebase/firestore";
 import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
-import { LoaderCircle, User, Key, CreditCard, Eye, EyeOff, Upload, Award, Clock, BadgeCheck, AlertTriangle } from "lucide-react";
+import { LoaderCircle, User, Key, CreditCard, Eye, EyeOff, Upload, Award, Clock, AlertTriangle } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { auth, db } from "@/lib/firebase";
@@ -39,6 +39,8 @@ import { format } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
+import { BadgeCheck } from 'lucide-react';
+
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -433,7 +435,7 @@ export default function AccountManagementPage() {
                                     <AvatarImage src={customAvatarFile || currentAvatar} alt="Current Avatar" />
                                     <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                {isVerified && <BadgeCheck className="absolute -bottom-1 -right-1 h-7 w-7 text-primary bg-background rounded-full p-0.5" />}
+                                {isVerified && <BadgeCheck className="absolute -bottom-1 -right-1 h-7 w-7 text-yellow-500 fill-yellow-400 bg-background rounded-full p-0.5" />}
                             </div>
                             <div className="flex-grow">
                                 <FormControl>

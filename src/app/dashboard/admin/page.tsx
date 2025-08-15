@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, BadgeCheck, User, Users, Mail, Copy, FolderKanban, TrendingUp, CreditCard, Send, Coins, PlusCircle, Gift } from 'lucide-react';
+import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, User, Users, Mail, Copy, FolderKanban, TrendingUp, CreditCard, Send, Coins, PlusCircle, Gift } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, format } from 'date-fns';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -41,6 +41,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { BadgeCheck } from 'lucide-react';
 
 
 interface VerificationRequest {
@@ -448,7 +449,7 @@ export default function AdminPage() {
                                                 <div>
                                                     <div className="font-medium flex items-center gap-1.5">
                                                         {u.displayName || 'No name'}
-                                                        {u.isVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                                                        {u.isVerified && <BadgeCheck className="h-4 w-4 text-yellow-500 fill-yellow-400" />}
                                                     </div>
                                                     <div className="text-sm text-muted-foreground">{u.email}</div>
                                                 </div>

@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Settings, LogOut, FolderKanban, Sun, Moon, Monitor, CreditCard, FileText, Shield, LifeBuoy, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid, SquarePen, ShieldCheck, BadgeCheck, PanelLeft, Search, MessageSquare, Coins } from "lucide-react";
+import { User, Settings, LogOut, FolderKanban, Sun, Moon, Monitor, CreditCard, FileText, Shield, LifeBuoy, MoreHorizontal, Pin, Trash2, Share, Pencil, LayoutGrid, SquarePen, ShieldCheck, Search, MessageSquare, Coins } from "lucide-react";
 import { useSidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { UserCredits } from "@/types/credit";
+import { BadgeCheck } from 'lucide-react';
 
 
 interface DashboardHeaderProps {
@@ -454,12 +455,12 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                                         <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
                                         <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                                     </Avatar>
-                                     {isVerified && <BadgeCheck className="absolute -bottom-1 -right-1 h-5 w-5 text-primary bg-background rounded-full" />}
+                                     {isVerified && <BadgeCheck className="absolute -bottom-1 -right-1 h-5 w-5 text-yellow-500 fill-yellow-400 bg-background rounded-full" />}
                                 </div>
                                 <div className={cn("text-left transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>
                                     <p className="text-sm font-medium leading-none flex items-center gap-1.5">
                                         {user.displayName}
-                                        {isVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                                        {isVerified && <BadgeCheck className="h-4 w-4 text-yellow-500 fill-yellow-400" />}
                                     </p>
                                     <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                                 </div>
@@ -562,7 +563,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                                 <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || "User"} data-ai-hint="person avatar" />
                                 <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
                             </Avatar>
-                             {isVerified && <BadgeCheck className="absolute -bottom-1 -right-1 h-5 w-5 text-primary bg-background rounded-full" />}
+                             {isVerified && <BadgeCheck className="absolute -bottom-1 -right-1 h-5 w-5 text-yellow-500 fill-yellow-400 bg-background rounded-full" />}
                         </div>
                     </Button>
                 </DropdownMenuTrigger>
@@ -570,7 +571,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 <DropdownMenuLabel className="font-normal">
                     <p className="text-sm font-medium leading-none flex items-center gap-1.5">
                         {user?.displayName}
-                        {isVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                        {isVerified && <BadgeCheck className="h-4 w-4 text-yellow-500 fill-yellow-400" />}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground truncate pt-1">{user?.email}</p>
                 </DropdownMenuLabel>
