@@ -137,7 +137,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   
   const filteredChats = useMemo(() => {
     if (!searchQuery) {
-        return recentChats.slice(0, 5); // Show 5 most recent if no query
+        return recentChats;
     }
     return recentChats.filter(chat =>
         chat.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -233,7 +233,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   
   const SidebarNav = () => (
     <div className="flex-1 flex flex-col gap-2 p-2 overflow-hidden">
-      <nav className="flex flex-col gap-2">
+      <nav className="flex-shrink-0 flex flex-col gap-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip={<TooltipContentWithShortcut shortcut="K">New Chat</TooltipContentWithShortcut>}>
