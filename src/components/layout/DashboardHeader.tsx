@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -286,6 +286,8 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                             </DialogTrigger>
                             <DialogContent className="max-w-xl gap-0 p-0">
                                 <DialogHeader className="p-4 border-b">
+                                    <DialogTitle className="sr-only">Search Conversations</DialogTitle>
+                                    <DialogDescription className="sr-only">Find a past conversation by searching for its title.</DialogDescription>
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input 
