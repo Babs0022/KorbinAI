@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, User, Users, Mail, Copy, FolderKanban, TrendingUp, CreditCard, Send, Coins, PlusCircle, Gift } from 'lucide-react';
+import { LoaderCircle, CheckCircle, XCircle, ExternalLink, ShieldAlert, MessageCircle, Bug, FileText, User, Users, Mail, Copy, FolderKanban, TrendingUp, CreditCard, Send, Coins, PlusCircle, Gift, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow, format } from 'date-fns';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -94,6 +94,7 @@ export default function AdminPage() {
   const [creditAmount, setCreditAmount] = useState(100);
   const [bulkCreditAmount, setBulkCreditAmount] = useState(100);
   const [isAddingCredits, setIsAddingCredits] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
 
 
   // Check for admin status
@@ -279,6 +280,10 @@ export default function AdminPage() {
 
       const users = dashboardData?.users || [];
       const timeSeriesData = dashboardData?.timeSeriesData || [];
+      const filteredUsers = users.filter(u =>
+        (u.displayName?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+         u.email?.toLowerCase().includes(userSearchQuery.toLowerCase()))
+      );
 
       return (
         <Tabs defaultValue="overview" className="w-full">
@@ -416,15 +421,26 @@ export default function AdminPage() {
             </TabsContent>
             <TabsContent value="users" className="mt-6">
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
+                    <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div className="flex-grow">
                             <CardTitle>User Management</CardTitle>
                             <CardDescription>A list of all registered users in the application.</CardDescription>
                         </div>
-                        <Button variant="outline" onClick={() => setIsBulkCreditDialogOpen(true)}>
-                            <Gift className="mr-2 h-4 w-4" />
-                            Add Credits to All Users
-                        </Button>
+                        <div className="flex items-center gap-2 w-full md:w-auto">
+                            <div className="relative flex-grow">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                    placeholder="Search by name or email..." 
+                                    className="pl-9"
+                                    value={userSearchQuery}
+                                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <Button variant="outline" onClick={() => setIsBulkCreditDialogOpen(true)}>
+                                <Gift className="mr-2 h-4 w-4" />
+                                <span className="hidden sm:inline">Add Credits to All</span>
+                            </Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <Table>
@@ -438,7 +454,7 @@ export default function AdminPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {users.length > 0 ? users.map((u) => (
+                                {filteredUsers.length > 0 ? filteredUsers.map((u) => (
                                     <TableRow key={u.uid}>
                                         <TableCell>
                                             <div className="flex items-center gap-3">
