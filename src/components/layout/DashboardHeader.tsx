@@ -77,7 +77,7 @@ const TooltipContentWithShortcut = ({ children, shortcut }: { children: React.Re
     const [modifierKey, setModifierKey] = useState('');
 
     useEffect(() => {
-        const isMac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
+        const isMac = /(Mac|iPhone|iPod|iPad)/i.test(navigator?.platform || "");
         setModifierKey(isMac ? '⌘' : 'Ctrl');
     }, []);
 
@@ -145,6 +145,19 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
       };
     }
   }, [user]);
+
+  // Search shortcut effect
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+        const isModifierKeyPressed = event.metaKey || event.ctrlKey;
+        if (isModifierKeyPressed && event.key === '/') {
+            event.preventDefault();
+            setIsSearchDialogOpen(true);
+        }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   
   const filteredChats = useMemo(() => {
     if (!searchQuery) {
@@ -222,47 +235,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <>
                         <Logo />
                         <div className="flex items-center">
-                             <Dialog open={isSearchDialogOpen} onOpenChange={setIsSearchDialogOpen}>
-                                <DialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7">
-                                        <Search className="h-4 w-4" />
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-xl gap-0 p-0">
-                                    <DialogHeader className="p-4 border-b">
-                                        <div className="relative">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                            <Input 
-                                                placeholder="Search conversations..." 
-                                                className="pl-9" 
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                autoFocus
-                                            />
-                                        </div>
-                                    </DialogHeader>
-                                    <div className="p-4 h-[300px] overflow-y-auto">
-                                        <div className="flex flex-col gap-2">
-                                            {filteredChats.map((chat) => (
-                                                <Link 
-                                                  key={chat.id} 
-                                                  href={`/chat/${chat.id}`} 
-                                                  className="p-2 rounded-md hover:bg-accent flex items-center gap-3"
-                                                  onClick={() => setIsSearchDialogOpen(false)}
-                                                >
-                                                    <MessageSquare className="h-5 w-5 shrink-0 text-muted-foreground" />
-                                                    <span className="truncate">{chat.title}</span>
-                                                </Link>
-                                            ))}
-                                            {searchQuery && filteredChats.length === 0 && (
-                                                <div className="text-center p-8 text-sm text-muted-foreground">
-                                                    No results found for "{searchQuery}".
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
                             <SidebarTrigger />
                         </div>
                     </>
@@ -296,6 +268,57 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                             </span>
                         </Link>
                         </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <Dialog open={isSearchDialogOpen} onOpenChange={setIsSearchDialogOpen}>
+                            <DialogTrigger asChild>
+                                <SidebarMenuButton tooltip={<TooltipContentWithShortcut shortcut="/">Search</TooltipContentWithShortcut>}>
+                                    <Search />
+                                    <span
+                                    className={cn(
+                                        "transition-opacity",
+                                        state === "collapsed" && !isMobile && "opacity-0"
+                                    )}
+                                    >
+                                    Search
+                                    </span>
+                                </SidebarMenuButton>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-xl gap-0 p-0">
+                                <DialogHeader className="p-4 border-b">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input 
+                                            placeholder="Search conversations..." 
+                                            className="pl-9" 
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            autoFocus
+                                        />
+                                    </div>
+                                </DialogHeader>
+                                <div className="p-4 h-[300px] overflow-y-auto">
+                                    <div className="flex flex-col gap-2">
+                                        {filteredChats.map((chat) => (
+                                            <Link 
+                                              key={chat.id} 
+                                              href={`/chat/${chat.id}`} 
+                                              className="p-2 rounded-md hover:bg-accent flex items-center gap-3"
+                                              onClick={() => setIsSearchDialogOpen(false)}
+                                            >
+                                                <MessageSquare className="h-5 w-5 shrink-0 text-muted-foreground" />
+                                                <span className="truncate">{chat.title}</span>
+                                            </Link>
+                                        ))}
+                                        {searchQuery && filteredChats.length === 0 && (
+                                            <div className="text-center p-8 text-sm text-muted-foreground">
+                                                No results found for "{searchQuery}".
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip={<TooltipContentWithShortcut shortcut="H">Creation Hub</TooltipContentWithShortcut>}>
