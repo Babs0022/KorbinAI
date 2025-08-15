@@ -11,8 +11,8 @@
     --card-foreground: 0 0% 100%; /* #FFFFFF */
     --popover: 0 0% 10%; /* #1A1A1A */
     --popover-foreground: 0 0% 100%; /* #FFFFFF */
-    --primary: 220 84% 60%; /* #3B82F6 - Vibrant Blue */
-    --primary-foreground: 0 0% 100%; /* White for high contrast on blue */
+    --primary: 267 65% 60%; /* #925ed7 */
+    --primary-foreground: 0 0% 100%; /* White for high contrast on purple */
     --secondary: 0 0% 13%; /* #222222 */
     --secondary-foreground: 0 0% 100%; /* #FFFFFF */
     --muted: 0 0% 13%; /* #222222 */
@@ -23,7 +23,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 0 0% 20%; /* #333333 */
     --input: 0 0% 27%; /* #444444 */
-    --ring: 220 84% 60%; /* #3B82F6 - Vibrant Blue */
+    --ring: 267 65% 60%; /* #925ed7 */
     --radius: 0.75rem; /* 12px */
 
     /* Custom Chart Colors */
@@ -39,7 +39,7 @@
     --sidebar-border: 0 0% 20%;
     --sidebar-accent: 0 0% 20%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-ring: 220 84% 60%;
+    --sidebar-ring: 267 65% 60%;
   }
 
   .dark {
