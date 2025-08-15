@@ -5,45 +5,14 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 7%;
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 7%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
-    --primary: 0 0% 7%; /* Black for light mode */
-    --primary-foreground: 0 0% 98%; /* White for light mode */
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 7%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 94%;
-    --accent-foreground: 0 0% 7%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 7%; /* Black for light mode */
-    --radius: 0.75rem;
-
-    /* Custom Sidebar Colors Light */
-    --sidebar-background: 0 0% 97%;
-    --sidebar-foreground: 0 0% 25%;
-    --sidebar-border: 0 0% 89.8%;
-    --sidebar-accent: 0 0% 92%;
-    --sidebar-accent-foreground: 0 0% 7%;
-    --sidebar-ring: 0 0% 7%; /* Black for light mode */
-  }
- 
-  .dark {
     --background: 0 0% 7%; /* #111111 */
     --foreground: 0 0% 100%; /* #FFFFFF */
     --card: 0 0% 10%; /* #1A1A1A */
     --card-foreground: 0 0% 100%; /* #FFFFFF */
     --popover: 0 0% 10%; /* #1A1A1A */
     --popover-foreground: 0 0% 100%; /* #FFFFFF */
-    --primary: 158 100% 47%; /* #00F0A0 */
-    --primary-foreground: 0 0% 7%; /* #111111 */
+    --primary: 220 84% 60%; /* #3B82F6 - Vibrant Blue */
+    --primary-foreground: 0 0% 100%; /* White for high contrast on blue */
     --secondary: 0 0% 13%; /* #222222 */
     --secondary-foreground: 0 0% 100%; /* #FFFFFF */
     --muted: 0 0% 13%; /* #222222 */
@@ -54,7 +23,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 0 0% 20%; /* #333333 */
     --input: 0 0% 27%; /* #444444 */
-    --ring: 158 100% 47%; /* #00F0A0 */
+    --ring: 220 84% 60%; /* #3B82F6 - Vibrant Blue */
     --radius: 0.75rem; /* 12px */
 
     /* Custom Chart Colors */
@@ -70,7 +39,11 @@
     --sidebar-border: 0 0% 20%;
     --sidebar-accent: 0 0% 20%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-ring: 158 100% 47%;
+    --sidebar-ring: 220 84% 60%;
+  }
+
+  .dark {
+    /* All variables are in :root for a single, dark-only theme. */
   }
 }
 
@@ -89,11 +62,5 @@
 @layer components {
   .tour-highlight {
     @apply outline-primary outline-2 outline-dashed outline-offset-4 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.6)] relative z-50 transition-all duration-300;
-  }
-  .dark .tour-highlight {
-      @apply shadow-[0_0_0_9999px_rgba(0,0,0,0.6)];
-  }
-  .light .tour-highlight {
-      @apply shadow-[0_0_0_9999px_rgba(255,255,255,0.6)];
   }
 }
