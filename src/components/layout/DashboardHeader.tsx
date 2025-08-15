@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -99,7 +99,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   const [chatToRename, setChatToRename] = useState<ChatSession | null>(null);
   const [newChatName, setNewChatName] = useState("");
   
-  const [isSearchModeActive, setIsSearchModeActive] = useState(false);
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -199,169 +199,6 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
     navigator.clipboard.writeText(url);
     toast({ title: "Link Copied", description: "A shareable link has been copied to your clipboard." });
   };
-  
-  const SearchMode = () => (
-    <div className="flex-1 flex flex-col gap-2 p-2 overflow-y-auto">
-        <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-                placeholder="Search conversations..." 
-                className="pl-8" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-            />
-        </div>
-        <SidebarMenu className="flex-1 overflow-y-auto">
-            {filteredChats.map((chat) => (
-                <SidebarMenuItem key={chat.id}>
-                    <SidebarMenuButton asChild isActive={pathname.includes(`/chat/${chat.id}`)}>
-                        <Link href={`/chat/${chat.id}`} className="flex items-center gap-2 w-full justify-start">
-                             <MessageSquare className="h-4 w-4 shrink-0" />
-                             <span className="truncate">{chat.title}</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            ))}
-            {searchQuery && filteredChats.length === 0 && (
-                <div className="text-center p-4 text-sm text-muted-foreground">
-                    No results found.
-                </div>
-            )}
-        </SidebarMenu>
-    </div>
-  );
-  
-  const SidebarNav = () => (
-    <div className="flex-1 flex flex-col gap-2 p-2 overflow-hidden">
-      <nav className="flex-shrink-0 flex flex-col gap-2">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={<TooltipContentWithShortcut shortcut="K">New Chat</TooltipContentWithShortcut>}>
-              <Link href="/">
-                <SquarePen />
-                <span
-                  className={cn(
-                    "transition-opacity",
-                    state === "collapsed" && !isMobile && "opacity-0"
-                  )}
-                >
-                  New Chat
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={<TooltipContentWithShortcut shortcut="H">Creation Hub</TooltipContentWithShortcut>}>
-              <Link href="/hub">
-                <LayoutGrid />
-                <span
-                  className={cn(
-                    "transition-opacity",
-                    state === "collapsed" && !isMobile && "opacity-0"
-                  )}
-                >
-                  Creation Hub
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={<TooltipContentWithShortcut shortcut="P">Projects</TooltipContentWithShortcut>}>
-              <Link href="/dashboard/projects">
-                <FolderKanban />
-                <span
-                  className={cn(
-                    "transition-opacity",
-                    state === "collapsed" && !isMobile && "opacity-0"
-                  )}
-                >
-                  Projects
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </nav>
-
-      <div
-        className={cn(
-          "px-2 py-2 text-xs font-medium text-sidebar-foreground/70 transition-opacity",
-          state === "collapsed" && !isMobile && "opacity-0"
-        )}
-      >
-        Recents
-      </div>
-      <div className="flex-1 overflow-y-auto">
-        <SidebarMenu>
-          {recentChats.map((chat) => (
-            <SidebarMenuItem key={chat.id}>
-              <div className="relative flex items-center w-full group">
-                <SidebarMenuButton
-                  asChild
-                  tooltip={{
-                    children: chat.title,
-                    className: "max-w-xs truncate",
-                  }}
-                  isActive={pathname.includes(`/chat/${chat.id}`)}
-                  className="flex-1 pr-8"
-                >
-                  <Link
-                    href={`/chat/${chat.id}`}
-                    className="flex items-center gap-2 truncate w-full justify-start"
-                  >
-                    {chat.isPinned && (
-                      <Pin className="h-3 w-3 shrink-0 text-primary" />
-                    )}
-                    <span
-                      className={cn(
-                        "transition-opacity truncate",
-                        state === "collapsed" && !isMobile && "opacity-0"
-                      )}
-                    >
-                      {chat.title}
-                    </span>
-                  </Link>
-                </SidebarMenuButton>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-48">
-                    <DropdownMenuItem onClick={() => handleTogglePin(chat)}>
-                      <Pin className="mr-2 h-4 w-4" />
-                      {chat.isPinned ? "Unpin" : "Pin"}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => openRenameDialog(chat)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Rename
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleShare(chat.id)}>
-                      <Share className="mr-2 h-4 w-4" />
-                      Share
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => handleDelete(chat.id)}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </div>
-    </div>
-  );
 
   if (variant === 'sidebar') {
     return (
@@ -374,9 +211,47 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <>
                         <Logo />
                         <div className="flex items-center">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsSearchModeActive(!isSearchModeActive)}>
-                                <Search className="h-4 w-4" />
-                            </Button>
+                             <Dialog open={isSearchDialogOpen} onOpenChange={setIsSearchDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7">
+                                        <Search className="h-4 w-4" />
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-xl gap-0 p-0">
+                                    <DialogHeader className="p-4 border-b">
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input 
+                                                placeholder="Search conversations..." 
+                                                className="pl-9" 
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                autoFocus
+                                            />
+                                        </div>
+                                    </DialogHeader>
+                                    <div className="p-4 h-[300px] overflow-y-auto">
+                                        <div className="flex flex-col gap-2">
+                                            {filteredChats.map((chat) => (
+                                                <Link 
+                                                  key={chat.id} 
+                                                  href={`/chat/${chat.id}`} 
+                                                  className="p-2 rounded-md hover:bg-accent flex items-center gap-3"
+                                                  onClick={() => setIsSearchDialogOpen(false)}
+                                                >
+                                                    <MessageSquare className="h-5 w-5 shrink-0 text-muted-foreground" />
+                                                    <span className="truncate">{chat.title}</span>
+                                                </Link>
+                                            ))}
+                                            {searchQuery && filteredChats.length === 0 && (
+                                                <div className="text-center p-8 text-sm text-muted-foreground">
+                                                    No results found for "{searchQuery}".
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
                             <SidebarTrigger />
                         </div>
                     </>
@@ -392,9 +267,139 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     </div>
                 )}
             </div>
-            <div className="flex-1 flex flex-col overflow-hidden">
-                {isSearchModeActive ? <SearchMode /> : <SidebarNav />}
+            
+             <div className="flex-1 flex flex-col gap-2 p-2 overflow-hidden">
+                <nav className="flex-shrink-0 flex flex-col gap-2">
+                    <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip={<TooltipContentWithShortcut shortcut="K">New Chat</TooltipContentWithShortcut>}>
+                        <Link href="/">
+                            <SquarePen />
+                            <span
+                            className={cn(
+                                "transition-opacity",
+                                state === "collapsed" && !isMobile && "opacity-0"
+                            )}
+                            >
+                            New Chat
+                            </span>
+                        </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip={<TooltipContentWithShortcut shortcut="H">Creation Hub</TooltipContentWithShortcut>}>
+                        <Link href="/hub">
+                            <LayoutGrid />
+                            <span
+                            className={cn(
+                                "transition-opacity",
+                                state === "collapsed" && !isMobile && "opacity-0"
+                            )}
+                            >
+                            Creation Hub
+                            </span>
+                        </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip={<TooltipContentWithShortcut shortcut="P">Projects</TooltipContentWithShortcut>}>
+                        <Link href="/dashboard/projects">
+                            <FolderKanban />
+                            <span
+                            className={cn(
+                                "transition-opacity",
+                                state === "collapsed" && !isMobile && "opacity-0"
+                            )}
+                            >
+                            Projects
+                            </span>
+                        </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    </SidebarMenu>
+                </nav>
+
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    <div
+                        className={cn(
+                        "px-2 py-2 text-xs font-medium text-sidebar-foreground/70 transition-opacity",
+                        state === "collapsed" && !isMobile && "opacity-0"
+                        )}
+                    >
+                        Recents
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                        <SidebarMenu>
+                        {recentChats.map((chat) => (
+                            <SidebarMenuItem key={chat.id}>
+                            <div className="relative flex items-center w-full group">
+                                <SidebarMenuButton
+                                asChild
+                                tooltip={{
+                                    children: chat.title,
+                                    className: "max-w-xs truncate",
+                                }}
+                                isActive={pathname.includes(`/chat/${chat.id}`)}
+                                className="flex-1 pr-8"
+                                >
+                                <Link
+                                    href={`/chat/${chat.id}`}
+                                    className="flex items-center gap-2 truncate w-full justify-start"
+                                >
+                                    {chat.isPinned && (
+                                    <Pin className="h-3 w-3 shrink-0 text-primary" />
+                                    )}
+                                    <span
+                                    className={cn(
+                                        "transition-opacity truncate",
+                                        state === "collapsed" && !isMobile && "opacity-0"
+                                    )}
+                                    >
+                                    {chat.title}
+                                    </span>
+                                </Link>
+                                </SidebarMenuButton>
+                                <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+                                    >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-48">
+                                    <DropdownMenuItem onClick={() => handleTogglePin(chat)}>
+                                    <Pin className="mr-2 h-4 w-4" />
+                                    {chat.isPinned ? "Unpin" : "Pin"}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => openRenameDialog(chat)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Rename
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleShare(chat.id)}>
+                                    <Share className="mr-2 h-4 w-4" />
+                                    Share
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                    onClick={() => handleDelete(chat.id)}
+                                    className="text-destructive focus:text-destructive"
+                                    >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                            </SidebarMenuItem>
+                        ))}
+                        </SidebarMenu>
+                    </div>
+                </div>
             </div>
+
             <div className="p-2 border-t border-transparent">
                 {loading ? (
                     <div className="flex items-center gap-3 p-2">
