@@ -77,8 +77,11 @@ const TooltipContentWithShortcut = ({ children, shortcut }: { children: React.Re
     const [modifierKey, setModifierKey] = useState('');
 
     useEffect(() => {
-        const isMac = /(Mac|iPhone|iPod|iPad)/i.test(navigator?.platform || "");
-        setModifierKey(isMac ? '⌘' : 'Ctrl');
+        // This check ensures window is defined, making it safe for SSR
+        if (typeof window !== "undefined") {
+            const isMac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
+            setModifierKey(isMac ? '⌘' : 'Ctrl');
+        }
     }, []);
 
     return (
@@ -251,8 +254,8 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                 )}
             </div>
             
-             <div className="flex-1 flex flex-col gap-2 p-2 overflow-hidden">
-                <nav className="flex-shrink-0 flex flex-col gap-2">
+             <div className="flex flex-1 flex-col overflow-hidden">
+                <nav className="flex-shrink-0 flex flex-col gap-2 p-2">
                     <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip={<TooltipContentWithShortcut shortcut="K">New Chat</TooltipContentWithShortcut>}>
@@ -284,7 +287,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                                     </span>
                                 </SidebarMenuButton>
                             </DialogTrigger>
-                            <DialogContent className="max-w-xl gap-0 p-0">
+                            <DialogContent className="top-[25%] -translate-y-[25%] max-w-2xl gap-0 p-0">
                                 <DialogHeader className="p-4 border-b">
                                     <DialogTitle className="sr-only">Search Conversations</DialogTitle>
                                     <DialogDescription className="sr-only">Find a past conversation by searching for its title.</DialogDescription>
@@ -355,7 +358,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     </SidebarMenu>
                 </nav>
 
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col p-2 pt-0 overflow-hidden">
                     <div
                         className={cn(
                         "px-2 py-2 text-xs font-medium text-sidebar-foreground/70 transition-opacity",
