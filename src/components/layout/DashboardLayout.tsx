@@ -71,7 +71,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {isBannerVisible && (
           <div className="relative w-full bg-amber-500/10 border-b border-amber-500/20 text-amber-200 text-center text-sm p-2 flex items-center justify-center gap-2">
             <AlertTriangle className="h-4 w-4 shrink-0" />
-            <span>Briefly is currently in beta and some functions may fail, proceed with caution.</span>
+            <span>KorbinAI is currently in beta and some functions may fail, proceed with caution.</span>
             <Button variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-amber-200 hover:bg-amber-500/20" onClick={handleDismissBanner}>
                 <X className="h-4 w-4" />
             </Button>

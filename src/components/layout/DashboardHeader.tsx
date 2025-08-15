@@ -432,9 +432,42 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                             <DropdownMenuItem asChild>
                                 <Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Account</Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={logout} className="text-destructive focus:text-destructive">
-                                <LogOut className="mr-2 h-4 w-4" />Log out
+                            <DropdownMenuItem asChild>
+                                <Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing & Billing</Link>
                             </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href="/dashboard/trash"><Trash2 className="mr-2 h-4 w-4" />Trash</Link>
+                            </DropdownMenuItem>
+                            {isAdmin && <DropdownMenuItem asChild><Link href="/dashboard/admin"><ShieldCheck className="mr-2 h-4 w-4" />Admin</Link></DropdownMenuItem>}
+                <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                        <Link href="/dashboard/feedback">
+                            <LifeBuoy className="mr-2 h-4 w-4" />Feedback & Bugs
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href="https://korbinai.com/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href="https://korbinai.com/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>
+                <DropdownMenuSeparator />
+                 <div className="px-2 py-1.5 text-sm flex justify-between items-center">
+                    <span className="flex items-center gap-2"><Coins className="h-4 w-4"/>Credits</span>
+                    <Badge variant={userCredits && userCredits > 0 ? "default" : "secondary"} className="capitalize">
+                        {userCredits ?? '...'}
+                    </Badge>
+                </div>
+                <div className="px-2 py-1.5 text-sm flex justify-between items-center">
+                    <span>Subscription</span>
+                    <Badge variant={subscription?.status === 'active' ? "default" : "secondary"} className="capitalize">
+                        {subscription?.planId || 'Free'}
+                    </Badge>
+                </div>
+                <MenuThemeToggle />
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={logout} className="text-destructive focus:text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />Sign Out
+                </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 ) : (
@@ -507,7 +540,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                     <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/dashboard/trash"><Trash2 className="mr-2 h-4 w-4" />Trash</Link></DropdownMenuItem>
                     {isAdmin && <DropdownMenuItem asChild><Link href="/dashboard/admin"><ShieldCheck className="mr-2 h-4 w-4" />Admin</Link></DropdownMenuItem>}
-                    <DropdownMenuItem asChild disabled><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing & Billing</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing & Billing</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                         <Link href="/dashboard/feedback">
