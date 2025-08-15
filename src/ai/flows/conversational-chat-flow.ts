@@ -80,7 +80,6 @@ export const conversationalChat = ai.defineFlow(
     name: 'conversationalChat',
     inputSchema: ConversationalChatInputSchema,
     outputSchema: z.string(),
-    streamSchema: z.string(),
   },
   async (input: ConversationalChatInput) => {
     

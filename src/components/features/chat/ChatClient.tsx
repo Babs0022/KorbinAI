@@ -201,6 +201,7 @@ export default function ChatClient() {
                 userId: user.uid,
                 chatId: currentChatId,
                 isExistingChat: !!chatId,
+                stream: true, // Enable streaming
             }),
         });
         
@@ -209,12 +210,57 @@ export default function ChatClient() {
             throw new Error(errorData.error || 'The API returned an error.');
         }
 
-        const data = await response.json();
-        const responseText = data.response;
-        
-        const aiMessage: Message = { role: 'model', content: responseText };
-        finalHistory = [...historyForAI, aiMessage];
-        setMessages(finalHistory);
+        // Handle streaming response
+        if (response.body) {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let accumulatedContent = '';
+            
+            // Create a placeholder message for streaming
+            const aiMessageIndex = historyForAI.length;
+            setMessages(prev => {
+                const newMessages = [...prev];
+                newMessages[aiMessageIndex] = { role: 'model', content: '' };
+                return newMessages;
+            });
+
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    accumulatedContent += chunk;
+                    
+                    // Update the message content in real-time
+                    setMessages(prev => {
+                        const newMessages = [...prev];
+                        if (newMessages[aiMessageIndex]) {
+                            newMessages[aiMessageIndex] = { 
+                                ...newMessages[aiMessageIndex], 
+                                content: accumulatedContent 
+                            };
+                        }
+                        return newMessages;
+                    });
+                }
+            } finally {
+                reader.releaseLock();
+            }
+            
+            // Final message with complete content
+            const aiMessage: Message = { role: 'model', content: accumulatedContent };
+            finalHistory = [...historyForAI, aiMessage];
+            
+        } else {
+            // Fallback to non-streaming for backward compatibility
+            const data = await response.json();
+            const responseText = data.response;
+            
+            const aiMessage: Message = { role: 'model', content: responseText };
+            finalHistory = [...historyForAI, aiMessage];
+            setMessages(finalHistory);
+        }
 
     } catch (error: any) {
         console.error("Request failed:", error);
