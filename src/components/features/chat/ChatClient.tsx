@@ -187,45 +187,97 @@ export default function ChatClient() {
     loadChat();
   }, [chatId, user, router]);
 
-  const getAiResponse = useCallback(async (currentChatId: string, historyForAI: Message[]) => {
+  const streamAiResponse = useCallback(async (currentChatId: string, historyForAI: Message[]) => {
     if (!user) return null;
 
     setIsLoading(true);
     let finalHistory: Message[] | null = null;
-    try {
-        const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                history: historyForAI,
-                userId: user.uid,
-                chatId: currentChatId,
-                isExistingChat: !!chatId,
-            }),
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'The API returned an error.');
-        }
 
-        const data = await response.json();
-        const responseText = data.response;
-        
+    try {
+      const response = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          history: historyForAI,
+          userId: user.uid,
+          chatId: currentChatId,
+          isExistingChat: !!chatId,
+        }),
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error('Streaming API error');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let accumulated = '';
+
+      setMessages(prev => {
+        const updated = [...prev];
+        const lastIndex = updated.length - 1;
+        if (lastIndex >= 0 && updated[lastIndex].role === 'model') {
+          updated[lastIndex] = { ...updated[lastIndex], content: '' };
+        }
+        return updated;
+      });
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = value ? decoder.decode(value) : '';
+        if (chunkValue) {
+          accumulated += chunkValue;
+          setMessages(prev => {
+            const updated = [...prev];
+            const lastIndex = updated.length - 1;
+            if (lastIndex >= 0 && updated[lastIndex].role === 'model') {
+              updated[lastIndex] = { ...updated[lastIndex], content: (updated[lastIndex].content || '') + chunkValue };
+            }
+            return updated;
+          });
+        }
+      }
+
+      const aiMessage: Message = { role: 'model', content: accumulated };
+      finalHistory = [...historyForAI, aiMessage];
+
+    } catch (error: any) {
+      console.error('Streaming request failed, falling back to non-streaming:', error);
+      try {
+        const resp = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            history: historyForAI,
+            userId: user.uid,
+            chatId: currentChatId,
+            isExistingChat: !!chatId,
+          }),
+        });
+        const data = await resp.json();
+        const responseText = data.response || `Sorry, an error occurred: ${error.message}`;
         const aiMessage: Message = { role: 'model', content: responseText };
         finalHistory = [...historyForAI, aiMessage];
         setMessages(finalHistory);
-
-    } catch (error: any) {
-        console.error("Request failed:", error);
-        const errorMessage: Message = { role: 'model', content: `Sorry, an error occurred: ${error.message}` };
+      } catch (fallbackError: any) {
+        console.error('Fallback request failed:', fallbackError);
+        const errorMessage: Message = { role: 'model', content: `Sorry, an error occurred: ${fallbackError.message}` };
         finalHistory = [...historyForAI, errorMessage];
         setMessages(finalHistory);
+      }
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
+
     return finalHistory;
   }, [user, chatId]);
+
+  const getAiResponse = useCallback(async (currentChatId: string, historyForAI: Message[]) => {
+    // Keep function name for compatibility with existing code paths
+    return streamAiResponse(currentChatId, historyForAI);
+  }, [streamAiResponse]);
 
   const handleSendMessage = useCallback(async (values: FormValues, media?: string[]) => {
     if (!user || isSubmittingRef.current) return;
