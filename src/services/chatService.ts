@@ -18,7 +18,7 @@ import {
 import { db } from '@/lib/firebase'; // Use the client-side Firebase instance
 import type { ChatSession } from '@/types/chat';
 import type { Message } from '@/types/ai';
-import { generateTitleForChat } from '@/ai/actions/generate-chat-title-action';
+// Title generation happens server-side after the first AI response
 
 interface CreateChatSessionInput {
   userId: string;
@@ -52,7 +52,7 @@ function sanitizeMessageForFirestore(message: Message): Message {
 export async function createChatSession({ userId, firstUserMessage }: CreateChatSessionInput): Promise<ChatSession> {
   const sanitizedUserMessage = sanitizeMessageForFirestore(firstUserMessage);
   const messages = [sanitizedUserMessage];
-  const title = "New Chat"; // Use a simple placeholder title initially
+  const title = "Untitled Conversation"; // Placeholder title; updated asynchronously after AI reply
 
   const newSessionData = {
     userId,

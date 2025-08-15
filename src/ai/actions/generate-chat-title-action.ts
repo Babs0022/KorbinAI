@@ -15,19 +15,22 @@ const GenerateTitleInputSchema = z.object({
 
 const titlePrompt = ai.definePrompt({
     name: 'generateChatTitle',
-    model: 'googleai/gemini-1.5-pro-latest', // Corrected model name
+    model: 'googleai/gemini-2.5-pro', // Align with main model
     input: { schema: GenerateTitleInputSchema },
     output: { schema: z.string() },
-    prompt: `Summarize the following conversation into a concise title of 3-5 words. The title should reflect the core topic of the exchange.
+    prompt: `Generate a short, descriptive conversation title (3-6 words) based on the user's request and the AI's response.
+- Use Title Case.
+- Do not include quotes, trailing punctuation, or emojis.
+- Avoid generic words like "Chat" or "Conversation".
 
-For example:
+Examples:
 - User: "Write a blog post about intermittent fasting"
 - AI: "Of course, here is a draft..."
-- Title: "Blog on Intermittent Fasting"
+- Title: Intermittent Fasting Blog
 
 - User: "generate an image of a red panda wizard"
 - AI: "I've generated an image for you..."
-- Title: "Red Panda Wizard Image"
+- Title: Red Panda Wizard Image
 
 Conversation to summarize:
 ---
@@ -45,25 +48,21 @@ AI Response: "{{aiResponse}}"
  */
 export async function generateTitleForChat(userMessage: string, aiResponse: string): Promise<string> {
     if (!userMessage && !aiResponse) {
-        return "New Chat";
+        return 'Untitled Conversation';
     }
 
-    if (!userMessage) {
-        return "Chat about an image";
-    }
-
-    const fallbackTitle = userMessage.split(' ').slice(0, 5).join(' ');
+    const fallbackTitle = 'Untitled Conversation';
 
     try {
         const response = await titlePrompt({ userMessage, aiResponse });
 
-        // Access .text as a PROPERTY, not a function
-        const generatedTitle = response.text;
+        // Ensure we access .text as a property and sanitize the output
+        const generatedTitle = (response.text || '').trim().replace(/^\s*["']|["']\s*$/g, '');
 
         return generatedTitle || fallbackTitle;
 
     } catch (error) {
-        console.error("Failed to generate chat title:", error);
+        console.error('Failed to generate chat title:', error);
         return fallbackTitle;
     }
 }
