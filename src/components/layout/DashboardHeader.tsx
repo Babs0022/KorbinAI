@@ -73,14 +73,25 @@ function MenuThemeToggle() {
     )
 }
 
-const TooltipContentWithShortcut = ({ children, shortcut }: { children: React.ReactNode, shortcut: string }) => (
-    <>
-        <span>{children}</span>
-        <kbd className="ml-4 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-            <span className="text-xs">⌘</span>{shortcut}
-        </kbd>
-    </>
-);
+const TooltipContentWithShortcut = ({ children, shortcut }: { children: React.ReactNode, shortcut: string }) => {
+    const [modifierKey, setModifierKey] = useState('');
+
+    useEffect(() => {
+        const isMac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
+        setModifierKey(isMac ? '⌘' : 'Ctrl');
+    }, []);
+
+    return (
+        <>
+            <span>{children}</span>
+            {modifierKey && (
+                <kbd className="ml-4 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                    <span className="text-xs">{modifierKey}</span>{shortcut}
+                </kbd>
+            )}
+        </>
+    );
+};
 
 
 export default function DashboardHeader({ variant = 'main' }: DashboardHeaderProps) {
