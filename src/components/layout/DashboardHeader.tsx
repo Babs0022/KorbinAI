@@ -232,7 +232,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
   );
   
   const SidebarNav = () => (
-    <div className="flex-1 flex flex-col gap-2 p-2 overflow-y-auto">
+    <div className="flex-1 flex flex-col gap-2 p-2 overflow-hidden">
       <nav className="flex flex-col gap-2">
         <SidebarMenu>
           <SidebarMenuItem>
@@ -291,73 +291,75 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
       >
         Recents
       </div>
-      <SidebarMenu className="flex-1 overflow-y-auto">
-        {recentChats.map((chat) => (
-          <SidebarMenuItem key={chat.id}>
-            <div className="relative flex items-center w-full group">
-              <SidebarMenuButton
-                asChild
-                tooltip={{
-                  children: chat.title,
-                  className: "max-w-xs truncate",
-                }}
-                isActive={pathname.includes(`/chat/${chat.id}`)}
-                className="flex-1 pr-8"
-              >
-                <Link
-                  href={`/chat/${chat.id}`}
-                  className="flex items-center gap-2 truncate w-full justify-start"
+      <div className="flex-1 overflow-y-auto">
+        <SidebarMenu>
+          {recentChats.map((chat) => (
+            <SidebarMenuItem key={chat.id}>
+              <div className="relative flex items-center w-full group">
+                <SidebarMenuButton
+                  asChild
+                  tooltip={{
+                    children: chat.title,
+                    className: "max-w-xs truncate",
+                  }}
+                  isActive={pathname.includes(`/chat/${chat.id}`)}
+                  className="flex-1 pr-8"
                 >
-                  {chat.isPinned && (
-                    <Pin className="h-3 w-3 shrink-0 text-primary" />
-                  )}
-                  <span
-                    className={cn(
-                      "transition-opacity truncate",
-                      state === "collapsed" && !isMobile && "opacity-0"
+                  <Link
+                    href={`/chat/${chat.id}`}
+                    className="flex items-center gap-2 truncate w-full justify-start"
+                  >
+                    {chat.isPinned && (
+                      <Pin className="h-3 w-3 shrink-0 text-primary" />
                     )}
-                  >
-                    {chat.title}
-                  </span>
-                </Link>
-              </SidebarMenuButton>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-48">
-                  <DropdownMenuItem onClick={() => handleTogglePin(chat)}>
-                    <Pin className="mr-2 h-4 w-4" />
-                    {chat.isPinned ? "Unpin" : "Pin"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openRenameDialog(chat)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Rename
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleShare(chat.id)}>
-                    <Share className="mr-2 h-4 w-4" />
-                    Share
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => handleDelete(chat.id)}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </SidebarMenuItem>
-        ))}
-      </SidebarMenu>
+                    <span
+                      className={cn(
+                        "transition-opacity truncate",
+                        state === "collapsed" && !isMobile && "opacity-0"
+                      )}
+                    >
+                      {chat.title}
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-48">
+                    <DropdownMenuItem onClick={() => handleTogglePin(chat)}>
+                      <Pin className="mr-2 h-4 w-4" />
+                      {chat.isPinned ? "Unpin" : "Pin"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openRenameDialog(chat)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleShare(chat.id)}>
+                      <Share className="mr-2 h-4 w-4" />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => handleDelete(chat.id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </div>
     </div>
   );
 
