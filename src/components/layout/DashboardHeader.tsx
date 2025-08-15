@@ -499,7 +499,7 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                                 <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || "User"} data-ai-hint="person avatar" />
                                 <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
                             </Avatar>
-                             {isVerified && <BadgeCheck className="absolute -bottom-1 -right-1 h-5 w-5 text-yellow-500 fill-yellow-400 bg-background rounded-full" />}
+                             {isVerified && <BadgeCheck className="absolute -bottom-1 -right-1 h-5 w-5 text-yellow-500 fill-yellow-400" />}
                         </div>
                     </Button>
                 </DropdownMenuTrigger>
