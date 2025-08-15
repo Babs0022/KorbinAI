@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -35,33 +36,41 @@
   }
  
   .dark {
-    --background: 0 0% 7%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%; /* White for dark mode */
-    --primary-foreground: 0 0% 7%; /* Black for dark mode */
-    --secondary: 0 0% 13%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 13%;
-    --muted-foreground: 0 0% 63%;
-    --accent: 0 0% 20%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 20%;
-    --input: 0 0% 27%;
-    --ring: 0 0% 98%; /* White for dark mode */
+    --background: 0 0% 7%; /* #111111 */
+    --foreground: 0 0% 100%; /* #FFFFFF */
+    --card: 0 0% 10%; /* #1A1A1A */
+    --card-foreground: 0 0% 100%; /* #FFFFFF */
+    --popover: 0 0% 10%; /* #1A1A1A */
+    --popover-foreground: 0 0% 100%; /* #FFFFFF */
+    --primary: 158 100% 47%; /* #00F0A0 */
+    --primary-foreground: 0 0% 7%; /* #111111 */
+    --secondary: 0 0% 13%; /* #222222 */
+    --secondary-foreground: 0 0% 100%; /* #FFFFFF */
+    --muted: 0 0% 13%; /* #222222 */
+    --muted-foreground: 0 0% 40%; /* #666666 */
+    --accent: 0 0% 20%; /* #333333 */
+    --accent-foreground: 0 0% 100%; /* #FFFFFF */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 0 0% 20%; /* #333333 */
+    --input: 0 0% 27%; /* #444444 */
+    --ring: 158 100% 47%; /* #00F0A0 */
+    --radius: 0.75rem; /* 12px */
 
-    /* Custom Sidebar Colors Dark */
-    --sidebar-background: 0 0% 9%;
-    --sidebar-foreground: 0 0% 80%;
+    /* Custom Chart Colors */
+    --chart-1: 220 84% 60%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 40 84% 52%;
+    --chart-4: 280 84% 60%;
+    --chart-5: 340 84% 60%;
+
+    /* Custom Sidebar Colors */
+    --sidebar-background: 0 0% 9%; /* A slightly different dark for the sidebar */
+    --sidebar-foreground: 0 0% 80%; /* Softer text color */
     --sidebar-border: 0 0% 20%;
     --sidebar-accent: 0 0% 20%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-ring: 0 0% 98%; /* White for dark mode */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-ring: 158 100% 47%;
   }
 }
 
@@ -70,7 +79,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground/90;
+    @apply bg-background text-foreground/70;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply text-foreground;
