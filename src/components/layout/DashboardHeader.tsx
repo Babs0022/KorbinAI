@@ -290,8 +290,8 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                             </DialogTrigger>
                             <DialogContent className="top-[25%] -translate-y-[25%] max-w-2xl gap-0 p-0">
                                 <DialogHeader className="p-4 border-b">
-                                    <DialogTitle className="sr-only">Search Conversations</DialogTitle>
-                                    <DialogDescription className="sr-only">Find a past conversation by searching for its title.</DialogDescription>
+                                    <DialogTitle>Search Conversations</DialogTitle>
+                                    <DialogDescription>Find a past conversation by searching for its title.</DialogDescription>
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input 
@@ -446,75 +446,11 @@ export default function DashboardHeader({ variant = 'main' }: DashboardHeaderPro
                         <Skeleton className="h-10 w-10 rounded-full" />
                         <Skeleton className="h-4 w-24" />
                     </div>
-                ) : user ? (
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                             <Button variant="ghost" className="w-full justify-start items-center gap-3 p-2 h-auto">
-                                <div className="relative">
-                                    <Avatar className="h-10 w-10">
-                                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} data-ai-hint="person avatar" />
-                                        <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                                    </Avatar>
-                                     {isVerified && <BadgeCheck className="absolute -bottom-1 -right-1 h-5 w-5 text-yellow-500 fill-yellow-400 bg-background rounded-full" />}
-                                </div>
-                                <div className={cn("text-left transition-opacity", state === 'collapsed' && !isMobile && 'opacity-0')}>
-                                    <p className="text-sm font-medium leading-none flex items-center gap-1.5">
-                                        {user.displayName}
-                                        {isVerified && <BadgeCheck className="h-4 w-4 text-yellow-500 fill-yellow-400" />}
-                                    </p>
-                                    <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
-                                </div>
-                             </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56 mb-2" align="start" side="right">
-                           <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                           <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                                <Link href="/dashboard/account"><User className="mr-2 h-4 w-4" />Account</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href="/dashboard/billing"><CreditCard className="mr-2 h-4 w-4" />Pricing & Billing</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href="/dashboard/trash"><Trash2 className="mr-2 h-4 w-4" />Trash</Link>
-                            </DropdownMenuItem>
-                            {isAdmin && <DropdownMenuItem asChild><Link href="/dashboard/admin"><ShieldCheck className="mr-2 h-4 w-4" />Admin</Link></DropdownMenuItem>}
-                <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                        <Link href="/dashboard/feedback">
-                            <LifeBuoy className="mr-2 h-4 w-4" />Feedback & Bugs
-                        </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href="https://korbinai.com/terms" target="_blank" rel="noopener noreferrer"><FileText className="mr-2 h-4 w-4" />Terms</a></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href="https://korbinai.com/privacy" target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" />Privacy Policy</a></DropdownMenuItem>
-                <DropdownMenuSeparator />
-                 <div className="px-2 py-1.5 text-sm flex justify-between items-center">
-                    <span className="flex items-center gap-2"><Coins className="h-4 w-4"/>Credits</span>
-                    <Badge variant={userCredits && userCredits > 0 ? "default" : "secondary"} className="capitalize">
-                        {userCredits ?? '...'}
-                    </Badge>
-                </div>
-                <div className="px-2 py-1.5 text-sm flex justify-between items-center">
-                    <span>Subscription</span>
-                    <Badge variant={subscription?.status === 'active' ? "default" : "secondary"} className="capitalize">
-                        {subscription?.planId || 'Free'}
-                    </Badge>
-                </div>
-                <MenuThemeToggle />
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={logout} className="text-destructive focus:text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />Sign Out
-                </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                ) : (
+                ) : !user ? (
                     <Button asChild className="w-full">
                       <Link href="/login">Sign In</Link>
                     </Button>
-                )}
+                ): null}
             </div>
             
              <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
