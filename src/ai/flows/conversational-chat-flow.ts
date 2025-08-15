@@ -157,8 +157,20 @@ export const conversationalChat = ai.defineFlow(
                 if (!input.isExistingChat) {
                     const userMessage = input.history.find(m => m.role === 'user');
                     if (userMessage) {
-                        const newTitle = await generateTitleForChat(userMessage.content, aiMessage.content);
-                        updateData.title = newTitle;
+                        try {
+                            const newTitle = await generateTitleForChat(userMessage.content, aiMessage.content);
+                            if (newTitle && newTitle.trim()) {
+                                updateData.title = newTitle.trim();
+                            }
+                        } catch (titleError) {
+                            console.error("Failed to generate chat title:", titleError);
+                            // Fallback to a better title based on user message
+                            if (userMessage.content) {
+                                const words = userMessage.content.trim().split(' ').slice(0, 6);
+                                const fallbackTitle = words.join(' ');
+                                updateData.title = fallbackTitle.length > 40 ? fallbackTitle.substring(0, 37) + '...' : fallbackTitle;
+                            }
+                        }
                     }
                 }
                 

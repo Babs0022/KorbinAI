@@ -6,7 +6,7 @@ import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useParams } from "next/navigation";
-import { LoaderCircle, Paperclip, X, Info, ArrowUp } from "lucide-react";
+import { LoaderCircle, Paperclip, X, Info, ArrowUp, Pencil } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { type Message } from "@/types/ai";
@@ -22,6 +22,8 @@ import ChatMessageActions from "./ChatMessageActions";
 import VoiceMode from "./VoiceMode";
 import Logo from "@/components/shared/Logo";
 import AnimatedLoadingText from "@/components/shared/AnimatedLoadingText";
+import { db } from "@/lib/firebase";
+import { doc, onSnapshot, Timestamp } from "firebase/firestore";
 
 const formSchema = z.object({
   message: z.string(),
@@ -154,6 +156,8 @@ export default function ChatClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(!!chatId);
   const [isVoiceModeActive, setIsVoiceModeActive] = useState(false);
+  const [currentChat, setCurrentChat] = useState<ChatSession | null>(null);
+  const [isRegeneratingTitle, setIsRegeneratingTitle] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isSubmittingRef = useRef(false);
 
@@ -167,6 +171,7 @@ export default function ChatClient() {
     async function loadChat() {
       if (!user || !chatId) {
         setMessages([]);
+        setCurrentChat(null);
         setIsPageLoading(false);
         return;
       }
@@ -175,6 +180,7 @@ export default function ChatClient() {
         const session = await getChatSession(chatId);
         if (session) {
           setMessages(session.messages);
+          setCurrentChat(session);
         } else {
           router.replace('/');
         }
@@ -186,6 +192,65 @@ export default function ChatClient() {
     }
     loadChat();
   }, [chatId, user, router]);
+
+  // Real-time listener for chat session updates
+  useEffect(() => {
+    if (!chatId || !user) return;
+    
+    const unsubscribe = onSnapshot(doc(db, 'chatSessions', chatId), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const updatedSession: ChatSession = {
+          id: docSnap.id,
+          ...data,
+          updatedAt: (data.updatedAt as Timestamp)?.toDate().toISOString(),
+          createdAt: (data.createdAt as Timestamp)?.toDate().toISOString(),
+        } as ChatSession;
+        
+        setCurrentChat(updatedSession);
+        // Only update messages if they've changed
+        if (JSON.stringify(updatedSession.messages) !== JSON.stringify(messages)) {
+          setMessages(updatedSession.messages);
+        }
+      }
+    });
+    
+    return unsubscribe;
+  }, [chatId, user, messages]);
+
+  const handleRegenerateTitle = async () => {
+    if (!currentChat || !currentChat.messages || currentChat.messages.length < 2) {
+      return;
+    }
+    
+    setIsRegeneratingTitle(true);
+    try {
+      const userMessage = currentChat.messages.find(m => m.role === 'user');
+      const aiMessage = currentChat.messages.find(m => m.role === 'model');
+      
+      if (!userMessage || !aiMessage) {
+        return;
+      }
+      
+      // Import the regenerate function dynamically
+      const { regenerateChatTitle } = await import('@/services/chatService');
+      const newTitle = await regenerateChatTitle(currentChat.id, userMessage.content || '', aiMessage.content || '');
+      
+      // Update the local state
+      setCurrentChat(prev => prev ? { ...prev, title: newTitle } : null);
+      
+      // Show success toast
+      const { toast } = await import('@/hooks/use-toast');
+      toast({ title: "Title Updated", description: `New title: "${newTitle}"` });
+    } catch (error) {
+      console.error("Failed to regenerate title:", error);
+      // Show error toast
+      const { toast } = await import('@/hooks/use-toast');
+      toast({ variant: 'destructive', title: "Error", description: "Could not regenerate title." });
+    } finally {
+      setIsRegeneratingTitle(false);
+    }
+  };
 
   const getAiResponse = useCallback(async (currentChatId: string, historyForAI: Message[]) => {
     if (!user) return null;
@@ -281,6 +346,41 @@ export default function ChatClient() {
     if (messages.length > 0) {
         return (
             <div className="w-full max-w-4xl mx-auto space-y-8 px-4">
+                {/* Chat Header with Title */}
+                {chatId && (
+                    <div className="flex items-center justify-between py-4 border-b border-border">
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-xl font-semibold text-foreground">
+                                {currentChat?.title === "New Chat" ? (
+                                    <span className="flex items-center gap-2">
+                                        <span className="animate-pulse text-muted-foreground">Generating title...</span>
+                                    </span>
+                                ) : (
+                                    currentChat?.title || "Chat"
+                                )}
+                            </h1>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {currentChat && currentChat.title !== "New Chat" && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleRegenerateTitle}
+                                    className="text-xs"
+                                    disabled={isRegeneratingTitle}
+                                >
+                                    {isRegeneratingTitle ? (
+                                        <LoaderCircle className="h-3 w-3 mr-1 animate-spin" />
+                                    ) : (
+                                        <Pencil className="h-3 w-3 mr-1" />
+                                    )}
+                                    {isRegeneratingTitle ? "Regenerating..." : "Regenerate Title"}
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                )}
+                
                 {messages.map((message, index) => (
                     <div
                     key={index}
